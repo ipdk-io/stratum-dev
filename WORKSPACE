@@ -98,7 +98,6 @@ switched_rules_by_language(
     name = "com_google_googleapis_imports",
     grpc = True,
     cc = True,
-    python = True,
 )
 
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
