@@ -227,7 +227,7 @@ YangParseTree::YangParseTree(SwitchInterface* switch_interface)
 }
 
 TreeNode* YangParseTree::AddNode(const ::gnmi::Path& path) {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
   TreeNode* node = &root_;
   for (const auto& element : path.elem()) {
     TreeNode* child = gtl::FindOrNull(node->children_, element.name());
@@ -259,7 +259,7 @@ TreeNode* YangParseTree::AddNode(const ::gnmi::Path& path) {
 
 ::util::Status YangParseTree::CopySubtree(const ::gnmi::Path& from,
                                           const ::gnmi::Path& to) {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
   // Find the source subtree root.
   const TreeNode* source = root_.FindNodeOrNull(from);
   if (source == nullptr) {
@@ -324,7 +324,7 @@ void YangParseTree::AddSubtreeSystem() {
 }
 
 void YangParseTree::AddSubtreeAllInterfaces() {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
 
   // Add all nodes defined in YangParseTreePaths class.
   YangParseTreePaths::AddSubtreeAllInterfaces(this);
@@ -336,12 +336,12 @@ void YangParseTree::AddSubtreeAllInterfaces() {
 // * the /components/component/* path to retrieve all the nodes for the
 //   specific component.
 void YangParseTree::AddSubtreeAllComponents() {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
   YangParseTreePaths::AddSubtreeAllComponents(this);
 }
 
 void YangParseTree::AddRoot() {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
 
   // Add root element
   YangParseTreePaths::AddRoot(this);
