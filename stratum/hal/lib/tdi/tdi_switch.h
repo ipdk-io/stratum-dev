@@ -27,53 +27,43 @@ class TdiSwitch : public SwitchInterface {
   ~TdiSwitch() override;
 
   // SwitchInterface public methods.
-  ::util::Status PushChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status VerifyChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+  ::util::Status PushChassisConfig(const ChassisConfig& config) override;
+  ::util::Status VerifyChassisConfig(const ChassisConfig& config) override;
   ::util::Status PushForwardingPipelineConfig(
-      uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+      uint64 node_id,
+      const ::p4::v1::ForwardingPipelineConfig& config) override;
   ::util::Status SaveForwardingPipelineConfig(
-      uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status CommitForwardingPipelineConfig(uint64 node_id) override
-      LOCKS_EXCLUDED(chassis_lock);
+      uint64 node_id,
+      const ::p4::v1::ForwardingPipelineConfig& config) override;
+  ::util::Status CommitForwardingPipelineConfig(uint64 node_id) override;
   ::util::Status VerifyForwardingPipelineConfig(
-      uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status Shutdown() override LOCKS_EXCLUDED(chassis_lock);
+      uint64 node_id,
+      const ::p4::v1::ForwardingPipelineConfig& config) override;
+  ::util::Status Shutdown() override;
   ::util::Status Freeze() override;
   ::util::Status Unfreeze() override;
-  ::util::Status WriteForwardingEntries(const ::p4::v1::WriteRequest& req,
-                                        std::vector<::util::Status>* results)
-      override LOCKS_EXCLUDED(chassis_lock);
+  ::util::Status WriteForwardingEntries(
+      const ::p4::v1::WriteRequest& req,
+      std::vector<::util::Status>* results) override;
   ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+      std::vector<::util::Status>* details) override;
   ::util::Status RegisterStreamMessageResponseWriter(
       uint64 node_id,
       std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer)
-      override LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status UnregisterStreamMessageResponseWriter(uint64 node_id) override
-      LOCKS_EXCLUDED(chassis_lock);
+      override;
+  ::util::Status UnregisterStreamMessageResponseWriter(uint64 node_id) override;
   ::util::Status HandleStreamMessageRequest(
-      uint64 node_id, const ::p4::v1::StreamMessageRequest& request) override
-      LOCKS_EXCLUDED(chassis_lock);
+      uint64 node_id, const ::p4::v1::StreamMessageRequest& request) override;
   ::util::Status RegisterEventNotifyWriter(
-      std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) override
-      LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status UnregisterEventNotifyWriter() override
-      LOCKS_EXCLUDED(chassis_lock) LOCKS_EXCLUDED(chassis_lock);
+      std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) override;
+  ::util::Status UnregisterEventNotifyWriter() override;
   ::util::Status RetrieveValue(uint64 node_id, const DataRequest& requests,
                                WriterInterface<DataResponse>* writer,
-                               std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+                               std::vector<::util::Status>* details) override;
   ::util::Status SetValue(uint64 node_id, const SetRequest& request,
-                          std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+                          std::vector<::util::Status>* details) override;
   ::util::StatusOr<std::vector<std::string>> VerifyState() override;
 
   // Factory function for creating the instance of the class.
