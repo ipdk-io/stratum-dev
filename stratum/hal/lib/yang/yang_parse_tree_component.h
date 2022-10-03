@@ -6,7 +6,7 @@
 #ifndef STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_COMPONENT_H_
 #define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_COMPONENT_H_
 
-#include "stratum/hal/lib/common/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
 
 namespace stratum {
 namespace hal {

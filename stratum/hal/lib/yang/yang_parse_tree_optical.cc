@@ -3,15 +3,15 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/lib/common/yang_parse_tree_paths.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
 
 #include "absl/strings/str_format.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/utils.h"
-#include "stratum/hal/lib/common/yang_parse_tree.h"
-#include "stratum/hal/lib/common/yang_parse_tree_component.h"
-#include "stratum/hal/lib/common/yang_parse_tree_helpers.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_component.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 
 namespace stratum {
 namespace hal {

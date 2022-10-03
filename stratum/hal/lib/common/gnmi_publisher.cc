@@ -12,7 +12,7 @@
 #include "gnmi/gnmi.pb.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/channel_writer_wrapper.h"
-#include "stratum/hal/lib/common/yang_parse_tree_paths.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
 
 namespace stratum {
 namespace hal {

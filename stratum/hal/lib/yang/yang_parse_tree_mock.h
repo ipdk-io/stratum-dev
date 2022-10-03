@@ -6,7 +6,7 @@
 #define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_MOCK_H_
 
 #include "gmock/gmock.h"
-#include "stratum/hal/lib/common/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
 
 namespace stratum {
 namespace hal {

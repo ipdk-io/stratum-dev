@@ -3,9 +3,9 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/lib/common/yang_parse_tree_component.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_component.h"
 
-#include "stratum/hal/lib/common/yang_parse_tree_helpers.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 
 namespace stratum {
 namespace hal {

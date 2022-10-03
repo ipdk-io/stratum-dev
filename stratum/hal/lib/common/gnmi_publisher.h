@@ -20,7 +20,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/lib/timer_daemon.h"
 #include "stratum/public/lib/error.h"
 #include "absl/synchronization/mutex.h"

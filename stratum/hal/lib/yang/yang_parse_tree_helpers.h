@@ -8,7 +8,7 @@
 
 #include "gnmi/gnmi.pb.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
 
 namespace stratum {
 namespace hal {

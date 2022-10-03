@@ -15,7 +15,7 @@
 #include "stratum/hal/lib/common/switch_mock.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_mock.h"
-#include "stratum/hal/lib/common/yang_parse_tree_mock.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_mock.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/test_utils/matchers.h"
 #include "stratum/lib/utils.h"
