@@ -36,15 +36,14 @@ config_setting(
 )
 
 target_defines = select({
-    ":dpdk_target": ["DPDK_TARGET"],
+    ":dpdk_target":   ["DPDK_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
 })
 
 target_sdk = select({
-    ":dpdk_target": ["@local_dpdk_bin//:dpdk_sde"],
+    ":dpdk_target":   ["@local_dpdk_bin//:dpdk_sde"],
     ":tofino_target": ["@local_tofino_bin//:tofino_sde"],
 })
-
 
 stratum_cc_library(
     name = "tdi_sde_interface",
@@ -73,11 +72,19 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "tdi_sde_wrapper",
-    srcs = ["tdi_sde_wrapper.cc"],
-    hdrs = ["tdi_sde_wrapper.h"],
+    srcs = [
+        "tdi_sde_action_profile.cc",
+        "tdi_sde_helpers.cc",
+        "tdi_sde_multicast.cc",
+        "tdi_sde_table_data.cc",
+        "tdi_sde_table_entry.cc",
+        "tdi_sde_table_key.cc",
+        "tdi_sde_wrapper.cc",
+    ],
     defines = target_defines,
     deps = [
         ":tdi_sde_interface",
+        ":tdi_sde_headers",
         ":tdi_constants",
         ":tdi_id_mapper",
         ":macros",
@@ -97,6 +104,20 @@ stratum_cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
     ] + target_sdk,
+)
+
+stratum_cc_library(
+    name = "tdi_sde_headers",
+    hdrs = [
+        "tdi_id_mapper.h",
+        "tdi_sde_common.h",
+        "tdi_sde_helpers.h",
+        "tdi_sde_wrapper.h",
+    ],
+    deps = [
+        ":tdi_sde_interface",
+        ":macros",
+    ],
 )
 
 stratum_cc_library(
@@ -278,7 +299,6 @@ stratum_cc_library(
 stratum_cc_library(
     name = "macros",
     hdrs = ["macros.h"],
-    defines = target_defines,
     deps = [
         "//stratum/lib:macros",
     ] + target_sdk,

@@ -268,7 +268,6 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
 
 ::util::Status TdiSdeWrapper::EnablePortShaping(
     int device, int port, TriState enable) {
-
   return ::util::OkStatus();
 }
 

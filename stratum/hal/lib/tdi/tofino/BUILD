@@ -47,6 +47,30 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tofino_sde_wrapper",
+    srcs = [
+        "tofino_sde_wrapper.cc",
+    ],
+    defines = ["TOFINO_TARGET"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/gtl:cleanup",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib:constants",
+        "//stratum/lib:utils",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@local_tofino_bin//:tofino_sde",
+    ],
+)
+
+stratum_cc_library(
     name = "tofino_switch",
     srcs = ["tofino_switch.cc"],
     hdrs = ["tofino_switch.h"],
