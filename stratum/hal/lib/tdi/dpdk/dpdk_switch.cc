@@ -199,7 +199,7 @@ DpdkSwitch::~DpdkSwitch() {}
           // TODO: implement generic interface through SDE interface.
           node_info->set_vendor_name("DPDK");
           node_info->set_chip_name(
-              sde_interface_->GetBfChipType(device_id.ValueOrDie()));
+              sde_interface_->GetChipType(device_id.ValueOrDie()));
         }
         break;
       }

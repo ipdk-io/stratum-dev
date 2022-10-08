@@ -113,7 +113,7 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD3(SetDeflectOnDropDestination,
                ::util::Status(int device, int port, int queue));
   MOCK_METHOD1(IsSoftwareModel, ::util::StatusOr<bool>(int device));
-  MOCK_CONST_METHOD1(GetBfChipType, std::string(int device));
+  MOCK_CONST_METHOD1(GetChipType, std::string(int device));
   MOCK_CONST_METHOD0(GetSdeVersion, std::string());
   MOCK_METHOD2(TxPacket, ::util::Status(int device, const std::string& packet));
   MOCK_METHOD1(StartPacketIo, ::util::Status(int device));

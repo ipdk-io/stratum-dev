@@ -236,7 +236,7 @@ TofinoSwitch::~TofinoSwitch() {}
           auto* node_info = resp.mutable_node_info();
           node_info->set_vendor_name("Barefoot");
           node_info->set_chip_name(
-              sde_interface_->GetBfChipType(device_id.ValueOrDie()));
+              sde_interface_->GetChipType(device_id.ValueOrDie()));
         }
         break;
       }

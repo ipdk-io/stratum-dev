@@ -16,6 +16,11 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 
+//#ifdef WITH_IWYU
+#undef LOCKS_EXCLUDED
+#define LOCKS_EXCLUDED(...)
+//#endif
+
 namespace stratum {
 namespace hal {
 namespace tdi {

@@ -5,6 +5,7 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_WRAPPER_H_
 #define STRATUM_HAL_LIB_TDI_TDI_SDE_WRAPPER_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -13,9 +14,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 
-#ifdef TOFINO_TARGET
-#include "pkt_mgr/pkt_mgr_intf.h"
-#endif
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
@@ -24,6 +22,10 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/lib/channel/channel.h"
+
+#ifdef TOFINO_TARGET
+#include "pkt_mgr/pkt_mgr_intf.h"
+#endif
 
 namespace stratum {
 namespace hal {
@@ -186,7 +188,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status SetDeflectOnDropDestination(int device, int port,
                                              int queue) override;
   ::util::StatusOr<bool> IsSoftwareModel(int device) override;
-  std::string GetBfChipType(int device) const override;
+  std::string GetChipType(int device) const override;
   std::string GetSdeVersion() const override;
   ::util::Status TxPacket(int device, const std::string& packet) override;
   ::util::Status StartPacketIo(int device) override;
