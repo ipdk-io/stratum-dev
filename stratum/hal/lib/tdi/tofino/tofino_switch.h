@@ -16,10 +16,9 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 
-//#ifdef WITH_IWYU
+// Suppress clang errors
 #undef LOCKS_EXCLUDED
 #define LOCKS_EXCLUDED(...)
-//#endif
 
 namespace stratum {
 namespace hal {

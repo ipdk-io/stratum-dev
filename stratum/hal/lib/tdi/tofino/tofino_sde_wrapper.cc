@@ -2,6 +2,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// Tofino-specific SDE wrapper methods.
+
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 
 #include <algorithm>
@@ -101,8 +103,8 @@ namespace {
   }
 }
 
-::util::StatusOr<bf_fec_type_t> FecModeHalToBf(FecMode fec_mode,
-                                               uint64 speed_bps) {
+::util::StatusOr<bf_fec_type_t> FecModeHalToBf(
+    FecMode fec_mode, uint64 speed_bps) {
   if (fec_mode == FEC_MODE_UNKNOWN || fec_mode == FEC_MODE_OFF) {
     return BF_FEC_TYP_NONE;
   } else if (fec_mode == FEC_MODE_ON || fec_mode == FEC_MODE_AUTO) {
@@ -166,8 +168,8 @@ bf_status_t sde_port_status_callback(
   return state ? PORT_STATE_UP : PORT_STATE_DOWN;
 }
 
-::util::Status TdiSdeWrapper::GetPortCounters(int device, int port,
-                                             PortCounters* counters) {
+::util::Status TdiSdeWrapper::GetPortCounters(
+    int device, int port, PortCounters* counters) {
   uint64_t stats[BF_NUM_RMON_COUNTERS] = {0};
   RETURN_IF_TDI_ERROR(
       bf_pal_port_all_stats_get(static_cast<bf_dev_id_t>(device),
@@ -204,8 +206,8 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::GetPortInfo(int device, int port,
-                                          TargetDatapathId *target_dp_id) {
+::util::Status TdiSdeWrapper::GetPortInfo(
+    int device, int port, TargetDatapathId *target_dp_id) {
   return ::util::OkStatus();
 }
 
@@ -214,8 +216,8 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddPort(int device, int port, uint64 speed_bps,
-                                     FecMode fec_mode) {
+::util::Status TdiSdeWrapper::AddPort(
+    int device, int port, uint64 speed_bps, FecMode fec_mode) {
   ASSIGN_OR_RETURN(auto bf_speed, PortSpeedHalToBf(speed_bps));
   ASSIGN_OR_RETURN(auto bf_fec_mode, FecModeHalToBf(fec_mode, speed_bps));
   RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),

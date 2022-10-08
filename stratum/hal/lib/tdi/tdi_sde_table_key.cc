@@ -2,6 +2,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// Target-agnostic SDE wrapper Table Key methods.
+
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 
 #include <memory>

@@ -2,33 +2,31 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// DPDK-specific SDE wrapper methods.
+
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 
+#include <algorithm>
 #include <memory>
+#include <ostream>
 #include <set>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <string>
 #include <utility>
+#include <vector>
 
-#include "absl/strings/match.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/synchronization/notification.h"
-#include "absl/time/time.h"
-
-#include "stratum/glue/gtl/cleanup.h"
-#include "stratum/glue/gtl/map_util.h"
-#include "stratum/glue/gtl/stl_util.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/macros.h"
-#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
-#include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/channel/channel.h"
-#include "stratum/lib/constants.h"
 #include "stratum/lib/utils.h"
 
 extern "C" {
@@ -58,12 +56,11 @@ bool IsPreallocatedTable(const ::tdi::Table& table) {
 } // namespace helpers
 
 ::util::StatusOr<PortState> TdiSdeWrapper::GetPortState(int device, int port) {
-  int state = 0;
-  return state ? PORT_STATE_UP : PORT_STATE_DOWN;
+  return PORT_STATE_UP;
 }
 
-::util::Status TdiSdeWrapper::GetPortCounters(int device, int port,
-                                             PortCounters* counters) {
+::util::Status TdiSdeWrapper::GetPortCounters(
+    int device, int port, PortCounters* counters) {
   uint64_t stats[BF_PORT_NUM_COUNTERS] = {0};
   RETURN_IF_TDI_ERROR(
       bf_pal_port_all_stats_get(static_cast<bf_dev_id_t>(device),
@@ -101,13 +98,14 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
     case PORT_TYPE_LINK: return BF_DPDK_LINK;
     case PORT_TYPE_SOURCE: return BF_DPDK_SOURCE;
     case PORT_TYPE_SINK: return BF_DPDK_SINK;
+    default: break;
   }
   return BF_DPDK_PORT_MAX;
 }
 } // namespace
 
-::util::Status TdiSdeWrapper::GetPortInfo(int device, int port,
-                                          TargetDatapathId *target_dp_id) {
+::util::Status TdiSdeWrapper::GetPortInfo(
+    int device, int port, TargetDatapathId *target_dp_id) {
   struct port_info_t *port_info = NULL;
   RETURN_IF_TDI_ERROR(bf_pal_port_info_get(static_cast<bf_dev_id_t>(device),
                                            static_cast<bf_dev_port_t>(port),
@@ -172,8 +170,8 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddPort(int device, int port, uint64 speed_bps,
-                                     FecMode fec_mode) {
+::util::Status TdiSdeWrapper::AddPort(
+    int device, int port, uint64 speed_bps, FecMode fec_mode) {
   auto port_attrs = absl::make_unique<port_attributes_t>();
   RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),
                                       static_cast<bf_dev_port_t>(port),
@@ -290,10 +288,6 @@ bool TdiSdeWrapper::IsValidPort(int device, int port) {
 
 ::util::Status TdiSdeWrapper::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
-  if (loopback_mode == LOOPBACK_STATE_UNKNOWN) {
-    // Do nothing if we try to set loopback mode to the default one (UNKNOWN).
-    return ::util::OkStatus();
-  }
   return ::util::OkStatus();
 }
 
@@ -342,16 +336,17 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
 }
 
 ::util::StatusOr<int> TdiSdeWrapper::GetPcieCpuPort(int device) {
-  return MAKE_ERROR() << "GetPcieCpuPort not implemented";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "GetPcieCpuPort not implemented";
 }
 
 ::util::Status TdiSdeWrapper::SetTmCpuPort(int device, int port) {
-  return MAKE_ERROR() << "SetTmCpuPort not implemented";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetTmCpuPort not implemented";
 }
 
 ::util::Status TdiSdeWrapper::SetDeflectOnDropDestination(
     int device, int port, int queue) {
-  return MAKE_ERROR() << "SetDeflectOnDropDestination not implemented";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED)
+      << "SetDeflectOnDropDestination not implemented";
 }
 
 ::util::Status TdiSdeWrapper::InitializeSde(
