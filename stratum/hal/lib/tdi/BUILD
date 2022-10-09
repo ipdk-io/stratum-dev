@@ -36,12 +36,12 @@ config_setting(
 )
 
 target_defines = select({
-    ":dpdk_target": ["DPDK_TARGET"],
+    ":dpdk_target":   ["DPDK_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
 })
 
 target_sdk = select({
-    ":dpdk_target": ["@local_dpdk_bin//:dpdk_sde"],
+    ":dpdk_target":   ["@local_dpdk_bin//:dpdk_sde"],
     ":tofino_target": ["@local_tofino_bin//:tofino_sde"],
 })
 

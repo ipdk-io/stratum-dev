@@ -1,3 +1,5 @@
+# stratum/hal/lib/common/BUILD
+
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
 # Copyright 2022 Intel Corporation
@@ -205,16 +207,14 @@ stratum_cc_library(
     srcs = [
         "config_monitoring_service.cc",
         "gnmi_publisher.cc",
-        "yang_parse_tree.cc",
-        "yang_parse_tree_paths.cc",
     ],
     hdrs = [
         "config_monitoring_service.h",
         "gnmi_publisher.h",
-        "yang_parse_tree.h",
-        "yang_parse_tree_paths.h",
     ],
     deps = [
+	"//stratum/hal/lib/yang:yang_parse_tree",
+	"//stratum/hal/lib/yang:yang_parse_tree_paths",
         ":channel_writer_wrapper",
         ":common_cc_proto",
         ":error_buffer",
@@ -262,10 +262,10 @@ stratum_cc_test(
     srcs = [
         "config_monitoring_service_test.cc",
         "gnmi_publisher_test.cc",
-        "yang_parse_tree_mock.h",
-        "yang_parse_tree_test.cc",
     ],
     deps = [
+	"//stratum/hal/lib/yang:parse_tree_mock",
+	"//stratum/hal/lib/yang:yang_parse_tree_test",
         ":config_monitoring_service",
         ":error_buffer",
         ":gnmi_publisher_mock",
@@ -317,9 +317,9 @@ cc_library(
         "gnmi_events.h",
         "gnmi_publisher.h",
         "gnmi_publisher_mock.h",
-        "yang_parse_tree.h",
     ],
     deps = [
+	"//stratum/hal/lib/yang:parse_tree",
         ":common_cc_proto",
         ":switch_interface",
         ":switch_mock",
@@ -347,6 +347,16 @@ stratum_cc_library(
         "//stratum/glue:integral_types",
         "@com_google_absl//absl/base:core_headers",
     ],
+)
+
+stratum_cc_library(
+    name = "gnmi_events",
+    hdrs = ["gnmi_events.h"],
+)
+
+stratum_cc_library(
+    name = "gnmi_publisher_hdr",
+    hdrs = ["gnmi_publisher.h"],
 )
 
 stratum_cc_library(
@@ -815,10 +825,10 @@ cc_library(
     hdrs = [
         "gnmi_events.h",
         "gnmi_publisher.h",
-        "yang_parse_tree.h",
-        "yang_parse_tree_paths.h",
     ],
     deps = [
+	"//stratum/hal/lib/yang:parse_tree",
+	"//stratum/hal/lib/yang:parse_tree_paths",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status:status",
         "//stratum/glue:integral_types",
@@ -846,100 +856,14 @@ stratum_cc_test(
         ":subscribe_reader_writer_mock",
         ":switch_mock",
         ":test_main",
-        ":yang_parse_tree",
-        ":yang_parse_tree_paths",
+        "//stratum/hal/lib/yang:yang_parse_tree",
+        "//stratum/hal/lib/yang:yang_parse_tree_paths",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/glue/status:status_test_util",
         "//stratum/glue:logging",
         "@com_github_openconfig_hercules//:openconfig_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
-stratum_cc_library(
-    name = "yang_parse_tree",
-    srcs = [
-        "yang_parse_tree.cc",
-    ],
-    hdrs = [
-        "gnmi_events.h",
-        "gnmi_publisher.h",
-        "yang_parse_tree.h",
-        "yang_parse_tree_paths.h",
-    ],
-    deps = [
-        ":common_cc_proto",
-        ":switch_interface",
-        ":writer_interface",
-        "//stratum/glue/status:status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/common:utils",
-        "//stratum/lib:macros",
-        "//stratum/lib:utils",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
-    ],
-)
-
-cc_library(
-    name = "yang_parse_tree_mock",
-    testonly = 1,
-    hdrs = ["yang_parse_tree_mock.h"],
-    deps = [
-        "@com_google_googletest//:gtest",
-    ],
-)
-
-stratum_cc_library(
-    name = "yang_parse_tree_paths",
-    srcs = [
-        "yang_parse_tree_paths.cc",
-    ],
-    hdrs = [
-        "gnmi_events.h",
-        "gnmi_publisher.h",
-        "yang_parse_tree.h",
-        "yang_parse_tree_paths.h",
-    ],
-    deps = [
-        ":openconfig_converter",
-        ":switch_interface",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/hal/lib/common:utils",
-        "//stratum/lib:timer_daemon",
-        "//stratum/lib:utils",
-        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
-        "@com_github_openconfig_hercules//:openconfig_cc_proto",
-    ],
-)
-
-stratum_cc_test(
-    name = "yang_parse_tree_test",
-    srcs = [
-        "yang_parse_tree_test.cc",
-    ],
-    deps = [
-        ":gnmi_publisher",
-        ":subscribe_reader_writer_mock",
-        ":switch_mock",
-        ":test_main",
-        ":testdata",
-        ":writer_mock",
-        ":yang_parse_tree",
-        ":yang_parse_tree_mock",
-        ":yang_parse_tree_paths",
-        "//stratum/glue/status:status_test_util",
-        "//stratum/hal/lib/common:utils",
-        "//stratum/lib/test_utils:matchers",
-        "//stratum/lib:constants",
-        "//stratum/lib:utils",
-        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
-        "@com_github_openconfig_hercules//:openconfig_cc_proto",
-        "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
     ],
 )
