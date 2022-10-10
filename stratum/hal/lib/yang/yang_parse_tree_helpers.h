@@ -3,8 +3,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_HELPERS_H_
-#define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_HELPERS_H_
+#ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_HELPERS_H_
+#define STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_HELPERS_H_
 
 #include "gnmi/gnmi.pb.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
@@ -816,4 +816,4 @@ TreeNodeEventHandler GetOnChangeFunctor(U (T::*get_func_ptr)() const,
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_HELPERS_H_
+#endif  // STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_HELPERS_H_

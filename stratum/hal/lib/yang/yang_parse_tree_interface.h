@@ -3,8 +3,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_INTERFACE_H_
-#define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_INTERFACE_H_
+#ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_INTERFACE_H_
+#define STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_INTERFACE_H_
 
 #include <string>
 
@@ -137,4 +137,4 @@ void SetUpQosQueuesQueueStateId(
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_INTERFACE_H_
+#endif  // STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_INTERFACE_H_

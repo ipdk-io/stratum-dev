@@ -2,8 +2,8 @@
 // Copyright 2018-present Open Networking Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_H_
-#define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_H_
+#ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_H_
+#define STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_H_
 
 #include <map>
 #include <memory>
@@ -540,4 +540,4 @@ class DataResponseWriter : public WriterInterface<DataResponse> {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_H_
+#endif  // STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_H_

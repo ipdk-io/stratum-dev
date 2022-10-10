@@ -2,8 +2,8 @@
 // Copyright 2018-present Open Networking Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_PATHS_H_
-#define STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_PATHS_H_
+#ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_PATHS_H_
+#define STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_PATHS_H_
 
 #include <string>
 
@@ -76,4 +76,4 @@ class YangParseTreePaths {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_COMMON_YANG_PARSE_TREE_PATHS_H_
+#endif  // STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_PATHS_H_
