@@ -3,6 +3,9 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// Implements the YangParseTreePaths::AddSubtreeNode() method and its
+// supporting functions.
+
 #include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
 
 #include "absl/strings/str_format.h"

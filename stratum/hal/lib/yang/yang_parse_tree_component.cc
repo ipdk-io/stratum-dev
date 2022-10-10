@@ -3,6 +3,9 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// Implements the SetUpComponents support functions, which are used by
+// several of the YangParseTreePaths methods.
+
 #include "stratum/hal/lib/yang/yang_parse_tree_component.h"
 
 #include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"

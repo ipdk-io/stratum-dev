@@ -3,6 +3,9 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+// Interface setup functions for YangParseTreePaths. Used by the
+// AddSubtreeInterface() and AddSubtreeInterfaceFromTrunk() methods.
+
 #include "stratum/hal/lib/yang/yang_parse_tree_interface.h"
 
 #include "gnmi/gnmi.pb.h"
