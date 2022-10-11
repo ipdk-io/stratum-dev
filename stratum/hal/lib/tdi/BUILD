@@ -299,6 +299,8 @@ stratum_cc_library(
 stratum_cc_library(
     name = "macros",
     hdrs = ["macros.h"],
+    # macros.h depends on bf_types
+    defines = target_defines,
     deps = [
         "//stratum/lib:macros",
     ] + target_sdk,
