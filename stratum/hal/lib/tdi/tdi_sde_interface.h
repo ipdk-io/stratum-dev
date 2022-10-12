@@ -269,7 +269,7 @@ class TdiSdeInterface {
   virtual ::util::StatusOr<bool> IsSoftwareModel(int device) = 0;
 
   // Return the chip type as a string.
-  virtual std::string GetBfChipType(int device) const = 0;
+  virtual std::string GetChipType(int device) const = 0;
 
   // Return the SDE version string.
   virtual std::string GetSdeVersion() const = 0;

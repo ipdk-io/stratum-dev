@@ -16,6 +16,10 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 
+// Suppress clang errors
+#undef LOCKS_EXCLUDED
+#define LOCKS_EXCLUDED(...)
+
 namespace stratum {
 namespace hal {
 namespace tdi {

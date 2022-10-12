@@ -52,7 +52,7 @@ namespace tdi {
 
   VLOG(1) << "Detected is_sw_model: " << is_sw_model;
   VLOG(1) << "SDE version: " << sde_wrapper->GetSdeVersion();
-  VLOG(1) << "Switch SKU: " << sde_wrapper->GetBfChipType(device_id);
+  VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
 
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
