@@ -47,6 +47,17 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tofino_sde_utils",
+    srcs = ["tofino_sde_utils.cc"],
+    hdrs = [
+        "//stratum/hal/lib/tdi:tdi_sde_utils.h",
+    ],
+    deps = [
+        "@local_tofino_bin//:tofino_sde",
+    ],
+)
+
+stratum_cc_library(
     name = "tofino_sde_wrapper",
     srcs = [
         "tofino_sde_wrapper.cc",

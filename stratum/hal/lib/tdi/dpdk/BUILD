@@ -56,11 +56,19 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "dpdk_sde_wrapper",
-    srcs = [
-        "dpdk_sde_wrapper.cc",
+    name = "dpdk_sde_utils",
+    srcs = ["dpdk_sde_utils.cc"],
+    hdrs = [
+        "//stratum/hal/lib/tdi:tdi_sde_utils.h",
     ],
-    defines = ["DPDK_TARGET"],
+    deps = [
+        "@local_dpdk_bin//:dpdk_sde",
+    ],
+)
+
+stratum_cc_library(
+    name = "dpdk_sde_wrapper",
+    srcs = ["dpdk_sde_wrapper.cc"],
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
