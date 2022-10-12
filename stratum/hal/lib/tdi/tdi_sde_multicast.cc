@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Target-agnostic SDE wrapper Multicast methods.
+// Target-agnostic SDE wrapper for Multicast methods.
 
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 

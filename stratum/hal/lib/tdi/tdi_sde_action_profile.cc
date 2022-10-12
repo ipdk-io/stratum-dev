@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Vendor-agnostic SDE wrapper Action Profile methods.
+// Vendor-agnostic SDE wrapper for Action Profile methods.
 
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 

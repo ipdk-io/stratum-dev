@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -27,9 +28,12 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
+#include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/lib/channel/channel.h"
@@ -38,6 +42,7 @@
 
 extern "C" {
 #include "bf_switchd/bf_switchd.h"
+#include "bf_types/bf_types.h"
 #include "lld/lld_sku.h"
 #include "tofino/bf_pal/bf_pal_port_intf.h"
 #include "tofino/bf_pal/dev_intf.h"

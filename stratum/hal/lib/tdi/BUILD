@@ -74,8 +74,12 @@ stratum_cc_library(
     name = "tdi_sde_wrapper",
     srcs = [
         "tdi_sde_action_profile.cc",
+        "tdi_sde_clone_session.cc",
+        "tdi_sde_counter.cc",
         "tdi_sde_helpers.cc",
+        "tdi_sde_meter.cc",
         "tdi_sde_multicast.cc",
+        "tdi_sde_register.cc",
         "tdi_sde_table_data.cc",
         "tdi_sde_table_entry.cc",
         "tdi_sde_table_key.cc",
