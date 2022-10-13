@@ -62,11 +62,11 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   SetUpInterfacesInterfaceStateHardwarePort(name, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
-		       ("ethernet")("state")("port-speed")());
+                       ("ethernet")("state")("port-speed")());
   SetUpInterfacesInterfaceEthernetStatePortSpeed(node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
-		       ("ethernet")("state")("negotiated-port-speed")());
+                       ("ethernet")("state")("negotiated-port-speed")());
   SetUpInterfacesInterfaceEthernetStateNegotiatedPortSpeed(
       node_id, port_id, node, tree);
 
@@ -205,7 +205,7 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
       SWBackendPktDirType::DIRECTION_NONE, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
-		       ("config")("qemu-socket-ip")());
+                       ("config")("qemu-socket-ip")());
   SetUpInterfacesInterfaceConfigQemuSocketIp("/", node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
@@ -272,7 +272,7 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
         gtl::FindOrNull(internal_priority_to_q_num, e.internal_priority());
     if (q_num != nullptr) {
       gtl::InsertIfNotPresent(
-	  &q_num_to_trafic_class, *q_num, e.traffic_class());
+          &q_num_to_trafic_class, *q_num, e.traffic_class());
     }
   }
 
@@ -290,7 +290,7 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
     node = tree->AddNode(GetPath("qos")("interfaces")("virtual-interface", name)(
         "output")("queues")("queue", queue_name)("state")("id")());
     SetUpQosInterfacesInterfaceOutputQueuesQueueStateId(
-	node_id, port_id, queue_id, node, tree);
+        node_id, port_id, queue_id, node, tree);
 
     node = tree->AddNode(GetPath("qos")("interfaces")("virtual-interface", name)(
         "output")("queues")("queue", queue_name)("state")("transmit-pkts")());

@@ -7,18 +7,19 @@
 
 #include <map>
 #include <memory>
+#include <string>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
 #include "absl/types/optional.h"
+
 #include "stratum/glue/integral_types.h"
+#include "stratum/glue/status/status.h"
+#include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/lib/channel/channel.h"
 
 namespace stratum {
 namespace hal {
@@ -49,8 +50,8 @@ class DpdkChassisManager {
   virtual ::util::StatusOr<DataResponse> GetPortData(
       const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(uint64 node_id,
-                                                              uint32 port_id)
+  virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(
+      uint64 node_id, uint32 port_id)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status GetPortCounters(uint64 node_id, uint32 port_id,
@@ -71,16 +72,20 @@ class DpdkChassisManager {
       OperationMode mode, TdiSdeInterface* sde_interface);
 
   // Determines whether the specified port configuration parameter has
-  // already been set. Once set, it may not be set again.
-  bool IsPortParamAlreadySet(
+  // already been set.
+  bool IsPortParamSet(
       uint64 node_id, uint32 port_id,
       SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a port configuration parameter.
-  // Once set, it may not be set again.
-  ::util::Status SetPortParam(uint64 node_id, uint32 port_id,
-                              const SingletonPort& singleton_port,
-                              SetRequest::Request::Port::ValueCase value_case);
+  ::util::Status SetPortParam(
+      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+      SetRequest::Request::Port::ValueCase value_case);
+
+  // Sets the value of a hotplug configuration parameter.
+  ::util::Status SetHotplugParam(
+      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+      SWBackendHotplugParams param_type);
 
   // DpdkChassisManager is neither copyable nor movable.
   DpdkChassisManager(const DpdkChassisManager&) = delete;
@@ -130,8 +135,8 @@ class DpdkChassisManager {
   // class.
   DpdkChassisManager(OperationMode mode, TdiSdeInterface* sde_interface);
 
-  ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
-                                                    uint32 port_id) const
+  ::util::StatusOr<const PortConfig*> GetPortConfig(
+      uint64 node_id, uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Returns the state of a port given its ID and the ID of its node.
@@ -148,15 +153,15 @@ class DpdkChassisManager {
   void CleanupInternalState() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // helper to add / configure / enable a port with TdiSdeInterface
-  ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
-                               const SingletonPort& singleton_port,
-                               PortConfig* config);
+  ::util::Status AddPortHelper(
+      uint64 node_id, int unit, uint32 port_id,
+      const SingletonPort& singleton_port, PortConfig* config);
 
   // helper to update port configuration with TdiSdeInterface
-  ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
-                                  const SingletonPort& singleton_port,
-                                  const PortConfig& config_old,
-                                  PortConfig* config);
+  ::util::Status UpdatePortHelper(
+      uint64 node_id, int unit, uint32 port_id,
+      const SingletonPort& singleton_port,
+      const PortConfig& config_old, PortConfig* config);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and

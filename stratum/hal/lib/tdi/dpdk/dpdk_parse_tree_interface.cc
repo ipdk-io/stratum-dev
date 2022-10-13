@@ -6,18 +6,6 @@
 // DPDK-specific setup functions for YangParseTreePaths. Used by the
 // AddSubtreeInterface() and AddSubtreeInterfaceFromTrunk() methods.
 
-// NOTE: This is a rough port of the support functions added to
-// yang_parse_tree_paths.cc in P4-OVS.
-//
-// - Calls to tree->GetTdiChassisManager()->ValidateOnetimeConfig()
-//   have been replaced with calls to IsPortParamSet(tree, ...).
-// - Calls to tree->GetTdiChassisManager()->ValidateAndAdd() have been
-//   replaced with calls to SetPortParam(tree, ...).
-// - Calls to tree->GetTdiChassisManager()->HotplugValidateAndAdd()
-//   have been replaced with calls to SetHotplugParam(tree, ...).
-//
-// The three replacement functions are currently stubs.
-
 #include "stratum/hal/lib/tdi/dpdk/dpdk_parse_tree_interface.h"
 
 #include "gnmi/gnmi.pb.h"
@@ -27,6 +15,7 @@
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/public/proto/error.pb.h"
 
@@ -35,33 +24,37 @@ namespace hal {
 namespace yang {
 namespace interface {
 
+using ::stratum::hal::tdi::DpdkSwitch;
 using namespace stratum::hal::yang::helpers;
 
 namespace {
 
-// Helper function to determine whether the specified port configuration
-// parameter has already been set. Once set, it may not be set again.
+// Determines whether the specified port configuration parameter
+// has already been set.
 bool IsPortParamSet(
     YangParseTree* tree, uint64 node_id, uint32 port_id,
     SetRequest::Request::Port::ValueCase value_case) {
-  return false;
+  auto dpsw = dynamic_cast<DpdkSwitch*>(tree->GetSwitchInterface());
+  return dpsw->IsPortParamSet(node_id, port_id, value_case);
 }
 
-// Helper function to set the value of a port configuration parameter.
-// Once set, it may not be set again.
+// Sets the value of a port configuration parameter.
 ::util::Status SetPortParam(
     YangParseTree* tree, uint64 node_id, uint32 port_id,
     const SingletonPort& singleton_port,
     SetRequest::Request::Port::ValueCase value_case) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortParam not implemented!";
+  auto dpsw = dynamic_cast<DpdkSwitch*>(tree->GetSwitchInterface());
+  return dpsw->SetPortParam(node_id, port_id, singleton_port, value_case);
 }
 
+// Sets the value of a hotplug configuration parameter.
 ::util::Status SetHotplugParam(
     YangParseTree* tree, uint64 node_id, uint32 port_id,
     const SingletonPort& singleton_port,
-    SetRequest::Request::Port::ValueCase change_field,
-    SWBackendHotplugParams params) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetHotplugParam not implemented!";
+    // TODO: SWBackendHotplugParams -> DpdkHotplugParamType
+    SWBackendHotplugParams param_type) {
+  auto dpsw = dynamic_cast<DpdkSwitch*>(tree->GetSwitchInterface());
+  return dpsw->SetHotplugParam(node_id, port_id, singleton_port, param_type);
 }
 
 } // namespace
@@ -72,8 +65,9 @@ bool IsPortParamSet(
 void SetUpInterfacesInterfaceConfigHost(
     const char *host_val, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [host_val](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [host_val](const GnmiEvent& event,
+                                 const ::gnmi::Path& path,
+                                 GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, host_val), stream);
@@ -88,8 +82,7 @@ void SetUpInterfacesInterfaceConfigHost(
     }
 
     if (IsPortParamSet(tree, node_id, port_id,
-                       SetRequest::Request::Port::ValueCase::kHostConfig))
-    {
+                       SetRequest::Request::Port::ValueCase::kHostConfig)) {
         return MAKE_ERROR(ERR_INVALID_PARAM)
             << "Host is already set or the PORT is already configured";
     }
@@ -99,14 +92,13 @@ void SetUpInterfacesInterfaceConfigHost(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->mutable_host_config()->set_host_name(host_name.c_str());
+    request->mutable_host_config()->set_host_name(host_name);
 
     // Update the chassis config and setValue
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-          singleton_port.mutable_config_params()
-              ->set_host_name(host_name.c_str());
+          singleton_port.mutable_config_params()->set_host_name(host_name);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -118,8 +110,8 @@ void SetUpInterfacesInterfaceConfigHost(
 
     // Update the YANG parse tree.
     auto poll_functor = [host_name](const GnmiEvent& event,
-                                        const ::gnmi::Path& path,
-                                        GnmiSubscribeStream* stream) {
+                                    const ::gnmi::Path& path,
+                                    GnmiSubscribeStream* stream) {
       // This leaf represents configuration data. Return what was known when
       // it was configured!
       return SendResponse(GetResponse(path, host_name), stream);
@@ -223,8 +215,9 @@ void SetUpInterfacesInterfaceConfigPortType(
 void SetUpInterfacesInterfaceConfigDeviceType(
     uint64 type, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [type](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [type](const GnmiEvent& event,
+                             const ::gnmi::Path& path,
+                             GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, type), stream);
@@ -282,8 +275,8 @@ void SetUpInterfacesInterfaceConfigDeviceType(
 
     // Update the YANG parse tree.
     auto poll_functor = [device_type_string](const GnmiEvent& event,
-                                           const ::gnmi::Path& path,
-                                           GnmiSubscribeStream* stream) {
+                                             const ::gnmi::Path& path,
+                                             GnmiSubscribeStream* stream) {
       // This leaf represents configuration data. Return what was known when
       // it was configured!
       return SendResponse(GetResponse(path, device_type_string), stream);
@@ -304,8 +297,9 @@ void SetUpInterfacesInterfaceConfigDeviceType(
 void SetUpInterfacesInterfaceConfigPipelineName(
     const char *pipeline_name, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [pipeline_name](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [pipeline_name](const GnmiEvent& event,
+                                      const ::gnmi::Path& path,
+                                      GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, pipeline_name), stream);
@@ -332,15 +326,14 @@ void SetUpInterfacesInterfaceConfigPipelineName(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_pipeline_name()
-        ->PipelineNameConfigured::set_pipeline_name((const char*)pipeline_name.c_str());
+    request->mutable_pipeline_name()->set_pipeline_name(pipeline_name);
 
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_pipeline((const char*)pipeline_name.c_str());
+        singleton_port.mutable_config_params()->set_pipeline(pipeline_name);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -352,8 +345,8 @@ void SetUpInterfacesInterfaceConfigPipelineName(
 
     // Update the YANG parse tree.
     auto poll_functor = [pipeline_name](const GnmiEvent& event,
-                                           const ::gnmi::Path& path,
-                                           GnmiSubscribeStream* stream) {
+                                        const ::gnmi::Path& path,
+                                        GnmiSubscribeStream* stream) {
       // This leaf represents configuration data. Return what was known when
       // it was configured!
       return SendResponse(GetResponse(path, pipeline_name), stream);
@@ -374,8 +367,9 @@ void SetUpInterfacesInterfaceConfigPipelineName(
 void SetUpInterfacesInterfaceConfigMempoolName(
     const char *mempool_name, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [mempool_name](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [mempool_name](const GnmiEvent& event,
+                                     const ::gnmi::Path& path,
+                                     GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, mempool_name), stream);
@@ -402,13 +396,13 @@ void SetUpInterfacesInterfaceConfigMempoolName(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_mempool_name()->MempoolNameConfigured::set_mempool_name((const char*)mempool_name.c_str());
+    request->mutable_mempool_name()->set_mempool_name(mempool_name);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_mempool((const char*)mempool_name.c_str());
+        singleton_port.mutable_config_params()->set_mempool(mempool_name);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -420,8 +414,8 @@ void SetUpInterfacesInterfaceConfigMempoolName(
 
     // Update the YANG parse tree.
     auto poll_functor = [mempool_name](const GnmiEvent& event,
-                                           const ::gnmi::Path& path,
-                                           GnmiSubscribeStream* stream) {
+                                       const ::gnmi::Path& path,
+                                       GnmiSubscribeStream* stream) {
       // This leaf represents configuration data. Return what was known when
       // it was configured!
       return SendResponse(GetResponse(path, mempool_name), stream);
@@ -442,8 +436,9 @@ void SetUpInterfacesInterfaceConfigMempoolName(
 void SetUpInterfacesInterfaceConfigPacketDir(
     uint64 packet_dir, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [packet_dir](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [packet_dir](const GnmiEvent& event,
+                                   const ::gnmi::Path& path,
+                                   GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, packet_dir), stream);
@@ -499,8 +494,8 @@ void SetUpInterfacesInterfaceConfigPacketDir(
 
     // Update the YANG parse tree.
     auto poll_functor = [packet_dir_string](const GnmiEvent& event,
-                                           const ::gnmi::Path& path,
-                                           GnmiSubscribeStream* stream) {
+                                            const ::gnmi::Path& path,
+                                            GnmiSubscribeStream* stream) {
       // This leaf represents configuration data. Return what was known when
       // it was configured!
       return SendResponse(GetResponse(path, packet_dir_string), stream);
@@ -521,8 +516,9 @@ void SetUpInterfacesInterfaceConfigPacketDir(
 void SetUpInterfacesInterfaceConfigControlPort(
     const char *control_port, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [control_port](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [control_port](const GnmiEvent& event,
+                                     const ::gnmi::Path& path,
+                                     GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, control_port), stream);
@@ -549,14 +545,14 @@ void SetUpInterfacesInterfaceConfigControlPort(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_control_port()->ControlPortConfigured::set_control_port((const char*)ctl_port.c_str());
+    request->mutable_control_port()->set_control_port(ctl_port);
 
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_control((const char*)ctl_port.c_str());
+        singleton_port.mutable_config_params()->set_control(ctl_port);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -590,8 +586,9 @@ void SetUpInterfacesInterfaceConfigControlPort(
 void SetUpInterfacesInterfaceConfigPciBdf(
     const char *pci_bdf, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [pci_bdf](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [pci_bdf](const GnmiEvent& event,
+                                const ::gnmi::Path& path,
+                                GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, pci_bdf), stream);
@@ -618,13 +615,13 @@ void SetUpInterfacesInterfaceConfigPciBdf(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_pci_bdf()->PciBdfConfigured::set_pci_bdf((const char*)bdf_val.c_str());
+    request->mutable_pci_bdf()->set_pci_bdf(bdf_val);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_pci((const char*)bdf_val.c_str());
+        singleton_port.mutable_config_params()->set_pci(bdf_val);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -658,8 +655,9 @@ void SetUpInterfacesInterfaceConfigPciBdf(
 void SetUpInterfacesInterfaceConfigMtuValue(
     uint64 mtu, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [mtu](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [mtu](const GnmiEvent& event,
+                            const ::gnmi::Path& path,
+                            GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, mtu), stream);
@@ -827,13 +825,13 @@ void SetUpInterfacesInterfaceConfigSocket(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_sock_path()->SocketPathConfigured::set_sock_path((const char*)socket_path.c_str());
+    request->mutable_sock_path()->set_sock_path(socket_path);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_socket((const char*)socket_path.c_str());
+        singleton_port.mutable_config_params()->set_socket(socket_path);
 
         RETURN_IF_ERROR(
             SetPortParam(tree, node_id, port_id, singleton_port,
@@ -891,19 +889,19 @@ void SetUpInterfacesInterfaceConfigQemuSocketIp(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_socket_ip((const char*)socket_ip.c_str());
+    request->mutable_hotplug_config()->set_qemu_socket_ip(socket_ip);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_socket_ip((const char*)socket_ip.c_str());
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_socket_ip(socket_ip);
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_SOCK_IP));
+                tree, node_id, port_id, singleton_port, PARAM_SOCK_IP));
         break;
       }
     }
@@ -933,8 +931,9 @@ void SetUpInterfacesInterfaceConfigQemuSocketIp(
 void SetUpInterfacesInterfaceConfigQemuSocketPort(
     uint64 default_socket_port, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [default_socket_port](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [default_socket_port](const GnmiEvent& event,
+                                            const ::gnmi::Path& path,
+                                            GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, default_socket_port), stream);
@@ -956,20 +955,20 @@ void SetUpInterfacesInterfaceConfigQemuSocketPort(
     request->set_node_id(node_id);
     request->set_port_id(port_id);
 
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_socket_port(socket_port);
+    request->mutable_hotplug_config()->set_qemu_socket_port(socket_port);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_socket_port(socket_port);
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_socket_port(socket_port);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_SOCK_PORT));
+                tree, node_id, port_id, singleton_port, PARAM_SOCK_PORT));
 
         break;
       }
@@ -999,8 +998,9 @@ void SetUpInterfacesInterfaceConfigQemuSocketPort(
 void SetUpInterfacesInterfaceConfigHotplug(
     uint64 status, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
-  auto poll_functor = [status](const GnmiEvent& event, const ::gnmi::Path& path,
-                              GnmiSubscribeStream* stream) {
+  auto poll_functor = [status](const GnmiEvent& event,
+                               const ::gnmi::Path& path,
+                               GnmiSubscribeStream* stream) {
     // This leaf represents configuration data. Return what was known when it
     // was configured!
     return SendResponse(GetResponse(path, status), stream);
@@ -1031,20 +1031,20 @@ void SetUpInterfacesInterfaceConfigHotplug(
     request->set_node_id(node_id);
     request->set_port_id(port_id);
 
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_hotplug(hotplug_status);
+    request->mutable_hotplug_config()->set_qemu_hotplug(hotplug_status);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_hotplug(hotplug_status);
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_hotplug(hotplug_status);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_HOTPLUG));
+                tree, node_id, port_id, singleton_port, PARAM_HOTPLUG));
 
         break;
       }
@@ -1102,20 +1102,20 @@ void SetUpInterfacesInterfaceConfigQemuVmMacAddress(
     request->set_node_id(node_id);
     request->set_port_id(port_id);
 
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_vm_mac_address(mac_address);
+    request->mutable_hotplug_config()->set_qemu_vm_mac_address(mac_address);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_vm_mac_address(mac_address);
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_vm_mac_address(mac_address);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_VM_MAC));
+                tree, node_id, port_id, singleton_port, PARAM_VM_MAC));
         break;
       }
     }
@@ -1168,21 +1168,20 @@ void SetUpInterfacesInterfaceConfigQemuVmNetdevId(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_vm_netdev_id((const char*)vm_netdev_id.c_str());
-
+    request->mutable_hotplug_config()->set_qemu_vm_netdev_id(vm_netdev_id);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_vm_netdev_id((const char*)vm_netdev_id.c_str());
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_vm_netdev_id(vm_netdev_id);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_NETDEV_ID));
+                tree, node_id, port_id, singleton_port, PARAM_NETDEV_ID));
         break;
       }
     }
@@ -1234,20 +1233,20 @@ void SetUpInterfacesInterfaceConfigQemuVmChardevId(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_vm_chardev_id((const char*)vm_chardev_id.c_str());
+    request->mutable_hotplug_config()->set_qemu_vm_chardev_id(vm_chardev_id);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_vm_chardev_id((const char*)vm_chardev_id.c_str());
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_vm_chardev_id(vm_chardev_id);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_CHARDEV_ID));
+                tree, node_id, port_id, singleton_port, PARAM_CHARDEV_ID));
         break;
       }
     }
@@ -1299,20 +1298,20 @@ void SetUpInterfacesInterfaceConfigQemuVmDeviceId(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_qemu_vm_device_id((const char*)vm_device_id.c_str());
+    request->mutable_hotplug_config()->set_qemu_vm_device_id(vm_device_id);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_qemu_vm_device_id((const char*)vm_device_id.c_str());
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_qemu_vm_device_id(vm_device_id);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
-                PARAM_DEVICE_ID));
+                tree, node_id, port_id, singleton_port, PARAM_DEVICE_ID));
         break;
       }
     }
@@ -1365,19 +1364,21 @@ void SetUpInterfacesInterfaceConfigNativeSocket(
     auto* request = req.add_requests()->mutable_port();
     request->set_node_id(node_id);
     request->set_port_id(port_id);
-    request->SetRequest::Request::Port::mutable_hotplug_config()->HotplugConfig::set_native_socket_path((const char*)native_socket_path.c_str());
+    request->mutable_hotplug_config()
+        ->set_native_socket_path(native_socket_path);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->mutable_hotplug_config()->set_native_socket_path((const char*)native_socket_path.c_str());
+        singleton_port.mutable_config_params()
+            ->mutable_hotplug_config()
+            ->set_native_socket_path(native_socket_path);
 
           // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
                 tree, node_id, port_id, singleton_port,
-                SetRequest::Request::Port::ValueCase::kHotplugConfig,
                 PARAM_NATIVE_SOCK_PATH));
         break;
       }
@@ -1406,7 +1407,8 @@ void SetUpInterfacesInterfaceConfigNativeSocket(
 // /interfaces/virtual-interface[name=<name>]/config/tdi-portin-id
 void SetUpInterfacesInterfaceConfigTdiPortinId(
     uint32 node_id, uint32 port_id, TreeNode* node, YangParseTree* tree) {
-  // Returns the Target Dp Index (tdi_portin_id) for the interface to be used by P4Runtime.
+  // Returns the Target Dp Index (tdi_portin_id) for the interface to be used
+  // by P4Runtime.
   auto on_poll_functor = GetOnPollFunctor(
       node_id, port_id, tree, &DataResponse::target_dp_id,
       &DataResponse::has_target_dp_id,
@@ -1422,7 +1424,8 @@ void SetUpInterfacesInterfaceConfigTdiPortinId(
 // /interfaces/virtual-interface[name=<name>]/config/tdi-portout-id
 void SetUpInterfacesInterfaceConfigTdiPortoutId(
     uint32 node_id, uint32 port_id, TreeNode* node, YangParseTree* tree) {
-  // Returns the Target Dp Index (tdi_portout_id) for the interface to be used by P4Runtime.
+  // Returns the Target Dp Index (tdi_portout_id) for the interface to be used
+  // by P4Runtime.
   auto on_poll_functor = GetOnPollFunctor(
       node_id, port_id, tree, &DataResponse::target_dp_id,
       &DataResponse::has_target_dp_id,

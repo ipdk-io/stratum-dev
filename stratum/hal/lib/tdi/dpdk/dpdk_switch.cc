@@ -15,6 +15,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"
@@ -233,18 +234,25 @@ DpdkSwitch::~DpdkSwitch() {}
   return std::vector<std::string>();
 }
 
-bool DpdkSwitch::IsPortParamAlreadySet(
+bool DpdkSwitch::IsPortParamSet(
     uint64 node_id, uint32 port_id,
     SetRequest::Request::Port::ValueCase value_case) {
-  return chassis_manager_->IsPortParamAlreadySet(node_id, port_id, value_case);
+  return chassis_manager_->IsPortParamSet(node_id, port_id, value_case);
 }
 
 ::util::Status DpdkSwitch::SetPortParam(
     uint64 node_id, uint32 port_id,
     const SingletonPort& singleton_port,
     SetRequest::Request::Port::ValueCase value_case) {
-  return chassis_manager_->SetPortParam(node_id, port_id, singleton_port,
-                                        value_case);
+  return chassis_manager_->SetPortParam(
+      node_id, port_id, singleton_port, value_case);
+}
+
+::util::Status DpdkSwitch::SetHotplugParam(
+    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+    SWBackendHotplugParams param_type) {
+  return chassis_manager_->SetHotplugParam(
+      node_id, port_id, singleton_port, param_type);
 }
 
 std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(
