@@ -73,13 +73,13 @@ class DpdkChassisManager {
   // Determines whether the specified port configuration parameter has
   // already been set. Once set, it may not be set again.
   bool IsPortParamSet(uint64 node_id, uint32 port_id,
-      SetRequest::Request::Port::ValueCase value_case);
+                      SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a port configuration parameter.
   // Once set, it may not be set again.
-  ::util::Status SetPortParam(
-      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-      SetRequest::Request::Port::ValueCase value_case);
+  ::util::Status SetPortParam(uint64 node_id, uint32 port_id,
+                              const SingletonPort& singleton_port,
+                              SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a hotplug configuration parameter.
   ::util::Status SetHotplugParam(
@@ -191,10 +191,10 @@ class DpdkChassisManager {
                                    PortConfig* config);
 
   // helper to update port configuration with TdiSdeInterface
-  ::util::Status UpdatePortHelper(
-      uint64 node_id, int unit, uint32 port_id,
-      const SingletonPort& singleton_port,
-      const PortConfig& config_old, PortConfig* config);
+  ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
+                                  const SingletonPort& singleton_port,
+                                  const PortConfig& config_old,
+                                  PortConfig* config);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
