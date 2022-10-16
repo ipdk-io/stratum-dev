@@ -27,8 +27,15 @@ target_defines = [
 
 stratum_cc_library(
     name = "dpdk_chassis_manager",
-    srcs = ["dpdk_chassis_manager.cc"],
-    hdrs = ["dpdk_chassis_manager.h"],
+    srcs = [
+        "dpdk_chassis_manager.cc",
+        "dpdk_port_config.cc"
+    ],
+    hdrs = [
+        "dpdk_chassis_manager.h",
+        "dpdk_port_config.h",
+        "dpdk_port_constants.h"
+    ],
     defines = target_defines,
     deps = [
         "//stratum/glue/gtl:map_util",
