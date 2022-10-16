@@ -1275,7 +1275,7 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, PortConfigParams& config,
+    int device, int port, uint64 speed_bps, const PortConfigParams& config,
     FecMode fec_mode) {
   static int port_in;
   static int port_out;

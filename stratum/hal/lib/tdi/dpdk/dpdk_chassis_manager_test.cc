@@ -92,8 +92,8 @@ class ChassisConfigBuilder {
   explicit ChassisConfigBuilder(uint64 node_id = kNodeId) : node_id(node_id) {
     config_.set_description("Test config for DpdkChassisManager");
     auto* chassis = config_.mutable_chassis();
-    chassis->set_platform(PLT_GENERIC_BAREFOOT_TOFINO);  // TODO: GENERIC_IPU?
-    chassis->set_name("Tofino");  // TODO: "IPU"?
+    chassis->set_platform(PLT_P4_SOFT_SWITCH);
+    chassis->set_name("tdi-dpdk");
 
     auto* node = config_.add_nodes();
     node->set_id(node_id);

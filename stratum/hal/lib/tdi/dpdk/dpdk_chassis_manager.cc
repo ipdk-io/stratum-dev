@@ -500,48 +500,43 @@ bool DpdkChassisManager::IsPortParamSet(
   config->speed_bps = singleton_port.speed_bps();
   config->admin_state = ADMIN_STATE_DISABLED;
   config->fec_mode = config_params.fec_mode();
+
+  TdiSdeInterface::PortConfigParams sde_params;
+  sde_params.port_type = config->port_type;
+  sde_params.device_type = config->device_type;
+  sde_params.packet_dir = config->packet_dir;
+  sde_params.queues = config->queues;
+  if (config->mtu.has_value()) {
+    sde_params.mtu = *config->mtu;
+  }
+  sde_params.socket_path = config->socket_path;
+  sde_params.host_name = config->host_name;
+  sde_params.port_name = port_name;
+  sde_params.pipeline_name = config->pipeline_name;
+  sde_params.mempool_name = config->mempool_name;
+  sde_params.pci_bdf = config->pci_bdf;
+
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
             << " (SDK Port " << sdk_port_id << ").";
-  TdiSdeInterface::PortConfigParams tdi_sde_wrapper_config = {config->port_type,
-                                                            config->device_type,
-                                                            config->packet_dir,
-                                                            config->queues,
-                                                            *config->mtu,
-                                                            config->socket_path,
-                                                            config->host_name,
-                                                            port_name,
-                                                            config->pipeline_name,
-                                                            config->mempool_name,
-                                                            config->pci_bdf};
 
   RETURN_IF_ERROR(sde_interface_->AddPort(
-      unit, sdk_port_id, singleton_port.speed_bps(), tdi_sde_wrapper_config,
+      unit, sdk_port_id, singleton_port.speed_bps(), sde_params,
       config_params.fec_mode()));
 
   // Check if Control Port Creation is opted in CLI.
   if(config->control_port.length()) {
-    LOG(INFO) << "Autocreation of Control TAP port is being triggered";
+    LOG(INFO) << "Autocreating Control TAP port";
     // Packet direction for control port will always be host type
-    tdi_sde_wrapper_config = {SWBackendPortType::PORT_TYPE_TAP,
-                             config->device_type,
-                             DEFAULT_PACKET_DIR,
-                             config->queues,
-                             *config->mtu,
-                             config->socket_path,
-                             config->host_name,
-                             config->control_port,
-                             config->pipeline_name,
-                             config->mempool_name,
-                             config->pci_bdf};
+    sde_params.port_type = PORT_TYPE_TAP;
+    sde_params.packet_dir = DEFAULT_PACKET_DIR;
 
     /* sdk_ctl_port_id is uniquely derived from the SDK_PORT_CONTROL_BASE range
-     * and 1:1 maps to parent-port's sdk_port_id.
+     * and maps 1:1 to parent port's sdk_port_id.
      */
     uint32 sdk_ctl_port_id = SDK_PORT_CONTROL_BASE + sdk_port_id;
-  RETURN_IF_ERROR(sde_interface_->AddPort(
-      unit, sdk_ctl_port_id, singleton_port.speed_bps(), tdi_sde_wrapper_config,
-      config_params.fec_mode()));
-
+    RETURN_IF_ERROR(sde_interface_->AddPort(
+        unit, sdk_ctl_port_id, singleton_port.speed_bps(), sde_params,
+        config_params.fec_mode()));
   }
 
   if(config->mtu) {

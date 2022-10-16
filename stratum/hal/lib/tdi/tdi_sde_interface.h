@@ -203,7 +203,7 @@ class TdiSdeInterface {
 
   // Add a new port with the given parameters.
   virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                                 PortConfigParams& config,
+                                 const PortConfigParams& config,
                                  FecMode fec_mode = FEC_MODE_UNKNOWN) = 0 ;
 
   // Hotplug add/delete the port
