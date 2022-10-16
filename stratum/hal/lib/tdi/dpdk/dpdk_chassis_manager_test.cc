@@ -189,8 +189,6 @@ class DpdkChassisManagerTest : public ::testing::Test {
         m_chassis_manager_->node_id_to_port_id_to_sdk_port_id_.empty());
     CHECK_RETURN_IF_FALSE(
         m_chassis_manager_->node_id_to_sdk_port_id_to_port_id_.empty());
-    CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_port_id_to_backend_.empty());
     return ::util::OkStatus();
   }
 

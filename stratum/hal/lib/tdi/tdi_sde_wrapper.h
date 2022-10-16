@@ -162,7 +162,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode) override;
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         PortConfigParams& config, FecMode fec_mode) override;
+                         const PortConfigParams& config,
+                         FecMode fec_mode) override;
   ::util::Status HotplugPort(int device, int port,
                             HotplugConfigParams& hotplug_config) override;
   ::util::Status DeletePort(int device, int port) override;

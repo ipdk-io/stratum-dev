@@ -24,6 +24,8 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+class DpdkPortConfig;
+
 // Lock which protects chassis state across the entire switch.
 extern absl::Mutex chassis_lock;
 
@@ -104,52 +106,6 @@ class DpdkChassisManager {
     std::unique_ptr<ChannelReader<T>> reader;
   };
 
-  struct HotplugConfig {
-    uint32 qemu_socket_port;
-    uint64 qemu_vm_mac_address;
-    std::string qemu_socket_ip;
-    std::string qemu_vm_netdev_id;
-    std::string qemu_vm_chardev_id;
-    std::string qemu_vm_device_id;
-    std::string native_socket_path;
-    SWBackendQemuHotplugStatus qemu_hotplug;
-
-    HotplugConfig() : qemu_socket_port(0),
-                      qemu_vm_mac_address(0),
-                      qemu_hotplug(NO_HOTPLUG) {}
-  };
-
-  struct PortConfig {
-    // ADMIN_STATE_UNKNOWN indicates that something went wrong during port
-    // configuration, and the port add failed or was not attempted.
-    AdminState admin_state;
-    absl::optional<uint64> speed_bps;  // empty if port add failed
-    absl::optional<int32> mtu;         // empty if MTU configuration failed
-    absl::optional<TriState> autoneg;  // empty if Autoneg configuration failed
-    absl::optional<FecMode> fec_mode;  // empty if port add failed
-    // empty if loopback mode configuration failed
-    absl::optional<LoopbackState> loopback_mode;
-
-    SWBackendPortType port_type;
-    SWBackendDeviceType device_type;
-    SWBackendPktDirType packet_dir;
-    int32 queues;
-    std::string socket_path;
-    std::string host_name;
-    std::string pipeline_name;
-    std::string mempool_name;
-    std::string control_port;
-    std::string pci_bdf;
-    HotplugConfig hotplug_config;
-
-    PortConfig() : admin_state(ADMIN_STATE_UNKNOWN),
-                   port_type(PORT_TYPE_NONE),
-                   device_type(DEVICE_TYPE_NONE),
-                   packet_dir (DIRECTION_HOST),
-                   queues(0) {
-    }
-  };
-
   // Maximum depth of port status change event channel.
   static constexpr int kMaxPortStatusEventDepth = 1024;
   static constexpr int kMaxXcvrEventDepth = 1024;
@@ -158,8 +114,8 @@ class DpdkChassisManager {
   // class.
   DpdkChassisManager(OperationMode mode, TdiSdeInterface* sde_interface);
 
-  ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
-                                                    uint32 port_id) const
+  ::util::StatusOr<const DpdkPortConfig*> GetPortConfig(
+      uint64 node_id, uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Returns the state of a port given its ID and the ID of its node.
@@ -183,18 +139,18 @@ class DpdkChassisManager {
   // helper to add / configure / enable a port with TdiSdeInterface
   ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
                                const SingletonPort& singleton_port,
-                               PortConfig* config);
+                               DpdkPortConfig* config);
 
   // helper to hotplug add / delete a port with TdiSdeInterface
   ::util::Status HotplugPortHelper(uint64 node_id, int unit, uint32 port_id,
                                    const SingletonPort& singleton_port,
-                                   PortConfig* config);
+                                   DpdkPortConfig* config);
 
   // helper to update port configuration with TdiSdeInterface
   ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
                                   const SingletonPort& singleton_port,
-                                  const PortConfig& config_old,
-                                  PortConfig* config);
+                                  const DpdkPortConfig& config_old,
+                                  DpdkPortConfig* config);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
@@ -233,7 +189,7 @@ class DpdkChassisManager {
   // We may change this once missing "get" methods get added to TdiSdeInterface,
   // as we would be able to rely on TdiSdeInterface to query config parameters,
   // instead of maintaining a "consistent" view in this map.
-  std::map<uint64, std::map<uint32, PortConfig>>
+  std::map<uint64, std::map<uint32, DpdkPortConfig>>
       node_id_to_port_id_to_port_config_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to another map from port ID to PortKey corresponding
@@ -253,10 +209,6 @@ class DpdkChassisManager {
   // This contains the inverse mapping of: node_id_to_port_id_to_sdk_port_id_
   // This map is updated as part of each config push.
   std::map<uint64, std::map<uint32, uint32>> node_id_to_sdk_port_id_to_port_id_
-      GUARDED_BY(chassis_lock);
-
-  // Bitmask indicating which attributes have been configured.
-  std::map<uint64, std::map<uint32, uint32>> node_id_port_id_to_backend_
       GUARDED_BY(chassis_lock);
 
   // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.

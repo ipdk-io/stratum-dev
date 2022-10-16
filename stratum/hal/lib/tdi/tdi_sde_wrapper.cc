@@ -1181,6 +1181,7 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
     case PORT_TYPE_LINK: return BF_DPDK_LINK;
     case PORT_TYPE_SOURCE: return BF_DPDK_SOURCE;
     case PORT_TYPE_SINK: return BF_DPDK_SINK;
+    default: break;
   }
   return BF_DPDK_PORT_MAX;
 }
