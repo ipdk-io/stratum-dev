@@ -42,19 +42,6 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-namespace helpers {
-
-// TDI does not provide a target-neutral way for us to determine whether a
-// table is preallocated, so we provide our own means of detection.
-bool IsPreallocatedTable(const ::tdi::Table& table) {
-  auto table_type = static_cast<tdi_rt_table_type_e>(
-      table.tableInfoGet()->tableTypeGet());
-  return (table_type == TDI_RT_TABLE_TYPE_COUNTER ||
-          table_type == TDI_RT_TABLE_TYPE_METER);
-}
-
-} // namespace helpers
-
 ::util::StatusOr<PortState> TdiSdeWrapper::GetPortState(int device, int port) {
   return PORT_STATE_UP;
 }

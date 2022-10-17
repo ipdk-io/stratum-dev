@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Target-agnostic helper functions for dealing with the SDE API.
+// Helper functions for use within TdiSdeWrapper.
 
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 
@@ -14,6 +14,7 @@
 #include "absl/strings/str_cat.h"
 #include "stratum/glue/gtl/stl_util.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_utils.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
@@ -459,6 +460,14 @@ namespace helpers {
   CHECK(table_keys->size() == entries);
 
   return ::util::OkStatus();
+}
+
+// TDI does not provide a target-neutral way for us to determine whether a
+// table is preallocated, so we provide our own means of detection.
+bool IsPreallocatedTable(const ::tdi::Table& table) {
+  auto table_type = GetSdeTableType(table);
+  return (table_type == TDI_SDE_TABLE_TYPE_COUNTER ||
+          table_type == TDI_SDE_TABLE_TYPE_METER);
 }
 
 }  // namespace helpers

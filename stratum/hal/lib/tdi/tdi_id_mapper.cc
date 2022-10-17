@@ -10,26 +10,8 @@
 #include "nlohmann/json.hpp"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
+#include "stratum/hal/lib/tdi/tdi_sde_utils.h"
 #include "stratum/hal/lib/tdi/macros.h"
-
-// NOTE: This module should be target-neutral.
-#if defined(TOFINO_TARGET)
-  #include "tdi_tofino/tdi_tofino_defs.h"
-#elif defined(DPDK_TARGET)
-  #include "tdi_rt/tdi_rt_defs.h"
-#else
-  #error P4 target not defined!
-#endif
-
-#if defined(DPDK_TARGET)
-  typedef tdi_rt_table_type_e sde_table_type;
-  #define SDE_TABLE_TYPE_ACTION_PROFILE TDI_RT_TABLE_TYPE_ACTION_PROFILE
-  #define SDE_TABLE_TYPE_SELECTOR TDI_RT_TABLE_TYPE_SELECTOR
-#elif defined(TOFINO_TARGET)
-  typedef tdi_tofino_table_type_e sde_table_type;
-  #define SDE_TABLE_TYPE_ACTION_PROFILE TDI_TOFINO_TABLE_TYPE_ACTION_PROFILE
-  #define SDE_TABLE_TYPE_SELECTOR TDI_TOFINO_TABLE_TYPE_SELECTOR
-#endif
 
 namespace stratum {
 namespace hal {
@@ -211,18 +193,15 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
   std::vector<const ::tdi::Table*> tdi_tables;
   RETURN_IF_TDI_ERROR(tdi_info->tablesGet(&tdi_tables));
   for (const auto* table : tdi_tables) {
-    std::string table_name;
-    tdi_id_t table_id;
-    auto table_type =
-        static_cast<sde_table_type>(table->tableInfoGet()->tableTypeGet());
-    table_id = table->tableInfoGet()->idGet();
-    table_name = table->tableInfoGet()->nameGet();
+    auto table_id = table->tableInfoGet()->idGet();
+    auto table_name = table->tableInfoGet()->nameGet();
+    auto table_type = GetSdeTableType(*table);
 
-    if (table_type == SDE_TABLE_TYPE_ACTION_PROFILE) {
+    if (table_type == TDI_SDE_TABLE_TYPE_ACTION_PROFILE) {
       CHECK_RETURN_IF_FALSE(
           gtl::InsertIfNotPresent(&act_prof_tdi_ids, table_name, table_id))
           << "Action profile with name " << table_name << " already exists.";
-    } else if (table_type == SDE_TABLE_TYPE_SELECTOR) {
+    } else if (table_type == TDI_SDE_TABLE_TYPE_SELECTOR) {
       CHECK_RETURN_IF_FALSE(
           gtl::InsertIfNotPresent(&selector_tdi_ids, table_name, table_id))
           << "Action selector with name " << table_name << " already exists.";

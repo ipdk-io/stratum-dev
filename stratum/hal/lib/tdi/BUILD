@@ -275,7 +275,10 @@ stratum_cc_test(
 stratum_cc_library(
     name = "tdi_id_mapper",
     srcs = ["tdi_id_mapper.cc"],
-    hdrs = ["tdi_id_mapper.h"],
+    hdrs = [
+        "tdi_id_mapper.h",
+        "tdi_sde_utils.h",
+    ],
     defines = target_defines,
     deps = [
         ":tdi_cc_proto",
@@ -297,7 +300,7 @@ stratum_cc_library(
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
-    ] + target_sdk,
+    ],
 )
 
 stratum_cc_library(
