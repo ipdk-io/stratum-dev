@@ -10,13 +10,15 @@
 #include <string>
 #include <vector>
 
+#include "p4/v1/p4runtime.pb.h"
+#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/switch_interface.h"
-#include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
+class DpdkChassisManager;
 class TdiSdeInterface;
 class TdiNode;
 
@@ -24,7 +26,7 @@ class PortParamInterface {
 public:
     virtual ~PortParamInterface() {}
 
-    virtual bool IsPortParamAlreadySet(
+    virtual bool IsPortParamSet(
         uint64 node_id, uint32 port_id,
         SetRequest::Request::Port::ValueCase value_case) = 0;
 
@@ -32,6 +34,10 @@ public:
         uint64 node_id, uint32 port_id,
         const SingletonPort& singleton_port,
         SetRequest::Request::Port::ValueCase value_case) = 0;
+
+    virtual ::util::Status SetHotplugParam(
+        uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+        SWBackendHotplugParams param_type) = 0;
 };
 
 class DpdkSwitch : virtual public SwitchInterface,
@@ -89,18 +95,21 @@ class DpdkSwitch : virtual public SwitchInterface,
       LOCKS_EXCLUDED(chassis_lock);
   ::util::StatusOr<std::vector<std::string>> VerifyState() override;
 
-  // Determines whether the specified port configuration parameter has
-  // already been set. Once set, it may not be set again.
-  bool IsPortParamAlreadySet(
+  // Determines whether the specified port configuration parameter
+  // has already been set.
+  bool IsPortParamSet(
       uint64 node_id, uint32 port_id,
       SetRequest::Request::Port::ValueCase value_case) override;
 
   // Sets the value of a port configuration parameter.
-  // Once set, it may not be set again.
   ::util::Status SetPortParam(
-      uint64 node_id, uint32 port_id,
-      const SingletonPort& singleton_port,
+      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
       SetRequest::Request::Port::ValueCase value_case) override;
+
+  // Sets the value of a hotplug configuration parameter.
+  ::util::Status SetHotplugParam(
+      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+      SWBackendHotplugParams param_type) override;
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<DpdkSwitch> CreateInstance(

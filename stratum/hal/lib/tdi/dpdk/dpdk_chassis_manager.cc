@@ -6,24 +6,28 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <utility>
 
-#include "absl/base/thread_annotations.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
+
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
+#include "stratum/glue/gtl/map_util.h"
+#include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
-#include "stratum/lib/channel/channel.h"
-#include "stratum/lib/constants.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/macros.h"
-#include "stratum/lib/utils.h"
+#include "stratum/public/proto/error.pb.h"
 
 // DPDK_TARGET: GnmiPortConfig
 #define GNMI_CONFIG_PORT_TYPE 0x01
@@ -49,8 +53,8 @@ constexpr int DpdkChassisManager::kMaxPortStatusEventDepth;
 /* static */
 constexpr int DpdkChassisManager::kMaxXcvrEventDepth;
 
-DpdkChassisManager::DpdkChassisManager(OperationMode mode,
-                                       TdiSdeInterface* sde_interface)
+DpdkChassisManager::DpdkChassisManager(
+    OperationMode mode, TdiSdeInterface* sde_interface)
     : mode_(mode),
       initialized_(false),
       gnmi_event_writer_(nullptr),
@@ -89,7 +93,7 @@ DpdkChassisManager::~DpdkChassisManager() = default;
 
 // Determines whether the specified port configuration parameter has
 // already been set.
-bool DpdkChassisManager::IsPortParamAlreadySet(
+bool DpdkChassisManager::IsPortParamSet(
     uint64 node_id, uint32 port_id,
     SetRequest::Request::Port::ValueCase value_case) {
 
@@ -173,6 +177,12 @@ bool DpdkChassisManager::IsPortParamAlreadySet(
   }
   google::FlushLogFiles(google::INFO);
   return ::util::OkStatus();
+}
+
+::util::Status DpdkChassisManager::SetHotplugParam(
+    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+    SWBackendHotplugParams param_type) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetHotplugParam not implemented!";
 }
 
 ::util::Status DpdkChassisManager::AddPortHelper(
