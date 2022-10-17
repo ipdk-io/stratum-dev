@@ -53,7 +53,7 @@ class TofinoHalTest : public ::testing::Test {
     auth_policy_checker_mock_ =
         new ::testing::StrictMock<AuthPolicyCheckerMock>();
     hal_ = TofinoHal::CreateSingleton(
-	kMode, switch_mock_, auth_policy_checker_mock_);
+           kMode, switch_mock_, auth_policy_checker_mock_);
     ASSERT_NE(hal_, nullptr);
   }
 

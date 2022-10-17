@@ -28,6 +28,7 @@ using PreEntry = ::p4::v1::PacketReplicationEngineEntry;
 
 class TdiPreManager {
  public:
+  ~TdiPreManager();
   // Pushes a ForwardingPipelineConfig.
   ::util::Status PushForwardingPipelineConfig(const TdiDeviceConfig& config)
       LOCKS_EXCLUDED(lock_);
@@ -47,6 +48,9 @@ class TdiPreManager {
   static std::unique_ptr<TdiPreManager> CreateInstance(
       TdiSdeInterface* tdi_sde_interface, int device);
 
+ protected:
+  // Default constructor. To be called by the Mock class instance only.
+  TdiPreManager();
  private:
   // Private constructor, we can create the instance by using `CreateInstance`
   // function only.

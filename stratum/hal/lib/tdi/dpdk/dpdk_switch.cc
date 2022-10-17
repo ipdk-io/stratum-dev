@@ -5,7 +5,6 @@
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 
 #include <algorithm>
-#include <map>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -26,7 +25,7 @@ namespace tdi {
 
 DpdkSwitch::DpdkSwitch(DpdkChassisManager* chassis_manager,
                        TdiSdeInterface* sde_interface,
-                       const std::map<int, TdiNode*>& device_id_to_tdi_node)
+                       const absl::flat_hash_map<int, TdiNode*>& device_id_to_tdi_node)
     : sde_interface_(ABSL_DIE_IF_NULL(sde_interface)),
       chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       device_id_to_tdi_node_(device_id_to_tdi_node),
@@ -34,6 +33,8 @@ DpdkSwitch::DpdkSwitch(DpdkChassisManager* chassis_manager,
   for (const auto& entry : device_id_to_tdi_node_) {
     CHECK_GE(entry.first, 0)
         << "Invalid device_id number " << entry.first << ".";
+    CHECK_NE(entry.second, nullptr)
+        << "Detected null TdiNode for device_id " << entry.first << ".";
   }
 }
 
@@ -41,9 +42,10 @@ DpdkSwitch::~DpdkSwitch() {}
 
 ::util::Status DpdkSwitch::PushChassisConfig(const ChassisConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
+  RETURN_IF_ERROR(DoVerifyChassisConfig(config));
   RETURN_IF_ERROR(chassis_manager_->PushChassisConfig(config));
   ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
-                   chassis_manager_->GetNodeIdToUnitMap());
+                   chassis_manager_->GetNodeIdToDeviceMap());
   node_id_to_tdi_node_.clear();
   for (const auto& entry : node_id_to_device_id) {
     uint64 node_id = entry.first;
@@ -59,15 +61,20 @@ DpdkSwitch::~DpdkSwitch() {}
 }
 
 ::util::Status DpdkSwitch::VerifyChassisConfig(const ChassisConfig& config) {
-  (void)config;
-  return ::util::OkStatus();
+  absl::ReaderMutexLock l(&chassis_lock);
+  return DoVerifyChassisConfig(config);
 }
 
 ::util::Status DpdkSwitch::PushForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
+  RETURN_IF_ERROR(DoVerifyForwardingPipelineConfig(node_id, config));
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
   RETURN_IF_ERROR(tdi_node->PushForwardingPipelineConfig(config));
+  //TODO (Nupur) check if this is required for DPDK
+  RETURN_IF_ERROR(chassis_manager_->ReplayChassisConfig(node_id));
+  LOG(INFO) << "P4-based forwarding pipeline config pushed successfully to "
+            << "node with ID " << node_id << ".";
   return ::util::OkStatus();
 }
 
@@ -76,6 +83,10 @@ DpdkSwitch::~DpdkSwitch() {}
   absl::WriterMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
   RETURN_IF_ERROR(tdi_node->SaveForwardingPipelineConfig(config));
+  //TODO (Nupur) check if this is required for DPDK
+  RETURN_IF_ERROR(chassis_manager_->ReplayChassisConfig(node_id));
+  LOG(INFO) << "P4-based forwarding pipeline config saved successfully to "
+            << "node with ID " << node_id << ".";
   return ::util::OkStatus();
 }
 
@@ -83,14 +94,16 @@ DpdkSwitch::~DpdkSwitch() {}
   absl::WriterMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
   RETURN_IF_ERROR(tdi_node->CommitForwardingPipelineConfig());
+  LOG(INFO) << "P4-based forwarding pipeline config committed successfully to "
+            << "node with ID " << node_id << ".";
   return ::util::OkStatus();
 }
 
 ::util::Status DpdkSwitch::VerifyForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
+  // TODO(max): This should be a ReaderMutexLock?
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  return tdi_node->VerifyForwardingPipelineConfig(config);
+  return DoVerifyForwardingPipelineConfig(node_id, config);
 }
 
 ::util::Status DpdkSwitch::Shutdown() {
@@ -110,8 +123,9 @@ DpdkSwitch::~DpdkSwitch() {}
 ::util::Status DpdkSwitch::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   if (!req.updates_size()) return ::util::OkStatus();  // nothing to do.
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in WriteRequest.";
-  CHECK_RETURN_IF_FALSE(results != nullptr) << "Results pointer must be non-null.";
+  RET_CHECK(req.device_id()) << "No device_id in WriteRequest.";
+  RET_CHECK(results != nullptr)
+      << "Need to provide non-null results pointer for non-empty updates.";
   absl::ReaderMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(req.device_id()));
   return tdi_node->WriteForwardingEntries(req, results);
@@ -121,9 +135,9 @@ DpdkSwitch::~DpdkSwitch() {}
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in ReadRequest.";
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(req.device_id()) << "No device_id in ReadRequest.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
   absl::ReaderMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(req.device_id()));
   return tdi_node->ReadForwardingEntries(req, writer, details);
@@ -191,7 +205,7 @@ DpdkSwitch::~DpdkSwitch() {}
       // Node information request
       case DataRequest::Request::kNodeInfo: {
         auto device_id =
-            chassis_manager_->GetUnitFromNodeId(req.node_info().node_id());
+            chassis_manager_->GetDeviceFromNodeId(req.node_info().node_id());
         if (!device_id.ok()) {
           status.Update(device_id.status());
         } else {
@@ -247,9 +261,68 @@ bool DpdkSwitch::IsPortParamAlreadySet(
                                         value_case);
 }
 
+::util::Status DpdkSwitch::DoVerifyForwardingPipelineConfig(
+    uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
+  // Get the Node pointer first. No need to continue if we cannot find one.
+  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
+  // Verify the forwarding config in all the managers and nodes.
+  auto status = ::util::OkStatus();
+  APPEND_STATUS_IF_ERROR(status,
+                         tdi_node->VerifyForwardingPipelineConfig(config));
+
+  if (status.ok()) {
+    LOG(INFO) << "P4-based forwarding pipeline config verified successfully"
+              << " for node with ID " << node_id << ".";
+  }
+
+  return status;
+}
+
+::util::Status DpdkSwitch::DoVerifyChassisConfig(const ChassisConfig& config) {
+  // First make sure PHAL is happy with the config then continue with the rest
+  // of the managers and nodes.
+  ::util::Status status = ::util::OkStatus();
+  APPEND_STATUS_IF_ERROR(status,
+                         chassis_manager_->VerifyChassisConfig(config));
+  // Get the current copy of the node_id_to_device from chassis manager. If this
+  // fails with ERR_NOT_INITIALIZED, do not verify anything at the node level.
+  // Note that we do not expect any change in node_id_to_device. Any change in
+  // this map will be detected in chassis_manager_->VerifyChassisConfig.
+  auto ret = chassis_manager_->GetNodeIdToDeviceMap();
+  if (!ret.ok()) {
+    if (ret.status().error_code() != ERR_NOT_INITIALIZED) {
+      APPEND_STATUS_IF_ERROR(status, ret.status());
+    }
+  } else {
+    const auto& node_id_to_device_id = ret.ValueOrDie();
+    for (const auto& entry : node_id_to_device_id) {
+      uint64 node_id = entry.first;
+      int device_id = entry.second;
+      TdiNode* tdi_node =
+          gtl::FindPtrOrNull(device_id_to_tdi_node_, device_id);
+      if (tdi_node == nullptr) {
+        ::util::Status error = MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
+                               << "Node ID " << node_id
+                               << " mapped to unknown device " << device_id
+                               << ".";
+        APPEND_STATUS_IF_ERROR(status, error);
+        continue;
+      }
+      APPEND_STATUS_IF_ERROR(status,
+                             tdi_node->VerifyChassisConfig(config, node_id));
+    }
+  }
+
+  if (status.ok()) {
+    LOG(INFO) << "Chassis config verified successfully.";
+  }
+
+  return status;
+}
+
 std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(
     DpdkChassisManager* chassis_manager, TdiSdeInterface* sde_interface,
-    const std::map<int, TdiNode*>& device_id_to_tdi_node) {
+    const absl::flat_hash_map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
          new DpdkSwitch(chassis_manager, sde_interface,
                         device_id_to_tdi_node));
@@ -259,8 +332,8 @@ std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(
     int device_id) const {
   TdiNode* tdi_node = gtl::FindPtrOrNull(device_id_to_tdi_node_, device_id);
   if (tdi_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
-           << "Unit " << device_id << " is unknown.";
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
+           << "Device " << device_id << " is unknown.";
   }
   return tdi_node;
 }
@@ -269,7 +342,7 @@ std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(
     uint64 node_id) const {
   TdiNode* tdi_node = gtl::FindPtrOrNull(node_id_to_tdi_node_, node_id);
   if (tdi_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
            << "Node with ID " << node_id
            << " is unknown or no config has been pushed to it yet.";
   }

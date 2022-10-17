@@ -4,7 +4,6 @@
 #include "stratum/hal/lib/barefoot/bfrt_switch.h"
 
 #include <algorithm>
-#include <map>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -23,10 +22,10 @@ namespace stratum {
 namespace hal {
 namespace barefoot {
 
-BfrtSwitch::BfrtSwitch(PhalInterface* phal_interface,
-                       BfChassisManager* bf_chassis_manager,
-                       BfSdeInterface* bf_sde_interface,
-                       const std::map<int, BfrtNode*>& device_id_to_bfrt_node)
+BfrtSwitch::BfrtSwitch(
+    PhalInterface* phal_interface, BfChassisManager* bf_chassis_manager,
+    BfSdeInterface* bf_sde_interface,
+    const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node)
     : phal_interface_(ABSL_DIE_IF_NULL(phal_interface)),
       bf_sde_interface_(ABSL_DIE_IF_NULL(bf_sde_interface)),
       bf_chassis_manager_(ABSL_DIE_IF_NULL(bf_chassis_manager)),
@@ -44,10 +43,11 @@ BfrtSwitch::~BfrtSwitch() {}
 
 ::util::Status BfrtSwitch::PushChassisConfig(const ChassisConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
+  RETURN_IF_ERROR(DoVerifyChassisConfig(config));
   RETURN_IF_ERROR(phal_interface_->PushChassisConfig(config));
   RETURN_IF_ERROR(bf_chassis_manager_->PushChassisConfig(config));
   ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
-                   bf_chassis_manager_->GetNodeIdToUnitMap());
+                   bf_chassis_manager_->GetNodeIdToDeviceMap());
   node_id_to_bfrt_node_.clear();
   for (const auto& entry : node_id_to_device_id) {
     uint64 node_id = entry.first;
@@ -63,28 +63,21 @@ BfrtSwitch::~BfrtSwitch() {}
 }
 
 ::util::Status BfrtSwitch::VerifyChassisConfig(const ChassisConfig& config) {
-  (void)config;
-  return ::util::OkStatus();
+  absl::ReaderMutexLock l(&chassis_lock);
+  return DoVerifyChassisConfig(config);
 }
 
 ::util::Status BfrtSwitch::PushForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
+  RETURN_IF_ERROR(DoVerifyForwardingPipelineConfig(node_id, config));
   ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(node_id));
   RETURN_IF_ERROR(bfrt_node->PushForwardingPipelineConfig(config));
-  RETURN_IF_ERROR(bf_chassis_manager_->ReplayPortsConfig(node_id));
+  RETURN_IF_ERROR(bf_chassis_manager_->ReplayChassisConfig(node_id));
 
   LOG(INFO) << "P4-based forwarding pipeline config pushed successfully to "
             << "node with ID " << node_id << ".";
 
-  ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
-                   bf_chassis_manager_->GetNodeIdToUnitMap());
-
-  CHECK_RETURN_IF_FALSE(gtl::ContainsKey(node_id_to_device_id, node_id))
-      << "Unable to find device_id number for node " << node_id;
-  int device_id = gtl::FindOrDie(node_id_to_device_id, node_id);
-  ASSIGN_OR_RETURN(auto cpu_port, bf_sde_interface_->GetPcieCpuPort(device_id));
-  RETURN_IF_ERROR(bf_sde_interface_->SetTmCpuPort(device_id, cpu_port));
   return ::util::OkStatus();
 }
 
@@ -93,7 +86,7 @@ BfrtSwitch::~BfrtSwitch() {}
   absl::WriterMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(node_id));
   RETURN_IF_ERROR(bfrt_node->SaveForwardingPipelineConfig(config));
-  RETURN_IF_ERROR(bf_chassis_manager_->ReplayPortsConfig(node_id));
+  RETURN_IF_ERROR(bf_chassis_manager_->ReplayChassisConfig(node_id));
 
   LOG(INFO) << "P4-based forwarding pipeline config saved successfully to "
             << "node with ID " << node_id << ".";
@@ -114,9 +107,9 @@ BfrtSwitch::~BfrtSwitch() {}
 
 ::util::Status BfrtSwitch::VerifyForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
+  // TODO(max): This should be a ReaderMutexLock?
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(node_id));
-  return bfrt_node->VerifyForwardingPipelineConfig(config);
+  return DoVerifyForwardingPipelineConfig(node_id, config);
 }
 
 ::util::Status BfrtSwitch::Shutdown() {
@@ -139,8 +132,8 @@ BfrtSwitch::~BfrtSwitch() {}
 ::util::Status BfrtSwitch::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   if (!req.updates_size()) return ::util::OkStatus();  // nothing to do.
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in WriteRequest.";
-  CHECK_RETURN_IF_FALSE(results != nullptr)
+  RET_CHECK(req.device_id()) << "No device_id in WriteRequest.";
+  RET_CHECK(results != nullptr)
       << "Need to provide non-null results pointer for non-empty updates.";
 
   absl::ReaderMutexLock l(&chassis_lock);
@@ -152,9 +145,9 @@ BfrtSwitch::~BfrtSwitch() {}
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in ReadRequest.";
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(req.device_id()) << "No device_id in ReadRequest.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(req.device_id()));
@@ -221,7 +214,7 @@ BfrtSwitch::~BfrtSwitch() {}
       }
       case DataRequest::Request::kNodeInfo: {
         auto device_id =
-            bf_chassis_manager_->GetUnitFromNodeId(req.node_info().node_id());
+            bf_chassis_manager_->GetDeviceFromNodeId(req.node_info().node_id());
         if (!device_id.ok()) {
           status.Update(device_id.status());
         } else {
@@ -265,18 +258,78 @@ BfrtSwitch::~BfrtSwitch() {}
 std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
     PhalInterface* phal_interface, BfChassisManager* bf_chassis_manager,
     BfSdeInterface* bf_sde_interface,
-    const std::map<int, BfrtNode*>& device_id_to_bfrt_node) {
+    const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node) {
   return absl::WrapUnique(new BfrtSwitch(phal_interface, bf_chassis_manager,
                                          bf_sde_interface,
                                          device_id_to_bfrt_node));
+}
+
+::util::Status BfrtSwitch::DoVerifyForwardingPipelineConfig(
+    uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
+  // Get the BfrtNode pointer first. No need to continue if we cannot find one.
+  ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(node_id));
+  // Verify the forwarding config in all the managers and nodes.
+  auto status = ::util::OkStatus();
+  APPEND_STATUS_IF_ERROR(status,
+                         bfrt_node->VerifyForwardingPipelineConfig(config));
+
+  if (status.ok()) {
+    LOG(INFO) << "P4-based forwarding pipeline config verified successfully"
+              << " for node with ID " << node_id << ".";
+  }
+
+  return status;
+}
+
+::util::Status BfrtSwitch::DoVerifyChassisConfig(const ChassisConfig& config) {
+  // First make sure PHAL is happy with the config then continue with the rest
+  // of the managers and nodes.
+  ::util::Status status = ::util::OkStatus();
+  APPEND_STATUS_IF_ERROR(status, phal_interface_->VerifyChassisConfig(config));
+  APPEND_STATUS_IF_ERROR(status,
+                         bf_chassis_manager_->VerifyChassisConfig(config));
+  // Get the current copy of the node_id_to_device from chassis manager. If this
+  // fails with ERR_NOT_INITIALIZED, do not verify anything at the node level.
+  // Note that we do not expect any change in node_id_to_device. Any change in
+  // this map will be detected in bf_chassis_manager_->VerifyChassisConfig.
+  auto ret = bf_chassis_manager_->GetNodeIdToDeviceMap();
+  if (!ret.ok()) {
+    if (ret.status().error_code() != ERR_NOT_INITIALIZED) {
+      APPEND_STATUS_IF_ERROR(status, ret.status());
+    }
+  } else {
+    const auto& node_id_to_device_id = ret.ValueOrDie();
+    for (const auto& entry : node_id_to_device_id) {
+      uint64 node_id = entry.first;
+      int device_id = entry.second;
+      BfrtNode* bfrt_node =
+          gtl::FindPtrOrNull(device_id_to_bfrt_node_, device_id);
+      if (bfrt_node == nullptr) {
+        ::util::Status error = MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
+                               << "Node ID " << node_id
+                               << " mapped to unknown device " << device_id
+                               << ".";
+        APPEND_STATUS_IF_ERROR(status, error);
+        continue;
+      }
+      APPEND_STATUS_IF_ERROR(status,
+                             bfrt_node->VerifyChassisConfig(config, node_id));
+    }
+  }
+
+  if (status.ok()) {
+    LOG(INFO) << "Chassis config verified successfully.";
+  }
+
+  return status;
 }
 
 ::util::StatusOr<BfrtNode*> BfrtSwitch::GetBfrtNodeFromDeviceId(
     int device_id) const {
   BfrtNode* bfrt_node = gtl::FindPtrOrNull(device_id_to_bfrt_node_, device_id);
   if (bfrt_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
-           << "Unit " << device_id << " is unknown.";
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
+           << "Device " << device_id << " is unknown.";
   }
   return bfrt_node;
 }
@@ -285,7 +338,7 @@ std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
     uint64 node_id) const {
   BfrtNode* bfrt_node = gtl::FindPtrOrNull(node_id_to_bfrt_node_, node_id);
   if (bfrt_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
            << "Node with ID " << node_id
            << " is unknown or no config has been pushed to it yet.";
   }

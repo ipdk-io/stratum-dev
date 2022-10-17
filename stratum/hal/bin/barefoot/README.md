@@ -8,18 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 # Stratum on Barefoot Tofino based switches
 
 Stratum is supported on Barefoot Tofino based switches. There are
-several documents to help get you understand how to build, run, and test
-these targets.
-
-There are two different Stratum targets for Tofino:
-
-`stratum_bf` is based on the [PI](https://github.com/p4lang/PI) C++ API is the
-better tested and supported target. This target is still recommended for most
-users.
-
-`stratum_bfrt` is a newer target based on Barefoot's BfRt C++ API. This target
-is still experimental, but gives users access to additional Tofino features.
-The plan is to make this target the default when it has matured.
+several documents to help get you understand how to build, run, and test.
 
 The easiest way to get started is with the pre-built Docker images. See
 the "Running" guide below for more details.

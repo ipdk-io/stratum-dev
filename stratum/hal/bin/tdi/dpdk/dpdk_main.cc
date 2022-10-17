@@ -77,7 +77,7 @@ namespace tdi {
       packetio_manager.get(), pre_manager.get(),
       counter_manager.get(), sde_wrapper, device_id);
 
-  std::map<int, TdiNode*> device_id_to_dpdk_node = {
+  absl::flat_hash_map<int, TdiNode*> device_id_to_dpdk_node = {
       {device_id, dpdk_node.get()},
   };
 
@@ -94,7 +94,7 @@ namespace tdi {
       // NOTE: Shouldn't first parameter be 'mode'?
       stratum::hal::OPERATION_MODE_STANDALONE, dpdk_switch.get(),
       auth_policy_checker.get());
-  CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
+  RET_CHECK(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.
   ::util::Status status = hal->Setup();

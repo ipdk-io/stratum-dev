@@ -36,30 +36,6 @@ stratum_cc_library(
     ],
 )
 
-# PI Node for Barefoot targets
-alias(
-    name = "pi_bf",
-    actual = select(
-        {
-            "@local_barefoot_bin//:sde_version_9.2.0": "@com_github_p4lang_PI_bf_9_2_0//proto/frontend:pifeproto",
-            "@local_barefoot_bin//:sde_version_9.3.0": "@com_github_p4lang_PI_bf_9_3_0//proto/frontend:pifeproto",
-            "@local_barefoot_bin//:sde_version_9.3.1": "@com_github_p4lang_PI_bf_9_3_1//proto/frontend:pifeproto",
-            "@local_barefoot_bin//:sde_version_9.3.2": "@com_github_p4lang_PI_bf_9_3_2//proto/frontend:pifeproto",
-            "@local_barefoot_bin//:sde_version_9.4.0": "@com_github_p4lang_PI_bf_9_4_0//proto/frontend:pifeproto",
-            "@local_barefoot_bin//:sde_version_9.5.0": "@com_github_p4lang_PI_bf_9_5_0//proto/frontend:pifeproto",
-        },
-        no_match_error = "Unsupported SDE version",
-    ),
-    visibility = ["//visibility:public"],
-)
-
-stratum_cc_library(
-    name = "pi_node_bf",
-    srcs = ["pi_node.cc"],
-    hdrs = ["pi_node.h"],
-    deps = pi_node_common_deps + [":pi_bf"],
-)
-
 # PI Node for Netcope targets
 stratum_cc_library(
     name = "pi_node_np4",

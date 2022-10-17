@@ -13,7 +13,6 @@
 #include <deque>
 #include <string>
 
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/p4/utils.h"
@@ -38,6 +37,17 @@ TdiPacketioManager::TdiPacketioManager(TdiSdeInterface* tdi_sde_interface,
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       device_(device) {}
 
+TdiPacketioManager::TdiPacketioManager()
+    : initialized_(false),
+      rx_writer_(nullptr),
+      packetin_header_(),
+      packetout_header_(),
+      packetin_header_size_(),
+      packetout_header_size_(),
+      packet_receive_channel_(nullptr),
+      sde_rx_thread_id_(),
+      tdi_sde_interface_(nullptr),
+      device_(-1) {}
 TdiPacketioManager::~TdiPacketioManager() {}
 
 std::unique_ptr<TdiPacketioManager> TdiPacketioManager::CreateInstance(
@@ -52,13 +62,11 @@ std::unique_ptr<TdiPacketioManager> TdiPacketioManager::CreateInstance(
 
 ::util::Status TdiPacketioManager::PushForwardingPipelineConfig(
     const TdiDeviceConfig& config) {
-  CHECK_RETURN_IF_FALSE(config.programs_size() == 1)
+  RET_CHECK(config.programs_size() == 1)
       << "Only one program is supported.";
   const auto& program = config.programs(0);
-  {
-    absl::WriterMutexLock l(&data_lock_);
     RETURN_IF_ERROR(BuildMetadataMapping(program.p4info()));
-    // PushForwardingPipelineConfig resets the bf_pkt driver.
+    // PushForwardingPipelineConfig resets the tdi_pkt driver.
     RETURN_IF_ERROR(tdi_sde_interface_->StartPacketIo(device_));
     if (!initialized_) {
       packet_receive_channel_ = Channel<std::string>::Create(128);
@@ -66,15 +74,13 @@ std::unique_ptr<TdiPacketioManager> TdiPacketioManager::CreateInstance(
         int ret = pthread_create(&sde_rx_thread_id_, nullptr,
                                  &TdiPacketioManager::SdeRxThreadFunc, this);
         if (ret != 0) {
-          RETURN_ERROR(ERR_INTERNAL)
+          return MAKE_ERROR(ERR_INTERNAL)
               << "Failed to spawn RX thread for SDE wrapper for device with ID "
               << device_ << ". Err: " << ret << ".";
         }
       }
       RETURN_IF_ERROR(tdi_sde_interface_->RegisterPacketReceiveWriter(
-          device_,
-          ChannelWriter<std::string>::Create(packet_receive_channel_)));
-    }
+          device_, ChannelWriter<std::string>::Create(packet_receive_channel_)));
     initialized_ = true;
   }
 
@@ -151,7 +157,7 @@ class BitBuffer {
 
   // Add a bytestring to the back of the buffer.
   ::util::Status PushBack(const std::string& bytestring, size_t bitwidth) {
-    CHECK_RETURN_IF_FALSE(bytestring.size() <=
+    RET_CHECK(bytestring.size() <=
                           (bitwidth + kBitsPerByte - 1) / kBitsPerByte)
         << "Bytestring " << StringToHex(bytestring) << " overflows bit width "
         << bitwidth << ".";
@@ -170,7 +176,7 @@ class BitBuffer {
     }
     // Remove bits from partial byte at the front.
     while (new_bits.size() > bitwidth) {
-      CHECK_RETURN_IF_FALSE(new_bits.front() == 0)
+      RET_CHECK(new_bits.front() == 0)
           << "Bytestring " << StringToHex(bytestring) << " overflows bit width "
           << bitwidth << ".";
       new_bits.pop_front();
@@ -235,7 +241,7 @@ class BitBuffer {
                            [&id](::p4::v1::PacketMetadata metadata) {
                              return metadata.metadata_id() == id;
                            });
-    CHECK_RETURN_IF_FALSE(it != packet.metadata().end())
+    RET_CHECK(it != packet.metadata().end())
         << "Missing metadata with Id " << id << " in PacketOut "
         << packet.ShortDebugString();
     RETURN_IF_ERROR(bit_buf.PushBack(it->value(), bitwidth));
@@ -254,7 +260,7 @@ class BitBuffer {
 ::util::Status TdiPacketioManager::ParsePacketIn(const std::string& buffer,
                                                   ::p4::v1::PacketIn* packet) {
   absl::ReaderMutexLock l(&data_lock_);
-  CHECK_RETURN_IF_FALSE(buffer.size() >= packetin_header_size_)
+  RET_CHECK(buffer.size() >= packetin_header_size_)
       << "Received packet is too small.";
 
   BitBuffer bit_buf;
@@ -282,7 +288,7 @@ class BitBuffer {
     const ::p4::v1::PacketOut& packet) {
   {
     absl::ReaderMutexLock l(&data_lock_);
-    if (!initialized_) RETURN_ERROR(ERR_NOT_INITIALIZED) << "Not initialized.";
+    if (!initialized_) return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized.";
   }
   std::string buf;
   RETURN_IF_ERROR(DeparsePacketOut(packet, &buf));
@@ -297,7 +303,7 @@ class BitBuffer {
   std::unique_ptr<ChannelReader<std::string>> reader;
   {
     absl::ReaderMutexLock l(&data_lock_);
-    if (!initialized_) RETURN_ERROR(ERR_NOT_INITIALIZED) << "Not initialized.";
+    if (!initialized_) return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized.";
     reader = ChannelReader<std::string>::Create(packet_receive_channel_);
   }
 
@@ -313,7 +319,11 @@ class BitBuffer {
     ::p4::v1::PacketIn packet_in;
     // FIXME: returning here in case of parsing errors might not be the best
     // solution.
-    RETURN_IF_ERROR(ParsePacketIn(buffer, &packet_in));
+    ::util::Status status = ParsePacketIn(buffer, &packet_in);
+    if (!status.ok()) {
+      LOG(ERROR) << "ParsePacketIn failed: " << status;
+      continue;
+    }
     {
       absl::WriterMutexLock l(&rx_writer_lock_);
       rx_writer_->Write(packet_in);
@@ -355,9 +365,9 @@ class BitBuffer {
     }
   }
 
-  CHECK_RETURN_IF_FALSE(packetin_bits % 8 == 0)
+  RET_CHECK(packetin_bits % 8 == 0)
       << "PacketIn header size must be multiple of 8 bits.";
-  CHECK_RETURN_IF_FALSE(packetout_bits % 8 == 0)
+  RET_CHECK(packetout_bits % 8 == 0)
       << "PacketOut header size must be multiple of 8 bits.";
   packetin_header_ = std::move(packetin_header);
   packetout_header_ = std::move(packetout_header);

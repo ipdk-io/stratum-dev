@@ -49,7 +49,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
                           const std::string& high) override;
   ::util::Status GetRange(int id, std::string* low,
                           std::string* high) const override;
-  ::util::Status SetPriority(uint64 priority) override;
+  ::util::Status SetPriority(uint32 priority) override;
   ::util::Status GetPriority(uint32* priority) const override;
 
   // Allocates a new table key object.
@@ -121,7 +121,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
       ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
       device->createSession(&tdi_session);
 
-      CHECK_RETURN_IF_FALSE(tdi_session) << "Failed to create new session.";
+      RET_CHECK(tdi_session) << "Failed to create new session.";
 
       return std::shared_ptr<TdiSdeInterface::SessionInterface>(
           new Session(tdi_session));
@@ -157,6 +157,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status UnregisterPortStatusEventWriter() override
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
+  //TODO (Refactoring): DPDK specific functions should move to dpdk_sde_wrapper.h
   ::util::Status GetPortInfo(int device, int port,
                              TargetDatapathId *target_dp_id) override;
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
@@ -227,12 +228,12 @@ class TdiSdeWrapper : public TdiSdeInterface {
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id, int egress_port, int cos,
+      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id, int egress_port, int cos,
+      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id) override LOCKS_EXCLUDED(data_lock_);
@@ -288,7 +289,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status GetActionProfileMembers(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id, std::vector<int>* member_ids,
-      std::vector<std::unique_ptr<TableDataInterface>>* table_values) override
+      std::vector<std::unique_ptr<TableDataInterface>>* table_datas) override
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertActionProfileGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
@@ -336,7 +337,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id,
       std::vector<std::unique_ptr<TableKeyInterface>>* table_keys,
-      std::vector<std::unique_ptr<TableDataInterface>>* table_values) override
+      std::vector<std::unique_ptr<TableDataInterface>>* table_datas) override
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status SetDefaultTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
@@ -487,7 +488,14 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
       device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
-
+#ifdef TOFINO_TARGET
+// TODO (Ravi): Enable this for traffic shaping support for Tofino
+#if 0
+  // Map from device ID to vector of all allocated PPGs.
+  absl::flat_hash_map<int, std::vector<tdi_tm_ppg_hdl>> device_to_ppg_handles_
+      GUARDED_BY(data_lock_);
+#endif
+#endif
   // TODO(max): make the following maps to handle multiple devices.
   // Pointer to the ID mapper. Not owned by this class.
   std::unique_ptr<TdiIdMapper> tdi_id_mapper_ GUARDED_BY(data_lock_);

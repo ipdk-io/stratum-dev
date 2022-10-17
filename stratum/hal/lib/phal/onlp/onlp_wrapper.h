@@ -6,6 +6,9 @@
 #define STRATUM_HAL_LIB_PHAL_ONLP_ONLP_WRAPPER_H_
 
 extern "C" {
+// Unless we set this define, AIM will undef _GNU_SOURCE and cause compilation
+// errors with GNU-only symbols later.
+#define AIM_CONFIG_INCLUDE_GNU_SOURCE 1
 #include <onlp/fan.h>
 #include <onlp/led.h>
 #include <onlp/oids.h>
@@ -67,7 +70,7 @@ class SfpInfo : public OidInfo {
  public:
   explicit SfpInfo(const onlp_sfp_info_t& sfp_info)
       : OidInfo(sfp_info.hdr), sfp_info_(sfp_info) {}
-  SfpInfo() {}
+  SfpInfo() = default;
   MediaType GetMediaType() const;
   SfpType GetSfpType() const;
   SfpModuleType GetSfpModuleType() const;
@@ -89,7 +92,7 @@ class FanInfo : public OidInfo {
  public:
   explicit FanInfo(const onlp_fan_info_t& fan_info)
       : OidInfo(fan_info.hdr), fan_info_(fan_info) {}
-  FanInfo() {}
+  FanInfo() = default;
   FanDir GetFanDir() const;
   void GetCaps(FanCaps* caps) const;
   ::util::StatusOr<const onlp_fan_info_t*> GetOnlpFan() const;
@@ -102,7 +105,7 @@ class PsuInfo : public OidInfo {
  public:
   explicit PsuInfo(const onlp_psu_info_t& psu_info)
       : OidInfo(psu_info.hdr), psu_info_(psu_info) {}
-  PsuInfo() {}
+  PsuInfo() = default;
   PsuType GetPsuType() const;
   void GetCaps(PsuCaps* caps) const;
   ::util::StatusOr<const onlp_psu_info_t*> GetOnlpPsu() const;
@@ -115,7 +118,7 @@ class ThermalInfo : public OidInfo {
  public:
   explicit ThermalInfo(const onlp_thermal_info_t& thermal_info)
       : OidInfo(thermal_info.hdr), thermal_info_(thermal_info) {}
-  ThermalInfo() {}
+  ThermalInfo() = default;
   int GetThermalCurTemp() const;
   int GetThermalWarnTemp() const;
   int GetThermalErrorTemp() const;
@@ -130,7 +133,7 @@ class LedInfo : public OidInfo {
  public:
   explicit LedInfo(const onlp_led_info_t& led_info)
       : OidInfo(led_info.hdr), led_info_(led_info) {}
-  LedInfo() {}
+  LedInfo() = default;
   LedMode GetLedMode() const;
   char GetLedChar() const;
   void GetCaps(LedCaps* caps) const;

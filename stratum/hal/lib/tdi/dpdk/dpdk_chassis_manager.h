@@ -57,13 +57,13 @@ class DpdkChassisManager {
                                          PortCounters* counters)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::Status ReplayPortsConfig(uint64 node_id)
+  virtual ::util::Status ReplayChassisConfig(uint64 node_id)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToUnitMap() const
+  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToDeviceMap() const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
+  virtual ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Factory function for creating the instance of the class.
@@ -176,10 +176,10 @@ class DpdkChassisManager {
       GUARDED_BY(gnmi_event_lock_);
 
   // Map from unit number to the node ID as specified by the config.
-  std::map<int, uint64> unit_to_node_id_ GUARDED_BY(chassis_lock);
+  std::map<int, uint64> device_to_node_id_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to unit number.
-  std::map<uint64, int> node_id_to_unit_ GUARDED_BY(chassis_lock);
+  std::map<uint64, int> node_id_to_device_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to another map from port ID to PortState representing
   // the state of the singleton port uniquely identified by (node ID, port ID).

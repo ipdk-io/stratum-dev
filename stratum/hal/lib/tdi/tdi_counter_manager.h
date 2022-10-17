@@ -45,7 +45,7 @@ class TdiCounterManager {
       TdiSdeInterface* tdi_sde_interface_, int device);
 
  private:
-  // Private constructure, we can create the instance by using `CreateInstance`
+  // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
   explicit TdiCounterManager(TdiSdeInterface* tdi_sde_interface_, int device);
 

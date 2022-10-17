@@ -10,7 +10,6 @@
 #include "absl/strings/strip.h"
 #include "gflags/gflags.h"
 #include "nlohmann/json.hpp"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
@@ -40,32 +39,8 @@ std::string Uint32ToLeByteStream(uint32 val) {
     return util::OkStatus();
   }
 
-  RETURN_ERROR(ERR_INVALID_PARAM) << "Unknown format for p4_device_config.";
-}
-
-::util::Status BfPipelineConfigToPiConfig(const BfPipelineConfig& bf_config,
-                                          std::string* pi_node_config) {
-  CHECK_RETURN_IF_FALSE(pi_node_config) << "null pointer.";
-
-  // Validate restrictions.
-  CHECK_RETURN_IF_FALSE(bf_config.profiles_size() == 1)
-      << "Only single pipeline P4 configs are supported.";
-  const auto& profile = bf_config.profiles(0);
-
-  pi_node_config->clear();
-  // Program name
-  pi_node_config->append(Uint32ToLeByteStream(bf_config.p4_name().size()));
-  pi_node_config->append(bf_config.p4_name());
-  // Tofino bin
-  pi_node_config->append(Uint32ToLeByteStream(profile.binary().size()));
-  pi_node_config->append(profile.binary());
-  // Context json
-  pi_node_config->append(Uint32ToLeByteStream(profile.context().size()));
-  pi_node_config->append(profile.context());
-  VLOG(2) << "First 16 bytes of converted PI node config: "
-          << StringToHex(pi_node_config->substr(0, 16));
-
-  return util::OkStatus();
+  return MAKE_ERROR(ERR_INVALID_PARAM)
+         << "Unknown format for p4_device_config.";
 }
 
 }  // namespace barefoot

@@ -25,6 +25,10 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/lib/channel/channel.h"
 
+extern "C" {
+#include "traffic_mgr/traffic_mgr.h"
+}
+
 namespace stratum {
 namespace hal {
 namespace barefoot {
@@ -51,6 +55,7 @@ class TableKey : public BfSdeInterface::TableKeyInterface {
                           std::string* high) const override;
   ::util::Status SetPriority(uint32 priority) override;
   ::util::Status GetPriority(uint32* priority) const override;
+  ::util::Status GetTableId(uint32* table_id) const override;
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<BfSdeInterface::TableKeyInterface>>
@@ -116,7 +121,7 @@ class BfSdeWrapper : public BfSdeInterface {
     static ::util::StatusOr<std::shared_ptr<BfSdeInterface::SessionInterface>>
     CreateSession() {
       auto bfrt_session = bfrt::BfRtSession::sessionCreate();
-      CHECK_RETURN_IF_FALSE(bfrt_session) << "Failed to create new session.";
+      RET_CHECK(bfrt_session) << "Failed to create new session.";
       VLOG(1) << "Started new BfRt session with ID "
               << bfrt_session->sessHandleGet();
 
@@ -162,6 +167,9 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status SetPortShapingRate(int device, int port, bool is_in_pps,
                                     uint32 burst_size,
                                     uint64 rate_per_second) override;
+  ::util::Status ConfigureQos(int device,
+                              const TofinoConfig::TofinoQosConfig& qos_config)
+      LOCKS_EXCLUDED(data_lock_) override;
   ::util::Status EnablePortShaping(int device, int port,
                                    TriState enable) override;
   ::util::Status SetPortAutonegPolicy(int device, int port,
@@ -218,12 +226,12 @@ class BfSdeWrapper : public BfSdeInterface {
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id, int egress_port, int egress_queue, int cos,
+      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id, int egress_port, int egress_queue, int cos,
+      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 session_id) override LOCKS_EXCLUDED(data_lock_);
@@ -428,8 +436,8 @@ class BfSdeWrapper : public BfSdeInterface {
   // Common code for clone session handling.
   ::util::Status WriteCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      uint32 session_id, int egress_port, int egress_queue, int cos,
+      int max_pkt_len, bool insert) SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for action profile member handling.
   ::util::Status WriteActionProfileMember(
@@ -479,6 +487,10 @@ class BfSdeWrapper : public BfSdeInterface {
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
       device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
+
+  // Map from device ID to vector of all allocated PPGs.
+  absl::flat_hash_map<int, std::vector<bf_tm_ppg_hdl>> device_to_ppg_handles_
+      GUARDED_BY(data_lock_);
 
   // TODO(max): make the following maps to handle multiple devices.
   // Pointer to the ID mapper. Not owned by this class.

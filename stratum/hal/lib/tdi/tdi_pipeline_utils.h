@@ -24,10 +24,6 @@ namespace tdi {
     const ::p4::v1::ForwardingPipelineConfig& config,
     BfPipelineConfig* bf_config);
 
-// Converts the BfPipelineConfig instance to the legacy binary format used
-// by the Barefoot PI implementation.
-::util::Status BfPipelineConfigToPiConfig(const BfPipelineConfig& bf_config,
-                                          std::string* pi_node_config);
 
 }  // namespace tdi
 }  // namespace hal

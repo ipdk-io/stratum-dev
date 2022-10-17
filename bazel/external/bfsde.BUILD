@@ -13,12 +13,18 @@ package(
 cc_library(
     name = "bfsde",
     srcs = glob([
+        "barefoot-bin/lib/bfshell_plugin*.so*",
         "barefoot-bin/lib/libavago.so*",
+        "barefoot-bin/lib/libbf_switchd_lib.a*",
         "barefoot-bin/lib/libbfsys.so*",
         "barefoot-bin/lib/libbfutils.so*",
+        "barefoot-bin/lib/libclish.so*",
         "barefoot-bin/lib/libdriver.so*",
-        "barefoot-bin/lib/libpython3.4m.so*",
-    ]) + ["barefoot-bin/lib/libbf_switchd_lib.a"],
+        "barefoot-bin/lib/libpython3*",
+        # target libraries from p4lang (was libbfsys and libbfutils before 9.9.0)
+        "barefoot-bin/lib/libtarget_sys.so*",
+        "barefoot-bin/lib/libtarget_utils.so*",
+    ]),
     hdrs = glob([
         "barefoot-bin/include/bf_rt/*.h",
         "barefoot-bin/include/bf_rt/*.hpp",
@@ -34,6 +40,9 @@ cc_library(
         "barefoot-bin/include/port_mgr/*.h",
         "barefoot-bin/include/tofino/bf_pal/*.h",
         "barefoot-bin/include/tofino/pdfixed/*.h",
+        "barefoot-bin/include/traffic_mgr/*.h",
+        "barefoot-bin/include/target-sys/**/*.h",
+        "barefoot-bin/include/target-utils/**/*.h",
     ]),
     linkopts = [
         "-lpthread",
@@ -41,24 +50,33 @@ cc_library(
         "-ldl",
     ],
     strip_include_prefix = "barefoot-bin/include",
-    deps = [
-        # TODO(bocon): PI needed when linking libdriver.so if/when pi is
-        # enabled when building bf-drivers. This shouldn't hurt, but can
-        # be excluded if/when PI is removed from the SDE build options.
-        "@//stratum/hal/lib/pi:pi_bf",
-    ],
 )
 
 pkg_tar_with_symlinks(
     name = "bf_library_files",
+    # Using a wildcard glob here to match the shared libraries makes this rule
+    # more generic than a normal source list, as it does not require that all
+    # targets are present, which is the case for non-BSP SDE builds. Extending
+    # this rule for additional BSP platforms is as easy as adding more matches
+    # to the list.
     srcs = glob([
         "barefoot-bin/lib/bfshell_plugin_*.so*",
         "barefoot-bin/lib/libavago.so*",
         "barefoot-bin/lib/libbfsys.so*",
         "barefoot-bin/lib/libbfutils.so*",
+        "barefoot-bin/lib/libclish.so*",
         "barefoot-bin/lib/libdriver.so*",
         "barefoot-bin/lib/libdru_sim.so*",
-        "barefoot-bin/lib/libpython3.4m.so*",
+        "barefoot-bin/lib/libpython3*",
+        # General BSP libraries.
+        "barefoot-bin/lib/libpltfm_driver.so*",
+        "barefoot-bin/lib/libpltfm_mgr.so*",
+        # BSP libraries for Edgecore Wedge100bf series.
+        "barefoot-bin/lib/libacctonbf_driver.so*",
+        "barefoot-bin/lib/libtcl_server.so*",
+        # target libraries from p4lang (was libbfsys and libbfutils before 9.9.0)
+        "barefoot-bin/lib/libtarget_sys.so*",
+        "barefoot-bin/lib/libtarget_utils.so*",
     ]),
     mode = "0644",
     package_dir = "/usr",
@@ -70,6 +88,7 @@ pkg_tar_with_symlinks(
     srcs = glob([
         "barefoot-bin/share/bf_rt_shared/**",
         "barefoot-bin/share/bfsys/**",
+        "barefoot-bin/share/bf_switchd/**",
         "barefoot-bin/share/cli/xml/**",
         "barefoot-bin/share/microp_fw/**",
         "barefoot-bin/share/tofino_sds_fw/**",
@@ -87,6 +106,16 @@ pkg_tar(
     strip_prefix = "barefoot-bin",
 )
 
+pkg_tar(
+    name = "bf_binary_files",
+    srcs = [
+        "barefoot-bin/bin/credo_firmware.bin",  # firmware for retimers in the 65x
+    ],
+    mode = "0644",
+    package_dir = "/usr",
+    strip_prefix = "barefoot-bin",
+)
+
 # This string setting is templated with the correct version string by reading
 # the $SDE_INSTALL/share/VERSION file. Then one of the config settings below
 # will match and can be used with select().
@@ -96,43 +125,43 @@ string_setting(
 )
 
 config_setting(
-    name = "sde_version_9.2.0",
+    name = "sde_version_9.7.0",
     flag_values = {
-        ":sde_version_setting": "9.2.0",
+        ":sde_version_setting": "9.7.0",
     },
 )
 
 config_setting(
-    name = "sde_version_9.3.0",
+    name = "sde_version_9.7.1",
     flag_values = {
-        ":sde_version_setting": "9.3.0",
+        ":sde_version_setting": "9.7.1",
     },
 )
 
 config_setting(
-    name = "sde_version_9.3.1",
+    name = "sde_version_9.7.2",
     flag_values = {
-        ":sde_version_setting": "9.3.1",
+        ":sde_version_setting": "9.7.2",
     },
 )
 
 config_setting(
-    name = "sde_version_9.3.2",
+    name = "sde_version_9.8.0",
     flag_values = {
-        ":sde_version_setting": "9.3.2",
+        ":sde_version_setting": "9.8.0",
     },
 )
 
 config_setting(
-    name = "sde_version_9.4.0",
+    name = "sde_version_9.9.0",
     flag_values = {
-        ":sde_version_setting": "9.4.0",
+        ":sde_version_setting": "9.9.0",
     },
 )
 
 config_setting(
-    name = "sde_version_9.5.0",
+    name = "sde_version_9.11.0",
     flag_values = {
-        ":sde_version_setting": "9.5.0",
+        ":sde_version_setting": "9.11.0",
     },
 )

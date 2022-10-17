@@ -158,8 +158,8 @@ BcmSwitch::~BcmSwitch() {}
 ::util::Status BcmSwitch::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   if (!req.updates_size()) return ::util::OkStatus();  // nothing to do.
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in WriteRequest.";
-  CHECK_RETURN_IF_FALSE(results != nullptr)
+  RET_CHECK(req.device_id()) << "No device_id in WriteRequest.";
+  RET_CHECK(results != nullptr)
       << "Need to provide non-null results pointer for non-empty updates.";
 
   absl::ReaderMutexLock l(&chassis_lock);
@@ -175,9 +175,9 @@ BcmSwitch::~BcmSwitch() {}
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in ReadRequest.";
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(req.device_id()) << "No device_id in ReadRequest.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&chassis_lock);
   if (shutdown) {
@@ -535,7 +535,7 @@ std::unique_ptr<BcmSwitch> BcmSwitch::CreateInstance(
       int unit = entry.second;
       BcmNode* bcm_node = gtl::FindPtrOrNull(unit_to_bcm_node_, unit);
       if (bcm_node == nullptr) {
-        ::util::Status error = MAKE_ERROR(ERR_INVALID_PARAM)
+        ::util::Status error = MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
                                << "Node ID " << node_id
                                << " mapped to unknown unit " << unit << ".";
         APPEND_STATUS_IF_ERROR(status, error);
@@ -573,7 +573,7 @@ std::unique_ptr<BcmSwitch> BcmSwitch::CreateInstance(
 ::util::StatusOr<BcmNode*> BcmSwitch::GetBcmNodeFromUnit(int unit) const {
   BcmNode* bcm_node = gtl::FindPtrOrNull(unit_to_bcm_node_, unit);
   if (bcm_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM) << "Unit " << unit << " is unknown.";
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND) << "Unit " << unit << " is unknown.";
   }
   return bcm_node;
 }
@@ -582,7 +582,7 @@ std::unique_ptr<BcmSwitch> BcmSwitch::CreateInstance(
     uint64 node_id) const {
   BcmNode* bcm_node = gtl::FindPtrOrNull(node_id_to_bcm_node_, node_id);
   if (bcm_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
            << "Node with ID " << node_id
            << " is unknown or no config has been pushed to it yet.";
   }

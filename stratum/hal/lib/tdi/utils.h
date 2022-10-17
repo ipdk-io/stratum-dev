@@ -49,6 +49,8 @@ std::string RangeDefaultHigh(size_t bitwidth);
 // byte string.
 int NumBitsToNumBytes(int num_bits);
 
+// Returns a byte string with bitwidth bits set to zero.
+std::string AllOnesByteString(size_t bitwidth);
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

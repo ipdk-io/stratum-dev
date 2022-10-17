@@ -7,7 +7,9 @@ load(
     "HOST_ARCHES",
     "STRATUM_INTERNAL",
     "stratum_cc_library",
+    "stratum_cc_test",
 )
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 licenses(["notice"])  # Apache v2
 
@@ -98,7 +100,6 @@ stratum_cc_library(
     ],
 )
 
-''' FIXME(boc) google only
 stratum_cc_test(
     name = "auth_policy_checker_test",
     srcs = [
@@ -107,17 +108,16 @@ stratum_cc_test(
     deps = [
         ":auth_policy_checker",
         ":test_main",
-        "@com_github_google_glog//:glog",
-        "@com_google_googletest//:gtest",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/synchronization",
         "//stratum/glue/status:status_test_util",
         "//stratum/lib:utils",
         "//stratum/lib/test_utils:matchers",
-        "//stratum/public/proto:error_proto",
+        "//stratum/public/proto:error_cc_proto",
+        "@com_github_google_glog//:glog",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_googletest//:gtest",
     ],
 )
-'''
 
 stratum_cc_library(
     name = "credentials_manager",
@@ -131,7 +131,6 @@ stratum_cc_library(
         "@com_github_google_glog//:glog",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -146,6 +145,46 @@ stratum_cc_library(
     ],
 )
 
+stratum_cc_test(
+    name = "credentials_manager_test",
+    srcs = ["credentials_manager_test.cc"],
+    deps = [
+        ":certificate",
+        ":credentials_manager",
+        ":test_cc_grpc",
+        ":test_main",
+        "//stratum/glue:logging",
+        "//stratum/glue/net_util:ports",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:status_test_util",
+        "//stratum/lib:utils",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+proto_library(
+    name = "test_proto",
+    testonly = True,
+    srcs = ["test.proto"],
+)
+
+cc_proto_library(
+    name = "test_cc_proto",
+    testonly = True,
+    deps = [":test_proto"],
+)
+
+cc_grpc_library(
+    name = "test_cc_grpc",
+    testonly = True,
+    srcs = [":test_proto"],
+    grpc_only = True,
+    deps = [":test_cc_proto"],
+)
+
 stratum_cc_library(
     name = "test_main",
     testonly = 1,
@@ -154,6 +193,31 @@ stratum_cc_library(
         "//stratum/glue:init_google",
         "//stratum/glue:logging",
         "@com_github_google_glog//:glog",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
+    name = "certificate",
+    srcs = ["certificate.cc"],
+    hdrs = ["certificate.h"],
+    deps = [
+        "//stratum/lib:utils",
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+stratum_cc_test(
+    name = "certificate_test",
+    srcs = ["certificate_test.cc"],
+    deps = [
+        ":certificate",
+        ":test_main",
+        "//stratum/glue/status:status_test_util",
+        "@com_github_google_glog//:glog",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest",
     ],
 )

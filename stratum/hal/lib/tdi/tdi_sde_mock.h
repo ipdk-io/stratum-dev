@@ -43,8 +43,8 @@ class TableKeyMock : public TdiSdeInterface::TableKeyInterface {
                                         const std::string& high));
   MOCK_CONST_METHOD3(GetRange, ::util::Status(int id, std::string* low,
                                               std::string* high));
-  MOCK_METHOD(::util::Status, SetPriority, (uint64 priority));
-  MOCK_METHOD(::util::Status, GetPriority, (uint32* priority), (const));
+  MOCK_METHOD1(SetPriority, ::util::Status(uint32 priority));
+  MOCK_CONST_METHOD1(GetPriority, ::util::Status(uint32* priority));
 };
 
 class TableDataMock : public TdiSdeInterface::TableDataInterface {
@@ -99,6 +99,9 @@ class TdiSdeMock : public TdiSdeInterface {
                               uint32 burst_size, uint64 rate_per_second));
   MOCK_METHOD3(EnablePortShaping,
                ::util::Status(int device, int port, TriState enable));
+  MOCK_METHOD2(ConfigureQos,
+               ::util::Status(int device,
+                              const TofinoConfig::TofinoQosConfig& qos_config));
   MOCK_METHOD3(SetPortAutonegPolicy,
                ::util::Status(int device, int port, TriState autoneg));
   MOCK_METHOD3(SetPortMtu, ::util::Status(int device, int port, int32 mtu));
@@ -172,6 +175,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
                      uint32 session_id, int egress_port, int cos,
                      int max_pkt_len));
+
   MOCK_METHOD3(GetNodesInMulticastGroup,
                ::util::StatusOr<std::vector<uint32>>(
                    int device,
@@ -257,7 +261,7 @@ class TdiSdeMock : public TdiSdeInterface {
       ::util::Status(
           int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
           uint32 table_id, int member_id, std::vector<int>* member_ids,
-          std::vector<std::unique_ptr<TableDataInterface>>* table_values));
+          std::vector<std::unique_ptr<TableDataInterface>>* table_datas));
   MOCK_METHOD7(
       InsertActionProfileGroup,
       ::util::Status(int device,
@@ -320,7 +324,7 @@ class TdiSdeMock : public TdiSdeInterface {
           int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
           uint32 table_id,
           std::vector<std::unique_ptr<TableKeyInterface>>* table_keys,
-          std::vector<std::unique_ptr<TableDataInterface>>* table_values));
+          std::vector<std::unique_ptr<TableDataInterface>>* table_datas));
   MOCK_METHOD4(
       SetDefaultTableEntry,
       ::util::Status(int device,
@@ -341,8 +345,8 @@ class TdiSdeMock : public TdiSdeInterface {
       ::util::Status(int device,
                      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
                      uint32 table_id, absl::Duration timeout));
-  MOCK_METHOD(::util::StatusOr<uint32>, GetTdiRtId, (uint32 p4info_id),
-              (const));
+ MOCK_CONST_METHOD1(GetTdiRtId, ::util::StatusOr<uint32>(uint32 p4info_id));
+
   MOCK_CONST_METHOD1(GetP4InfoId, ::util::StatusOr<uint32>(uint32 bfrt_id));
   MOCK_CONST_METHOD1(GetActionSelectorTdiRtId,
                      ::util::StatusOr<uint32>(uint32 action_profile_id));

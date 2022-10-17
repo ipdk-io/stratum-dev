@@ -19,12 +19,11 @@ access P4 Studio SDE. Contact Intel for more details.*
 
 #### Supported SDE versions
 
- - 9.2.0
- - 9.3.0
- - 9.3.1
- - 9.3.2 (Recommended; LTS release)
- - 9.4.0
- - 9.5.0 (Experimental; LTS release; Latest)
+ - 9.7.0 (experimental)
+ - 9.7.1 (experimental)
+ - 9.7.2 (recommended; LTS release)
+ - 9.8.0 (experimental)
+ - 9.9.0 (experimental)
 
 The rest of this guide depends on the BF SDE tarball, so you can export an
 environment variable that points to it:
@@ -47,8 +46,7 @@ Stratum release -- 2020-12.*
 If you plan to run Stratum on hardware, you will need to build the kernel
 module for your particular switch OS.
 
-If you are running Stratum on ONL (OpenNetworkLinux), you can download
-the [Linux kernel headers here][onl-linux-headers].
+We recommand running Stratum on SONiC, you can download the [Linux kernel headers here][sonic-linux-headers].
 
 You can also find the Linux headers package for your distro by using `apt-get`,
 for example:
@@ -60,7 +58,7 @@ for example:
 ### Docker
 
 If you plan to build Stratum using Docker or build the Stratum Docker container,
-we've tested with: **Docker 18.06.0-ce**
+we've tested with: **Docker 18.09.8 community edition**
 
 You can skip this depedency if you plan to build the Stratum Debian package
 locally (Method 3 and Method 4).
@@ -99,7 +97,7 @@ You can also build the SDE to support multiple kernel modules, for example:
 
 ```bash
 stratum/hal/bin/barefoot/build-bf-sde.sh -t $SDE_TAR \
-  -k linux-4.9.75-OpenNetworkLinux.tar.xz \
+  -k linux-headers-4.19.0-12-2-amd64.tgz \
   -k linux-4.14.49-OpenNetworkLinux.tar.xz
 ```
 
@@ -143,11 +141,6 @@ First follow [Step 1 from Method 2](#step-1:-generate-the-sde-install-tarball)
 Make sure to export the path to the install tarball as an environment variable,
 then you can use Bazel to build the Stratum.
 
-#### To build `stratum_bf`:
-```bash
-bazel build //stratum/hal/bin/barefoot:stratum_bf_deb
-```
-
 #### To build `stratum_bfrt`:
 ```bash
 bazel build //stratum/hal/bin/barefoot:stratum_bfrt_deb
@@ -159,7 +152,6 @@ package also includes systemd service definition so users can use systemd to
 start the Stratum as a system service.
 
 The resulting Debian package can be found here:
-`bazel-bin/stratum/hal/bin/barefoot/stratum_bf_deb.deb` or
 `bazel-bin/stratum/hal/bin/barefoot/stratum_bfrt_deb.deb`
 
 Copy this file over to the switch and follow the
@@ -173,10 +165,8 @@ below.
 If you want to create a Docker image from the Debian package,
 
 ```bash
-export SDE_VERSION=9.3.2
-export STRATUM_TARGET=stratum_bf
-docker build -t stratumproject/stratum-bf:$SDE_VERSION \
-  --build-arg STRATUM_TARGET="$STRATUM_TARGET" \
+export SDE_VERSION=9.7.2
+docker build -t stratumproject/stratum-bfrt:latest-$SDE_VERSION \
   -f stratum/hal/bin/barefoot/docker/Dockerfile \
   bazel-bin/stratum/hal/bin/barefoot
 ```
@@ -196,7 +186,7 @@ docker save [Image Name] -o [Tarball Name]
 
 For example,
 ```bash
-docker save stratumproject/stratum-bf:9.3.2 -o stratum-bf-9.3.2-docker.tar
+docker save stratumproject/stratum-bfrt:9.7.2 -o stratum-bfrt-9.7.2-docker.tar
 ```
 
 ### Method 4: Build the SDE and Stratum locally
@@ -222,13 +212,10 @@ dependencies and builds the SDE with the appropriate flags. Feel free to
 customize the profile if needed; please refer to the P4Studio Build documentation.
 If you are using the
 reference BSP provided by Barefoot, you may also use P4Studio Build to
-install the BSP (see [below](#board-support-package-bsp-or-onlpv2)).
+install the BSP (see [below](#with-or-without-board-support-package-bsp)).
 
 Remember to download and pass the correct Kernel sources (`-kdir`) if you
 are building modules for a specific version other than the host's.
-
-As there are some issues with building the SDE on ONL switches, it's better to
-do that on a separate server.
 
 #### Step 2: Patching the BF SDE install directory
 
@@ -270,13 +257,13 @@ automatically by reading the `$SDE_INSTALL_TAR/share/VERSION` file.
 These are only available in
 [Method 4](#method-4:-build-the-sde-and-stratum-locally).
 
-### Board support package (BSP) or ONLPv2?
+### With or without Board Support Package (BSP)
 
 Stratum can be run on Tofino-based platforms in 2 different modes:
 
-**ONLPv2**
+**Without BSP**
 
-If your platform comes with ONLPv2 and a JSON "port mapping" file is provided
+If your platform comes with a JSON "port mapping" file provided
 by the platform vendor (see this
 [example](../../config/x86-64-accton-wedge100bf-32x-r0/port_map.json) for the
 Wedge 100bf-32x), you can use Stratum in "BSP-less mode". Refer to this
@@ -285,15 +272,22 @@ information. **This is the recommended mode. No changes to the SDE needed.**
 
 **BSP**
 
-Otherwise, you need to build & install the BSP. You will not be able to use
-the Stratum ONLP support. The exact instructions vary by the BSP vendor, here is
-how it works for the Wedge reference switch. Pass the BSP sources to the p4studio_build
-script with the `--bsp-path` flag.
+Otherwise, you need to build & install the BSP.
+The exact instructions vary by the BSP vendor, here is
+how it works for the Wedge reference switch. Either set the `BSP` environment
+variable before running the
+[`build-stratum-bf-container.sh`](#method-1-build-with-docker-in-one-shot) script:
 
 ```bash
-tar -xzvf bf-reference-bsp-<SDE_VERSION>.tgz
-export BSP_PATH=`pwd`/bf-reference-bsp-<SDE_VERSION>
-./p4studio_build.py -up profiles/stratum_profile.yaml --bsp-path $BSP_PATH [-kdir <path/to/linux/sources>]
+export BSP=`pwd`/bf-reference-bsp-<SDE_VERSION>.tgz
+stratum/hal/bin/barefoot/docker/build-stratum-bf-container.sh ...
 ```
 
-[onl-linux-headers]: https://github.com/opennetworkinglab/OpenNetworkLinux/releases/tag/onlpv2-dev-1.0.1
+Or pass the BSP sources to the `p4studio` script with the `--bsp-path` flag.
+
+```bash
+export BSP_PATH=`pwd`/bf-reference-bsp-<SDE_VERSION>.tgz
+./p4studio configure ... --bsp-path $BSP_PATH [-kdir <path/to/linux/sources>]
+```
+
+[sonic-linux-headers]: https://github.com/stratum/sonic-base-image/releases

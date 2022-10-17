@@ -19,14 +19,14 @@ You can find Debian packages and Docker containers on the
 ### Nightly version
 
 You can pull a nightly version of this container image from
-[Dockerhub](https://hub.docker.com/repository/docker/stratumproject/stratum-bf/tags)
+[Dockerhub](https://hub.docker.com/r/stratumproject/stratum-bfrt/tags)
 
 ```bash
-$ docker pull stratumproject/stratum-bf:[SDE version]
+$ docker pull stratumproject/stratum-bfrt:latest-[SDE version]
 ```
 
-For example, the container with BF SDE 9.3.2: <br/>
-`stratumproject/stratum-bf:9.3.2`
+For example, the container with BF SDE 9.7.2: <br/>
+`stratumproject/stratum-bfrt:latest-9.7.2`
 
 These containers include kernel modules for OpenNetworkLinux.
 
@@ -37,7 +37,7 @@ These containers include kernel modules for OpenNetworkLinux.
 **This is the recommended way to run Stratum.**
 
 Before deploing the container to the device, make sure you install Docker on the
-switch; we've tested with: **Docker 18.06.0-ce**
+switch; we've tested with: **Docker 18.09.8 community edition**
 
 No other dependencies are required.
 
@@ -60,8 +60,8 @@ docker save [Image Name] -o [Tarball Name]
 
 For example,
 ```bash
-docker pull stratumproject/stratum-bf:9.3.2
-docker save stratumproject/stratum-bf:9.3.2 -o stratum-bf-9.3.2-docker.tar
+docker pull stratumproject/stratum-bfrt:latest-9.7.2
+docker save stratumproject/stratum-bfrt:latest-9.7.2 -o stratum-bfrt-9.7.2-docker.tar
 ```
 
 Then, deploy the tarball to the device via scp, rsync, http, USB stick, etc.
@@ -77,7 +77,7 @@ docker images
 For example,
 
 ```bash
-docker load -i stratum-bf-9.3.2-docker.tar
+docker load -i stratum-bfrt-9.7.2-docker.tar
 ```
 
 ### Set up huge pages
@@ -93,7 +93,7 @@ __Note:__ This step only needs to be done once.
 [sudo] mount -t hugetlbfs nodev /mnt/huge
 ```
 
-If you re-image your switch (reload ONL via ONIE), you will need to run these commands again.
+If you re-image your switch (reload SONiC via ONIE), you will need to run these commands again.
 
 ### Upload start script to the switch
 
@@ -116,11 +116,10 @@ For more details on additional options that can be passed to
 
 ```bash
 CHASSIS_CONFIG    # Override the default chassis config file.
-FLAG_FILE         # Override the default flag file.
 LOG_DIR           # The directory for logging, default: `/var/log/`.
 SDE_VERSION       # The SDE version
-DOCKER_IMAGE      # The container image name, default: stratumproject/stratum-bf
-DOCKER_IMAGE_TAG  # The container image tag, default: $SDE_VERSION
+DOCKER_IMAGE      # The container image name, default: stratumproject/stratum-bfrt
+DOCKER_IMAGE_TAG  # The container image tag, default: latest-$SDE_VERSION
 PLATFORM          # Use specific platform port map
 ```
 
@@ -140,11 +139,11 @@ Install the package using the followign command on the switch:
 
 ```bash
 [sudo] apt-get update
-[sudo] apt-get install -y --reinstall ./stratum_bf_deb.deb
+[sudo] apt-get install -y --reinstall ./stratum_bfrt_deb.deb
 ```
 
 You can safely ignore warnings like this:
-`N: Download is performed unsandboxed as root as file '/root/stratum_bf_deb.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)`
+`N: Download is performed unsandboxed as root as file '/root/stratum_bfrt_deb.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)`
 
 ### Running Stratum
 ```bash
@@ -152,6 +151,8 @@ You can safely ignore warnings like this:
 ```
 
 For more details on additional options, see [below](#stratum-runtime-options).
+Otherwise, continue with the [pipeline README](/stratum/hal/bin/barefoot/README.pipeline.md)
+on how to load a P4 pipeline into Stratum.
 
 ### Managing Stratum with systemd
 
@@ -159,17 +160,17 @@ Systemd provides service management and Stratum has been integrated into it.
 
 Start/stop Stratum service manually:
 ```bash
-systemctl start stratum_bf.service  # stop
+systemctl start stratum_bfrt.service  # stop
 ```
 
 Enable/disable auto-start of Stratum on boot:
 ```bash
-systemctl enable stratum_bf.service  # disable
+systemctl enable stratum_bfrt.service  # disable
 ```
 
 View logs:
 ```bash
-journalctl -u stratum_bf.service
+journalctl -u stratum_bfrt.service
 ```
 
 -----
@@ -199,7 +200,7 @@ In one terminal window, run `tofino-model` in one container:
 ```bash
 docker run --rm -it --privileged \
   --network=host \
-  stratumproject/tofino-model:9.3.2  # <SDE_VERSION>
+  stratumproject/tofino-model:9.7.2  # <SDE_VERSION>
 ```
 
 In another terminal window, run Stratum in its own container:
@@ -207,9 +208,7 @@ In another terminal window, run Stratum in its own container:
 ```bash
 PLATFORM=barefoot-tofino-model \
 stratum/hal/bin/barefoot/docker/start-stratum-container.sh \
-  -bf_sim \
-  -bf_switchd_background=false \
-  -enable_onlp=false
+  -bf_switchd_background=false
 ```
 
 ### Cleaning up `tofino-model` interfaces
@@ -371,8 +370,189 @@ vendor_config {
           key: 1  # singleton port id reference
           value {
             byte_shaping {
-              max_rate_bps: 1000000000 # 1G
-              max_burst_bytes: 16384 # 2x MTU
+              rate_bps: 1000000000 # 1G
+              burst_bytes: 16384 # 2x MTU
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+##### Quality of Service (QoS)
+
+Due to legal reasons we can't give a full description of the QoS model inside
+the Tofino traffic manager here. Refer to the Intel docs "10k-AS1-002EA" and
+"10k-UG8-002EA-FF-TM" available on the customer portal.
+
+Example configuration:
+
+```protobuf
+vendor_config {
+  tofino_config {
+    node_id_to_qos_config {
+      key: 1
+      value {
+        pool_configs {
+          pool: INGRESS_APP_POOL_0
+          pool_size: 30000
+          enable_color_drop: true
+          color_drop_limit_green: 30000
+          color_drop_limit_yellow: 10000
+          color_drop_limit_red: 5000
+        }
+        pool_configs {
+          pool: INGRESS_APP_POOL_1
+          pool_size: 30000
+          enable_color_drop: true
+          color_drop_limit_green: 30000
+          color_drop_limit_yellow: 10000
+          color_drop_limit_red: 5000
+        }
+        pool_configs {
+          pool: EGRESS_APP_POOL_0
+          pool_size: 30000
+          enable_color_drop: true
+          color_drop_limit_green: 30000
+          color_drop_limit_yellow: 10000
+          color_drop_limit_red: 5000
+        }
+        pool_configs {
+          pool: EGRESS_APP_POOL_1
+          pool_size: 30000
+          enable_color_drop: true
+          color_drop_limit_green: 30000
+          color_drop_limit_yellow: 10000
+          color_drop_limit_red: 5000
+        }
+        pool_color_drop_hysteresis_green: 20000
+        pool_color_drop_hysteresis_yellow: 8000
+        pool_color_drop_hysteresis_red: 4000
+        ppg_configs {
+          sdk_port: 260
+          # Or SingletonPort ID
+          # port: 1
+          is_default_ppg: true
+          minimum_guaranteed_cells: 200
+          pool: INGRESS_APP_POOL_0
+          base_use_limit: 400
+          baf: BAF_80_PERCENT
+          hysteresis: 50
+          ingress_drop_limit: 4000
+          icos_bitmap: 0xfd
+        }
+        ppg_configs {
+          sdk_port: 260
+          is_default_ppg: false
+          minimum_guaranteed_cells: 200
+          pool: INGRESS_APP_POOL_1
+          base_use_limit: 400
+          baf: BAF_80_PERCENT
+          hysteresis: 50
+          ingress_drop_limit: 4000
+          icos_bitmap: 0x02
+        }
+        ppg_configs {
+          sdk_port: 268
+          is_default_ppg: true
+          minimum_guaranteed_cells: 200
+          pool: INGRESS_APP_POOL_0
+          base_use_limit: 400
+          baf: BAF_80_PERCENT
+          hysteresis: 50
+          ingress_drop_limit: 4000
+          icos_bitmap: 0xfd
+        }
+        ppg_configs {
+          sdk_port: 268
+          is_default_ppg: false
+          minimum_guaranteed_cells: 200
+          pool: INGRESS_APP_POOL_1
+          base_use_limit: 400
+          baf: BAF_80_PERCENT
+          hysteresis: 50
+          ingress_drop_limit: 4000
+          icos_bitmap: 0x02
+        }
+        queue_configs {
+          sdk_port: 260
+          queue_mapping {
+            queue_id: 0
+            priority: PRIO_0
+            weight: 1
+            minimum_guaranteed_cells: 100
+            pool: EGRESS_APP_POOL_0
+            base_use_limit: 200
+            baf: BAF_80_PERCENT
+            hysteresis: 50
+            max_rate_bytes {
+              rate_bps: 100000000
+              burst_bytes: 9000
+            }
+            min_rate_bytes {
+              rate_bps: 1000000
+              burst_bytes: 4500
+            }
+          }
+          queue_mapping {
+            queue_id: 1
+            priority: PRIO_1
+            weight: 1
+            minimum_guaranteed_cells: 100
+            pool: EGRESS_APP_POOL_1
+            base_use_limit: 200
+            baf: BAF_80_PERCENT
+            hysteresis: 50
+            max_rate_bytes {
+              rate_bps: 100000000
+              burst_bytes: 9000
+            }
+            min_rate_bytes {
+              rate_bps: 1000000
+              burst_bytes: 4500
+            }
+          }
+        }
+        queue_configs {
+          sdk_port: 268
+          # Or SingletonPort ID
+          # port: 1
+          queue_mapping {
+            queue_id: 0
+            priority: PRIO_0
+            weight: 1
+            minimum_guaranteed_cells: 100
+            pool: EGRESS_APP_POOL_0
+            base_use_limit: 200
+            baf: BAF_80_PERCENT
+            hysteresis: 50
+            max_rate_bytes {
+              rate_bps: 100000000
+              burst_bytes: 9000
+            }
+            min_rate_bytes {
+              rate_bps: 1000000
+              burst_bytes: 4500
+            }
+          }
+          queue_mapping {
+            queue_id: 1
+            priority: PRIO_1
+            weight: 1
+            minimum_guaranteed_cells: 100
+            pool: EGRESS_APP_POOL_1
+            base_use_limit: 200
+            baf: BAF_80_PERCENT
+            hysteresis: 50
+            max_rate_bytes {
+              rate_bps: 100000000
+              burst_bytes: 9000
+            }
+            min_rate_bytes {
+              rate_bps: 1000000
+              burst_bytes: 4500
             }
           }
         }
@@ -384,31 +564,26 @@ vendor_config {
 
 ### Running with BSP or on Tofino model
 
-```bash
-start-stratum.sh -bf_sim -enable_onlp=false
-```
+On some supported platforms the BSP-based implementation is chosen by default.
+This selection can be overwritten with the `-bf_switchd_cfg` flag:
 
-The `-bf_sim` flag tells Stratum not to use the Phal ONLP implementation, but
-`PhalSim`, a "fake" Phal implementation, instead. Use this flag when you are
-using a vendor-provided BSP or running Stratum with the Tofino software model.
-Additionally, the ONLP plugin has to be disabled with `-enable_onlp=false`.
+```bash
+start-stratum.sh -bf_switchd_cfg=/usr/share/stratum/tofino_skip_p4.conf
+```
 
 ### Running the binary in BSP-less mode
 
 ```bash
-start-stratum.sh --bf_switchd_cfg=/usr/share/stratum/tofino_skip_p4_no_bsp.conf -enable_onlp=true
+start-stratum.sh --bf_switchd_cfg=/usr/share/stratum/tofino_skip_p4_no_bsp.conf
 ```
 
-If ONLP support is available for your platform, you do not need to use a
-BSP. Instead the platform vendor can provide a JSON "port mapping" file (see
+The platform vendor can provide a JSON "port mapping" file (see
 this [example](platforms/x86-64-accton-wedge100bf-32x-r0.json) for the Wedge
-100bf-32x) and Stratum takes care of making the information exposed by ONLP
-available to the SDE as needed.
+100bf-32x) and Stratum takes care of making the information to the SDE as needed.
 
 To start Stratum in BSP-less mode, copy the JSON port mapping file for your
 platform to `/etc/stratum/<platform>/port_map.json` and run `start-stratum.sh` with
-`--bf_switchd_cfg=stratum/hal/bin/barefoot/tofino_skip_p4_no_bsp.conf`. Make
-sure to include the `-enable_onlp=true` flag to activate the ONLP plugin.
+`--bf_switchd_cfg=stratum/hal/bin/barefoot/tofino_skip_p4_no_bsp.conf`.
 
 Platforms with repeaters (such as the Wedge 100bf-65x) are not currently
 supported in BSP-less mode.
@@ -482,6 +657,30 @@ short, it requires that the binary strings must not contain redundant bytes,
 behavior. **This flag will be removed in a future release and canonical byte
 strings will be the default.**
 
+
+### Experimental P4Runtime translation support
+
+The `stratum_bfrt` target supports P4Runtime translation which helps to translate
+between SDN port and the SDK port.
+
+To enable this, you need to create a new port type in you P4 code and use this type
+for match field and action parameter, for example:
+
+```p4
+@p4runtime_translation("tna/PortId_t", 32)
+type bit<9> FabricPortId_t;
+```
+
+To enable it on Stratum, add `--experimental_enable_p4runtime_translation` flag
+when starting Stratum.
+
+Note that `stratum_bfrt` also follows the PSA port spec, below are reserved ports
+when using `stratum_bfrt`:
+
+- `0x00000000`: Unspecified port.
+- `0xFFFFFFFD`: CPU port.
+- `0xFFFFFF00` - `0xFFFFFF03`: Recirculation ports for pipeline 0 - 3.
+
 -----
 
 ## Troubleshooting
@@ -535,50 +734,31 @@ particularly large and does not fit in the [maximum receive message size](https:
 Although we set a reasonable default, the value can be adjusted with Stratum's
 `-grpc_max_recv_msg_size` flag.
 
-### TNA P4 programs on Stratum-bf / PI Node
+### Checking the Switch or ASIC revision number
 
-When using Stratum with the legacy PI node backend, only limited support for P4
-programs targeting TNA architecture is provided. Such programs must be compiled
-with the `--p4runtime-force-std-externs` bf-p4c flag, or pushing the pipeline
-will crash the switch:
+Some switch models and ASIC chips are updated over time, but the old devices
+remain in circulation.
+The following commands allow you to check the revision of your device.
 
-```
-2020-12-07 20:09:43.810989 BF_PI ERROR - handles_map_add: error when inserting into handles map
-*** SIGSEGV (@0x0) received by PID 16282 (TID 0x7f5f599dc700) from PID 0; stack trace: ***
-    @     0x7f5f725c60e0 (unknown)
-    @           0xa7456f p4info_get_at
-    @           0xa74319 pi_p4info_table_get_implementation
-    @     0x7f5f744b9add (unknown)
-    @     0x7f5f744b9ee3 pi_state_assign_device
-    @     0x7f5f744b2f47 (unknown)
-    @     0x7f5f73e29b10 bf_drv_notify_clients_dev_add
-    @     0x7f5f73e26b45 bf_device_add
-    @           0x9f0689 bf_switchd_device_add.part.4
-    @           0x9f10b7 bf_switchd_device_add_with_p4.part.5
-    @     0x7f5f744b33a5 _pi_update_device_start
-    @           0xa6eef5 pi_update_device_start
-    @           0x9f8403 pi::fe::proto::DeviceMgrImp::pipeline_config_set()
-    @           0x9f7e31 pi::fe::proto::DeviceMgr::pipeline_config_set()
-    @           0x7220d6 stratum::hal::pi::PINode::PushForwardingPipelineConfig()
-    @           0x41fb99 stratum::hal::barefoot::BfSwitch::PushForwardingPipelineConfig()
-    @           0x65db56 stratum::hal::P4Service::SetForwardingPipelineConfig()
+For use with the `ucli` in a running Stratum instance:
+```bash
+# Check for part_revision_number and the codes A0 or B0.
+efuse 0
+pm sku -d
 ```
 
-Use Stratum-bfrt with the BfRt backend if you need advanced functionality.
-
-### Error pushing pipeline to Stratum-bf
-
-```
-E20201207 20:44:53.611562 18416 PI-device_mgr.cpp:0] Error in first phase of device update
-E20201207 20:44:53.611724 18416 bf_switch.cc:135] Return Error: pi_node->PushForwardingPipelineConfig(config) failed with generic::unknown:
-E20201207 20:44:53.612004 18416 p4_service.cc:381] generic::unknown: Error without message at stratum/hal/lib/common/p4_service.cc:381
-E20201207 20:44:53.612030 18416 error_buffer.cc:30] (p4_service.cc:422): Failed to set forwarding pipeline config for node 1: Error without message at stratum/hal/lib/common/p4_service.cc:381
+In a bash shell on the switch:
+```bash
+lspci -d 1d1c:
+# 05:00.0 Unassigned class [ff00]: Device 1d1c:0010 (rev 10)
 ```
 
-This error occurs when the binary pipeline is not in the correct format.
-Make sure the pipeline config binary has been packed correctly for PI node, like
-so: [update_config.py](/stratum/hal/bin/barefoot/update_config.py#L39-L52).
-You cannot push the compiler output (e.g. `tofino.bin`) directly.
+### SDE config mismatch and connection error
 
-Also, consider moving to the newer [protobuf](README.pipeline.md) based pipeline
-format.
+`connect failed. Error: Connection refused`
+
+This error means that Stratum was started with the expectation of a BSP
+(`-bf_switchd_cfg=...`), but no BSP was actually found. Check that you are
+passing in the right config, depending on how you compiled the SDE:
+`tofino_skip_p4.conf` vs. `tofino_skip_p4_no_bsp.conf `. Normally the
+`start-stratum.sh` script will pick the right value.

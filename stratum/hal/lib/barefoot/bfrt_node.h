@@ -13,8 +13,8 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/hal/lib/barefoot/bf.pb.h"
-#include "stratum/hal/lib/barefoot/bfrt_action_profile_manager.h"
 #include "stratum/hal/lib/barefoot/bfrt_counter_manager.h"
+#include "stratum/hal/lib/barefoot/bfrt_p4runtime_translator.h"
 #include "stratum/hal/lib/barefoot/bfrt_packetio_manager.h"
 #include "stratum/hal/lib/barefoot/bfrt_pre_manager.h"
 #include "stratum/hal/lib/barefoot/bfrt_table_manager.h"
@@ -65,10 +65,10 @@ class BfrtNode {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<BfrtNode> CreateInstance(
       BfrtTableManager* bfrt_table_manager,
-      BfrtActionProfileManager* bfrt_action_profile_manager,
       BfrtPacketioManager* bfrt_packetio_manager,
       BfrtPreManager* bfrt_pre_manager,
       BfrtCounterManager* bfrt_counter_manager,
+      BfrtP4RuntimeTranslator* bfrt_p4runtime_translator,
       BfSdeInterface* bf_sde_interface, int device_id);
 
   // BfrtNode is neither copyable nor movable.
@@ -85,10 +85,10 @@ class BfrtNode {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   BfrtNode(BfrtTableManager* bfrt_table_manager,
-           BfrtActionProfileManager* bfrt_action_profile_manager,
            BfrtPacketioManager* bfrt_packetio_manager,
            BfrtPreManager* bfrt_pre_manager,
            BfrtCounterManager* bfrt_counter_manager,
+           BfrtP4RuntimeTranslator* bfrt_p4runtime_translator,
            BfSdeInterface* bf_sde_interface, int device_id);
 
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata
@@ -127,10 +127,13 @@ class BfrtNode {
 
   // Managers. Not owned by this class.
   BfrtTableManager* bfrt_table_manager_;
-  BfrtActionProfileManager* bfrt_action_profile_manager_;
   BfrtPacketioManager* bfrt_packetio_manager_;
   BfrtPreManager* bfrt_pre_manager_;
   BfrtCounterManager* bfrt_counter_manager_;
+
+  // Pointer to a P4RuntimeTranslatorInterface implementation that includes all
+  // translator logic. Not owned by this class.
+  BfrtP4RuntimeTranslator* bfrt_p4runtime_translator_ = nullptr;
 
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
@@ -140,6 +143,8 @@ class BfrtNode {
   // Fixed zero-based BFRT device_id number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.
   const int device_id_;
+
+  friend class BfrtNodeTest;
 };
 
 }  // namespace barefoot

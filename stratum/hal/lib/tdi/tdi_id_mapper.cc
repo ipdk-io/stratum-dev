@@ -13,6 +13,7 @@
 #include "stratum/hal/lib/tdi/macros.h"
 
 // NOTE: This module should be target-neutral.
+// TODO (Refactoring): Abstract the include headers and defines based on target properly
 #if defined(TOFINO_TARGET)
   #include "tdi_tofino/tdi_tofino_defs.h"
 #elif defined(DPDK_TARGET)
@@ -168,7 +169,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
   try {
     nlohmann::json context_json =
         nlohmann::json::parse(context_json_content, nullptr, false);
-    CHECK_RETURN_IF_FALSE(!context_json.is_discarded())
+    RET_CHECK(!context_json.is_discarded())
         << "Failed to parse context.json";
 
     // Builds mappings for ActionProfile and ActionSelector.
@@ -193,10 +194,10 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
       }
 
       const auto& action_selector_name = selection_table_refs[0]["name"];
-      CHECK_RETURN_IF_FALSE(!action_selector_name.empty())
+      RET_CHECK(!action_selector_name.empty())
           << "ActionSelector for ActionProfile " << action_profile_name
           << " name is empty, this should not happened";
-      CHECK_RETURN_IF_FALSE(gtl::InsertIfNotPresent(
+      RET_CHECK(gtl::InsertIfNotPresent(
           &prof_to_sel, action_profile_name, action_selector_name))
           << "Action profile with name " << action_profile_name
           << " already exists.";
@@ -219,11 +220,11 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
     table_name = table->tableInfoGet()->nameGet();
 
     if (table_type == SDE_TABLE_TYPE_ACTION_PROFILE) {
-      CHECK_RETURN_IF_FALSE(
+      RET_CHECK(
           gtl::InsertIfNotPresent(&act_prof_tdi_ids, table_name, table_id))
           << "Action profile with name " << table_name << " already exists.";
     } else if (table_type == SDE_TABLE_TYPE_SELECTOR) {
-      CHECK_RETURN_IF_FALSE(
+      RET_CHECK(
           gtl::InsertIfNotPresent(&selector_tdi_ids, table_name, table_id))
           << "Action selector with name " << table_name << " already exists.";
     }
@@ -253,9 +254,9 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
         break;
       }
     }
-    CHECK_RETURN_IF_FALSE(prof_id != 0)
+    RET_CHECK(prof_id != 0)
         << "Unable to find ID for action profile " << prof;
-    CHECK_RETURN_IF_FALSE(sel_id != 0)
+    RET_CHECK(sel_id != 0)
         << "Unable to find ID for action selector " << sel;
 
     act_profile_to_selector_mapping_[prof_id] = sel_id;
@@ -266,14 +267,14 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
 
 ::util::StatusOr<uint32> TdiIdMapper::GetTdiRtId(uint32 p4info_id) const {
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(gtl::ContainsKey(p4info_to_tdi_id_, p4info_id))
+  RET_CHECK(gtl::ContainsKey(p4info_to_tdi_id_, p4info_id))
       << "Unable to find TDI id from p4info id: " << p4info_id;
   return gtl::FindOrDie(p4info_to_tdi_id_, p4info_id);
 }
 
 ::util::StatusOr<uint32> TdiIdMapper::GetP4InfoId(tdi_id_t tdi_id) const {
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(gtl::ContainsKey(tdi_to_p4info_id_, tdi_id))
+  RET_CHECK(gtl::ContainsKey(tdi_to_p4info_id_, tdi_id))
       << "Unable to find p4info id from TDI id: " << tdi_id;
   return gtl::FindOrDie(tdi_to_p4info_id_, tdi_id);
 }
@@ -281,7 +282,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
 ::util::StatusOr<tdi_id_t> TdiIdMapper::GetActionSelectorTdiRtId(
     tdi_id_t action_profile_id) const {
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(
       gtl::ContainsKey(act_profile_to_selector_mapping_, action_profile_id))
       << "Unable to find action selector of an action profile: "
       << action_profile_id;
@@ -291,7 +292,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
 ::util::StatusOr<tdi_id_t> TdiIdMapper::GetActionProfileTdiRtId(
     tdi_id_t action_selector_id) const {
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(
       gtl::ContainsKey(act_selector_to_profile_mapping_, action_selector_id))
       << "Unable to find action profile of an action selector: "
       << action_selector_id;

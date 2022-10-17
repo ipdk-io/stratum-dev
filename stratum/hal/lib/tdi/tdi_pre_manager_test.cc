@@ -13,30 +13,37 @@
 #include "gtest/gtest.h"
 #include "stratum/glue/status/status_test_util.h"
 #include "stratum/hal/lib/tdi/tdi_sde_mock.h"
+#include "stratum/hal/lib/common/writer_mock.h"
+#include "stratum/lib/test_utils/matchers.h"
 #include "stratum/lib/utils.h"
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
+using test_utils::EqualsProto;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::HasSubstr;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
+using ::testing::SetArgPointee;
+using ::testing::StrictMock;
+using ::testing::UnorderedElementsAreArray;
 
 class TdiPreManagerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    tdi_sde_wrapper_mock_ = absl::make_unique<TdiSdeMock>();
+    tdi_sde_wrapper_mock_ = absl::make_unique<StrictMock<TdiSdeMock>>();
     tdi_pre_manager_ =
         TdiPreManager::CreateInstance(tdi_sde_wrapper_mock_.get(), kDevice1);
   }
 
   static constexpr int kDevice1 = 0;
 
-  std::unique_ptr<TdiSdeMock> tdi_sde_wrapper_mock_;
+  // Strict mock to ensure we capture all SDE calls.
+  std::unique_ptr<StrictMock<TdiSdeMock>> tdi_sde_wrapper_mock_;
   std::unique_ptr<TdiPreManager> tdi_pre_manager_;
 };
 
@@ -81,6 +88,7 @@ TEST_F(TdiPreManagerTest, DeleteMulticastGroupTest) {
                                              ::p4::v1::Update::DELETE, entry));
 }
 
+// TODO(Ravi): New tests are added for clone sessions and multicast groups, check if applicable for Tofino TDI
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

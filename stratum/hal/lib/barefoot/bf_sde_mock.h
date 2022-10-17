@@ -11,7 +11,7 @@
 #include "gmock/gmock.h"
 #include "stratum/hal/lib/barefoot/bf_sde_interface.h"
 
-DEFINE_bool(incompatible_enable_bfrt_legacy_bytestring_responses, true,
+DEFINE_bool(incompatible_enable_bfrt_legacy_bytestring_responses, false,
             "Enables the legacy padded byte string format in P4Runtime "
             "responses for Stratum-bfrt. The strings are left unchanged from "
             "the underlying SDE.");
@@ -44,6 +44,7 @@ class TableKeyMock : public BfSdeInterface::TableKeyInterface {
                                               std::string* high));
   MOCK_METHOD1(SetPriority, ::util::Status(uint32 priority));
   MOCK_CONST_METHOD1(GetPriority, ::util::Status(uint32* priority));
+  MOCK_CONST_METHOD1(GetTableId, ::util::Status(uint32* table_id));
 };
 
 class TableDataMock : public BfSdeInterface::TableDataInterface {
@@ -91,6 +92,9 @@ class BfSdeMock : public BfSdeInterface {
                               uint32 burst_size, uint64 rate_per_second));
   MOCK_METHOD3(EnablePortShaping,
                ::util::Status(int device, int port, TriState enable));
+  MOCK_METHOD2(ConfigureQos,
+               ::util::Status(int device,
+                              const TofinoConfig::TofinoQosConfig& qos_config));
   MOCK_METHOD3(SetPortAutonegPolicy,
                ::util::Status(int device, int port, TriState autoneg));
   MOCK_METHOD3(SetPortMtu, ::util::Status(int device, int port, int32 mtu));
@@ -152,18 +156,18 @@ class BfSdeMock : public BfSdeInterface {
                      std::shared_ptr<BfSdeInterface::SessionInterface> session,
                      uint32 group_id, std::vector<uint32>* group_ids,
                      std::vector<std::vector<uint32>>* mc_node_ids));
-  MOCK_METHOD6(
+  MOCK_METHOD7(
       InsertCloneSession,
       ::util::Status(int device,
                      std::shared_ptr<BfSdeInterface::SessionInterface> session,
-                     uint32 session_id, int egress_port, int cos,
-                     int max_pkt_len));
-  MOCK_METHOD6(
+                     uint32 session_id, int egress_port, int egress_queue,
+                     int cos, int max_pkt_len));
+  MOCK_METHOD7(
       ModifyCloneSession,
       ::util::Status(int device,
                      std::shared_ptr<BfSdeInterface::SessionInterface> session,
-                     uint32 session_id, int egress_port, int cos,
-                     int max_pkt_len));
+                     uint32 session_id, int egress_port, int egress_queue,
+                     int cos, int max_pkt_len));
   MOCK_METHOD3(GetNodesInMulticastGroup,
                ::util::StatusOr<std::vector<uint32>>(
                    int device,

@@ -14,6 +14,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/barefoot/bf_sde_interface.h"
+#include "stratum/hal/lib/barefoot/bfrt_p4runtime_translator.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 
@@ -23,36 +24,49 @@ namespace barefoot {
 
 class BfrtCounterManager {
  public:
+  virtual ~BfrtCounterManager();
+
   // Pushes the forwarding pipeline config
-  ::util::Status PushForwardingPipelineConfig(const BfrtDeviceConfig& config)
-      LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status PushForwardingPipelineConfig(
+      const BfrtDeviceConfig& config) LOCKS_EXCLUDED(lock_);
 
   // Writes an indrect counter entry.
-  ::util::Status WriteIndirectCounterEntry(
+  virtual ::util::Status WriteIndirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::CounterEntry& counter_entry) LOCKS_EXCLUDED(lock_);
 
   // Reads an indirect counter entry.
-  ::util::Status ReadIndirectCounterEntry(
+  virtual ::util::Status ReadIndirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::CounterEntry& counter_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
 
   // Creates a table manager instance.
   static std::unique_ptr<BfrtCounterManager> CreateInstance(
-      BfSdeInterface* bf_sde_interface_, int device);
+      BfSdeInterface* bf_sde_interface_,
+      BfrtP4RuntimeTranslator* bfrt_p4runtime_translator, int device);
+
+ protected:
+  // Default constructor. To be called by the Mock class instance only.
+  BfrtCounterManager();
 
  private:
-  // Private constructure, we can create the instance by using `CreateInstance`
+  // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
-  explicit BfrtCounterManager(BfSdeInterface* bf_sde_interface_, int device);
+  explicit BfrtCounterManager(
+      BfSdeInterface* bf_sde_interface_,
+      BfrtP4RuntimeTranslator* bfrt_p4runtime_translator, int device);
 
   // Reader-writer lock used to protect access to pipeline state.
   mutable absl::Mutex lock_;
 
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   BfSdeInterface* bf_sde_interface_ = nullptr;  // not owned by this class.
+
+  // Pointer to a BfrtTranslator implementation that translate P4Runtime
+  // entities, not owned by this class.
+  BfrtP4RuntimeTranslator* bfrt_p4runtime_translator_ = nullptr;
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

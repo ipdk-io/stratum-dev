@@ -6,7 +6,6 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_NODE_MOCK_H_
 #define STRATUM_HAL_LIB_TDI_TDI_NODE_MOCK_H_
 
-#include <map>
 #include <memory>
 #include <vector>
 

@@ -90,6 +90,9 @@ class BfSdeInterface {
 
     // Gets the priority of this table key. 0 is the highest priority.
     virtual ::util::Status GetPriority(uint32* priority) const = 0;
+
+    // Gets the BfRt (not P4) table ID associated with this table key.
+    virtual ::util::Status GetTableId(uint32* table_id) const = 0;
   };
 
   // TableKeyInterface is a proxy class for BfRt table data.
@@ -189,6 +192,10 @@ class BfSdeInterface {
   // Enable port shaping on a port.
   virtual ::util::Status EnablePortShaping(int device, int port,
                                            TriState enable) = 0;
+
+  // Configure QoS based on the given config.
+  virtual ::util::Status ConfigureQos(
+      int device, const TofinoConfig::TofinoQosConfig& qos_config) = 0;
 
   // Get the operational state of a port.
   virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
@@ -301,12 +308,14 @@ class BfSdeInterface {
   // Inserts a clone session ($mirror.cfg table).
   virtual ::util::Status InsertCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) = 0;
+      uint32 session_id, int egress_port, int egress_queue, int cos,
+      int max_pkt_len) = 0;
 
   // Modifies a clone session ($mirror.cfg table).
   virtual ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id, int egress_port, int cos, int max_pkt_len) = 0;
+      uint32 session_id, int egress_port, int egress_queue, int cos,
+      int max_pkt_len) = 0;
 
   // Deletes a clone session ($mirror.cfg table).
   virtual ::util::Status DeleteCloneSession(
@@ -425,7 +434,7 @@ class BfSdeInterface {
       uint32 table_id, int group_id) = 0;
 
   // Returns the action profile group from the given table, or all
-  // groups if member ID is 0.
+  // groups if group ID is 0.
   virtual ::util::Status GetActionProfileGroups(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, std::vector<int>* group_ids,

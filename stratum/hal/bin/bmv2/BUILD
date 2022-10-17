@@ -2,7 +2,7 @@
 # Copyright 2018-present Open Networking Foundation
 # SPDX-License-Identifier: Apache-2.0
 
-load("//bazel:rules.bzl", "HOST_ARCHES", "stratum_cc_binary")
+load("//bazel:rules.bzl", "HOST_ARCHES", "stratum_cc_binary", "stratum_license_tar")
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 
 licenses(["notice"])  # Apache v2
@@ -54,19 +54,23 @@ pkg_tar(
     name = "stratum_bmv2_config",
     srcs = [
         "chassis_config.pb.txt",
+        "dummy.json",
         "stratum_bmv2.environment",
+        "//stratum/hal/lib/common:gnmi_caps.pb.txt",
     ],
     mode = "0644",
     package_dir = "/etc/stratum",
-    strip_prefix = "/stratum/hal/bin/bmv2",
 )
 
-pkg_tar(
-    name = "stratum_bmv2_pipeline",
-    srcs = ["dummy.json"],
+stratum_license_tar(
+    name = "stratum_bmv2_legal",
+    dep_notices = [
+        "//legal:NOTICE.common.txt",
+        "//legal:NOTICE.pi.txt",
+        "//legal:NOTICE.bmv2.txt",
+    ],
     mode = "0644",
-    package_dir = "/etc/stratum",
-    strip_prefix = "/stratum/hal/bin/bmv2",
+    package_dir = "/usr/share/doc/stratum-bmv2/",
 )
 
 pkg_tar(
@@ -75,7 +79,7 @@ pkg_tar(
     deps = [
         ":stratum_bmv2_bin",
         ":stratum_bmv2_config",
-        ":stratum_bmv2_pipeline",
+        ":stratum_bmv2_legal",
         ":stratum_bmv2_service",
         "@local_bmv2_bin//:bmv2_library_files",
     ],
@@ -86,9 +90,9 @@ pkg_deb(
     architecture = "amd64",
     data = ":stratum_bmv2_data",
     depends = [
-        "libboost-filesystem1.62.0",
-        "libboost-program-options1.62.0",
-        "libboost-thread1.62.0",
+        "libboost-filesystem1.67.0",
+        "libboost-program-options1.67.0",
+        "libboost-thread1.67.0",
         "libgmp10",
         "libjudydebian1",
         "libpcap-dev",

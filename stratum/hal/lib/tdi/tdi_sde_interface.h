@@ -37,7 +37,7 @@ class TdiSdeInterface {
     PortState state;
     absl::Time time_last_changed;
   };
-
+//TODO(Refactoring): Move the target specific port parameters out of sde_interface.h
   struct HotplugConfigParams {
     uint32 qemu_socket_port;
     uint64 qemu_vm_mac_address;
@@ -113,7 +113,7 @@ class TdiSdeInterface {
                                     std::string* high) const = 0;
 
     // Sets the priority of this table key. 0 is the highest priority.
-    virtual ::util::Status SetPriority(uint64 priority) = 0;
+    virtual ::util::Status SetPriority(uint32 priority) = 0;
 
     // Gets the priority of this table key. 0 is the highest priority.
     virtual ::util::Status GetPriority(uint32* priority) const = 0;
@@ -193,6 +193,7 @@ class TdiSdeInterface {
   // Unregisters the port status writer.
   virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
 
+  //TODO(Refactoring): Move the target specific port parameters out of sde_interface.h
   // Get Port Info
   virtual ::util::Status GetPortInfo(int device, int port,
                                      TargetDatapathId *target_dp_id) = 0;
@@ -229,6 +230,10 @@ class TdiSdeInterface {
   // Enable port shaping on a port.
   virtual ::util::Status EnablePortShaping(int device, int port,
                                            TriState enable) = 0;
+  /* TODO(Ravi)Configure QoS based on the given config.
+  virtual ::util::Status ConfigureQos(
+      int device, const TofinoConfig::TofinoQosConfig& qos_config) = 0;
+  */
 
   // Get the operational state of a port.
   virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
@@ -339,15 +344,15 @@ class TdiSdeInterface {
       std::vector<std::vector<uint32>>* mc_node_ids) = 0;
 
   // Inserts a clone session ($mirror.cfg table).
+  /* TODO (Ravi): Check if new parameter egress_queue will be supported with TDI
+   * for CloneSession API's */
   virtual ::util::Status InsertCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int cos, int max_pkt_len) = 0;
-
   // Modifies a clone session ($mirror.cfg table).
   virtual ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int cos, int max_pkt_len) = 0;
-
   // Deletes a clone session ($mirror.cfg table).
   virtual ::util::Status DeleteCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,

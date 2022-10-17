@@ -28,10 +28,21 @@ namespace tdi {
 // Lock which protects chassis state across the entire switch.
 extern absl::Mutex chassis_lock;
 
+// The "TofinoChassisManager" class encapsulates all the chassis-related
+// functionalities needed in TofinoSwitch class. This class is in charge
+// of maintaining and updating all the port/node/chassis related datastructures.
+// NOTE: The maps in this class may be accessed in such a way where the order of
+// the keys is important. That is why we chose to use std::map as opposed to
+// std::unordered_map or absl::flat_hash_map and accept a little bit of
+// performance hit when doing lookup.
 class TofinoChassisManager {
  public:
   virtual ~TofinoChassisManager();
 
+  // Pushes the chassis config. If the class is not initialized, this function
+  // calls RegisterEventWriters() to register those with the SDE. Then it
+  // applies the ChassisConfig proto to the switch and stores internal copies of
+  // the configuration for later re-application with ReplayChassisConfig.
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
@@ -58,17 +69,20 @@ class TofinoChassisManager {
                                          PortCounters* counters)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::Status ReplayPortsConfig(uint64 node_id)
+  // Replays the current configuration onto the ASIC. This function is called by
+  // the switch after a pipeline push (PushForwardingPipelineConfig), as the
+  // push resets most device state, including port configuration.
+  virtual ::util::Status ReplayChassisConfig(uint64 node_id)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status GetFrontPanelPortInfo(uint64 node_id, uint32 port_id,
                                                FrontPanelPortInfo* fp_port_info)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToUnitMap() const
+  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToDeviceMap() const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
+  virtual ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Factory function for creating the instance of the class.
@@ -236,10 +250,10 @@ class TofinoChassisManager {
       GUARDED_BY(gnmi_event_lock_);
 
   // Map from unit number to the node ID as specified by the config.
-  std::map<int, uint64> unit_to_node_id_ GUARDED_BY(chassis_lock);
+  std::map<int, uint64> device_to_node_id_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to unit number.
-  std::map<uint64, int> node_id_to_unit_ GUARDED_BY(chassis_lock);
+  std::map<uint64, int> node_id_to_device_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to another map from port ID to PortState representing
   // the state of the singleton port uniquely identified by (node ID, port ID).
@@ -281,6 +295,9 @@ class TofinoChassisManager {
   std::map<uint64, TofinoConfig::DeflectOnPacketDropConfig>
       node_id_to_deflect_on_drop_config_ GUARDED_BY(chassis_lock);
 
+  // Map from node ID to QoS configuration.
+  std::map<uint64, TofinoConfig::TofinoQosConfig> node_id_to_qos_config_
+      GUARDED_BY(chassis_lock);
   // Map from PortKey representing (slot, port) of a transceiver port to the
   // state of the transceiver module plugged into that (slot, port).
   std::map<PortKey, HwState> xcvr_port_key_to_xcvr_state_

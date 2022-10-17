@@ -2,11 +2,9 @@
 // Copyright 2018-present Open Networking Foundation
 // SPDX-License-Identifier: Apache-2.0
 
-#include <linux/reboot.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <sys/reboot.h>
-#include <sys/sysinfo.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -331,9 +329,9 @@ std::string FileSystemHelper::GetHashSum(
 }
 
 ::util::Status FileSystemHelper::RemoveDir(const std::string& path) const {
-  CHECK_RETURN_IF_FALSE(!path.empty());
-  CHECK_RETURN_IF_FALSE(PathExists(path)) << path << " does not exist.";
-  CHECK_RETURN_IF_FALSE(IsDir(path)) << path << " is not a dir.";
+  RET_CHECK(!path.empty());
+  RET_CHECK(PathExists(path)) << path << " does not exist.";
+  RET_CHECK(IsDir(path)) << path << " is not a dir.";
   // TODO(unknown): Is Dir Empty ?
   int ret = remove(path.c_str());
   if (ret != 0) {
@@ -353,8 +351,8 @@ std::string FileSystemHelper::GetHashSum(
   // Return failure if reboot was not successful
   if (reboot_return_val != 0) {
     LOG(ERROR) << "Failed to reboot the system: " << strerror(errno);
-    RETURN_ERROR(ERR_INTERNAL)
-        << "Failed to reboot the system: " << strerror(errno);
+    return MAKE_ERROR(ERR_INTERNAL)
+           << "Failed to reboot the system: " << strerror(errno);
   }
   return ::util::OkStatus();
 }

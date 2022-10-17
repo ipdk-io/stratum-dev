@@ -16,6 +16,7 @@
 
 namespace stratum {
 namespace hal {
+namespace {
 
 using ::testing::HasSubstr;
 
@@ -87,6 +88,79 @@ TEST(ByteStringTest, ByteStringToP4RuntimeByteStringCorrect) {
   EXPECT_EQ("", ByteStringToP4RuntimeByteString(""));
   EXPECT_EQ(std::string("\xab", 1), ByteStringToP4RuntimeByteString(std::string(
                                         "\x00\x00\x00\x00\xab", 5)));
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigEmptyValid) {
+  constexpr char kInvalidMeterConfigText[] = R"pb(
+    # Empty MeterConfig, all fields zero.
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kInvalidMeterConfigText, &config));
+  EXPECT_OK(IsValidMeterConfig(config));
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigZeroBurstInvalid) {
+  constexpr char kInvalidMeterConfigText[] = R"pb(
+    # Zero burst sizes.
+    cir: 100
+    pir: 200
+    cburst: 0
+    pburst: 0
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kInvalidMeterConfigText, &config));
+  EXPECT_OK(IsValidMeterConfig(config));
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigRatesInvalid) {
+  constexpr char kInvalidMeterConfigText[] = R"pb(
+    # Commited rate greater peak rate.
+    cir: 500
+    pir: 400
+    cburst: 100
+    pburst: 100
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kInvalidMeterConfigText, &config));
+  EXPECT_FALSE(IsValidMeterConfig(config).ok());
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigValid) {
+  constexpr char kValidMeterConfigText[] = R"pb(
+    cir: 50
+    pir: 100
+    cburst: 400
+    pburst: 800
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kValidMeterConfigText, &config));
+  EXPECT_OK(IsValidMeterConfig(config));
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigBurstsValid) {
+  constexpr char kValidMeterConfigText[] = R"pb(
+    # Commited burst size is allowed to be greater than peak burst size.
+    cir: 1000
+    pir: 2000
+    cburst: 800
+    pburst: 400
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kValidMeterConfigText, &config));
+  EXPECT_OK(IsValidMeterConfig(config));
+}
+
+TEST(ValidMeterConfigTest, IsValidMeterConfigZeroRateValid) {
+  constexpr char kValidMeterConfigText[] = R"pb(
+    # Zero rates are allowed.
+    cir: 0
+    pir: 0
+    cburst: 400
+    pburst: 800
+  )pb";
+  ::p4::v1::MeterConfig config;
+  CHECK_OK(ParseProtoFromString(kValidMeterConfigText, &config));
+  EXPECT_OK(IsValidMeterConfig(config));
 }
 
 // This test fixture provides a common P4PipelineConfig for these tests.
@@ -199,5 +273,6 @@ TEST_F(TableMapValueTest, FindFailValueWithWrongDescriptorCaseWithLogObject) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("p4-object"));
 }
 
+}  // namespace
 }  // namespace hal
 }  // namespace stratum

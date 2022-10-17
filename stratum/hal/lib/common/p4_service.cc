@@ -9,6 +9,7 @@
 #include <sstream>  // IWYU pragma: keep
 #include <utility>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/memory/memory.h"
 #include "absl/numeric/int128.h"
 #include "absl/strings/str_cat.h"
@@ -18,7 +19,6 @@
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/code.pb.h"
 #include "google/rpc/status.pb.h"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
@@ -57,8 +57,8 @@ namespace hal {
 P4Service::P4Service(OperationMode mode, SwitchInterface* switch_interface,
                      AuthPolicyChecker* auth_policy_checker,
                      ErrorBuffer* error_buffer)
-    : node_id_to_controllers_(),
-      connection_ids_(),
+    : node_id_to_controller_manager_(),
+      num_controller_connections_(),
       forwarding_pipeline_configs_(nullptr),
       mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
@@ -84,8 +84,8 @@ P4Service::~P4Service() {}
 ::util::Status P4Service::Teardown() {
   {
     absl::WriterMutexLock l(&controller_lock_);
-    node_id_to_controllers_.clear();
-    connection_ids_.clear();
+    node_id_to_controller_manager_.clear();
+    num_controller_connections_ = 0;
   }
   {
     absl::WriterMutexLock l(&stream_response_thread_lock_);
@@ -215,6 +215,13 @@ void LogWriteRequest(uint64 node_id, const ::p4::v1::WriteRequest& req,
   if (FLAGS_write_req_log_file.empty()) {
     return;
   }
+  if (results.empty()) {
+    // Nothing to log as the switch interface did not fill in any error details.
+    // TODO(max): Consider logging the requests with the overall status in this
+    //            case. But keep in mind that LogWriteRequest will not be called
+    //            for auth errors or invalid device IDs.
+    return;
+  }
   if (results.size() != req.updates_size()) {
     LOG(ERROR) << "Size mismatch: " << results.size()
                << " != " << req.updates_size() << ". Did not log anything!";
@@ -230,10 +237,8 @@ void LogWriteRequest(uint64 node_id, const ::p4::v1::WriteRequest& req,
   }
   ::util::Status status =
       WriteStringToFile(msg, FLAGS_write_req_log_file, /*append=*/true);
-  if (!status.ok()) {
-    LOG_EVERY_N(ERROR, 50) << "Failed to log the write request: "
-                           << status.error_message();
-  }
+  LOG_IF_EVERY_N(ERROR, !status.ok(), 50)
+      << "Failed to log the write request: " << status.error_message();
 }
 
 // Helper to facilitate logging the read requests to the desired log file.
@@ -241,6 +246,13 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                     const std::vector<::util::Status>& results,
                     const absl::Time timestamp) {
   if (FLAGS_read_req_log_file.empty()) {
+    return;
+  }
+  if (results.empty()) {
+    // Nothing to log as the switch interface did not fill in any error details.
+    // TODO(max): Consider logging the requests with the overall status in this
+    //            case. But keep in mind that LogReadRequest will not be called
+    //            for auth errors or invalid device IDs.
     return;
   }
   if (results.size() != req.entities_size()) {
@@ -258,10 +270,8 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   }
   ::util::Status status =
       WriteStringToFile(msg, FLAGS_read_req_log_file, /*append=*/true);
-  if (!status.ok()) {
-    LOG_EVERY_N(ERROR, 50) << "Failed to log the read request: "
-                           << status.error_message();
-  }
+  LOG_IF_EVERY_N(ERROR, !status.ok(), 50)
+      << "Failed to log the read request: " << status.error_message();
 }
 
 // Helper function to generate a StreamMessageResponse from a failed Status.
@@ -293,6 +303,13 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                           "Invalid device ID.");
   }
 
+  // Check that a forwarding config is present.
+  auto ret = DoGetForwardingPipelineConfig(node_id);
+  if (!ret.ok()) {
+    return ::grpc::Status(ToGrpcCode(ret.status().CanonicalCode()),
+                          ret.status().error_message());
+  }
+
   // Require valid election_id for Write.
   absl::uint128 election_id =
       absl::MakeUint128(req->election_id().high(), req->election_id().low());
@@ -301,9 +318,8 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                           "Invalid election ID.");
   }
 
-  // Make sure this node already has a master controller and the given
-  // election_id and the uri of the client matches those of the master.
-  if (!IsWritePermitted(node_id, election_id, context->peer())) {
+  // Verify the request comes from the primary connection.
+  if (!IsWritePermitted(node_id, *req)) {
     return ::grpc::Status(::grpc::StatusCode::PERMISSION_DENIED,
                           "Write from non-master is not permitted.");
   }
@@ -329,9 +345,38 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   RETURN_IF_NOT_AUTHORIZED(auth_policy_checker_, P4Service, Read, context);
 
   if (!req->entities_size()) return ::grpc::Status::OK;
-  if (req->device_id() == 0) {
+  // device_id is nothing but the node_id specified in the config for the node.
+  uint64 node_id = req->device_id();
+  if (node_id == 0) {
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
                           "Invalid device ID.");
+  }
+
+  // Check that a forwarding config is present.
+  auto ret = DoGetForwardingPipelineConfig(node_id);
+  if (!ret.ok()) {
+    return ::grpc::Status(ToGrpcCode(ret.status().CanonicalCode()),
+                          ret.status().error_message());
+  }
+
+  // To allow role config read filtering in wildcard requests, we have to expand
+  // wildcard reads targeting all tables into individual table wildcards. At the
+  // same time, we must not include entities disallowed by the role config, else
+  // the request fill be denied erroneously later.
+  const ::p4::v1::ReadRequest* original_req = req;  // For later logging.
+  ::p4::v1::ReadRequest expanded_req;
+  if (!req->role().empty()) {
+    expanded_req =
+        ExpandWildcardsInReadRequest(*req, ret.ValueOrDie().p4info());
+    req = &expanded_req;
+    VLOG(1) << "Expanded wildcard read into "
+            << expanded_req.ShortDebugString();
+  }
+
+  // Verify the request only contains entities allowed by the role config.
+  if (!IsReadPermitted(req->device_id(), *req)) {
+    return ::grpc::Status(::grpc::StatusCode::PERMISSION_DENIED,
+                          "Read is not permitted.");
   }
 
   ServerWriterWrapper<::p4::v1::ReadResponse> wrapper(writer);
@@ -340,12 +385,12 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   ::util::Status status =
       switch_interface_->ReadForwardingEntries(*req, &wrapper, &details);
   if (!status.ok()) {
-    LOG(ERROR) << "Failed to read forwarding entries from node "
-               << req->device_id() << ": " << status.error_message();
+    LOG(ERROR) << "Failed to read forwarding entries from node " << node_id
+               << ": " << status.error_message();
   }
 
   // Log debug info for future debugging.
-  LogReadRequest(req->device_id(), *req, details, timestamp);
+  LogReadRequest(node_id, *original_req, details, timestamp);
 
   return ToGrpcStatus(status, details);
 }
@@ -372,11 +417,12 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
         ::grpc::StatusCode::INVALID_ARGUMENT,
         absl::StrCat("Invalid election ID for node ", node_id, "."));
   }
+
   // Make sure this node already has a master controller and the given
-  // election_id and the uri of the client matches those of the
-  // master. According to the P4Runtime specification, only master can perform
+  // election_id and the role of the client matches those of the master.
+  // According to the P4Runtime specification, only master can perform
   // SetForwardingPipelineConfig RPC.
-  if (!IsWritePermitted(node_id, election_id, context->peer())) {
+  if (!IsWritePermitted(node_id, *req)) {
     return ::grpc::Status(
         ::grpc::StatusCode::PERMISSION_DENIED,
         absl::StrCat("SetForwardingPipelineConfig from non-master is not "
@@ -487,40 +533,32 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                           "Invalid device ID.");
   }
 
-  absl::ReaderMutexLock l(&config_lock_);
-  if (forwarding_pipeline_configs_ == nullptr ||
-      forwarding_pipeline_configs_->node_id_to_config_size() == 0) {
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION,
-                          "No valid forwarding pipeline config has been pushed "
-                          "for any node so far.");
+  auto status = DoGetForwardingPipelineConfig(node_id);
+  if (!status.ok()) {
+    return ::grpc::Status(ToGrpcCode(status.status().CanonicalCode()),
+                          status.status().error_message());
   }
-  auto it = forwarding_pipeline_configs_->node_id_to_config().find(node_id);
-  if (it == forwarding_pipeline_configs_->node_id_to_config().end()) {
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION,
-                          absl::StrCat("Invalid node id or no valid forwarding "
-                                       "pipeline config has been pushed for "
-                                       "node ",
-                                       node_id, " yet."));
-  }
+  const ::p4::v1::ForwardingPipelineConfig& config = status.ValueOrDie();
 
   switch (req->response_type()) {
-    case p4::v1::GetForwardingPipelineConfigRequest::ALL: {
-      *resp->mutable_config() = it->second;
+    case ::p4::v1::GetForwardingPipelineConfigRequest::ALL: {
+      *resp->mutable_config() = config;
       break;
     }
-    case p4::v1::GetForwardingPipelineConfigRequest::COOKIE_ONLY: {
-      *resp->mutable_config()->mutable_cookie() = it->second.cookie();
+    case ::p4::v1::GetForwardingPipelineConfigRequest::COOKIE_ONLY: {
+      *resp->mutable_config()->mutable_cookie() = config.cookie();
       break;
     }
-    case p4::v1::GetForwardingPipelineConfigRequest::P4INFO_AND_COOKIE: {
-      *resp->mutable_config()->mutable_p4info() = it->second.p4info();
-      *resp->mutable_config()->mutable_cookie() = it->second.cookie();
+    case ::p4::v1::GetForwardingPipelineConfigRequest::P4INFO_AND_COOKIE: {
+      *resp->mutable_config()->mutable_p4info() = config.p4info();
+      *resp->mutable_config()->mutable_cookie() = config.cookie();
       break;
     }
-    case p4::v1::GetForwardingPipelineConfigRequest::DEVICE_CONFIG_AND_COOKIE: {
+    case ::p4::v1::GetForwardingPipelineConfigRequest::
+        DEVICE_CONFIG_AND_COOKIE: {
       *resp->mutable_config()->mutable_p4_device_config() =
-          it->second.p4_device_config();
-      *resp->mutable_config()->mutable_cookie() = it->second.cookie();
+          config.p4_device_config();
+      *resp->mutable_config()->mutable_cookie() = config.cookie();
       break;
     }
     default:
@@ -545,21 +583,24 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   // 3- At any point of time, only the master stream is capable of sending
   //    and receiving packets.
 
-  // First thing to do is to find a new ID for this connection.
-  auto ret = FindNewConnectionId();
+  // First thing to do is to ensure that we're not already handling too many
+  // connections and increment the counter by one.
+  auto ret = CheckAndIncrementConnectionCount();
   if (!ret.ok()) {
-    return ::grpc::Status(ToGrpcCode(ret.status().CanonicalCode()),
-                          ret.status().error_message());
+    return ::grpc::Status(ToGrpcCode(ret.CanonicalCode()), ret.error_message());
   }
-  uint64 connection_id = ret.ValueOrDie();
+
+  // We create a unique SDN connection object for every active connection.
+  auto sdn_connection =
+      absl::make_unique<p4runtime::SdnConnection>(context, stream);
 
   // The ID of the node this stream channel corresponds to. This is MUST NOT
   // change after it is set for the first time.
   uint64 node_id = 0;
 
   // The cleanup object. Will call RemoveController() upon exit.
-  auto cleaner = gtl::MakeCleanup([this, &node_id, &connection_id]() {
-    this->RemoveController(node_id, connection_id);
+  auto cleaner = absl::MakeCleanup([this, &node_id, &sdn_connection]() {
+    this->RemoveController(node_id, sdn_connection.get());
   });
 
   ::p4::v1::StreamMessageRequest req;
@@ -571,11 +612,6 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                                 "Invalid node (aka device) ID.");
         } else if (node_id == 0) {
           node_id = req.arbitration().device_id();
-        } else if (node_id != req.arbitration().device_id()) {
-          std::stringstream ss;
-          ss << "Node (aka device) ID for this stream has changed. Was "
-             << node_id << ", now is " << req.arbitration().device_id() << ".";
-          return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ss.str());
         }
         absl::uint128 election_id =
             absl::MakeUint128(req.arbitration().election_id().high(),
@@ -585,20 +621,28 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                                 "Invalid election ID.");
         }
         // Try to add the controller to controllers_.
-        auto status = AddOrModifyController(node_id, connection_id, election_id,
-                                            context->peer(), stream);
+        auto status = AddOrModifyController(node_id, req.arbitration(),
+                                            sdn_connection.get());
         if (!status.ok()) {
           return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
                                 status.error_message());
         }
+        LOG(INFO) << "Controller " << sdn_connection->GetName()
+                  << " is connected as "
+                  << (IsMasterController(node_id, sdn_connection->GetRoleName(),
+                                         sdn_connection->GetElectionId())
+                          ? "MASTER"
+                          : "SLAVE")
+                  << " for node (aka device) with ID " << node_id << ".";
         break;
       }
       case ::p4::v1::StreamMessageRequest::kPacket: {
         // If this stream is not the master stream generate a stream error.
         ::util::Status status;
-        if (!IsMasterController(node_id, connection_id)) {
-          status = MAKE_ERROR(ERR_PERMISSION_DENIED)
-                   << "Controller with connection ID " << connection_id
+        if (!IsMasterController(node_id, sdn_connection->GetRoleName(),
+                                sdn_connection->GetElectionId())) {
+          status = MAKE_ERROR(ERR_PERMISSION_DENIED).without_logging()
+                   << "Controller " << sdn_connection->GetName()
                    << " is not a master";
         } else {
           // If master, try to transmit the packet.
@@ -609,16 +653,17 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
           auto resp = ToStreamMessageResponse(status);
           *resp.mutable_error()->mutable_packet_out()->mutable_packet_out() =
               req.packet();
-          stream->Write(resp);  // Best effort.
+          sdn_connection->SendStreamMessageResponse(resp);  // Best effort.
         }
         break;
       }
       case ::p4::v1::StreamMessageRequest::kDigestAck: {
         // If this stream is not the master stream generate a stream error.
         ::util::Status status;
-        if (!IsMasterController(node_id, connection_id)) {
-          status = MAKE_ERROR(ERR_PERMISSION_DENIED)
-                   << "Controller with connection ID " << connection_id
+        if (!IsMasterController(node_id, sdn_connection->GetRoleName(),
+                                sdn_connection->GetElectionId())) {
+          status = MAKE_ERROR(ERR_PERMISSION_DENIED).without_logging()
+                   << "Controller " << sdn_connection->GetName()
                    << " is not a master";
         } else {
           // If master, try to ack the digest.
@@ -632,7 +677,7 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
           *resp.mutable_error()
                ->mutable_digest_list_ack()
                ->mutable_digest_list_ack() = req.digest_ack();
-          stream->Write(resp);  // Best effort.
+          sdn_connection->SendStreamMessageResponse(resp);  // Best effort.
         }
         break;
       }
@@ -647,41 +692,34 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   return ::grpc::Status::OK;
 }
 
-::grpc::Status P4Service::Capabilities(
-    ::grpc::ServerContext* context,
-    const ::p4::v1::CapabilitiesRequest* request,
-    ::p4::v1::CapabilitiesResponse* response) {
-  response->set_p4runtime_api_version(STRINGIFY(P4RUNTIME_VER));
+::grpc::Status P4Service::Capabilities(::grpc::ServerContext* context,
+                                       const ::p4::v1::CapabilitiesRequest* req,
+                                       ::p4::v1::CapabilitiesResponse* resp) {
+  resp->set_p4runtime_api_version(STRINGIFY(P4RUNTIME_VER));
   return ::grpc::Status::OK;
 }
 
-::util::StatusOr<uint64> P4Service::FindNewConnectionId() {
+::util::Status P4Service::CheckAndIncrementConnectionCount() {
   absl::WriterMutexLock l(&controller_lock_);
-  if (static_cast<int>(connection_ids_.size()) >=
-      FLAGS_max_num_controller_connections) {
+
+  if (num_controller_connections_ >= FLAGS_max_num_controller_connections) {
     return MAKE_ERROR(ERR_NO_RESOURCE)
            << "Can have max " << FLAGS_max_num_controller_connections
-           << " active/inactive streams for all the node.";
+           << " active/inactive streams for all the nodes.";
   }
-  uint64 max_connection_id =
-      connection_ids_.empty() ? 0 : *connection_ids_.end();
-  for (uint64 i = 1; i <= max_connection_id + 1; ++i) {
-    if (!connection_ids_.count(i)) {
-      connection_ids_.insert(i);
-      return i;
-    }
-  }
-  return 0;
+  ++num_controller_connections_;
+
+  return ::util::OkStatus();
 }
 
 ::util::Status P4Service::AddOrModifyController(
-    uint64 node_id, uint64 connection_id, absl::uint128 election_id,
-    const std::string& uri, ServerStreamChannelReaderWriter* stream) {
+    uint64 node_id, const ::p4::v1::MasterArbitrationUpdate& update,
+    p4runtime::SdnConnection* controller) {
   // To be called by all the threads handling controller connections.
   absl::WriterMutexLock l(&controller_lock_);
-  auto it = node_id_to_controllers_.find(node_id);
-  if (it == node_id_to_controllers_.end()) {
-    absl::WriterMutexLock l(&stream_response_thread_lock_);
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) {
+    absl::WriterMutexLock lg(&stream_response_thread_lock_);
     // This is the first time we are hearing about this node. Lets try to add
     // an RX response writer for it. If the node_id is invalid, registration
     // will fail.
@@ -711,164 +749,97 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
     // Store Channel and tid for Teardown().
     stream_response_reader_tids_.push_back(tid);
     stream_response_channels_[node_id] = channel;
-    node_id_to_controllers_[node_id] = {};
-    it = node_id_to_controllers_.find(node_id);
+    // SdnControllerManager must be constructed in-place, as it's not moveable.
+    node_id_to_controller_manager_.emplace(node_id, node_id);
+    it = node_id_to_controller_manager_.find(node_id);
   }
 
-  // Need to see if this controller was master before we process this new
-  // request.
-  bool was_master = (!it->second.empty() &&
-                     connection_id == it->second.begin()->connection_id());
-
   // Need to check we do not go beyond the max number of connections per node.
-  if (static_cast<int>(it->second.size()) >=
-      FLAGS_max_num_controllers_per_node) {
+  if (it->second.ActiveConnections() >= FLAGS_max_num_controllers_per_node) {
     return MAKE_ERROR(ERR_NO_RESOURCE)
            << "Cannot have more than " << FLAGS_max_num_controllers_per_node
            << " controllers for node (aka device) with ID " << node_id << ".";
   }
 
-  // Next see if this is a new controller for this node, or this is an existing
-  // one. If there exist a controller with this connection_id remove it first.
-  auto cont = std::find_if(
-      it->second.begin(), it->second.end(),
-      [=](const Controller& c) { return c.connection_id() == connection_id; });
-  if (cont != it->second.end()) {
-    it->second.erase(cont);
+  grpc::Status status = it->second.HandleArbitrationUpdate(update, controller);
+  if (!status.ok()) {
+    return ::util::Status(static_cast<::util::error::Code>(status.error_code()),
+                          status.error_message());
   }
-
-  // Now add the controller to the set of controllers for this node. The add
-  // will possibly lead to a new master.
-  Controller controller(connection_id, election_id, uri, stream);
-  it->second.insert(controller);
-
-  // Find the most updated master. Also find out if this controller is master
-  // after this new Controller instance was inserted.
-  auto master = it->second.begin();  // points to master
-  bool is_master = (election_id == master->election_id());
-
-  // Now we need to do the following:
-  // - If this new controller is master (no matter if it was a master before
-  //   or not), we need to send its election_id to all connected controllers
-  //   for this node. The arbitration token sent back to all the connected
-  //   controllers will have OK status for the master and non-OK for slaves.
-  // - The controller was master but it is not master now, this means a master
-  //   change. We need to notify all connected controllers in this case as well.
-  // - If this new controller is not master now and it was not master before,
-  //   we just need to send the arbitration token with non-OK status to this
-  //   controller.
-  ::p4::v1::StreamMessageResponse resp;
-  resp.mutable_arbitration()->set_device_id(node_id);
-  resp.mutable_arbitration()->mutable_election_id()->set_high(
-      master->election_id_high());
-  resp.mutable_arbitration()->mutable_election_id()->set_low(
-      master->election_id_low());
-  if (is_master || was_master) {
-    resp.mutable_arbitration()->mutable_status()->set_code(::google::rpc::OK);
-    for (const auto& c : it->second) {
-      if (!c.stream()->Write(resp)) {
-        return MAKE_ERROR(ERR_INTERNAL)
-               << "Failed to write to a stream for node " << node_id << ".";
-      }
-      // For non masters.
-      resp.mutable_arbitration()->mutable_status()->set_code(
-          ::google::rpc::ALREADY_EXISTS);
-      resp.mutable_arbitration()->mutable_status()->set_message(
-          "You are not my master!");
-    }
-  } else {
-    resp.mutable_arbitration()->mutable_status()->set_code(
-        ::google::rpc::ALREADY_EXISTS);
-    resp.mutable_arbitration()->mutable_status()->set_message(
-        "You are not my master!");
-    if (!stream->Write(resp)) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to write to a stream for node " << node_id << ".";
-    }
-  }
-
-  LOG(INFO) << "Controller " << controller.Name() << " is connected as "
-            << (is_master ? "MASTER" : "SLAVE")
-            << " for node (aka device) with ID " << node_id << ".";
 
   return ::util::OkStatus();
 }
 
-void P4Service::RemoveController(uint64 node_id, uint64 connection_id) {
+void P4Service::RemoveController(uint64 node_id,
+                                 p4runtime::SdnConnection* connection) {
   absl::WriterMutexLock l(&controller_lock_);
-  connection_ids_.erase(connection_id);
-  auto it = node_id_to_controllers_.find(node_id);
-  if (it == node_id_to_controllers_.end()) return;
-  auto controller = std::find_if(
-      it->second.begin(), it->second.end(),
-      [=](const Controller& c) { return c.connection_id() == connection_id; });
-  if (controller != it->second.end()) {
-    // Need to see if we are removing a master. Removing a master means
-    // mastership change.
-    bool is_master =
-        controller->connection_id() == it->second.begin()->connection_id();
-    // Get the name of the controller before removing it for logging purposes.
-    std::string name = controller->Name();
-    it->second.erase(controller);
-    // Log the transition. Very useful for debugging. Also if there was a change
-    // in mastership, let all other controller know.
-    if (is_master) {
-      if (it->second.empty()) {
-        LOG(INFO) << "Controller " << name << " which was MASTER for node "
-                  << "(aka device) with ID " << node_id
-                  << " is disconnected. The node is "
-                  << "now orphan :(";
-      } else {
-        LOG(INFO) << "Controller " << name << " which was MASTER for node "
-                  << "(aka device) with ID " << node_id
-                  << " is disconnected. New master is "
-                  << it->second.begin()->Name();
-        // We need to let all the connected controller know about this
-        // mastership change.
-        ::p4::v1::StreamMessageResponse resp;
-        resp.mutable_arbitration()->set_device_id(node_id);
-        resp.mutable_arbitration()->mutable_election_id()->set_high(
-            it->second.begin()->election_id_high());
-        resp.mutable_arbitration()->mutable_election_id()->set_low(
-            it->second.begin()->election_id_low());
-        resp.mutable_arbitration()->mutable_status()->set_code(
-            ::google::rpc::OK);
-        for (const auto& c : it->second) {
-          c.stream()->Write(resp);  // Best effort.
-          // For non masters.
-          resp.mutable_arbitration()->mutable_status()->set_code(
-              ::google::rpc::ALREADY_EXISTS);
-          resp.mutable_arbitration()->mutable_status()->set_message(
-              "You are not my master!");
-        }
-      }
-    } else {
-      if (it->second.empty()) {
-        LOG(INFO) << "Controller " << name << " which was SLAVE for node "
-                  << "(aka device) with ID " << node_id
-                  << " is disconnected. The node is now orphan :(";
-      } else {
-        LOG(INFO) << "Controller " << name << " which was SLAVE for node "
-                  << "(aka device) with ID " << node_id << " is disconnected.";
-      }
-    }
+  --num_controller_connections_;
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return;
+  it->second.Disconnect(connection);
+}
+
+bool P4Service::IsWritePermitted(uint64 node_id,
+                                 const ::p4::v1::WriteRequest& req) const {
+  absl::ReaderMutexLock l(&controller_lock_);
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return false;
+  return it->second.AllowRequest(req).ok();
+}
+
+bool P4Service::IsWritePermitted(
+    uint64 node_id,
+    const ::p4::v1::SetForwardingPipelineConfigRequest& req) const {
+  absl::ReaderMutexLock l(&controller_lock_);
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return false;
+  return it->second.AllowRequest(req).ok();
+}
+
+bool P4Service::IsReadPermitted(uint64 node_id,
+                                const p4::v1::ReadRequest& req) const {
+  absl::ReaderMutexLock l(&controller_lock_);
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return true;
+  return it->second.AllowRequest(req).ok();
+}
+
+bool P4Service::IsMasterController(
+    uint64 node_id, const absl::optional<std::string>& role_name,
+    const absl::optional<absl::uint128>& election_id) const {
+  absl::ReaderMutexLock l(&controller_lock_);
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return false;
+  return it->second.AllowRequest(role_name, election_id).ok();
+}
+
+::util::StatusOr<::p4::v1::ForwardingPipelineConfig>
+P4Service::DoGetForwardingPipelineConfig(uint64 node_id) const {
+  absl::ReaderMutexLock l(&config_lock_);
+  if (forwarding_pipeline_configs_ == nullptr ||
+      forwarding_pipeline_configs_->node_id_to_config_size() == 0) {
+    return MAKE_ERROR(ERR_FAILED_PRECONDITION)
+           << "No valid forwarding pipeline config has been pushed for any "
+           << "node so far.";
   }
+  auto it = forwarding_pipeline_configs_->node_id_to_config().find(node_id);
+  if (it == forwarding_pipeline_configs_->node_id_to_config().end()) {
+    return MAKE_ERROR(ERR_FAILED_PRECONDITION)
+           << "Invalid node id or no valid forwarding pipeline config has been "
+           << "pushed for node " << node_id << " yet.";
+  }
+
+  return it->second;
 }
 
-bool P4Service::IsWritePermitted(uint64 node_id, absl::uint128 election_id,
-                                 const std::string& uri) const {
+p4::v1::ReadRequest P4Service::ExpandWildcardsInReadRequest(
+    const p4::v1::ReadRequest& req,
+    const p4::config::v1::P4Info& p4info) const {
   absl::ReaderMutexLock l(&controller_lock_);
-  auto it = node_id_to_controllers_.find(node_id);
-  if (it == node_id_to_controllers_.end() || it->second.empty()) return false;
-  // TODO(unknown): Find a way to check for uri as well.
-  return it->second.begin()->election_id() == election_id;
-}
 
-bool P4Service::IsMasterController(uint64 node_id, uint64 connection_id) const {
-  absl::ReaderMutexLock l(&controller_lock_);
-  auto it = node_id_to_controllers_.find(node_id);
-  if (it == node_id_to_controllers_.end() || it->second.empty()) return false;
-  return it->second.begin()->connection_id() == connection_id;
+  auto it = node_id_to_controller_manager_.find(req.device_id());
+  if (it == node_id_to_controller_manager_.end()) return req;
+  return it->second.ExpandWildcardsInReadRequest(req, p4info);
 }
 
 void* P4Service::StreamResponseReceiveThreadFunc(void* arg) {
@@ -910,14 +881,12 @@ void P4Service::StreamResponseReceiveHandler(
   }
   // We send the responses only to the master controller stream for this node.
   absl::ReaderMutexLock l(&controller_lock_);
-  auto it = node_id_to_controllers_.find(node_id);
-  if (it == node_id_to_controllers_.end() || it->second.empty()) return;
-  if (!it->second.begin()->stream()->Write(resp)) {
-    LOG_EVERY_N(ERROR, 500)
-        << "Can't send StreamMessageResponse " << resp.ShortDebugString()
-        << " to controller " << it->second.begin()->Name()
-        << " because stream channel is closed.";
-  }
+  auto it = node_id_to_controller_manager_.find(node_id);
+  if (it == node_id_to_controller_manager_.end()) return;
+  absl::Status status = it->second.SendStreamMessageToPrimary(resp);
+  LOG_IF_EVERY_N(ERROR, !status.ok(), 500)
+      << "Can't send StreamMessageResponse " << resp.ShortDebugString()
+      << " to primary controller: " << status.ToString();
 }
 
 }  // namespace hal

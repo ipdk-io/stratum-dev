@@ -5,13 +5,16 @@
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_DPDK_SWITCH_H_
 #define STRATUM_HAL_LIB_TDI_DPDK_DPDK_SWITCH_H_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "stratum/hal/lib/common/switch_interface.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/synchronization/mutex.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_node.h"
+#include "stratum/hal/lib/common/switch_interface.h"
 
 namespace stratum {
 namespace hal {
@@ -106,7 +109,7 @@ class DpdkSwitch : virtual public SwitchInterface,
   static std::unique_ptr<DpdkSwitch> CreateInstance(
       DpdkChassisManager* chassis_manager,
       TdiSdeInterface* sde_interface,
-      const std::map<int, TdiNode*>& device_id_to_tdi_node);
+      const absl::flat_hash_map<int, TdiNode*>& device_id_to_tdi_node);
 
   // DpdkSwitch is neither copyable nor movable.
   DpdkSwitch(const DpdkSwitch&) = delete;
@@ -119,8 +122,16 @@ class DpdkSwitch : virtual public SwitchInterface,
   // class.
   DpdkSwitch(DpdkChassisManager* chassis_manager,
              TdiSdeInterface* sde_interface,
-             const std::map<int, TdiNode*>& device_id_to_tdi_node);
+             const absl::flat_hash_map<int, TdiNode*>& device_id_to_tdi_node);
 
+  // Internal version of VerifyForwardingPipelineConfig() which takes no locks.
+  ::util::Status DoVerifyForwardingPipelineConfig(
+      uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config)
+      SHARED_LOCKS_REQUIRED(chassis_lock);
+
+  // Internal version of VerifyChassisConfig() which takes no locks.
+  ::util::Status DoVerifyChassisConfig(const ChassisConfig& config)
+      SHARED_LOCKS_REQUIRED(chassis_lock);
   // Helper to get TdiNode pointer from device_id number or return error
   // indicating invalid device_id.
   ::util::StatusOr<TdiNode*> GetTdiNodeFromDeviceId(int device_id) const;
@@ -141,14 +152,14 @@ class DpdkSwitch : virtual public SwitchInterface,
   // node/ASIC. This map is initialized in the constructor and will not change
   // during the lifetime of the class.
   // TODO(max): Does this need to be protected by chassis_lock?
-  const std::map<int, TdiNode*> device_id_to_tdi_node_;  // pointers not owned
+  const absl::flat_hash_map<int, TdiNode*> device_id_to_tdi_node_;  // pointers not owned
 
   // Map from the node ids to to a pointer to TdiNode which contain all the
   // per-node managers for that node/ASIC. Created whenever a config is pushed.
   // At any point in time, this map will contain as keys the ids of the nodes
   // that had a successful config push.
   // TODO(max): Does this need to be protected by chassis_lock?
-  std::map<uint64, TdiNode*> node_id_to_tdi_node_;  //  pointers not owned
+  absl::flat_hash_map<uint64, TdiNode*> node_id_to_tdi_node_;  //  pointers not owned
 };
 
 }  // namespace tdi

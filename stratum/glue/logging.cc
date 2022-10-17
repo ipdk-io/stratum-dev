@@ -8,7 +8,12 @@
 
 #include <memory>
 
+#include "absl/time/time.h"
 #include "gflags/gflags.h"
+#if 0
+//TODO NUPUR - Revisit when enabling stamping
+#include "stratum/glue/stamping.h"
+#endif
 
 #ifdef STRATUM_ARCH_PPC
 
@@ -57,6 +62,21 @@ void InitStratumLogging() {
   if (FLAGS_logtostderr) {
     LogToStderr();
   }
+
+#if 0
+//TODO Nupur - Revisit when enabling stamping
+  if (kBuildTimestamp > 0) {
+    LOG(INFO)
+        << "Stratum version: "
+        << kBuildScmRevision
+        // TODO(max): enable once CI does not modify the source tree anymore
+        // << " (" << kBuildScmStatus << ")"
+        << " built at " << absl::FromTimeT(kBuildTimestamp) << " on host "
+        << kBuildHost << " by user " << kBuildUser << ".";
+  } else {
+    LOG(INFO) << "Stratum version: not stamped.";
+  }
+#endif
 }
 
 LoggingConfig GetCurrentLogLevel() {

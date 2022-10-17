@@ -6,6 +6,9 @@
 
 STRATUM_BF_DIR=$( cd $(dirname "${BASH_SOURCE[0]}") >/dev/null 2>&1 && pwd )
 JOBS=${JOBS:-4}
+# target-syslibs commit is based on submodule in target-utils/third-party/target-syslibs
+TARGET_SYSLIBS_COMMIT=95dca9002890418614be7f76da6012b4670fb2b5
+TARGET_UTILS_COMMIT=1f6fbc3387b9605ecaa4faefdc038a039e5451b2
 
 print_help() {
 echo "
@@ -19,14 +22,23 @@ Options:
     -k, --kernel-headers-tar: Linux Kernel headers tarball
     -l, --build-local-kernel-mod: Build kernel module for local kernel (Default: false)
     -j, --jobs: Number of jobs for BF SDE build (Default: 4)
+    -b, --bsp-path: Path to optional BSP package directory (Default: <empty>)
     -o, --bf-sde-install-tar: BF SDE install tarball (Default: <bf sde tar name>-install.tgz)
 
 Examples:
 
-    $0 -t ~/bf-sde-9.3.2.tgz
-    $0 -t ~/bf-sde-9.3.2.tgz -j 4
-    $0 -t ~/bf-sde-9.3.2.tgz -k ~/linux-4.14.49-ONL.tar.xz
+    $0 -t ~/bf-sde-9.7.2.tgz
+    $0 -t ~/bf-sde-9.7.2.tgz -j 4
+    $0 -t ~/bf-sde-9.7.2.tgz -k ~/linux-4.14.49-ONL.tar.xz
 "
+}
+
+function numeric_version() {
+  # Get numeric version, for example 9.7.2 will become 90702.
+  sem_ver=$1
+  ver_arr=()
+  IFS='.' read -raver_arr<<<"$sem_ver"
+  echo $((ver_arr[0] * 10000 + ver_arr[1] * 100 + ver_arr[2]))
 }
 
 KERNEL_HEADERS_TARS=""
@@ -62,6 +74,15 @@ while (( "$#" )); do
     -l|--build-local-kernel-mod)
       BUILD_LOCAL_KERNEL=true
       shift
+      ;;
+    -b|--bsp-path)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        BSP_CMD=" --bsp-path $2 "
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
       ;;
     -j|--jobs)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
@@ -99,6 +120,7 @@ echo "
 Build variables:
   BF SDE tar: $SDE_TAR
   Kernel headers directories: ${KERNEL_HEADERS_TARS:-none}
+  BSP package command: ${BSP_CMD:-none}
   Build kernel module for local kernel: ${BUILD_LOCAL_KERNEL:-false}
   Stratum scripts directory: $STRATUM_BF_DIR
   SDE build jobs: $JOBS
@@ -113,13 +135,6 @@ if [[ $EUID -ne 0 ]]; then
    sudo="sudo"
 fi
 
-# Install an older version of pyresistent before running the P4 studio
-# since the pip will try to install newer version of it when pip install
-# the jsonschema library. And the new version of pyresistent(0.17.x) requires
-# Python >= 3.5
-# TODO: Remove this once we move to Python3
-$sudo pip install pyrsistent==0.14.0
-
 # Set up SDE build directory in /tmp
 tmpdir="$(mktemp -d /tmp/bf_sde.XXXXXX)"
 export SDE=$tmpdir
@@ -128,14 +143,57 @@ export SDE_INSTALL=$SDE/install
 # Extract the SDE
 tar xf $SDE_TAR -C $SDE --strip-components 1
 
-# Patch stratum_profile.yaml in SDE
-cp -f $STRATUM_BF_DIR/stratum_profile.yaml $SDE/p4studio_build/profiles/
+# Get SDE version from bf-sde-[version].manifest
+SDE_VERSION=$(find "$SDE" -name 'bf-sde-*.manifest' -printf '%f')
+SDE_VERSION=${SDE_VERSION#bf-sde-} # Remove "bf-sde-"
+SDE_VERSION=${SDE_VERSION%.manifest} # Remove ".manifest"
+if [ -z "${SDE_VERSION}" ]; then
+    echo "Unknown SDE version, cannot find SDE manifest file"
+    exit 1
+else
+    echo "SDE version: ${SDE_VERSION}"
+fi
 
+# SDE verison >= 9.7.0
+pushd "$SDE/p4studio"
+$sudo ./install-p4studio-dependencies.sh
+./p4studio packages extract
+# Patch SDE to build without kernel driver
+sed -i 's/add_subdirectory(kdrv)/#add_subdirectory(kdrv)/g' $SDE/pkgsrc/bf-drivers/CMakeLists.txt
 # Build BF SDE
-pushd $SDE/p4studio_build
-./p4studio_build.py -up stratum_profile -wk -j$JOBS -shc
+./p4studio dependencies install --source-packages bridge,libcli,thrift --jobs $JOBS
+./p4studio configure bfrt '^pi' '^tofino2h' '^thrift-driver' '^p4rt' tofino asic '^tofino2m' '^tofino2' '^grpc' $BSP_CMD
+./p4studio build --jobs $JOBS
 popd
+
 echo "BF SDE build complete."
+
+if [[ $(numeric_version "$SDE_VERSION") -ge $(numeric_version "9.9.0") ]]; then
+    echo "Build and install target-syslibs and target-utils."
+    TARGET_SYSLIBS_TMP=$(mktemp -d)
+    git clone https://github.com/p4lang/target-syslibs.git "$TARGET_SYSLIBS_TMP"
+    pushd "$TARGET_SYSLIBS_TMP"
+    git checkout "$TARGET_SYSLIBS_COMMIT"
+    git submodule update --init
+    mkdir -p build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX="$SDE_INSTALL" ..
+    make install -j "$JOBS"
+    popd
+    rm -rf "$TARGET_SYSLIBS_TMP"
+
+    TARGET_UTILS_TMP=$(mktemp -d)
+    git clone https://github.com/p4lang/target-utils.git "$TARGET_UTILS_TMP"
+    pushd "$TARGET_UTILS_TMP"
+    git checkout ${TARGET_UTILS_COMMIT}
+    git submodule update --init --recursive
+    mkdir -p build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX="$SDE_INSTALL" -DSTANDALONE=1 ..
+    make install -j "$JOBS"
+    popd
+    rm -rf "$TARGET_UTILS_TMP"
+fi
 
 # Strip shared libraries and fix permissions
 find $SDE_INSTALL -name "*\.so*" -a -type f | xargs -n1 chmod u+w

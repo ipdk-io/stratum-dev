@@ -177,19 +177,19 @@ class DpdkChassisManagerTest : public ::testing::Test {
   }
 
   ::util::Status CheckCleanInternalState() {
-    CHECK_RETURN_IF_FALSE(m_chassis_manager_->unit_to_node_id_.empty());
-    CHECK_RETURN_IF_FALSE(m_chassis_manager_->node_id_to_unit_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(m_chassis_manager_->device_to_node_id_.empty());
+    RET_CHECK(m_chassis_manager_->node_id_to_device_.empty());
+    RET_CHECK(
         m_chassis_manager_->node_id_to_port_id_to_port_state_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(
         m_chassis_manager_->node_id_to_port_id_to_port_config_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(
         m_chassis_manager_->node_id_to_port_id_to_singleton_port_key_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(
         m_chassis_manager_->node_id_to_port_id_to_sdk_port_id_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(
         m_chassis_manager_->node_id_to_sdk_port_id_to_port_id_.empty());
-    CHECK_RETURN_IF_FALSE(
+    RET_CHECK(
         m_chassis_manager_->node_id_port_id_to_backend_.empty());
     return ::util::OkStatus();
   }
@@ -212,7 +212,7 @@ class DpdkChassisManagerTest : public ::testing::Test {
   }
 
   ::util::Status PushBaseChassisConfig(ChassisConfigBuilder* builder) {
-    CHECK_RETURN_IF_FALSE(!Initialized())
+    RET_CHECK(!Initialized())
         << "Can only call PushBaseChassisConfig() for first ChassisConfig!";
     RegisterSdkPortId(builder->AddPort(kPortId, kPort, ADMIN_STATE_ENABLED));
 
@@ -222,17 +222,17 @@ class DpdkChassisManagerTest : public ::testing::Test {
 
     RETURN_IF_ERROR(PushChassisConfig(builder->Get()));
 
-    auto unit = GetUnitFromNodeId(kNodeId);
-    CHECK_RETURN_IF_FALSE(unit.ok());
-    CHECK_RETURN_IF_FALSE(unit.ValueOrDie() == kUnit) << "Invalid unit number!";
-    CHECK_RETURN_IF_FALSE(Initialized())
+    auto unit = GetDeviceFromNodeId(kNodeId);
+    RET_CHECK(unit.ok());
+    RET_CHECK(unit.ValueOrDie() == kUnit) << "Invalid unit number!";
+    RET_CHECK(Initialized())
         << "Class is not initialized after push!";
     return ::util::OkStatus();
   }
 
-  ::util::Status ReplayPortsConfig(uint64 node_id) {
+  ::util::Status ReplayChassisConfig(uint64 node_id) {
     absl::WriterMutexLock l(&chassis_lock);
-    return m_chassis_manager_->ReplayPortsConfig(node_id);
+    return m_chassis_manager_->ReplayChassisConfig(node_id);
   }
 
   ::util::Status PushBaseChassisConfig() {
@@ -240,9 +240,9 @@ class DpdkChassisManagerTest : public ::testing::Test {
     return PushBaseChassisConfig(&builder);
   }
 
-  ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const {
+  ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const {
     absl::ReaderMutexLock l(&chassis_lock);
-    return m_chassis_manager_->GetUnitFromNodeId(node_id);
+    return m_chassis_manager_->GetDeviceFromNodeId(node_id);
   }
 
   ::util::Status Shutdown() { return m_chassis_manager_->Shutdown(); }
@@ -379,7 +379,7 @@ TEST_F(DpdkChassisManagerTest, ReplayPorts) {
   EXPECT_ADD_PORT_CALL(kUnit, sdkPortId, kDefaultSpeedBps, kDefaultFecMode);
   EXPECT_ENABLE_PORT_CALL(kUnit, sdkPortId);
 
-  EXPECT_OK(ReplayPortsConfig(kNodeId));
+  EXPECT_OK(ReplayChassisConfig(kNodeId));
 
   ASSERT_OK(ShutdownAndTestCleanState());
 }
