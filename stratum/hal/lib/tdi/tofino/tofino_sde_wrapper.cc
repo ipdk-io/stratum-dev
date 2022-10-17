@@ -233,7 +233,7 @@ bf_status_t sde_port_status_callback(
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, PortConfigParams& config,
+    int device, int port, uint64 speed_bps, const PortConfigParams& config,
     FecMode fec_mode) {
   return ::util::OkStatus();
 }
@@ -252,7 +252,7 @@ bf_status_t sde_port_status_callback(
 
 ::util::Status TdiSdeWrapper::DisablePort(int device, int port) {
   RETURN_IF_TDI_ERROR(bf_pal_port_disable(static_cast<bf_dev_id_t>(device),
-					  static_cast<bf_dev_port_t>(port)));
+                                          static_cast<bf_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 

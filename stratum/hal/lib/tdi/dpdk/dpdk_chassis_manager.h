@@ -7,19 +7,18 @@
 
 #include <map>
 #include <memory>
-#include <string>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "absl/types/optional.h"
-
 #include "stratum/glue/integral_types.h"
-#include "stratum/glue/status/status.h"
-#include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
+#include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/lib/channel/channel.h"
 
 namespace stratum {
 namespace hal {
@@ -50,8 +49,8 @@ class DpdkChassisManager {
   virtual ::util::StatusOr<DataResponse> GetPortData(
       const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(
-      uint64 node_id, uint32 port_id)
+  virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(uint64 node_id,
+                                                              uint32 port_id)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status GetPortCounters(uint64 node_id, uint32 port_id,
@@ -72,15 +71,15 @@ class DpdkChassisManager {
       OperationMode mode, TdiSdeInterface* sde_interface);
 
   // Determines whether the specified port configuration parameter has
-  // already been set.
-  bool IsPortParamSet(
-      uint64 node_id, uint32 port_id,
-      SetRequest::Request::Port::ValueCase value_case);
+  // already been set. Once set, it may not be set again.
+  bool IsPortParamSet(uint64 node_id, uint32 port_id,
+                      SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a port configuration parameter.
-  ::util::Status SetPortParam(
-      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-      SetRequest::Request::Port::ValueCase value_case);
+  // Once set, it may not be set again.
+  ::util::Status SetPortParam(uint64 node_id, uint32 port_id,
+                              const SingletonPort& singleton_port,
+                              SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a hotplug configuration parameter.
   ::util::Status SetHotplugParam(
@@ -105,6 +104,21 @@ class DpdkChassisManager {
     std::unique_ptr<ChannelReader<T>> reader;
   };
 
+  struct HotplugConfig {
+    uint32 qemu_socket_port;
+    uint64 qemu_vm_mac_address;
+    std::string qemu_socket_ip;
+    std::string qemu_vm_netdev_id;
+    std::string qemu_vm_chardev_id;
+    std::string qemu_vm_device_id;
+    std::string native_socket_path;
+    SWBackendQemuHotplugStatus qemu_hotplug;
+
+    HotplugConfig() : qemu_socket_port(0),
+                      qemu_vm_mac_address(0),
+                      qemu_hotplug(NO_HOTPLUG) {}
+  };
+
   struct PortConfig {
     // ADMIN_STATE_UNKNOWN indicates that something went wrong during port
     // configuration, and the port add failed or was not attempted.
@@ -115,16 +129,25 @@ class DpdkChassisManager {
     absl::optional<FecMode> fec_mode;  // empty if port add failed
     // empty if loopback mode configuration failed
     absl::optional<LoopbackState> loopback_mode;
+
     SWBackendPortType port_type;
     SWBackendDeviceType device_type;
+    SWBackendPktDirType packet_dir;
     int32 queues;
     std::string socket_path;
     std::string host_name;
+    std::string pipeline_name;
+    std::string mempool_name;
+    std::string control_port;
+    std::string pci_bdf;
+    HotplugConfig hotplug_config;
 
     PortConfig() : admin_state(ADMIN_STATE_UNKNOWN),
                    port_type(PORT_TYPE_NONE),
                    device_type(DEVICE_TYPE_NONE),
-                   queues(0) {}
+                   packet_dir (DIRECTION_HOST),
+                   queues(0) {
+    }
   };
 
   // Maximum depth of port status change event channel.
@@ -135,8 +158,8 @@ class DpdkChassisManager {
   // class.
   DpdkChassisManager(OperationMode mode, TdiSdeInterface* sde_interface);
 
-  ::util::StatusOr<const PortConfig*> GetPortConfig(
-      uint64 node_id, uint32 port_id) const
+  ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
+                                                    uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Returns the state of a port given its ID and the ID of its node.
@@ -148,20 +171,30 @@ class DpdkChassisManager {
   ::util::StatusOr<uint32> GetSdkPortId(uint64 node_id, uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
+  // Returns the port in id and port out id required to configure pipeline
+  ::util::Status GetTargetDatapathId(uint64 node_id, uint32 port_id,
+                                     TargetDatapathId* target_dp_id)
+      SHARED_LOCKS_REQUIRED(chassis_lock);
+
   // Cleans up the internal state. Resets all the internal port maps and
   // deletes the pointers.
   void CleanupInternalState() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // helper to add / configure / enable a port with TdiSdeInterface
-  ::util::Status AddPortHelper(
-      uint64 node_id, int unit, uint32 port_id,
-      const SingletonPort& singleton_port, PortConfig* config);
+  ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
+                               const SingletonPort& singleton_port,
+                               PortConfig* config);
+
+  // helper to hotplug add / delete a port with TdiSdeInterface
+  ::util::Status HotplugPortHelper(uint64 node_id, int unit, uint32 port_id,
+                                   const SingletonPort& singleton_port,
+                                   PortConfig* config);
 
   // helper to update port configuration with TdiSdeInterface
-  ::util::Status UpdatePortHelper(
-      uint64 node_id, int unit, uint32 port_id,
-      const SingletonPort& singleton_port,
-      const PortConfig& config_old, PortConfig* config);
+  ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
+                                  const SingletonPort& singleton_port,
+                                  const PortConfig& config_old,
+                                  PortConfig* config);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
@@ -222,7 +255,7 @@ class DpdkChassisManager {
   std::map<uint64, std::map<uint32, uint32>> node_id_to_sdk_port_id_to_port_id_
       GUARDED_BY(chassis_lock);
 
-  // TODO: document this member variable.
+  // Bitmask indicating which attributes have been configured.
   std::map<uint64, std::map<uint32, uint32>> node_id_port_id_to_backend_
       GUARDED_BY(chassis_lock);
 
