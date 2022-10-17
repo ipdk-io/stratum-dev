@@ -110,7 +110,7 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
       if (config_params.mtu() > MAX_MTU) {
         return MAKE_ERROR(ERR_INVALID_PARAM)
              << "Unsupported MTU = " << config_params.mtu()
-             << ". MTU should be less than " << MAX_MTU;
+             << ". MTU should be less than " << MAX_MTU << ".";
       }
       mtu = config_params.mtu();
       params_set |= GNMI_CONFIG_MTU_VALUE;

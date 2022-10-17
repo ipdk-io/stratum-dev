@@ -27,17 +27,12 @@ target_defines = [
 
 stratum_cc_library(
     name = "dpdk_chassis_manager",
-    srcs = [
-        "dpdk_chassis_manager.cc",
-        "dpdk_port_config.cc"
-    ],
-    hdrs = [
-        "dpdk_chassis_manager.h",
-        "dpdk_port_config.h",
-        "dpdk_port_constants.h"
-    ],
+    srcs = ["dpdk_chassis_manager.cc"],
+    hdrs = ["dpdk_chassis_manager.h"],
     defines = target_defines,
     deps = [
+	":dpdk_port_config",
+	":dpdk_port_constants",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -60,6 +55,28 @@ stratum_cc_library(
         "@com_google_absl//absl/types:optional",
         "@com_google_protobuf//:protobuf",
     ],
+)
+
+stratum_cc_library(
+    name = "dpdk_port_config",
+    srcs = ["dpdk_port_config.cc"],
+    hdrs = ["dpdk_port_config.h"],
+    deps = [
+	":dpdk_port_constants",
+        "//stratum/glue/status",
+        "//stratum/glue:integral_types",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_interface",
+        "//stratum/public/lib:error",
+        "@com_github_google_glog//:glog",
+        "@com_google_absl//absl/types:optional",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_library(
+    name = "dpdk_port_constants",
+    hdrs = ["dpdk_port_constants.h"],
 )
 
 stratum_cc_library(
@@ -184,6 +201,19 @@ stratum_cc_test(
         "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_test(
+    name = "dpdk_port_config_test",
+    srcs = [
+        "dpdk_port_config_test.cc",
+    ],
+    deps = [
+	":dpdk_port_config",
+	"//stratum/hal/lib/tdi:tdi_sde_interface",
+        ":test_main",
         "@com_google_googletest//:gtest",
     ],
 )
