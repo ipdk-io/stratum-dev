@@ -340,7 +340,8 @@ TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
                   kUnit, kPort, sport, PARAM_SOCK_IP).ok());
 }
 
-TEST_F(DpdkChassisManagerTest, SetPortLoopback) {
+// Not defined for DPDK
+TEST_F(DpdkChassisManagerTest, DISABLED_SetPortLoopback) {
   ChassisConfigBuilder builder;
   ASSERT_OK(PushBaseChassisConfig(&builder));
 

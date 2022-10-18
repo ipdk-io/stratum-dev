@@ -26,13 +26,7 @@ public:
   // configuration, and the port add failed or was not attempted.
   AdminState admin_state;
 
-  absl::optional<uint64> speed_bps;  // empty if port add failed
-  absl::optional<int32> mtu;         // empty if MTU configuration failed
-  absl::optional<TriState> autoneg;  // empty if Autoneg configuration failed
-  absl::optional<FecMode> fec_mode;  // empty if port add failed
-  absl::optional<LoopbackState> loopback_mode; // empty if config failed
-
-  // The configuration objects we pass to the SDE.
+  // The configuration objects we pass to the SDK.
   TdiSdeInterface::PortConfigParams cfg;
   TdiSdeInterface::HotplugConfigParams hotplug;
 

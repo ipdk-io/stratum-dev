@@ -112,9 +112,9 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
              << "Unsupported MTU = " << config_params.mtu()
              << ". MTU should be less than " << MAX_MTU << ".";
       }
-      mtu = config_params.mtu();
+      cfg.mtu = config_params.mtu();
       params_set |= GNMI_CONFIG_MTU_VALUE;
-      LOG(INFO) << "PortParam::kMtuValue = " << mtu.value();
+      LOG(INFO) << "PortParam::kMtuValue = " << cfg.mtu;
       break;
 
     case ValueCase::kPacketDir:
