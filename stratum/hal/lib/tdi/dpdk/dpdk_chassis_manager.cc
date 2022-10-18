@@ -181,7 +181,7 @@ bool DpdkChassisManager::IsPortParamSet(
   RETURN_IF_ERROR(config.SetHotplugParam(param_type, singleton_port));
 
   auto hotplug_params = static_cast<TdiSdeInterface::HotplugConfigParams*>(
-      &config.cfg.hotplug_config);
+      &config.hotplug);
   auto unit = node_id_to_unit_[node_id];
   auto sdk_port_id = node_id_to_port_id_to_sdk_port_id_[node_id][port_id];
 
@@ -326,7 +326,7 @@ bool DpdkChassisManager::IsPortParamSet(
       << " (SDK Port " << sdk_port_id << ").";
 
   RETURN_IF_ERROR(sde_interface_->HotplugPort(unit, sdk_port_id,
-                                              config->cfg.hotplug_config));
+                                              config->hotplug));
 
   return ::util::OkStatus();
 }

@@ -61,7 +61,6 @@ class TdiSdeInterface {
     std::string pipeline_name;
     std::string mempool_name;
     std::string pci_bdf;
-    struct HotplugConfigParams hotplug_config;
   };
 
   // SessionInterface is a proxy class for TDI sessions. Most API calls require

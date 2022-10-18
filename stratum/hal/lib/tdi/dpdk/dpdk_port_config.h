@@ -32,9 +32,11 @@ public:
   absl::optional<FecMode> fec_mode;  // empty if port add failed
   absl::optional<LoopbackState> loopback_mode; // empty if config failed
 
-  // The configuration object we pass to the SDE.
+  // The configuration objects we pass to the SDE.
   TdiSdeInterface::PortConfigParams cfg;
+  TdiSdeInterface::HotplugConfigParams hotplug;
 
+  // TAP control port.
   std::string control_port;
 
   // Whether the port has been added.

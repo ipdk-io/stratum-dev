@@ -4,6 +4,8 @@
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_DPDK_PORT_CONSTANTS_H_
 #define STRATUM_HAL_LIB_TDI_DPDK_DPDK_PORT_CONSTANTS_H_
 
+#include <stdint.h>
+
 namespace stratum {
 namespace hal {
 namespace tdi {
@@ -76,7 +78,7 @@ constexpr int32 MAX_MTU = 65535;
 
 // SDK_PORT_CONTROL_BASE is used as an offset to define a reserved
 // port range for the control ports.
-#define SDK_PORT_CONTROL_BASE 256
+constexpr uint32_t SDK_PORT_CONTROL_BASE = 256;
 
 enum qemu_cmd_type {
    CHARDEV_ADD,

@@ -133,7 +133,6 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
   DpdkHotplugParam param_type, const SingletonPort& singleton_port) {
 
   const auto& params = singleton_port.config_params().hotplug_config();
-  auto& hotplug = cfg.hotplug_config;
 
   switch (param_type) {
     case PARAM_SOCK_IP:

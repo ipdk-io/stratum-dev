@@ -124,7 +124,7 @@ TEST(DpdkConfigParamTest, HotplugSocketPort) {
        ->set_qemu_socket_port(1984);
   ASSERT_TRUE(config.SetHotplugParam(PARAM_SOCK_PORT, sport).ok());
   ASSERT_TRUE(config.HasAllOf(GNMI_CONFIG_HOTPLUG_SOCKET_PORT));
-  ASSERT_EQ(config.cfg.hotplug_config.qemu_socket_port, 1984);
+  ASSERT_EQ(config.hotplug.qemu_socket_port, 1984);
 }
 
 TEST(DpdkConfigParamTest, HotplugConfig) {
