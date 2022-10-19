@@ -29,19 +29,23 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
+#define CONFIG_PREFIX "/usr/share/stratum/"
+
 DEFINE_string(dpdk_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
 DEFINE_bool(dpdk_infrap4d_background, false,
             "Run infrap4d in the background with no interactive features");
-// TODO(dfoster): Default value for DPDK?
-DEFINE_string(dpdk_infrap4d_cfg, "stratum/hal/bin/dpdk/tofino_skip_p4.conf",
+DEFINE_string(dpdk_infrap4d_cfg, CONFIG_PREFIX "dpdk_skip_p4.conf",
               "Path to the infrap4d json config file");
+DECLARE_string(chassis_config_file);
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
 ::util::Status DpdkMain(int argc, char* argv[]) {
+  // Default value for DPDK.
+  FLAGS_chassis_config_file = CONFIG_PREFIX "dpdk_port_config.pb.txt";
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 

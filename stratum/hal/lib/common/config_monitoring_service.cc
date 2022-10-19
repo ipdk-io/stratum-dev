@@ -130,7 +130,7 @@ ConfigMonitoringService::~ConfigMonitoringService() {
   // Save running_chassis_config_ after everything went OK.
   running_chassis_config_ = std::move(config);
 
-  // Notify the gNMI GnmiPublisher that the config has changed.
+  // Notify GnmiPublisher that the config has changed.
   RETURN_IF_ERROR(gnmi_publisher_.HandleChange(
       ConfigHasBeenPushedEvent(*running_chassis_config_)));
 
@@ -254,6 +254,8 @@ bool ContainsUniqueNames(const T& values) {
       return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
                             status.error_message());
     }
+
+#ifndef DPDK_TARGET
     status = switch_interface_->PushChassisConfig(*config);
     // If the config push was successful or reported reboot required, save the
     // config on the switch. Any other config push error is considered
@@ -269,7 +271,6 @@ bool ContainsUniqueNames(const T& values) {
                             status.error_message());
     }
 
-#ifndef DPDK_TARGET
     // Save running_chassis_config_ after everything went OK.
     running_chassis_config_.reset(config.PassOwnership());
 
