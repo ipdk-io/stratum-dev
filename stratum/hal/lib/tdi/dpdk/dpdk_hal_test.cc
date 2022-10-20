@@ -25,9 +25,7 @@ DECLARE_string(chassis_config_file);
 DECLARE_string(forwarding_pipeline_configs_file);
 DECLARE_string(test_tmpdir);
 DECLARE_string(local_stratum_url);
-#if 0
 DECLARE_string(persistent_config_dir);
-#endif
 
 namespace stratum {
 namespace hal {
@@ -69,9 +67,7 @@ class DpdkHalTest : public ::testing::Test {
     FLAGS_chassis_config_file = FLAGS_test_tmpdir + "/chassis_config.pb.txt";
     FLAGS_forwarding_pipeline_configs_file =
         FLAGS_test_tmpdir + "/forwarding_pipeline_configs_file.pb.txt";
-#if 0
     FLAGS_persistent_config_dir = FLAGS_test_tmpdir + "/config_dir";
-#endif
     FLAGS_external_stratum_urls =
         absl::StrJoin({RandomURL(), RandomURL()}, ",");
     FLAGS_local_stratum_url = RandomURL();
@@ -186,16 +182,14 @@ TEST_F(DpdkHalTest, SanityCheckFailureWhenExtURLsAreInvalid) {
               HasSubstr("reserved local URLs as an external URL"));
 }
 
-#if 0
 TEST_F(DpdkHalTest, SanityCheckFailureWhenPersistentConfigDirFlagNotGiven) {
   FLAGS_persistent_config_dir = "";
   ::util::Status status = hal_->SanityCheck();
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(
       status.error_message(),
-      HasSubstr("persistent_config_dir flag needs to be explicitly give"));
+      HasSubstr("persistent_config_dir flag needs to be explicitly given"));
 }
-#endif
 
 TEST_F(DpdkHalTest, ColdbootSetupSuccessForSavedConfigs) {
   // Setup and save the test config(s).
