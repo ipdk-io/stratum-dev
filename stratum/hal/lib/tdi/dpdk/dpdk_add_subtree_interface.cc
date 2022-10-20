@@ -32,12 +32,8 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
     const NodeConfigParams& node_config, YangParseTree* tree) {
   // No need to lock the mutex - it is locked by method calling this one.
   uint64 mac_address = kDummyMacAddress;
-
+ 
   TreeNode* node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("state")("last-change")());
-  SetUpInterfacesInterfaceStateLastChange(node_id, port_id, node, tree);
-
-  node = tree->AddNode(
       GetPath("interfaces")("virtual-interface", name)("config")("ifindex")());
   SetUpInterfacesInterfaceStateIfindex(node_id, port_id, node, tree);
 
@@ -46,29 +42,8 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   SetUpInterfacesInterfaceStateName(name, node);
 
   node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("state")("oper-status")());
-  SetUpInterfacesInterfaceStateOperStatus(node_id, port_id, node, tree);
-
-  node = tree->AddNode(
       GetPath("interfaces")("virtual-interface", name)("state")("admin-status")());
   SetUpInterfacesInterfaceStateAdminStatus(node_id, port_id, node, tree);
-
-  node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("state")("loopback-mode")());
-  SetUpInterfacesInterfaceStateLoopbackMode(node_id, port_id, node, tree);
-
-  node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("state")("hardware-port")());
-  SetUpInterfacesInterfaceStateHardwarePort(name, node, tree);
-
-  node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
-                       ("ethernet")("state")("port-speed")());
-  SetUpInterfacesInterfaceEthernetStatePortSpeed(node_id, port_id, node, tree);
-
-  node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
-                       ("ethernet")("state")("negotiated-port-speed")());
-  SetUpInterfacesInterfaceEthernetStateNegotiatedPortSpeed(
-      node_id, port_id, node, tree);
 
   // In most cases the TARGET_DEFINED mode is changed into ON_CHANGE mode as
   // this mode is the least resource-hungry. But to make the gNMI demo more
@@ -142,20 +117,6 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
       "virtual-interface", name)("config")("counters")("in-fcs-errors")());
   SetUpInterfacesInterfaceStateCountersInFcsErrors(
       node_id, port_id, node, tree);
-
-  node = tree->AddNode(GetPath("lacp")("interfaces")(
-      "virtual-interface", name)("state")("system-priority")());
-  SetUpLacpInterfacesInterfaceStateSystemPriority(node_id, port_id, node, tree);
-
-  node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("config")("health-indicator")());
-  // TODO(tmadejski): Fix this value once common.proto has corresponding field.
-  SetUpInterfacesInterfaceConfigHealthIndicator(
-      "GOOD", node_id, port_id, node, tree);
-
-  node = tree->AddNode(
-      GetPath("interfaces")("virtual-interface", name)("state")("health-indicator")());
-  SetUpInterfacesInterfaceStateHealthIndicator(node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("host")());
@@ -244,23 +205,6 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   node = tree->AddNode(
       GetPath("interfaces")("virtual-interface", name)("config")("tdi-portout-id")());
   SetUpInterfacesInterfaceConfigTdiPortoutId(node_id, port_id, node, tree);
-
-  node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("ethernet")("config")("forwarding-viable")());
-  // TODO(tmadejski): Fix this value once common.proto has corresponding field.
-  SetUpInterfacesInterfaceEthernetConfigForwardingViability(
-      node_id, port_id,
-      /* forwarding-viable */ true, node, tree);
-
-  node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("ethernet")("state")("forwarding-viable")());
-  SetUpInterfacesInterfaceEthernetStateForwardingViability(
-      node_id, port_id, node, tree);
-
-  node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("ethernet")("state")("auto-negotiate")());
-  SetUpInterfacesInterfaceEthernetStateAutoNegotiate(
-      node_id, port_id, node, tree);
 
   absl::flat_hash_map<uint32, uint32> internal_priority_to_q_num;
   absl::flat_hash_map<uint32, TrafficClass> q_num_to_trafic_class;
