@@ -7,6 +7,7 @@
 
 #include <limits.h>
 #include <utility>
+#include <stdio.h>
 
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
@@ -40,6 +41,8 @@ DEFINE_uint32(grpc_max_recv_msg_size, 256 * 1024 * 1024,
               "grpc server max receive message size (0 = gRPC default).");
 DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
+
+DECLARE_string(forwarding_pipeline_configs_file);
 
 namespace stratum {
 namespace hal {
@@ -117,7 +120,7 @@ DpdkHal::~DpdkHal() {
   CHECK_RETURN_IF_FALSE(!FLAGS_persistent_config_dir.empty())
       << "persistent_config_dir flag needs to be explicitly given.";
 
-  LOG(INFO) << "HAL sanity checks all passed.";
+  LOG(INFO) << "All HAL sanity checks passed.";
 
   return ::util::OkStatus();
 }
@@ -131,6 +134,16 @@ DpdkHal::~DpdkHal() {
             << (warmboot ? "WARMBOOT" : "COLDBOOT") << " mode...";
 
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
+
+  // DPDK cannot configure the pipeline until after the ports have been
+  // created, so we ensure that the saved configuration file is empty
+  // on startup.
+  FILE* pipeline_cfg_file =
+    fopen(FLAGS_forwarding_pipeline_configs_file.c_str(), "wb");
+  if (pipeline_cfg_file != NULL) {
+    LOG(INFO) << "Truncating saved pipeline configuration file.";
+    fclose(pipeline_cfg_file);
+  }
 
   // Set up all the services. For a cold boot, we push the saved configs
   // to the switch as part of setup. For a warm boot, we only recover the

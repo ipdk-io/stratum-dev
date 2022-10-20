@@ -29,7 +29,7 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
-#define CONFIG_PREFIX "/usr/share/stratum/"
+#define CONFIG_PREFIX "/usr/share/stratum/dpdk/"
 
 DEFINE_string(dpdk_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");

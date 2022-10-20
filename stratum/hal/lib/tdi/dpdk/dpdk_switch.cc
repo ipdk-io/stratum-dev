@@ -224,7 +224,7 @@ DpdkSwitch::~DpdkSwitch() {}
 ::util::Status DpdkSwitch::SetValue(uint64 node_id, const SetRequest& request,
                                     std::vector<::util::Status>* details) {
 #if 0
-  // Since this is a known limitation, there is no need for us to long
+  // Since this is a known limitation, there is no need for us to log
   // every time this method is called. dgf 10/20/2022
   LOG(INFO) << "DpdkSwitch::SetValue is not implemented yet. Changes will "
             << "be applied when ChassisConfig is pushed again. "
