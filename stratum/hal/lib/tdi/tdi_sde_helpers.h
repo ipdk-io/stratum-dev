@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Helper functions for dealing with the SDE API.
+// Helper functions for use within TdiSdeWrapper.
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_HELPERS_H_
 #define STRATUM_HAL_LIB_TDI_TDI_SDE_HELPERS_H_
@@ -118,8 +118,6 @@ template <typename T>
     ::tdi::Target tdi_dev_target, const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>* table_values);
-
-// Target-specific helper functions
 
 bool IsPreallocatedTable(const ::tdi::Table& table);
 

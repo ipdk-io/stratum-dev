@@ -76,7 +76,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
 }
 
 ::util::Status TdiNode::PushChassisConfig(const ChassisConfig& config,
-                                           uint64 node_id) {
+                                          uint64 node_id) {
   absl::WriterMutexLock l(&lock_);
   node_id_ = node_id;
   // RETURN_IF_ERROR(tdi_table_manager_->PushChassisConfig(config, node_id));

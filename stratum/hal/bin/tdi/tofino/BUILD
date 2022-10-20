@@ -40,6 +40,7 @@ stratum_cc_binary(
     deps = [
         "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager",
         "//stratum/hal/lib/tdi/tofino:tofino_hal",
+        "//stratum/hal/lib/tdi/tofino:tofino_sde_utils",
         "//stratum/hal/lib/tdi/tofino:tofino_sde_wrapper",
         "//stratum/hal/lib/tdi/tofino:tofino_switch",
         "//stratum/hal/lib/tdi:tdi_action_profile_manager",

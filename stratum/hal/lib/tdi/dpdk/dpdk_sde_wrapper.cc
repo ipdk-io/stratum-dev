@@ -42,19 +42,6 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-namespace helpers {
-
-// TDI does not provide a target-neutral way for us to determine whether a
-// table is preallocated, so we provide our own means of detection.
-bool IsPreallocatedTable(const ::tdi::Table& table) {
-  auto table_type = static_cast<tdi_rt_table_type_e>(
-      table.tableInfoGet()->tableTypeGet());
-  return (table_type == TDI_RT_TABLE_TYPE_COUNTER ||
-          table_type == TDI_RT_TABLE_TYPE_METER);
-}
-
-} // namespace helpers
-
 ::util::StatusOr<PortState> TdiSdeWrapper::GetPortState(int device, int port) {
   return PORT_STATE_UP;
 }
@@ -149,13 +136,13 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
 
   LOG(INFO) << "Parameters for hotplug are:"
             << " qemu_socket_port=" << hotplug_attrs->qemu_socket_port
-            << " qemu_vm_mac_address=" <<hotplug_attrs->qemu_vm_mac_address
-            << " qemu_socket_ip=" <<hotplug_attrs->qemu_socket_ip
-            << " qemu_vm_netdev_id=" <<hotplug_attrs->qemu_vm_netdev_id
-            << " qemu_vm_chardev_id=" <<hotplug_attrs->qemu_vm_chardev_id
-            << " qemu_vm_device_id=" <<hotplug_attrs->qemu_vm_device_id
-            << " native_socket_path=" <<hotplug_attrs->native_socket_path
-            << " qemu_hotplug = " <<hotplug_attrs->qemu_hotplug;
+            << " qemu_vm_mac_address=" << hotplug_attrs->qemu_vm_mac_address
+            << " qemu_socket_ip=" << hotplug_attrs->qemu_socket_ip
+            << " qemu_vm_netdev_id=" << hotplug_attrs->qemu_vm_netdev_id
+            << " qemu_vm_chardev_id=" << hotplug_attrs->qemu_vm_chardev_id
+            << " qemu_vm_device_id=" << hotplug_attrs->qemu_vm_device_id
+            << " native_socket_path=" << hotplug_attrs->native_socket_path
+            << " qemu_hotplug = " << hotplug_attrs->qemu_hotplug;
 
   if (hotplug_config.qemu_hotplug == HOTPLUG_ADD) {
        RETURN_IF_TDI_ERROR(bf_pal_hotplug_add(static_cast<bf_dev_id_t>(device),
@@ -180,7 +167,7 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, PortConfigParams& config,
+    int device, int port, uint64 speed_bps, const PortConfigParams& config,
     FecMode fec_mode) {
   static int port_in;
   static int port_out;

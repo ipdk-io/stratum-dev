@@ -15,6 +15,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"
@@ -222,10 +223,13 @@ DpdkSwitch::~DpdkSwitch() {}
 
 ::util::Status DpdkSwitch::SetValue(uint64 node_id, const SetRequest& request,
                                     std::vector<::util::Status>* details) {
+#if 0
+  // Since this is a known limitation, there is no need for us to log
+  // every time this method is called. dgf 10/20/2022
   LOG(INFO) << "DpdkSwitch::SetValue is not implemented yet. Changes will "
             << "be applied when ChassisConfig is pushed again. "
             << request.ShortDebugString() << ".";
-
+#endif
   return ::util::OkStatus();
 }
 
@@ -233,18 +237,25 @@ DpdkSwitch::~DpdkSwitch() {}
   return std::vector<std::string>();
 }
 
-bool DpdkSwitch::IsPortParamAlreadySet(
+bool DpdkSwitch::IsPortParamSet(
     uint64 node_id, uint32 port_id,
     SetRequest::Request::Port::ValueCase value_case) {
-  return chassis_manager_->IsPortParamAlreadySet(node_id, port_id, value_case);
+  return chassis_manager_->IsPortParamSet(node_id, port_id, value_case);
 }
 
 ::util::Status DpdkSwitch::SetPortParam(
     uint64 node_id, uint32 port_id,
     const SingletonPort& singleton_port,
     SetRequest::Request::Port::ValueCase value_case) {
-  return chassis_manager_->SetPortParam(node_id, port_id, singleton_port,
-                                        value_case);
+  return chassis_manager_->SetPortParam(
+      node_id, port_id, singleton_port, value_case);
+}
+
+::util::Status DpdkSwitch::SetHotplugParam(
+    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
+    SWBackendHotplugParams param_type) {
+  return chassis_manager_->SetHotplugParam(
+      node_id, port_id, singleton_port, param_type);
 }
 
 std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(

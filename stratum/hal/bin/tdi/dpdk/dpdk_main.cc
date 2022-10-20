@@ -5,33 +5,47 @@
 
 #include "stratum/hal/bin/tdi/dpdk/dpdk_main.h"
 
+#include <map>
+#include <memory>
+#include <ostream>
+#include <string>
+
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/logging.h"
+#include "stratum/glue/status/status_macros.h"
+#include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
+#include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
+#include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
+
+#define CONFIG_PREFIX "/usr/share/stratum/dpdk/"
 
 DEFINE_string(dpdk_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
 DEFINE_bool(dpdk_infrap4d_background, false,
             "Run infrap4d in the background with no interactive features");
-// TODO(dfoster): Default value for DPDK?
-DEFINE_string(dpdk_infrap4d_cfg, "stratum/hal/bin/dpdk/tofino_skip_p4.conf",
+DEFINE_string(dpdk_infrap4d_cfg, CONFIG_PREFIX "dpdk_skip_p4.conf",
               "Path to the infrap4d json config file");
+DECLARE_string(chassis_config_file);
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
 ::util::Status DpdkMain(int argc, char* argv[]) {
+  // Default value for DPDK.
+  FLAGS_chassis_config_file = CONFIG_PREFIX "dpdk_port_config.pb.txt";
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 

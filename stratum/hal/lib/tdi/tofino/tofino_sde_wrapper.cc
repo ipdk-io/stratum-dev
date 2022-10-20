@@ -61,19 +61,6 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-namespace helpers {
-
-// TDI does not provide a target-neutral way for us to determine whether a
-// table is preallocated, so we provide our own means of detection.
-bool IsPreallocatedTable(const ::tdi::Table& table) {
-  auto table_type = static_cast<tdi_tofino_table_type_e>(
-      table.tableInfoGet()->tableTypeGet());
-  return (table_type == TDI_TOFINO_TABLE_TYPE_COUNTER ||
-          table_type == TDI_TOFINO_TABLE_TYPE_METER);
-}
-
-} // namespace helpers
-
 namespace {
 
 ::util::StatusOr<bf_port_speed_t> PortSpeedHalToBf(uint64 speed_bps) {
@@ -233,7 +220,7 @@ bf_status_t sde_port_status_callback(
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, PortConfigParams& config,
+    int device, int port, uint64 speed_bps, const PortConfigParams& config,
     FecMode fec_mode) {
   return ::util::OkStatus();
 }
@@ -252,7 +239,7 @@ bf_status_t sde_port_status_callback(
 
 ::util::Status TdiSdeWrapper::DisablePort(int device, int port) {
   RETURN_IF_TDI_ERROR(bf_pal_port_disable(static_cast<bf_dev_id_t>(device),
-					  static_cast<bf_dev_port_t>(port)));
+                                          static_cast<bf_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 

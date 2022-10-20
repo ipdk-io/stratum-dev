@@ -27,10 +27,8 @@ DEFINE_string(local_stratum_url, stratum::kLocalStratumUrl,
               "URL for listening to local calls from stratum stub.");
 
 DEFINE_bool(warmboot, false, "Determines whether HAL is in warmboot stage.");
-#if 0
 DEFINE_string(persistent_config_dir, "/etc/stratum/",
               "The persistent dir where all the config files will be stored.");
-#endif
 
 DEFINE_int32(grpc_keepalive_time_ms, 600000, "grpc keep alive time");
 DEFINE_int32(grpc_keepalive_timeout_ms, 20000,
@@ -116,10 +114,8 @@ TofinoHal::~TofinoHal() {
       << FLAGS_local_stratum_url
       << ".";
 
-#if 0
   CHECK_RETURN_IF_FALSE(!FLAGS_persistent_config_dir.empty())
       << "persistent_config_dir flag needs to be explicitly given.";
-#endif
 
   LOG(INFO) << "HAL sanity checks all passed.";
 
@@ -134,9 +130,7 @@ TofinoHal::~TofinoHal() {
   LOG(INFO) << "Setting up HAL in "
             << (warmboot ? "WARMBOOT" : "COLDBOOT") << " mode...";
 
-#if 0
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
-#endif
 
   // Set up all the services. For a cold boot, we push the saved configs
   // to the switch as part of setup. For a warm boot, we only recover the
