@@ -334,16 +334,25 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
   config_params->set_socket("/socket/to/me");
   config_params->set_host_name("Fawlty");
 
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(kUnit, kPort, *sport,
-                                               ValueCase::kPortType).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(kUnit, kPort, *sport,
-                                               ValueCase::kDeviceType).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(kUnit, kPort, *sport,
-                                               ValueCase::kQueueCount).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(kUnit, kPort, *sport,
-                                               ValueCase::kSockPath).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(kUnit, kPort, *sport,
-                                               ValueCase::kHostConfig).ok());
+  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+                  kUnit, kPort, *sport, ValueCase::kPortType).ok());
+  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+                  kUnit, kPort, *sport, ValueCase::kDeviceType).ok());
+  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+                  kUnit, kPort, *sport, ValueCase::kQueueCount).ok());
+  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+                  kUnit, kPort, *sport, ValueCase::kSockPath).ok());
+  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+                  kUnit, kPort, *sport, ValueCase::kHostConfig).ok());
+}
+
+TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
+  SingletonPort sport;
+  PortConfigParams* config_params = sport.mutable_config_params();
+  HotplugConfig* hotplug_config = config_params->mutable_hotplug_config();
+  hotplug_config->set_qemu_socket_ip("/qemu/socket_ip");
+  ASSERT_TRUE(m_chassis_manager_->SetHotplugParam(
+                  kUnit, kPort, sport, PARAM_SOCK_IP).ok());
 }
 
 TEST_F(DpdkChassisManagerTest, SetPortLoopback) {
