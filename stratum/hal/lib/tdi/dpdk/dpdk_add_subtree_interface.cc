@@ -115,22 +115,21 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
 
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("counters")("in-fcs-errors")());
-  SetUpInterfacesInterfaceStateCountersInFcsErrors(
-      node_id, port_id, node, tree);
+  SetUpInterfacesInterfaceStateCountersInFcsErrors(node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("config")("host")());
+      "virtual-interface", name)("config")("host-name")());
   SetUpInterfacesInterfaceConfigHost("", node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("port-type")());
   SetUpInterfacesInterfaceConfigPortType(
-      SWBackendPortType::PORT_TYPE_NONE, node_id, port_id, node, tree);
+      DpdkPortType::PORT_TYPE_NONE, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("device-type")());
   SetUpInterfacesInterfaceConfigDeviceType(
-      SWBackendPortType::PORT_TYPE_NONE, node_id, port_id, node, tree);
+      DpdkPortType::PORT_TYPE_NONE, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("pipeline-name")());
@@ -163,7 +162,7 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   node = tree->AddNode(GetPath("interfaces")(
       "virtual-interface", name)("config")("packet-dir")());
   SetUpInterfacesInterfaceConfigPacketDir(
-      SWBackendPktDirType::DIRECTION_NONE, node_id, port_id, node, tree);
+      PacketDirection::DIRECTION_NONE, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")("virtual-interface", name)
                        ("config")("qemu-socket-ip")());
@@ -174,12 +173,12 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   SetUpInterfacesInterfaceConfigQemuSocketPort(0, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("config")("hotplug")());
-  SetUpInterfacesInterfaceConfigHotplug(
-      SWBackendQemuHotplugStatus::NO_HOTPLUG, node_id, port_id, node, tree);
+      "virtual-interface", name)("config")("qemu-hotplug-mode")());
+  SetUpInterfacesInterfaceConfigQemuHotplugMode(
+      QemuHotplugMode::HOTPLUG_MODE_NONE, node_id, port_id, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(
-      "virtual-interface", name)("config")("qemu-vm-mac")());
+      "virtual-interface", name)("config")("qemu-vm-mac-address")());
   SetUpInterfacesInterfaceConfigQemuVmMacAddress(node_id, port_id, mac_address, node, tree);
 
   node = tree->AddNode(GetPath("interfaces")(

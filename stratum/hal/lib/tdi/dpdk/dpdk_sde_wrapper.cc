@@ -78,7 +78,7 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 namespace {
-dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
+dpdk_port_type_t get_target_port_type(DpdkPortType type) {
   switch(type) {
     case PORT_TYPE_VHOST: return BF_DPDK_LINK;
     case PORT_TYPE_TAP: return BF_DPDK_TAP;
@@ -121,7 +121,8 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
   strncpy(hotplug_attrs->native_socket_path,
           hotplug_config.native_socket_path.c_str(),
           sizeof(hotplug_attrs->native_socket_path));
-  hotplug_attrs->qemu_hotplug = hotplug_config.qemu_hotplug;
+  // Convert enum to Boolean (NONE == false, ADD or DEL == true)
+  hotplug_attrs->qemu_hotplug = (hotplug_config.qemu_hotplug_mode != 0);
   hotplug_attrs->qemu_socket_port = hotplug_config.qemu_socket_port;
   uint64 mac_address = hotplug_config.qemu_vm_mac_address;
 
@@ -142,13 +143,13 @@ dpdk_port_type_t get_target_port_type(SWBackendPortType type) {
             << " qemu_vm_chardev_id=" << hotplug_attrs->qemu_vm_chardev_id
             << " qemu_vm_device_id=" << hotplug_attrs->qemu_vm_device_id
             << " native_socket_path=" << hotplug_attrs->native_socket_path
-            << " qemu_hotplug = " << hotplug_attrs->qemu_hotplug;
+            << " qemu_hotplug_mode = " << hotplug_attrs->qemu_hotplug;
 
-  if (hotplug_config.qemu_hotplug == HOTPLUG_ADD) {
+  if (hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_ADD) {
        RETURN_IF_TDI_ERROR(bf_pal_hotplug_add(static_cast<bf_dev_id_t>(device),
                                               static_cast<bf_dev_port_t>(port),
                                               hotplug_attrs.get()));
-  } else if (hotplug_config.qemu_hotplug == HOTPLUG_DEL) {
+  } else if (hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_DEL) {
        RETURN_IF_TDI_ERROR(bf_pal_hotplug_del(static_cast<bf_dev_id_t>(device),
                                               static_cast<bf_dev_port_t>(port),
                                               hotplug_attrs.get()));

@@ -46,13 +46,13 @@ class TdiSdeInterface {
     std::string qemu_vm_chardev_id;
     std::string qemu_vm_device_id;
     std::string native_socket_path;
-    SWBackendQemuHotplugStatus qemu_hotplug;
+    QemuHotplugMode qemu_hotplug_mode;
   };
 
   struct PortConfigParams {
-    SWBackendPortType port_type;
-    SWBackendDeviceType device_type;
-    SWBackendPktDirType packet_dir;
+    DpdkPortType port_type;
+    DpdkDeviceType device_type;
+    PacketDirection packet_dir;
     int queues;
     int mtu;
     std::string socket_path;

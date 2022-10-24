@@ -51,8 +51,8 @@ bool IsPortParamSet(
 ::util::Status SetHotplugParam(
     YangParseTree* tree, uint64 node_id, uint32 port_id,
     const SingletonPort& singleton_port,
-    // TODO: SWBackendHotplugParams -> DpdkHotplugParamType
-    SWBackendHotplugParams param_type) {
+    // TODO: DpdkHotplugParam -> DpdkHotplugParamType
+    DpdkHotplugParam param_type) {
   auto dpsw = dynamic_cast<DpdkSwitch*>(tree->GetSwitchInterface());
   return dpsw->SetHotplugParam(node_id, port_id, singleton_port, param_type);
 }
@@ -60,7 +60,7 @@ bool IsPortParamSet(
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
-// /interfaces/virtual-interface[name=<name>]/config/host
+// /interfaces/virtual-interface[name=<name>]/config/host-name
 //
 void SetUpInterfacesInterfaceConfigHost(
     const char *host_val, uint64 node_id, uint64 port_id,
@@ -154,17 +154,17 @@ void SetUpInterfacesInterfaceConfigPortType(
     }
 
     std::string port_type_string = typed_val->string_val();
-    SWBackendPortType port_type = PORT_TYPE_NONE;
+    DpdkPortType port_type = PORT_TYPE_NONE;
     if (port_type_string == "vhost" || port_type_string == "VHOST") {
-        port_type = SWBackendPortType::PORT_TYPE_VHOST;
+        port_type = DpdkPortType::PORT_TYPE_VHOST;
     } else if (port_type_string == "link" || port_type_string == "LINK") {
-        port_type = SWBackendPortType::PORT_TYPE_LINK;
+        port_type = DpdkPortType::PORT_TYPE_LINK;
     } else if (port_type_string == "tap" || port_type_string == "TAP") {
-        port_type = SWBackendPortType::PORT_TYPE_TAP;
+        port_type = DpdkPortType::PORT_TYPE_TAP;
     } else if (port_type_string == "source" || port_type_string == "SOURCE") {
-        port_type = SWBackendPortType::PORT_TYPE_SOURCE;
+        port_type = DpdkPortType::PORT_TYPE_SOURCE;
     } else if (port_type_string == "sink" || port_type_string == "SINK") {
-        port_type = SWBackendPortType::PORT_TYPE_SINK;
+        port_type = DpdkPortType::PORT_TYPE_SINK;
     } else {
       return MAKE_ERROR(ERR_INVALID_PARAM) << "wrong value for port-type!";
     }
@@ -172,7 +172,7 @@ void SetUpInterfacesInterfaceConfigPortType(
     // Set the value.
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_port_type,
-                           &SWBackendPortStatus::set_type, port_type);
+                           &DpdkPortTypeValue::set_type, port_type);
     if (status != ::util::OkStatus()) {
       return status;
     }
@@ -181,7 +181,7 @@ void SetUpInterfacesInterfaceConfigPortType(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_type(port_type);
+        singleton_port.mutable_config_params()->set_port_type(port_type);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -238,13 +238,13 @@ void SetUpInterfacesInterfaceConfigDeviceType(
     }
 
     std::string device_type_string = typed_val->string_val();
-    SWBackendDeviceType device_type = DEVICE_TYPE_NONE;
+    DpdkDeviceType device_type = DEVICE_TYPE_NONE;
     if (device_type_string == "VIRTIO_NET" ||
         device_type_string == "virtio_net") {
-      device_type = SWBackendDeviceType::DEVICE_TYPE_VIRTIO_NET;
+      device_type = DpdkDeviceType::DEVICE_TYPE_VIRTIO_NET;
     } else if (device_type_string == "VIRTIO_BLK" ||
                device_type_string == "virtio_blk") {
-      device_type = SWBackendDeviceType::DEVICE_TYPE_VIRTIO_BLK;
+      device_type = DpdkDeviceType::DEVICE_TYPE_VIRTIO_BLK;
     } else {
       return MAKE_ERROR(ERR_INVALID_PARAM)
           << "wrong value for device-type: accepted values are "
@@ -254,7 +254,7 @@ void SetUpInterfacesInterfaceConfigDeviceType(
     // Set the value.
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_device_type,
-                           &SWBackendDeviceStatus::set_device_type, device_type);
+                           &DpdkDeviceTypeValue::set_device_type, device_type);
     if (status != ::util::OkStatus()) {
       return status;
     }
@@ -333,7 +333,7 @@ void SetUpInterfacesInterfaceConfigPipelineName(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_pipeline(pipeline_name);
+        singleton_port.mutable_config_params()->set_pipeline_name(pipeline_name);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -402,7 +402,7 @@ void SetUpInterfacesInterfaceConfigMempoolName(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_mempool(mempool_name);
+        singleton_port.mutable_config_params()->set_mempool_name(mempool_name);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -459,11 +459,11 @@ void SetUpInterfacesInterfaceConfigPacketDir(
     }
 
     std::string packet_dir_string = typed_val->string_val();
-    SWBackendPktDirType direction = DIRECTION_NONE;
+    PacketDirection direction = DIRECTION_NONE;
     if (packet_dir_string == "network" || packet_dir_string == "NETWORK") {
-        direction = SWBackendPktDirType::DIRECTION_NETWORK;
+        direction = PacketDirection::DIRECTION_NETWORK;
     } else if (packet_dir_string == "host" || packet_dir_string == "HOST") {
-        direction = SWBackendPktDirType::DIRECTION_HOST;
+        direction = PacketDirection::DIRECTION_HOST;
     } else {
       return MAKE_ERROR(ERR_INVALID_PARAM)
           << "wrong value for packet-direction: accepted values are "
@@ -473,7 +473,7 @@ void SetUpInterfacesInterfaceConfigPacketDir(
     // Set the value.
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_packet_dir,
-                           &SWBackendPktDirStatus::set_packet_dir, direction);
+                           &PacketDirValue::set_packet_dir, direction);
     if (status != ::util::OkStatus()) {
       return status;
     }
@@ -552,7 +552,7 @@ void SetUpInterfacesInterfaceConfigControlPort(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_control(ctl_port);
+        singleton_port.mutable_config_params()->set_control_port(ctl_port);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -621,7 +621,7 @@ void SetUpInterfacesInterfaceConfigPciBdf(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_pci(bdf_val);
+        singleton_port.mutable_config_params()->set_pci_bdf(bdf_val);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
@@ -831,7 +831,7 @@ void SetUpInterfacesInterfaceConfigSocket(
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
-        singleton_port.mutable_config_params()->set_socket(socket_path);
+        singleton_port.mutable_config_params()->set_socket_path(socket_path);
 
         RETURN_IF_ERROR(
             SetPortParam(tree, node_id, port_id, singleton_port,
@@ -993,9 +993,9 @@ void SetUpInterfacesInterfaceConfigQemuSocketPort(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// /interfaces/virtual-interface[name=<name>]/config/hotplug
+// /interfaces/virtual-interface[name=<name>]/config/hotplug-action
 //
-void SetUpInterfacesInterfaceConfigHotplug(
+void SetUpInterfacesInterfaceConfigQemuHotplugMode(
     uint64 status, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree) {
   auto poll_functor = [status](const GnmiEvent& event,
@@ -1015,14 +1015,14 @@ void SetUpInterfacesInterfaceConfigHotplug(
     }
 
     std::string status_string = typed_val->string_val();
-    SWBackendQemuHotplugStatus hotplug_status = NO_HOTPLUG;
+    QemuHotplugMode hotplug_mode = HOTPLUG_MODE_NONE;
     if (status_string == "add" || status_string == "ADD") {
-      hotplug_status = SWBackendQemuHotplugStatus::HOTPLUG_ADD;
+      hotplug_mode = QemuHotplugMode::HOTPLUG_MODE_ADD;
     } else if (status_string == "del" || status_string == "DEL") {
-        hotplug_status = SWBackendQemuHotplugStatus::HOTPLUG_DEL;
+        hotplug_mode = QemuHotplugMode::HOTPLUG_MODE_DEL;
     } else {
       return MAKE_ERROR(ERR_INVALID_PARAM)
-          << "wrong value for qemu hotplug: supported values are ADD and DEL!";
+          << "wrong value for qemu hotplug mode: supported values are ADD and DEL!";
     }
 
     // Set the value.
@@ -1031,7 +1031,7 @@ void SetUpInterfacesInterfaceConfigHotplug(
     request->set_node_id(node_id);
     request->set_port_id(port_id);
 
-    request->mutable_hotplug_config()->set_qemu_hotplug(hotplug_status);
+    request->mutable_hotplug_config()->set_qemu_hotplug_mode(hotplug_mode);
 
     // Update the chassis config
     ChassisConfig* new_config = config->writable();
@@ -1039,12 +1039,12 @@ void SetUpInterfacesInterfaceConfigHotplug(
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
         singleton_port.mutable_config_params()
             ->mutable_hotplug_config()
-            ->set_qemu_hotplug(hotplug_status);
+            ->set_qemu_hotplug_mode(hotplug_mode);
 
         // Validate if all mandatory params are set and call SDE API
         RETURN_IF_ERROR(
             SetHotplugParam(
-                tree, node_id, port_id, singleton_port, PARAM_HOTPLUG));
+                tree, node_id, port_id, singleton_port, PARAM_HOTPLUG_MODE));
 
         break;
       }

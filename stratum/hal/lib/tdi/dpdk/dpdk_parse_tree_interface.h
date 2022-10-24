@@ -70,7 +70,7 @@ void SetUpInterfacesInterfaceConfigQemuSocketPort(
     uint64 default_socket_port, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree);
 
-void SetUpInterfacesInterfaceConfigHotplug(
+void SetUpInterfacesInterfaceConfigQemuHotplugMode(
     uint64 status, uint64 node_id, uint64 port_id,
     TreeNode* node, YangParseTree* tree);
 

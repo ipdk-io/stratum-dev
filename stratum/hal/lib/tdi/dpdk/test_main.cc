@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 
   bool tmpdir_created = false;
   if (FLAGS_test_tmpdir.empty()) {
-    char tmpdir[] = "/tmp/stratum_hal_ipdk_test.XXXXXX";
+    char tmpdir[] = "/tmp/stratum_dpdk_hal_test.XXXXXX";
     CHECK(mkdtemp(tmpdir));
     FLAGS_test_tmpdir = tmpdir;
     tmpdir_created = true;

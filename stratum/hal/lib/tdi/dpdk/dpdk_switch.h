@@ -37,7 +37,7 @@ public:
 
     virtual ::util::Status SetHotplugParam(
         uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-        SWBackendHotplugParams param_type) = 0;
+        DpdkHotplugParam param_type) = 0;
 };
 
 class DpdkSwitch : virtual public SwitchInterface,
@@ -109,7 +109,7 @@ class DpdkSwitch : virtual public SwitchInterface,
   // Sets the value of a hotplug configuration parameter.
   ::util::Status SetHotplugParam(
       uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-      SWBackendHotplugParams param_type) override;
+      DpdkHotplugParam param_type) override;
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<DpdkSwitch> CreateInstance(

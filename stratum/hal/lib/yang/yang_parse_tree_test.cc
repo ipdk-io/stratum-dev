@@ -179,11 +179,11 @@ class YangParseTreeTest : public ::testing::Test {
     parse_tree_.AddSubtreeSystem();
   }
 
-  // A method helping testing if the OnXxx method of a leaf specified by 'path'.
-  // It takes care of all the boiler plate code:
+  // A method to help test the OnXxx method of a leaf specified by 'path'.
+  // It takes care of all the boilerplate code:
   // - adds an interface named "interface-1"
   // - adds a node named "node-1"
-  // - creates a stream that will write the response proto-buf into 'resp'
+  // - creates a stream that will write the response protobuf into 'resp'
   // - finds the node in the parse three
   // - gets the requested handler
   // - calls the handler with 'event'
@@ -192,7 +192,7 @@ class YangParseTreeTest : public ::testing::Test {
                                  const OnEventAction& action,
                                  const GnmiEvent& event,
                                  ::gnmi::SubscribeResponse* resp) {
-    // After tree creation only two leafs are defined:
+    // After tree creation only two leaves are defined:
     // /interfaces/interface[name=*]/state/ifindex
     // /interfaces/interface[name=*]/state/name
 
@@ -206,7 +206,7 @@ class YangParseTreeTest : public ::testing::Test {
     AddSubtreeSystem();
 
     // Mock gRPC stream that copies parameter of Write() to 'resp'. The contents
-    // of the 'resp' variable is then checked.
+    // of the 'resp' variable are than checked.
     SubscribeReaderWriterMock stream;
     EXPECT_CALL(stream, Write(_, _))
         .WillOnce(DoAll(
@@ -225,11 +225,11 @@ class YangParseTreeTest : public ::testing::Test {
     return handler(event, &stream);
   }
 
-  // A method helping testing if the OnPoll method of a leaf specified by
-  // 'path'. It calls ExecuteOnAction() that takes care of all the boiler plate
+  // A method to help test the OnPoll method of a leaf specified by
+  // 'path'. It calls ExecuteOnAction() that takes care of all the boilerplate
   // code:
   // - adds an interface named "interface-1"
-  // - creates a stream that will write the response proto-buf into 'resp'
+  // - creates a stream that will write the response protobuf into 'resp'
   // - finds the node in the parse three
   // - gets the OnPoll event handler
   // - calls the handler with PollEvent event
@@ -242,11 +242,11 @@ class YangParseTreeTest : public ::testing::Test {
                            resp);
   }
 
-  // A method helping testing if the OnTimer method of a leaf specified by
-  // 'path'. It calls ExecuteOnAction() that takes care of all the boiler plate
+  // A method to help test the OnTimer method of a leaf specified by
+  // 'path'. It calls ExecuteOnAction() that takes care of all the boilerplate
   // code:
   // - adds an interface named "interface-1"
-  // - creates a stream that will write the response proto-buf into 'resp'
+  // - creates a stream that will write the response protobuf into 'resp'
   // - finds the node in the parse three
   // - gets the OmTimer event handler
   // - calls the handler with TimerEvent event
@@ -259,11 +259,11 @@ class YangParseTreeTest : public ::testing::Test {
                            resp);
   }
 
-  // A method helping testing if the OnChange method of a leaf specified by
-  // 'path'. It calls ExecuteOnAction() that takes care of all the boiler plate
+  // A method to help test the OnChange method of a leaf specified by
+  // 'path'. It calls ExecuteOnAction() that takes care of all the boilerplate
   // code:
   // - adds an interface named "interface-1"
-  // - creates a stream that will write the response proto-buf into 'resp'
+  // - creates a stream that will write the response protobuf into 'resp'
   // - finds the node in the parse three
   // - gets the OnChange event handler
   // - calls the handler with 'event' event
@@ -276,11 +276,11 @@ class YangParseTreeTest : public ::testing::Test {
     return ExecuteOnAction(path, &TreeNode::GetOnChangeHandler, event, resp);
   }
 
-  // A method helping testing if the OnChange method of
+  // A method to help test the OnChange method of
   // /components/component/chassis/alarms sub-tree leaf specified by 'path'.
-  // It takes care of all the boiler plate code:
+  // It takes care of all the boilerplate code:
   // - adds a chassis named "chassis-1"
-  // - creates a stream that will write the response proto-buf into 'resp'
+  // - creates a stream that will write the response protobuf into 'resp'
   // - finds the node in the parse three
   // - gets the OnChange event handler
   // - calls the handler with event of type 'A'
@@ -305,11 +305,11 @@ class YangParseTreeTest : public ::testing::Test {
     EXPECT_EQ((resp.update().update(0).val().*get_value)(), expected_value);
   }
 
-  // A method helping testing if the OnPoll method of
+  // A method to help test the OnPoll method of
   // /components/component/chassis/alarms sub-tree leaf specified by 'path'.
-  // It takes care of all the boiler plate code:
+  // It takes care of all the boilerplate code:
   // - adds a chassis named "chassis-1"
-  // - creates a stream that will write the response proto-buf into 'resp' with
+  // - creates a stream that will write the response protobuf into 'resp' with
   //   value 'conf_value' of type 'W'
   // - finds the node in the parse three
   // - gets the OnPoll event handler
@@ -362,11 +362,11 @@ class YangParseTreeTest : public ::testing::Test {
                         expected_value, expected_value);
   }
 
-  // A method helping testing if the OnXxx method of a leaf specified by 'path'.
-  // It takes care of all the boiler plate code:
+  // A method to help test the OnXxx method of a leaf specified by 'path'.
+  // It takes care of all the boilerplate code:
   // - adds an interface named "interface-1"
   // - adds a node named "node-1"
-  // - creates a mock method that will write the set request proto-buf into
+  // - creates a mock method that will write the set request protobuf into
   //   'req'
   // - finds the node in the parse three
   // - gets the requested handler
@@ -376,7 +376,7 @@ class YangParseTreeTest : public ::testing::Test {
                               const OnSetAction& action,
                               const ::google::protobuf::Message& val,
                               SetRequest* req, GnmiEventPtr* notification) {
-    // After tree creation only two leafs are defined:
+    // After tree creation only two leaves are defined:
     // /interfaces/interface[name=*]/state/ifindex
     // /interfaces/interface[name=*]/state/name
 
@@ -422,12 +422,12 @@ class YangParseTreeTest : public ::testing::Test {
     return status;
   }
 
-  // A method helping testing if the OnUpdate method of a leaf specified by
-  // 'path'. It calls ExecuteOnSet() that takes care of all the boiler plate
+  // A method to help test the OnUpdate method of a leaf specified by
+  // 'path'. It calls ExecuteOnSet() that takes care of all the boilerplate
   // code:
   // - adds an interface named "interface-1"
   // - adds a node named "node-1"
-  // - creates a mock method that will write the set request proto-buf into
+  // - creates a mock method that will write the set request protobuf into
   //   'req'
   // - finds the node in the parse three
   // - gets the requested OnUpdate handler
@@ -442,12 +442,12 @@ class YangParseTreeTest : public ::testing::Test {
                         notification);
   }
 
-  // A method helping testing if the OnReplace method of a leaf specified by
-  // 'path'. It calls ExecuteOnSet() that takes care of all the boiler plate
+  // A method to help test the OnReplace method of a leaf specified by
+  // 'path'. It calls ExecuteOnSet() that takes care of all the boilerplate
   // code:
   // - adds an interface named "interface-1"
   // - adds a node named "node-1"
-  // - creates a mock method that will write the set request proto-buf into
+  // - creates a mock method that will write the set request protobuf into
   //   'req'
   // - finds the node in the parse three
   // - gets the requested OnReplace handler
@@ -649,7 +649,7 @@ TEST_F(YangParseTreeTest, FindRoot) {
 }
 
 TEST_F(YangParseTreeTest, PerformActionForAllNodesNonePresent) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -670,9 +670,9 @@ TEST_F(YangParseTreeTest, PerformActionForAllNodesNonePresent) {
   EXPECT_EQ(0, counter);
 }
 
-// Check if the action is executed for all qualified leafs.
+// Check if the action is executed for all qualified leaves.
 TEST_F(YangParseTreeTest, PerformActionForAllNodesOnePresent) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -802,9 +802,9 @@ TEST_F(YangParseTreeTest, SendNotificationPass) {
       /*node_id*/ 0, /*port_id*/ 0, HealthState::HEALTH_STATE_BAD)));
 }
 
-// Check if the action is executed for all qualified leafs.
+// Check if the action is executed for all qualified leaves.
 TEST_F(YangParseTreeTest, GetDataFromSwitchInterfaceDataConvertedCorrectly) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -824,7 +824,7 @@ TEST_F(YangParseTreeTest, GetDataFromSwitchInterfaceDataConvertedCorrectly) {
                       Return(::util::OkStatus())));
 
   // Mock gRPC stream that copies parameter of Write() to 'resp'. The contents
-  // of the 'resp' variable is then checked.
+  // of the 'resp' variable are than checked.
   SubscribeReaderWriterMock stream;
   ::gnmi::SubscribeResponse resp;
   EXPECT_CALL(stream, Write(_, _))
@@ -974,7 +974,7 @@ TEST_F(YangParseTreeTest, InterfacesInterfaceStateAdminStatusOnChangeSuccess) {
 
 // Check if the action is executed correctly.
 TEST_F(YangParseTreeTest, InterfacesInterfaceStateNameOnPollSuccess) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -982,7 +982,7 @@ TEST_F(YangParseTreeTest, InterfacesInterfaceStateNameOnPollSuccess) {
   AddSubtreeInterface("interface-1");
 
   // Mock gRPC stream that copies parameter of Write() to 'resp'. The contents
-  // of the 'resp' variable is then checked.
+  // of the 'resp' variable are than checked.
   SubscribeReaderWriterMock stream;
   ::gnmi::SubscribeResponse resp;
   EXPECT_CALL(stream, Write(_, _))
@@ -1005,7 +1005,7 @@ TEST_F(YangParseTreeTest, InterfacesInterfaceStateNameOnPollSuccess) {
   EXPECT_EQ(resp.update().update(0).val().string_val(), "interface-1");
 }
 
-// Check if the 'state/ifindex' OnPoll action is works correctly.
+// Check if the 'state/ifindex' OnPoll action works correctly.
 TEST_F(YangParseTreeTest, InterfacesInterfaceStateIfIndexOnPollSuccess) {
   const uint32 kInterface1SdnPortId = 33;
   auto path =
@@ -1144,20 +1144,20 @@ TEST_F(YangParseTreeTest,
 
   static constexpr char kMacAddressAsString[] = "11:22:33:44:55:66";
   static constexpr char kMacStrings[][21] = {
-      "11:22:33:44:55",        // Too short string
-      "11:22:33:44:55:66:77",  // Too long string
+      "11:22:33:44:55",        // String too short
+      "11:22:33:44:55:66:77",  // String too long
       "11;22;33;44;55;66",     // Incorrect delimiter
       "11-22-33-44-55-66",     // Unsupported delimiter
-      "11::22:33:44:55:66",    // Too many delimiter in between
-      ":11:22:33:44:55:66",    // Too many delimiter in the beginning
-      "11:22:33:44:55:66:",    // Too many delimiter in the end
+      "11::22:33:44:55:66",    // Too many delimiters in between
+      ":11:22:33:44:55:66",    // Too many delimiters at the beginning
+      "11:22:33:44:55:66:",    // Too many delimiters at the end
       "1122:3344:5566",        // Unsupported format
       "0",                     // No colon
       "00112233445566",        // No colon
       "11:22:333:44:55:66",    // Too many hex digits
       "11:22:3:44:55:66",      // Too few hex digits
-      "",                      // empty mac string
-      "st:ra:tu:mr:oc:ks"      // None hex digits
+      "",                      // Empty string
+      "st:ra:tu:mr:oc:ks"      // Non-hex digits
   };
 
   // Set new value.
@@ -2523,7 +2523,7 @@ TEST_F(YangParseTreeTest,
   AddSubtreeChassis("chassis-1");
 
   // Mock implementation of RetrieveValue() that sends a response with contents
-  // of whole sub-tree (all leafs).
+  // of whole sub-tree (all leaves).
   EXPECT_CALL(switch_, RetrieveValue(_, _, _, _))
       .WillOnce(DoAll(WithArg<2>(Invoke([](WriterInterface<DataResponse>* w) {
                         DataResponse resp;
@@ -2757,7 +2757,7 @@ TEST_F(YangParseTreeTest,
   AddSubtreeChassis("chassis-1");
 
   // Mock implementation of RetrieveValue() that sends a response with contents
-  // of whole sub-tree (all leafs).
+  // of whole sub-tree (all leaves).
   EXPECT_CALL(switch_, RetrieveValue(_, _, _, _))
       .WillOnce(DoAll(
           WithArg<2>(Invoke([](WriterInterface<DataResponse>* w) {
@@ -2995,7 +2995,7 @@ TEST_F(YangParseTreeTest,
 // Check if all expected handlers are registered
 TEST_F(YangParseTreeTest,
        ExpectedRegistrationsTakePlaceInterfacesInterfaceElipsis) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -3057,7 +3057,7 @@ TEST_F(YangParseTreeTest,
 // Check if all expected handlers are registered
 TEST_F(YangParseTreeTest,
        ExpectedRegistrationsTakePlaceComponentsComponetChassisAlarms) {
-  // After tree creation only two leafs are defined:
+  // After tree creation only two leaves are defined:
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
