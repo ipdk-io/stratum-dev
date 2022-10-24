@@ -305,7 +305,7 @@ TEST_F(DpdkChassisManagerTest, RemovePort) {
 
 TEST_F(DpdkChassisManagerTest, IsPortParamSet) {
   SingletonPort sport;
-  sport.mutable_config_params()->set_type(PORT_TYPE_VHOST);
+  sport.mutable_config_params()->set_port_type(PORT_TYPE_VHOST);
   ASSERT_FALSE(m_chassis_manager_->IsPortParamSet(
       kUnit, kPort, ValueCase::kPortType));
   ASSERT_TRUE(m_chassis_manager_->SetPortParam(
@@ -328,10 +328,10 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
 
   PortConfigParams* config_params = sport->mutable_config_params();
   config_params->set_admin_state(ADMIN_STATE_ENABLED);
-  config_params->set_type(PORT_TYPE_VHOST);
+  config_params->set_port_type(PORT_TYPE_VHOST);
   config_params->set_device_type(DEVICE_TYPE_VIRTIO_NET);
   config_params->set_queues(2);
-  config_params->set_socket("/socket/to/me");
+  config_params->set_socket_path("/socket/to/me");
   config_params->set_host_name("Fawlty");
 
   ASSERT_TRUE(m_chassis_manager_->SetPortParam(

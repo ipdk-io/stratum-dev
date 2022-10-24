@@ -40,8 +40,8 @@
 #define GNMI_CONFIG_PCI_BDF_VALUE 0x100
 #define GNMI_CONFIG_HOTPLUG_SOCKET_IP 0x200
 #define GNMI_CONFIG_HOTPLUG_SOCKET_PORT 0x400
-#define GNMI_CONFIG_HOTPLUG_VAL 0x800
-#define GNMI_CONFIG_HOTPLUG_VM_MAC 0x1000
+#define GNMI_CONFIG_HOTPLUG_MODE 0x800
+#define GNMI_CONFIG_HOTPLUG_VM_MAC_ADDRESS 0x1000
 #define GNMI_CONFIG_HOTPLUG_VM_NETDEV_ID 0x2000
 #define GNMI_CONFIG_HOTPLUG_VM_CHARDEV_ID 0x4000
 #define GNMI_CONFIG_NATIVE_SOCKET_PATH 0x8000
@@ -75,9 +75,9 @@
        GNMI_CONFIG_SOCKET_PATH | GNMI_CONFIG_HOST_NAME | \
        GNMI_CONFIG_PCI_BDF_VALUE)
 
-#define GNMI_CONFIG_HOTPLUG_ADD \
+#define GNMI_CONFIG_HOTPLUG_ALL \
        (GNMI_CONFIG_HOTPLUG_SOCKET_IP | GNMI_CONFIG_HOTPLUG_SOCKET_PORT | \
-        GNMI_CONFIG_HOTPLUG_VAL | GNMI_CONFIG_HOTPLUG_VM_MAC | \
+        GNMI_CONFIG_HOTPLUG_MODE | GNMI_CONFIG_HOTPLUG_VM_MAC_ADDRESS | \
         GNMI_CONFIG_HOTPLUG_VM_NETDEV_ID | GNMI_CONFIG_HOTPLUG_VM_CHARDEV_ID | \
         GNMI_CONFIG_NATIVE_SOCKET_PATH | GNMI_CONFIG_HOTPLUG_VM_DEVICE_ID)
 
@@ -222,7 +222,7 @@ bool DpdkChassisManager::IsPortParamSet(
 
 ::util::Status DpdkChassisManager::SetHotplugParam(
     uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-    SWBackendHotplugParams param_type) {
+    DpdkHotplugParam param_type) {
   auto unit = node_id_to_unit_[node_id];
   uint32 sdk_port_id = node_id_to_port_id_to_sdk_port_id_[node_id][port_id];
   auto& config = node_id_to_port_id_to_port_config_[node_id][port_id];
@@ -242,14 +242,14 @@ bool DpdkChassisManager::IsPortParamSet(
       LOG(INFO) << "SetPortParam::kQemuSocketPort = " << config_params.hotplug_config().qemu_socket_port();
       break;
 
-    case PARAM_HOTPLUG:
-      validate |= GNMI_CONFIG_HOTPLUG_VAL;
-      config.hotplug_config.qemu_hotplug = config_params.hotplug_config().qemu_hotplug();
-      LOG(INFO) << "SetPortParam::kQemuHotplug = " << config_params.hotplug_config().qemu_hotplug();
+    case PARAM_HOTPLUG_MODE:
+      validate |= GNMI_CONFIG_HOTPLUG_MODE;
+      config.hotplug_config.qemu_hotplug_mode = config_params.hotplug_config().qemu_hotplug_mode();
+      LOG(INFO) << "SetPortParam::kQemuHotplugMode = " << config_params.hotplug_config().qemu_hotplug_mode();
       break;
 
     case PARAM_VM_MAC:
-      validate |= GNMI_CONFIG_HOTPLUG_VM_MAC;
+      validate |= GNMI_CONFIG_HOTPLUG_VM_MAC_ADDRESS;
       config.hotplug_config.qemu_vm_mac_address = config_params.hotplug_config().qemu_vm_mac_address();
       LOG(INFO) << "SetPortParam::kQemuVmMacAddress = " << config_params.hotplug_config().qemu_vm_mac_address();
       break;
@@ -284,14 +284,14 @@ bool DpdkChassisManager::IsPortParamSet(
 
   node_id_port_id_to_backend_[node_id][port_id] = validate;
 
-  if (((validate & GNMI_CONFIG_HOTPLUG_ADD) == GNMI_CONFIG_HOTPLUG_ADD) &&
-      (config.hotplug_config.qemu_hotplug == HOTPLUG_ADD)) {
+  if (((validate & GNMI_CONFIG_HOTPLUG_ALL) == GNMI_CONFIG_HOTPLUG_ALL) &&
+      (config.hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_ADD)) {
     if ((validate & GNMI_CONFIG_PORT_DONE) != GNMI_CONFIG_PORT_DONE) {
-      validate &= ~GNMI_CONFIG_HOTPLUG_ADD;
+      validate &= ~GNMI_CONFIG_HOTPLUG_ALL;
       RETURN_ERROR(ERR_INTERNAL) << "Unsupported operation, requested port doesn't exist \n";
     }
     if ((validate & GNMI_CONFIG_HOTPLUG_DONE) == GNMI_CONFIG_HOTPLUG_DONE) {
-      validate &= ~GNMI_CONFIG_HOTPLUG_ADD;
+      validate &= ~GNMI_CONFIG_HOTPLUG_ALL;
       RETURN_ERROR(ERR_INTERNAL) << "Unsupported operation, requested port is already hotplugged \n";
     }
 
@@ -300,23 +300,23 @@ bool DpdkChassisManager::IsPortParamSet(
     LOG(INFO) << "Port was successfully hotplugged";
 
     // Unset this entry to allow future entries
-    if (validate & GNMI_CONFIG_HOTPLUG_VAL) {
-      validate &= ~(GNMI_CONFIG_HOTPLUG_VAL);
-      config.hotplug_config.qemu_hotplug = NO_HOTPLUG;
+    if (validate & GNMI_CONFIG_HOTPLUG_MODE) {
+      validate &= ~(GNMI_CONFIG_HOTPLUG_MODE);
+      config.hotplug_config.qemu_hotplug_mode = HOTPLUG_MODE_NONE;
     }
-  } else if (((validate & GNMI_CONFIG_HOTPLUG_VAL) == GNMI_CONFIG_HOTPLUG_VAL) &&
-              (config.hotplug_config.qemu_hotplug == HOTPLUG_DEL)) {
+  } else if (((validate & GNMI_CONFIG_HOTPLUG_MODE) == GNMI_CONFIG_HOTPLUG_MODE) &&
+              (config.hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_DEL)) {
     if (!((validate & GNMI_CONFIG_HOTPLUG_DONE) == GNMI_CONFIG_HOTPLUG_DONE)) {
-       validate &= ~GNMI_CONFIG_HOTPLUG_VAL;
+       validate &= ~GNMI_CONFIG_HOTPLUG_MODE;
        RETURN_ERROR(ERR_INTERNAL) << "Unsupported operation, No device is hotplugged to be deleted";
     }
     RETURN_IF_ERROR(HotplugPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
     validate &= ~(GNMI_CONFIG_HOTPLUG_DONE);
-    validate &= ~GNMI_CONFIG_HOTPLUG_ADD;
+    validate &= ~GNMI_CONFIG_HOTPLUG_ALL;
     // Unset this entry to allow future entries
-    if (validate & GNMI_CONFIG_HOTPLUG_VAL) {
-      validate &= ~(GNMI_CONFIG_HOTPLUG_VAL);
-      config.hotplug_config.qemu_hotplug = NO_HOTPLUG;
+    if (validate & GNMI_CONFIG_HOTPLUG_MODE) {
+      validate &= ~(GNMI_CONFIG_HOTPLUG_MODE);
+      config.hotplug_config.qemu_hotplug_mode = HOTPLUG_MODE_NONE;
     }
     LOG(INFO) << "Port was successfully removed from QEMU VM";
   }
@@ -340,8 +340,8 @@ bool DpdkChassisManager::IsPortParamSet(
   switch (value_case) {
     case SetRequest::Request::Port::ValueCase::kPortType:
       validate |= GNMI_CONFIG_PORT_TYPE;
-      config.port_type = config_params.type();
-      LOG(INFO) << "SetPortParam::kPortType = " << config_params.type();
+      config.port_type = config_params.port_type();
+      LOG(INFO) << "SetPortParam::kPortType = " << config_params.port_type();
       break;
 
     case SetRequest::Request::Port::ValueCase::kDeviceType:
@@ -358,31 +358,34 @@ bool DpdkChassisManager::IsPortParamSet(
 
     case SetRequest::Request::Port::ValueCase::kSockPath:
       validate |= GNMI_CONFIG_SOCKET_PATH;
-      config.socket_path = config_params.socket();
-      LOG(INFO) << "SetPortParam::kSockPath = " << config_params.socket();
+      config.socket_path = config_params.socket_path();
+      LOG(INFO) << "SetPortParam::kSockPath = " << config_params.socket_path();
       break;
 
     case SetRequest::Request::Port::ValueCase::kPipelineName:
-      config.pipeline_name = config_params.pipeline();
+      config.pipeline_name = config_params.pipeline_name();
       validate |= GNMI_CONFIG_PIPELINE_NAME;
-      LOG(INFO) << "SetPortParam::kPipelineName= " << config_params.pipeline();
+      LOG(INFO) << "SetPortParam::kPipelineName= "
+                << config_params.pipeline_name();
       break;
 
     case SetRequest::Request::Port::ValueCase::kMempoolName:
-      config.mempool_name = config_params.mempool();
+      config.mempool_name = config_params.mempool_name();
       validate |= GNMI_CONFIG_MEMPOOL_NAME;
-      LOG(INFO) << "SetPortParam::kMempoolName= " << config_params.mempool();
+      LOG(INFO) << "SetPortParam::kMempoolName= "
+                << config_params.mempool_name();
       break;
 
     case SetRequest::Request::Port::ValueCase::kControlPort:
-      config.control_port = config_params.control();
-      LOG(INFO) << "SetPortParam::kControlPort= " << config_params.control();
+      config.control_port = config_params.control_port();
+      LOG(INFO) << "SetPortParam::kControlPort= "
+                << config_params.control_port();
       break;
 
     case SetRequest::Request::Port::ValueCase::kPciBdf:
       validate |= GNMI_CONFIG_PCI_BDF_VALUE;
-      config.pci_bdf = config_params.pci();
-      LOG(ERROR) << "SetPortParam::kPciBdf= " << config_params.pci();
+      config.pci_bdf = config_params.pci_bdf();
+      LOG(ERROR) << "SetPortParam::kPciBdf= " << config_params.pci_bdf();
       break;
 
     case SetRequest::Request::Port::ValueCase::kMtuValue:
@@ -593,7 +596,7 @@ bool DpdkChassisManager::IsPortParamSet(
                                     config->hotplug_config.qemu_vm_chardev_id,
                                     config->hotplug_config.qemu_vm_device_id,
                                     config->hotplug_config.native_socket_path,
-                                    config->hotplug_config.qemu_hotplug};
+                                    config->hotplug_config.qemu_hotplug_mode};
   RETURN_IF_ERROR(sde_interface_->HotplugPort(
       unit, sdk_port_id, tdi_sde_wrapper_config));
 

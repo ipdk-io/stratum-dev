@@ -168,18 +168,10 @@ DpdkSwitch::~DpdkSwitch() {}
     ::util::Status status = ::util::OkStatus();
     switch (req.request_case()) {
       // Port data request
-      case DataRequest::Request::kOperStatus:
       case DataRequest::Request::kAdminStatus:
       case DataRequest::Request::kMacAddress:
-      case DataRequest::Request::kPortSpeed:
-      case DataRequest::Request::kNegotiatedPortSpeed:
       case DataRequest::Request::kLacpRouterMac:
       case DataRequest::Request::kPortCounters:
-      case DataRequest::Request::kForwardingViability:
-      case DataRequest::Request::kHealthIndicator:
-      case DataRequest::Request::kAutonegStatus:
-      case DataRequest::Request::kFrontPanelPortInfo:
-      case DataRequest::Request::kLoopbackStatus:
       case DataRequest::Request::kSdnPortId: {
         auto port_data = chassis_manager_->GetPortData(req);
         if (!port_data.ok()) {
@@ -204,6 +196,14 @@ DpdkSwitch::~DpdkSwitch() {}
         }
         break;
       }
+      case DataRequest::Request::kOperStatus:
+      case DataRequest::Request::kPortSpeed:
+      case DataRequest::Request::kNegotiatedPortSpeed:
+      case DataRequest::Request::kForwardingViability:
+      case DataRequest::Request::kHealthIndicator:
+      case DataRequest::Request::kAutonegStatus:
+      case DataRequest::Request::kFrontPanelPortInfo:
+      case DataRequest::Request::kLoopbackStatus:
       default:
         status =
             MAKE_ERROR(ERR_UNIMPLEMENTED)
@@ -253,7 +253,7 @@ bool DpdkSwitch::IsPortParamSet(
 
 ::util::Status DpdkSwitch::SetHotplugParam(
     uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-    SWBackendHotplugParams param_type) {
+    DpdkHotplugParam param_type) {
   return chassis_manager_->SetHotplugParam(
       node_id, port_id, singleton_port, param_type);
 }

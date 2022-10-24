@@ -84,7 +84,7 @@ class DpdkChassisManager {
   // Sets the value of a hotplug configuration parameter.
   ::util::Status SetHotplugParam(
       uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-      SWBackendHotplugParams param_type);
+      DpdkHotplugParam param_type);
 
   // DpdkChassisManager is neither copyable nor movable.
   DpdkChassisManager(const DpdkChassisManager&) = delete;
@@ -112,11 +112,11 @@ class DpdkChassisManager {
     std::string qemu_vm_chardev_id;
     std::string qemu_vm_device_id;
     std::string native_socket_path;
-    SWBackendQemuHotplugStatus qemu_hotplug;
+    QemuHotplugMode qemu_hotplug_mode;
 
     HotplugConfig() : qemu_socket_port(0),
                       qemu_vm_mac_address(0),
-                      qemu_hotplug(NO_HOTPLUG) {}
+                      qemu_hotplug_mode(HOTPLUG_MODE_NONE) {}
   };
 
   struct PortConfig {
@@ -130,9 +130,9 @@ class DpdkChassisManager {
     // empty if loopback mode configuration failed
     absl::optional<LoopbackState> loopback_mode;
 
-    SWBackendPortType port_type;
-    SWBackendDeviceType device_type;
-    SWBackendPktDirType packet_dir;
+    DpdkPortType port_type;
+    DpdkDeviceType device_type;
+    PacketDirection packet_dir;
     int32 queues;
     std::string socket_path;
     std::string host_name;
