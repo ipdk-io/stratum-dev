@@ -143,7 +143,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
             << " qemu_vm_chardev_id=" << hotplug_attrs->qemu_vm_chardev_id
             << " qemu_vm_device_id=" << hotplug_attrs->qemu_vm_device_id
             << " native_socket_path=" << hotplug_attrs->native_socket_path
-            << " qemu_hotplug_mode = " << hotplug_attrs->qemu_hotplug;
+            << " qemu_hotplug=" << hotplug_attrs->qemu_hotplug;
 
   if (hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_ADD) {
        RETURN_IF_TDI_ERROR(bf_pal_hotplug_add(static_cast<bf_dev_id_t>(device),
