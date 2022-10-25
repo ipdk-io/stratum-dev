@@ -160,11 +160,8 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 
 ::util::Status TdiSdeWrapper::AddPort(
     int device, int port, uint64 speed_bps, FecMode fec_mode) {
-  auto port_attrs = absl::make_unique<port_attributes_t>();
-  RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),
-                                      static_cast<bf_dev_port_t>(port),
-                                      port_attrs.get()));
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED)
+      << "AddPort(device, port, speed, fec_mode) not implemented";
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
@@ -241,41 +238,45 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 }
 
 ::util::Status TdiSdeWrapper::EnablePort(int device, int port) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "EnablePort not implemented";
 }
 
 ::util::Status TdiSdeWrapper::DisablePort(int device, int port) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "DisablePort not implemented";
 }
 
 ::util::Status TdiSdeWrapper::SetPortShapingRate(
     int device, int port, bool is_in_pps, uint32 burst_size,
     uint64 rate_per_second) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortShapingRate not implemented";
 }
 
 ::util::Status TdiSdeWrapper::EnablePortShaping(
     int device, int port, TriState enable) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "EnablePortShaping not implemented";
 }
 
 ::util::Status TdiSdeWrapper::SetPortAutonegPolicy(
     int device, int port, TriState autoneg) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortAutonegPolicy not implemented";
 }
 
 ::util::Status TdiSdeWrapper::SetPortMtu(int device, int port, int32 mtu) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortMtu not implemented";
 }
 
+// Should this return ::util::StatusOr<bool>?
 bool TdiSdeWrapper::IsValidPort(int device, int port) {
-  // NOTE: Function returns bool. What is BF_SUCCESS doing here?
+  // NOTE: Method returns bool. What is BF_SUCCESS doing here?
+  // Is the method supposed to succeed or fail? The name suggests
+  // that it is supposed to succeed, but BF_SUCCESS == 0, which when
+  // converted to a Boolean is FALSE, so it is actually failure.
   return BF_SUCCESS;
 }
 
 ::util::Status TdiSdeWrapper::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortLoopbackMode not implemented";
 }
 
 ::util::StatusOr<bool> TdiSdeWrapper::IsSoftwareModel(int device) {
