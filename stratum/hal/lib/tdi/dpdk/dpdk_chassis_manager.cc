@@ -259,9 +259,7 @@ bool DpdkChassisManager::IsPortParamSet(
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
             << " (SDK Port " << sdk_port_id << ").";
 
-  RETURN_IF_ERROR(sde_interface_->AddPort(
-      unit, sdk_port_id, singleton_port.speed_bps(), sde_params,
-      config_params.fec_mode()));
+  RETURN_IF_ERROR(sde_interface_->AddPort(unit, sdk_port_id, sde_params));
 
   // Check if Control Port Creation is opted.
   if (config->control_port.length()) {
@@ -274,9 +272,7 @@ bool DpdkChassisManager::IsPortParamSet(
      * and maps 1:1 to parent port's sdk_port_id.
      */
     uint32 sdk_ctl_port_id = SDK_PORT_CONTROL_BASE + sdk_port_id;
-    RETURN_IF_ERROR(sde_interface_->AddPort(
-        unit, sdk_ctl_port_id, singleton_port.speed_bps(), sde_params,
-        config_params.fec_mode()));
+    RETURN_IF_ERROR(sde_interface_->AddPort(unit, sdk_ctl_port_id, sde_params));
   }
 
   if (config->mtu) {

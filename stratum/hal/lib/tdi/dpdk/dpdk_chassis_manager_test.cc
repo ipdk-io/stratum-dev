@@ -29,11 +29,11 @@
 #undef IPU_ADD_NEW_PORT
 
 #if !defined(IPU_ADD_NEW_PORT)
-  #define EXPECT_ADD_PORT_CALL(unit, port, speed, fec_mode)
+  #define EXPECT_ADD_PORT_CALL(unit, port, config)
   #define EXPECT_ENABLE_PORT_CALL(unit, port)
 #else
-  #define EXPECT_ADD_PORT_CALL(unit, port, speed, fec_mode) \
-    EXPECT_CALL(*sde_mock_, AddPort((unit), (port), (speed), _, (fec_mode)))
+  #define EXPECT_ADD_PORT_CALL(unit, port, config) \
+    EXPECT_CALL(*sde_mock_, AddPort((unit), (port), _))
   #define EXPECT_ENABLE_PORT_CALL(unit, port) \
     EXPECT_CALL(*sde_mock_, EnablePort(unit, port))
 #endif
@@ -69,10 +69,6 @@ constexpr int kPort = 1;
 constexpr uint32 kPortId = 12345;
 constexpr uint32 kSdkPortOffset = 900000;
 constexpr uint32 kDefaultPortId = kSdkPortOffset + kPortId;
-constexpr uint64 kDefaultSpeedBps = kHundredGigBps;
-constexpr FecMode kDefaultFecMode = FEC_MODE_UNKNOWN;
-constexpr TriState kDefaultAutoneg = TRI_STATE_UNKNOWN;
-constexpr LoopbackState kDefaultLoopbackMode = LOOPBACK_STATE_UNKNOWN;
 
 MATCHER_P(GnmiEventEq, event, "") {
   if (absl::StrContains(typeid(*event).name(), "PortOperStateChangedEvent")) {
@@ -102,24 +98,16 @@ class ChassisConfigBuilder {
   }
 
   // Adds a port to the ChassisConfig message.
-  SingletonPort* AddPort(uint32 port_id, int32 port, AdminState admin_state,
-                         uint64 speed_bps = kDefaultSpeedBps,
-                         FecMode fec_mode = kDefaultFecMode,
-                         TriState autoneg = kDefaultAutoneg,
-                         LoopbackState loopback_mode = kDefaultLoopbackMode) {
+  SingletonPort* AddPort(uint32 port_id, int32 port, AdminState admin_state) {
     auto* sport = config_.add_singleton_ports();
     sport->set_id(port_id);
     sport->set_node(node_id);
     sport->set_port(port);
     sport->set_slot(kSlot);
     sport->set_channel(0);
-    sport->set_speed_bps(speed_bps);
 
     auto* params = sport->mutable_config_params();
     params->set_admin_state(admin_state);
-    params->set_fec_mode(fec_mode);
-    params->set_autoneg(autoneg);
-    params->set_loopback_mode(loopback_mode);
 
     return sport;
   }
@@ -215,8 +203,7 @@ class DpdkChassisManagerTest : public ::testing::Test {
         << "Can only call PushBaseChassisConfig() for first ChassisConfig!";
     RegisterSdkPortId(builder->AddPort(kPortId, kPort, ADMIN_STATE_ENABLED));
 
-    EXPECT_ADD_PORT_CALL(kUnit, kDefaultPortId, kDefaultSpeedBps,
-                         kDefaultFecMode);
+    EXPECT_ADD_PORT_CALL(kUnit, kDefaultPortId, _);
     EXPECT_ENABLE_PORT_CALL(kUnit, kDefaultPortId);
 
     RETURN_IF_ERROR(PushChassisConfig(builder->Get()));
@@ -322,7 +309,7 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
 
   auto sport = builder.AddPort(portId, port, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(sport);
-  EXPECT_CALL(*sde_mock_, AddPort(_, _, _, _, _));
+  EXPECT_CALL(*sde_mock_, AddPort(_, _, _));
 
   PortConfigParams* config_params = sport->mutable_config_params();
   config_params->set_admin_state(ADMIN_STATE_ENABLED);
@@ -410,7 +397,7 @@ TEST_F(DpdkChassisManagerTest, ReplayPorts) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   const uint32 sdkPortId = kDefaultPortId;
-  EXPECT_ADD_PORT_CALL(kUnit, sdkPortId, kDefaultSpeedBps, kDefaultFecMode);
+  EXPECT_ADD_PORT_CALL(kUnit, sdkPortId, _);
   EXPECT_ENABLE_PORT_CALL(kUnit, sdkPortId);
 
   EXPECT_OK(ReplayPortsConfig(kNodeId));
@@ -426,8 +413,7 @@ TEST_F(DpdkChassisManagerTest, DISABLED_UpdateInvalidPort) {
   SingletonPort* new_port =
       builder.AddPort(portId, kPort + 1, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(new_port);
-  EXPECT_CALL(*sde_mock_,
-              AddPort(kUnit, sdkPortId, kDefaultSpeedBps, FEC_MODE_UNKNOWN))
+  EXPECT_CALL(*sde_mock_, AddPort(kUnit, sdkPortId, _))
       .WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*sde_mock_, EnablePort(kUnit, sdkPortId))
       .WillOnce(Return(::util::OkStatus()));
