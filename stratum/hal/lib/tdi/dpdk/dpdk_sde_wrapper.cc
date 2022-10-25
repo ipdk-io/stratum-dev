@@ -160,8 +160,8 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 
 ::util::Status TdiSdeWrapper::AddPort(
     int device, int port, uint64 speed_bps, FecMode fec_mode) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED)
-      << "AddPort(device, port, speed, fec_mode) not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "AddPort(device, port, speed, fec_mode) not supported";
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
@@ -248,17 +248,20 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 ::util::Status TdiSdeWrapper::SetPortShapingRate(
     int device, int port, bool is_in_pps, uint32 burst_size,
     uint64 rate_per_second) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortShapingRate not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "SetPortShapingRate not supported";
 }
 
 ::util::Status TdiSdeWrapper::EnablePortShaping(
     int device, int port, TriState enable) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "EnablePortShaping not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "EnablePortShaping not supported";
 }
 
 ::util::Status TdiSdeWrapper::SetPortAutonegPolicy(
     int device, int port, TriState autoneg) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortAutonegPolicy not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "SetPortAutonegPolicy not supported";
 }
 
 ::util::Status TdiSdeWrapper::SetPortMtu(int device, int port, int32 mtu) {
@@ -267,7 +270,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 
 // Should this return ::util::StatusOr<bool>?
 bool TdiSdeWrapper::IsValidPort(int device, int port) {
-  // NOTE: Method returns bool. What is BF_SUCCESS doing here?
+  // NOTE: Method returns bool. What is BF_SUCCESS (an enum) doing here?
   // Is the method supposed to succeed or fail? The name suggests
   // that it is supposed to succeed, but BF_SUCCESS == 0, which when
   // converted to a Boolean is FALSE, so it is actually failure.
@@ -276,7 +279,8 @@ bool TdiSdeWrapper::IsValidPort(int device, int port) {
 
 ::util::Status TdiSdeWrapper::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortLoopbackMode not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "SetPortLoopbackMode not supported";
 }
 
 ::util::StatusOr<bool> TdiSdeWrapper::IsSoftwareModel(int device) {
@@ -324,11 +328,11 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
 }
 
 ::util::StatusOr<int> TdiSdeWrapper::GetPcieCpuPort(int device) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "GetPcieCpuPort not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "GetPcieCpuPort not supported";
 }
 
 ::util::Status TdiSdeWrapper::SetTmCpuPort(int device, int port) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetTmCpuPort not implemented";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "SetTmCpuPort not supported";
 }
 
 ::util::Status TdiSdeWrapper::SetDeflectOnDropDestination(
