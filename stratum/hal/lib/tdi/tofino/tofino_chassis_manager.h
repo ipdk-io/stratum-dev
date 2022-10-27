@@ -71,6 +71,8 @@ class TofinoChassisManager {
   virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
+  virtual std::string GetChipType(int device) const;
+
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TofinoChassisManager> CreateInstance(
       OperationMode mode, PhalInterface* phal_interface,

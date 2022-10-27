@@ -84,7 +84,7 @@ namespace tdi {
       TofinoChassisManager::CreateInstance(mode, phal, sde_wrapper);
 
   auto tdi_switch = TofinoSwitch::CreateInstance(
-      phal, chassis_manager.get(), sde_wrapper, device_id_to_tdi_node);
+      chassis_manager.get(), device_id_to_tdi_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 

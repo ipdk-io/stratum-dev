@@ -282,6 +282,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
 ::util::Status TofinoChassisManager::PushChassisConfig(
     const ChassisConfig& config) {
+  RETURN_IF_ERROR(phal_interface_->PushChassisConfig(config));
+
   if (!initialized_) RETURN_IF_ERROR(RegisterEventWriters());
 
   // new maps
@@ -834,7 +836,10 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       break;
     }
     default:
-      RETURN_ERROR(ERR_INTERNAL) << "Not supported yet";
+      RETURN_ERROR(ERR_UNIMPLEMENTED)
+        << "DataRequest field "
+        << request.descriptor()->FindFieldByNumber(request.request_case())->name()
+        << " is not supported yet!";
   }
   return resp;
 }
@@ -1343,6 +1348,10 @@ void TofinoChassisManager::TransceiverEventHandler(int slot, int port,
   return *unit;
 }
 
+std::string TofinoChassisManager::GetChipType(int device) const {
+  return tdi_sde_interface_->GetChipType(device);
+}
+
 void TofinoChassisManager::CleanupInternalState() {
   unit_to_node_id_.clear();
   node_id_to_unit_.clear();
@@ -1366,6 +1375,7 @@ void TofinoChassisManager::CleanupInternalState() {
   // UnregisterEventWriters or there would be a deadlock). Because initialized_
   // is set to true, RegisterEventWriters cannot be called.
   APPEND_STATUS_IF_ERROR(status, UnregisterEventWriters());
+  APPEND_STATUS_IF_ERROR(status, phal_interface_->Shutdown());
   {
     absl::WriterMutexLock l(&chassis_lock);
     initialized_ = false;

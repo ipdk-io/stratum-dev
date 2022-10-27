@@ -25,23 +25,16 @@ namespace hal {
 namespace tdi {
 
 TofinoSwitch::TofinoSwitch(
-    PhalInterface* phal_interface,
     TofinoChassisManager* chassis_manager,
-    TdiSdeInterface* sde_interface,
     const std::map<int, TdiNode*>& device_id_to_tdi_node)
-    : phal_interface_(ABSL_DIE_IF_NULL(phal_interface)),
-      sde_interface_(ABSL_DIE_IF_NULL(sde_interface)),
-      chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
+    : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       device_id_to_tdi_node_(device_id_to_tdi_node),
       node_id_to_tdi_node_() {
   for (const auto& entry : device_id_to_tdi_node_) {
     CHECK_GE(entry.first, 0)
         << "Invalid device_id number " << entry.first << ".";
-/*
     CHECK_NE(entry.second, nullptr)
         << "Detected null TdiNode for device_id " << entry.first << ".";
-*/
-
   }
 }
 
@@ -49,7 +42,6 @@ TofinoSwitch::~TofinoSwitch() {}
 
 ::util::Status TofinoSwitch::PushChassisConfig(const ChassisConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
-  RETURN_IF_ERROR(phal_interface_->PushChassisConfig(config));
   RETURN_IF_ERROR(chassis_manager_->PushChassisConfig(config));
   ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
                    chassis_manager_->GetNodeIdToUnitMap());
@@ -82,14 +74,6 @@ TofinoSwitch::~TofinoSwitch() {}
   LOG(INFO) << "P4-based forwarding pipeline config pushed successfully to "
             << "node with ID " << node_id << ".";
 
-  ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
-                   chassis_manager_->GetNodeIdToUnitMap());
-
-  CHECK_RETURN_IF_FALSE(gtl::ContainsKey(node_id_to_device_id, node_id))
-      << "Unable to find device_id number for node " << node_id;
-  int device_id = gtl::FindOrDie(node_id_to_device_id, node_id);
-  ASSIGN_OR_RETURN(auto cpu_port, sde_interface_->GetPcieCpuPort(device_id));
-  RETURN_IF_ERROR(sde_interface_->SetTmCpuPort(device_id, cpu_port));
   return ::util::OkStatus();
 }
 
@@ -131,8 +115,6 @@ TofinoSwitch::~TofinoSwitch() {}
     APPEND_STATUS_IF_ERROR(status, node->Shutdown());
   }
   APPEND_STATUS_IF_ERROR(status, chassis_manager_->Shutdown());
-  APPEND_STATUS_IF_ERROR(status, phal_interface_->Shutdown());
-  // APPEND_STATUS_IF_ERROR(status, sde_interface_->Shutdown());
 
   return status;
 }
@@ -236,7 +218,7 @@ TofinoSwitch::~TofinoSwitch() {}
           auto* node_info = resp.mutable_node_info();
           node_info->set_vendor_name("Barefoot");
           node_info->set_chip_name(
-              sde_interface_->GetChipType(device_id.ValueOrDie()));
+              chassis_manager_->GetChipType(device_id.ValueOrDie()));
         }
         break;
       }
@@ -272,12 +254,10 @@ TofinoSwitch::~TofinoSwitch() {}
 }
 
 std::unique_ptr<TofinoSwitch> TofinoSwitch::CreateInstance(
-    PhalInterface* phal_interface, TofinoChassisManager* chassis_manager,
-    TdiSdeInterface* sde_interface,
+    TofinoChassisManager* chassis_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
-      new TofinoSwitch(phal_interface, chassis_manager,
-		       sde_interface, device_id_to_tdi_node));
+      new TofinoSwitch(chassis_manager, device_id_to_tdi_node));
 }
 
 ::util::StatusOr<TdiNode*> TofinoSwitch::GetTdiNodeFromDeviceId(
