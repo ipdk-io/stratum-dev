@@ -58,9 +58,9 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tofino_sde_wrapper",
+    name = "tofino_sde_target",
     srcs = [
-        "tofino_sde_wrapper.cc",
+        "tofino_sde_target.cc",
     ],
     defines = ["TOFINO_TARGET"],
     deps = [
