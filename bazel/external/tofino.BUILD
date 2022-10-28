@@ -15,10 +15,8 @@ cc_library(
     name = "tofino_sde",
     srcs = glob([
         "tofino-bin/lib/libdriver.so",
-        "tofino-bin/lib/libpython3.4m.so*",
+        "tofino-bin/lib/libpython3.10m.so*",
         "tofino-bin/lib/libtarget_sys.so",
-        "tofino-bin/lib/libtdi.so*",
-        "tofino-bin/lib/libtdi_json_parser.so*",
     ]),
     hdrs = glob([
         "tofino-bin/include/bf_switchd/*.h",
@@ -60,7 +58,6 @@ pkg_tar_with_symlinks(
         "tofino-bin/lib/libpython3.*",
         "tofino-bin/lib/libtarget_sys.so*",
         "tofino-bin/lib/libtarget_utils.so*",
-        "tofino-bin/lib/libtdi*",
     ]),
     mode = "0644",
     package_dir = "/usr",
