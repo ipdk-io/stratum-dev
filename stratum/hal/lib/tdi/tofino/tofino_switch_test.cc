@@ -82,9 +82,7 @@ class TofinoSwitchTest : public ::testing::Test {
     node_mock_ = absl::make_unique<NiceMock<TdiNodeMock>>();
     unit_to_ipdk_node_mock_[kUnit] = node_mock_.get();
     switch_ = TofinoSwitch::CreateInstance(
-        phal_mock_.get(),
         chassis_manager_mock_.get(),
-        sde_mock_.get(),
         unit_to_ipdk_node_mock_);
 #if 0
     // no 'shutdown'
@@ -144,7 +142,6 @@ TEST_F(TofinoSwitchTest, ShutdownSucceeds) {
   EXPECT_CALL(*node_mock_, Shutdown()).WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*chassis_manager_mock_, Shutdown())
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(*phal_mock_, Shutdown()).WillOnce(Return(::util::OkStatus()));
 
   EXPECT_OK(switch_->Shutdown());
 }
@@ -153,7 +150,6 @@ TEST_F(TofinoSwitchTest, ShutdownFailsWhenSomeManagerShutdownFails) {
   EXPECT_CALL(*node_mock_, Shutdown()).WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*chassis_manager_mock_, Shutdown())
       .WillOnce(Return(DefaultError()));
-  EXPECT_CALL(*phal_mock_, Shutdown()).WillOnce(Return(::util::OkStatus()));
 
   EXPECT_THAT(switch_->Shutdown(), DerivedFromStatus(DefaultError()));
 }
