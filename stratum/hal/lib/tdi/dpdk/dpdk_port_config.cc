@@ -54,32 +54,32 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
 
   switch (value_case) {
     case ValueCase::kPortType:
-      params_set |= GNMI_CONFIG_PORT_TYPE;
       cfg.port_type = config_params.port_type();
+      params_set |= GNMI_CONFIG_PORT_TYPE;
       LOG(INFO) << "PortParam::kPortType = " << cfg.port_type;
       break;
 
     case ValueCase::kDeviceType:
-      params_set |= GNMI_CONFIG_DEVICE_TYPE;
       cfg.device_type = config_params.device_type();
+      params_set |= GNMI_CONFIG_DEVICE_TYPE;
       LOG(INFO) << "PortParam::kDeviceType = " << cfg.device_type;
       break;
 
     case ValueCase::kQueueCount:
-      params_set |= GNMI_CONFIG_QUEUE_COUNT;
       cfg.queues = config_params.queues();
+      params_set |= GNMI_CONFIG_QUEUE_COUNT;
       LOG(INFO) << "PortParam::kQueueCount = " << cfg.queues;
       break;
 
     case ValueCase::kSockPath:
-      params_set |= GNMI_CONFIG_SOCKET_PATH;
       cfg.socket_path = config_params.socket_path();
+      params_set |= GNMI_CONFIG_SOCKET_PATH;
       LOG(INFO) << "PortParam::kSockPath = " << cfg.socket_path;
       break;
 
     case ValueCase::kHostConfig:
-      params_set |= GNMI_CONFIG_HOST_NAME;
       cfg.host_name = config_params.host_name();
+      params_set |= GNMI_CONFIG_HOST_NAME;
       LOG(INFO) << "PortParam::kHostConfig = " << cfg.host_name;
       break;
 
@@ -101,8 +101,8 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
       break;
 
     case ValueCase::kPciBdf:
-      params_set |= GNMI_CONFIG_PCI_BDF_VALUE;
       cfg.pci_bdf = config_params.pci_bdf();
+      params_set |= GNMI_CONFIG_PCI_BDF_VALUE;
       LOG(INFO) << "PortParam::kPciBdf = " << cfg.pci_bdf;
       break;
 
@@ -112,14 +112,14 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
              << "Unsupported MTU = " << config_params.mtu()
              << ". MTU should be less than " << MAX_MTU << ".";
       }
-      mtu = config_params.mtu();
+      cfg.mtu = config_params.mtu();
       params_set |= GNMI_CONFIG_MTU_VALUE;
-      LOG(INFO) << "PortParam::kMtuValue = " << mtu.value();
+      LOG(INFO) << "PortParam::kMtuValue = " << cfg.mtu;
       break;
 
     case ValueCase::kPacketDir:
-      params_set |= GNMI_CONFIG_PACKET_DIR;
       cfg.packet_dir = config_params.packet_dir();
+      params_set |= GNMI_CONFIG_PACKET_DIR;
       LOG(INFO) << "PortParam::kPacketDir = " << cfg.packet_dir;
       break;
 

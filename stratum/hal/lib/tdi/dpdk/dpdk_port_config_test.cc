@@ -103,7 +103,7 @@ TEST(DpdkConfigParamTest, MtuValue) {
   sport.mutable_config_params()->set_mtu(1500);
   ASSERT_TRUE(config.SetParam(ValueCase::kMtuValue, sport).ok());
   ASSERT_TRUE(config.HasAnyOf(GNMI_CONFIG_MTU_VALUE));
-  ASSERT_EQ(config.mtu, 1500);
+  ASSERT_EQ(config.cfg.mtu, 1500);
 }
 
 TEST(DpskConfigParamTest, BadMtuValue) {
@@ -111,9 +111,9 @@ TEST(DpskConfigParamTest, BadMtuValue) {
   SingletonPort sport;
   PortConfigParams* port_params = sport.mutable_config_params();
   port_params->set_mtu(0x10001);
-  config.mtu.reset();
-  auto status = config.SetParam(ValueCase::kMtuValue, sport);
-  ASSERT_FALSE(config.mtu.has_value());
+  config.cfg.mtu = 0;
+  ASSERT_FALSE(config.SetParam(ValueCase::kMtuValue, sport).ok());
+  ASSERT_EQ(config.cfg.mtu, 0);
 }
 
 TEST(DpdkConfigParamTest, HotplugSocketPort) {

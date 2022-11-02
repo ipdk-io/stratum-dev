@@ -44,6 +44,8 @@ constexpr int DpdkChassisManager::kMaxPortStatusEventDepth;
 /* static */
 constexpr int DpdkChassisManager::kMaxXcvrEventDepth;
 
+constexpr uint64 SPEED_BPS_UNKNOWN = 0;
+
 DpdkChassisManager::DpdkChassisManager(
     OperationMode mode, TdiSdeInterface* sde_interface)
     : mode_(mode),
@@ -101,7 +103,7 @@ void SupplyDefaultParams(DpdkPortConfig& config) {
     config.Add(GNMI_CONFIG_MEMPOOL_NAME);
   }
   if (!config.HasAnyOf(GNMI_CONFIG_MTU_VALUE)) {
-    config.mtu = DEFAULT_MTU;
+    config.cfg.mtu = DEFAULT_MTU;
     config.Add(GNMI_CONFIG_MTU_VALUE);
   }
   if (!config.HasAnyOf(GNMI_CONFIG_PACKET_DIR)) {
@@ -246,14 +248,9 @@ bool DpdkChassisManager::IsPortParamSet(
         << node_id << " (SDK Port " << sdk_port_id << ").";
   }
 
-  config->speed_bps = singleton_port.speed_bps();
   config->admin_state = ADMIN_STATE_DISABLED;
-  config->fec_mode = config_params.fec_mode();
 
   TdiSdeInterface::PortConfigParams sde_params = config->cfg;
-  if (config->mtu.has_value()) {
-    sde_params.mtu = *config->mtu;
-  }
   sde_params.port_name = singleton_port.name();
 
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
@@ -271,35 +268,9 @@ bool DpdkChassisManager::IsPortParamSet(
     /* sdk_ctl_port_id is uniquely derived from the SDK_PORT_CONTROL_BASE range
      * and maps 1:1 to parent port's sdk_port_id.
      */
-    uint32 sdk_ctl_port_id = SDK_PORT_CONTROL_BASE + sdk_port_id;
-    RETURN_IF_ERROR(sde_interface_->AddPort(unit, sdk_ctl_port_id, sde_params));
+    uint32 ctl_port_id = SDK_PORT_CONTROL_BASE + sdk_port_id;
+    RETURN_IF_ERROR(sde_interface_->AddPort(unit, ctl_port_id, sde_params));
   }
-
-  if (config->mtu) {
-    LOG(INFO) << "MTU value - config->mtu= " << *config->mtu;
-    RETURN_IF_ERROR(
-        sde_interface_->SetPortMtu(unit, sdk_port_id, *config->mtu));
-  } else if (config_params.mtu() != 0) {
-    LOG(INFO) << "MTU value - config_params.mtu= " << config_params.mtu();
-    RETURN_IF_ERROR(
-        sde_interface_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
-    config->mtu = config_params.mtu();
-  }
-
-  if (config_params.autoneg() != TRI_STATE_UNKNOWN) {
-    RETURN_IF_ERROR(sde_interface_->SetPortAutonegPolicy(
-        unit, sdk_port_id, config_params.autoneg()));
-  }
-  config->autoneg = config_params.autoneg();
-
-  if (config_params.loopback_mode() != LOOPBACK_STATE_UNKNOWN) {
-    LOG(INFO) << "Setting port " << port_id << " to loopback mode "
-              << config_params.loopback_mode() << " (SDK Port " << sdk_port_id
-              << ").";
-    RETURN_IF_ERROR(sde_interface_->SetPortLoopbackMode(
-        unit, sdk_port_id, config_params.loopback_mode()));
-  }
-  config->loopback_mode = config_params.loopback_mode();
 
   if (config_params.admin_state() == ADMIN_STATE_ENABLED) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
@@ -338,52 +309,12 @@ bool DpdkChassisManager::IsPortParamSet(
 
   if (!sde_interface_->IsValidPort(unit, sdk_port_id)) {
     config->admin_state = ADMIN_STATE_UNKNOWN;
-    config->speed_bps.reset();
-    config->fec_mode.reset();
     return MAKE_ERROR(ERR_INTERNAL)
         << "Port " << port_id << " in node " << node_id << " is not valid"
         << " (SDK Port " << sdk_port_id << ").";
   }
 
   const auto& config_params = singleton_port.config_params();
-  if (singleton_port.speed_bps() != config_old.speed_bps) {
-    RETURN_IF_ERROR(sde_interface_->DisablePort(unit, sdk_port_id));
-    RETURN_IF_ERROR(sde_interface_->DeletePort(unit, sdk_port_id));
-
-    ::util::Status status =
-        AddPortHelper(node_id, unit, sdk_port_id, singleton_port, config);
-    if (status.ok()) {
-      return ::util::OkStatus();
-    } else {
-      // Revert to the old port configuration
-      //   -- make a singleton_port from config_old
-      //   -- call AddPortHelper with "old" singleton_port
-      SingletonPort port_old =
-          BuildSingletonPort(singleton_port.slot(), singleton_port.port(),
-                             singleton_port.channel(), *config_old.speed_bps);
-      port_old.mutable_config_params()->set_admin_state(config_old.admin_state);
-      if (config_old.autoneg)
-        port_old.mutable_config_params()->set_autoneg(*config_old.autoneg);
-      if (config_old.mtu)
-        port_old.mutable_config_params()->set_mtu(*config_old.mtu);
-      if (config_old.fec_mode)
-        port_old.mutable_config_params()->set_fec_mode(*config_old.fec_mode);
-      AddPortHelper(node_id, unit, sdk_port_id, port_old, config);
-      return MAKE_ERROR(ERR_INVALID_PARAM)
-          << "Could not add port " << port_id << " with new speed "
-          << singleton_port.speed_bps() << " to BF SDE"
-          << " (SDK Port " << sdk_port_id << ").";
-    }
-  }
-
-  // same for FEC mode
-  if (config_params.fec_mode() != config_old.fec_mode) {
-    return MAKE_ERROR(ERR_UNIMPLEMENTED)
-        << "The FEC mode for port " << port_id << " in node " << node_id
-        << " has changed; you need to delete the port and add it again"
-        << " (SDK Port " << sdk_port_id << ").";
-  }
-
   if (config_params.admin_state() == ADMIN_STATE_UNKNOWN) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
         << "Invalid admin state for port " << port_id << " in node " << node_id
@@ -396,36 +327,6 @@ bool DpdkChassisManager::IsPortParamSet(
   }
 
   bool config_changed = false;
-
-  if (config_params.mtu() != config_old.mtu) {
-    VLOG(1) << "Mtu for port " << port_id << " in node " << node_id
-            << " changed"
-            << " (SDK Port " << sdk_port_id << ").";
-    config->mtu.reset();
-    RETURN_IF_ERROR(
-        sde_interface_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
-    config->mtu = config_params.mtu();
-    config_changed = true;
-  }
-
-  if (config_params.autoneg() != config_old.autoneg) {
-    VLOG(1) << "Autoneg policy for port " << port_id << " in node " << node_id
-            << " changed"
-            << " (SDK Port " << sdk_port_id << ").";
-    config->autoneg.reset();
-    RETURN_IF_ERROR(sde_interface_->SetPortAutonegPolicy(
-        unit, sdk_port_id, config_params.autoneg()));
-    config->autoneg = config_params.autoneg();
-    config_changed = true;
-  }
-
-  if (config_params.loopback_mode() != config_old.loopback_mode) {
-    config->loopback_mode.reset();
-    RETURN_IF_ERROR(sde_interface_->SetPortLoopbackMode(
-        unit, sdk_port_id, config_params.loopback_mode()));
-    config->loopback_mode = config_params.loopback_mode();
-    config_changed = true;
-  }
 
   bool need_disable = false, need_enable = false;
   if (config_params.admin_state() == ADMIN_STATE_DISABLED) {
@@ -554,16 +455,6 @@ bool DpdkChassisManager::IsPortParamSet(
         continue;
       }
 
-      // diff configs and apply necessary changes
-
-      // sanity-check: if admin_state is not ADMIN_STATE_UNKNOWN, then the port
-      // was added and the speed_bps was set.
-      if (!config_old->speed_bps) {
-        return MAKE_ERROR(ERR_INTERNAL)
-            << "Invalid internal state in DpdkChassisManager, "
-            << "speed_bps field should contain a value";
-      }
-
       // if anything fails, config.admin_state will be set to
       // ADMIN_STATE_UNKNOWN (invalid)
       RETURN_IF_ERROR(UpdatePortHelper(node_id, unit, sdk_port_id,
@@ -672,8 +563,6 @@ bool DpdkChassisManager::IsPortParamSet(
         << "No valid slot in " << singleton_port.ShortDebugString() << ".";
     CHECK_RETURN_IF_FALSE(singleton_port.port() > 0)
         << "No valid port in " << singleton_port.ShortDebugString() << ".";
-    CHECK_RETURN_IF_FALSE(singleton_port.speed_bps() > 0)
-        << "No valid speed_bps in " << singleton_port.ShortDebugString() << ".";
     PortKey singleton_port_key(singleton_port.slot(), singleton_port.port(),
                                singleton_port.channel());
     CHECK_RETURN_IF_FALSE(!singleton_port_keys.count(singleton_port_key))
@@ -830,27 +719,6 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       resp.mutable_mac_address()->set_mac_address(kDummyMacAddress);
       break;
     }
-    case Request::kPortSpeed: {
-      ASSIGN_OR_RETURN(auto* config,
-                       GetPortConfig(request.port_speed().node_id(),
-                                     request.port_speed().port_id()));
-      if (config->speed_bps)
-        resp.mutable_port_speed()->set_speed_bps(*config->speed_bps);
-      break;
-    }
-    case Request::kNegotiatedPortSpeed: {
-      ASSIGN_OR_RETURN(
-          auto* config,
-          GetPortConfig(request.negotiated_port_speed().node_id(),
-                        request.negotiated_port_speed().port_id()));
-      if (!config->speed_bps) break;
-      ASSIGN_OR_RETURN(auto port_state,
-                       GetPortState(request.negotiated_port_speed().node_id(),
-                                    request.negotiated_port_speed().port_id()));
-      if (port_state != PORT_STATE_UP) break;
-      resp.mutable_negotiated_port_speed()->set_speed_bps(*config->speed_bps);
-      break;
-    }
     case DataRequest::Request::kLacpRouterMac: {
       // Find LACP System ID MAC address of port located at:
       // - node_id: req.lacp_router_mac().node_id()
@@ -865,33 +733,13 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
                                       resp.mutable_port_counters()));
       break;
     }
-    case Request::kAutonegStatus: {
-      ASSIGN_OR_RETURN(auto* config,
-                       GetPortConfig(request.autoneg_status().node_id(),
-                                     request.autoneg_status().port_id()));
-      if (config->autoneg)
-        resp.mutable_autoneg_status()->set_state(*config->autoneg);
-      break;
-    }
-    case Request::kFrontPanelPortInfo: {
-      // NOTE: return error?
-      break;
-    }
-    case Request::kFecStatus: {
-      ASSIGN_OR_RETURN(auto* config,
-                       GetPortConfig(request.fec_status().node_id(),
-                                     request.fec_status().port_id()));
-      if (config->fec_mode)
-        resp.mutable_fec_status()->set_mode(*config->fec_mode);
-      break;
-    }
+    case Request::kPortSpeed:
+    case Request::kNegotiatedPortSpeed:
+    case Request::kAutonegStatus:
+    case Request::kFrontPanelPortInfo:
+    case Request::kFecStatus:
     case Request::kLoopbackStatus: {
-      ASSIGN_OR_RETURN(auto* config,
-                       GetPortConfig(request.loopback_status().node_id(),
-                                     request.loopback_status().port_id()));
-      if (config->loopback_mode)
-        resp.mutable_loopback_status()->set_state(*config->loopback_mode);
-      break;
+      return MAKE_ERROR(ERR_INTERNAL) << "Attribute not supported by DPDK";
     }
     case Request::kSdnPortId: {
       ASSIGN_OR_RETURN(auto sdk_port_id,
@@ -1017,39 +865,11 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       return ::util::OkStatus();
     }
 
-    if (!config.speed_bps) {
-      return MAKE_ERROR(ERR_INTERNAL)
-          << "Invalid internal state in DpdkChassisManager, "
-          << "speed_bps field should contain a value";
-    }
-    if (!config.fec_mode) {
-      return MAKE_ERROR(ERR_INTERNAL)
-          << "Invalid internal state in DpdkChassisManager, "
-          << "fec_mode field should contain a value";
-    }
-
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
+    // NOTE: This is the legacy AddPort method. DPDK does not support it.
     RETURN_IF_ERROR(sde_interface_->AddPort(
-        unit, sdk_port_id, *config.speed_bps, *config.fec_mode));
-    config_new->speed_bps = *config.speed_bps;
+        unit, sdk_port_id, SPEED_BPS_UNKNOWN, FEC_MODE_UNKNOWN));
     config_new->admin_state = ADMIN_STATE_DISABLED;
-    config_new->fec_mode = *config.fec_mode;
-
-    if (config.mtu) {
-      RETURN_IF_ERROR(
-          sde_interface_->SetPortMtu(unit, sdk_port_id, *config.mtu));
-      config_new->mtu = *config.mtu;
-    }
-    if (config.autoneg) {
-      RETURN_IF_ERROR(sde_interface_->SetPortAutonegPolicy(unit, sdk_port_id,
-                                                           *config.autoneg));
-      config_new->autoneg = *config.autoneg;
-    }
-    if (config.loopback_mode) {
-      RETURN_IF_ERROR(sde_interface_->SetPortLoopbackMode(
-          unit, sdk_port_id, *config.loopback_mode));
-      config_new->loopback_mode = *config.loopback_mode;
-    }
 
     if (config.admin_state == ADMIN_STATE_ENABLED) {
       VLOG(1) << "Enabling port " << port_id << " in node " << node_id
