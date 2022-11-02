@@ -87,8 +87,7 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD4(AddPort, ::util::Status(int device, int port, uint64 speed_bps,
                                        FecMode fec_mode));
   MOCK_METHOD(::util::Status, AddPort,
-              (int device, int port, uint64 speed_bps,
-               const PortConfigParams& config, FecMode fec_mode));
+              (int device, int port, const PortConfigParams& config));
   MOCK_METHOD(::util::Status, HotplugPort,
               (int device, int port, HotplugConfigParams& hotplug_config));
   MOCK_METHOD2(DeletePort, ::util::Status(int device, int port));

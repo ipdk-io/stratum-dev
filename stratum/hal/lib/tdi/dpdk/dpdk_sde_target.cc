@@ -165,8 +165,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, const PortConfigParams& config,
-    FecMode fec_mode) {
+    int device, int port, const PortConfigParams& config) {
   static int port_in;
   static int port_out;
 
@@ -185,7 +184,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
   port_attrs->port_out_id = port_out++;
   port_attrs->net_port = config.packet_dir;
 
-  LOG(INFO) << "Parameters for backend are:"
+  LOG(INFO) << "Parameters for DPDK are:"
             << " port_name=" << port_attrs->port_name
             << " port_type=" << port_attrs->port_type
             << " port_in_id=" << port_attrs->port_in_id
@@ -194,7 +193,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
             << " pipeline_out_name=" << port_attrs->pipe_out
             << " mempool_name=" << port_attrs->mempool_name
             << " net_port=" << port_attrs->net_port
-            << " sdk_port_id = " << port;
+            << " sdk_port_id= " << port;
 
   if (port_attrs->port_type == BF_DPDK_LINK) {
     // Update LINK parameters

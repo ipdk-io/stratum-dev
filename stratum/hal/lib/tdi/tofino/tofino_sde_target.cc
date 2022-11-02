@@ -205,7 +205,7 @@ bf_status_t sde_port_status_callback(
 
 ::util::Status TdiSdeWrapper::HotplugPort(
     int device, int port, HotplugConfigParams& hotplug_config) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "HotplugPort not implemented";
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
@@ -220,9 +220,9 @@ bf_status_t sde_port_status_callback(
 }
 
 ::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, uint64 speed_bps, const PortConfigParams& config,
-    FecMode fec_mode) {
-  return ::util::OkStatus();
+    int device, int port, const PortConfigParams& config) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED)
+      << "AddPort(device, port, config) not implemented";
 }
 
 ::util::Status TdiSdeWrapper::DeletePort(int device, int port) {

@@ -61,7 +61,6 @@ class TdiSdeInterface {
     std::string pipeline_name;
     std::string mempool_name;
     std::string pci_bdf;
-    struct HotplugConfigParams hotplug_config;
   };
 
   // SessionInterface is a proxy class for TDI sessions. Most API calls require
@@ -202,9 +201,8 @@ class TdiSdeInterface {
                                  FecMode fec_mode = FEC_MODE_UNKNOWN) = 0;
 
   // Add a new port with the given parameters.
-  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                                 const PortConfigParams& config,
-                                 FecMode fec_mode = FEC_MODE_UNKNOWN) = 0 ;
+  virtual ::util::Status AddPort(
+      int device, int port, const PortConfigParams& config) = 0 ;
 
   // Hotplug add/delete the port
   virtual ::util::Status HotplugPort(int device, int port,
