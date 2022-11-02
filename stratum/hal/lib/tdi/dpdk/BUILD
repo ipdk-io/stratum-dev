@@ -80,8 +80,8 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "dpdk_sde_wrapper",
-    srcs = ["dpdk_sde_wrapper.cc"],
+    name = "dpdk_sde_target",
+    srcs = ["dpdk_sde_target.cc"],
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -181,7 +181,6 @@ stratum_cc_library(
     ],
 )
 
-# Not yet integrated or tested.
 stratum_cc_library(
     name = "dpdk_hal",
     srcs = ["dpdk_hal.cc"],
