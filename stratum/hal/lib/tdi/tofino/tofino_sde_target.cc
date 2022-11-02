@@ -316,52 +316,7 @@ namespace {
 
 std::string GetBfChipFamilyAndType(int device) {
   bf_dev_type_t dev_type = lld_sku_get_dev_type(device);
-  switch (dev_type) {
-    case BF_DEV_BFNT10064Q:
-      return "TOFINO_64Q";
-    case BF_DEV_BFNT10032Q:
-      return "TOFINO_32Q";
-    case BF_DEV_BFNT10032D:
-      return "TOFINO_32D";
-    case BF_DEV_BFNT20128Q:
-      return "TOFINO2_128Q";
-#ifdef BF_DEV_BFNT20128QM
-    case BF_DEV_BFNT20128QM:  // added in 9.3.0
-      return "TOFINO2_128QM";
-#endif
-    case BF_DEV_BFNT20080T:
-      return "TOFINO2_80T";
-#ifdef BF_DEV_BFNT20080TM
-    case BF_DEV_BFNT20080TM:  // added in 9.3.0
-      return "TOFINO2_80TM";
-#endif
-    case BF_DEV_BFNT20064Q:
-      return "TOFINO2_64Q";
-    case BF_DEV_BFNT20064D:
-      return "TOFINO2_64D";
-#ifdef BF_DEV_BFNT20032D
-    case BF_DEV_BFNT20032D:  // removed in 9.3.0
-      return "TOFINO2_32D";
-#endif
-#ifdef BF_DEV_BFNT20032S
-    case BF_DEV_BFNT20032S:  // removed in 9.3.0
-      return "TOFINO2_32S";
-#endif
-#ifdef BF_DEV_BFNT20036D
-    case BF_DEV_BFNT20036D:  // removed in 9.3.0
-      return "TOFINO2_36D";
-#endif
-#ifdef BF_DEV_BFNT20032E
-    case BF_DEV_BFNT20032E:  // removed in 9.3.0
-      return "TOFINO2_32E";
-#endif
-#ifdef BF_DEV_BFNT20064E
-    case BF_DEV_BFNT20064E:  // removed in 9.3.0
-      return "TOFINO2_64E";
-#endif
-    default:
-      return "UNKNOWN";
-  }
+  return pipe_mgr_dev_type2str(dev_type);
 }
 
 std::string GetBfChipRevision(int device) {
@@ -583,6 +538,9 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   tdi_id_mapper_ = TdiIdMapper::CreateInstance();
   RETURN_IF_ERROR(
       tdi_id_mapper_->PushForwardingPipelineConfig(device_config, tdi_info_));
+
+  ASSIGN_OR_RETURN(auto cpu_port, GetPcieCpuPort(dev_id));
+  RETURN_IF_ERROR(SetTmCpuPort(dev_id, cpu_port));
 
   return ::util::OkStatus();
 }

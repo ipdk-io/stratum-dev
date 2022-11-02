@@ -6,22 +6,22 @@ The developers who implemented OpenConfig/gNMI support for DPDK in
 P4-OVS made extensive changes to the implementation of the
 *YangParseTreePaths* class (yang\_parse\_tree\_paths.cc).
 
-  - Many of the paths were changed from */interfaces/interface* to
-    */interfaces/virtual-interface*.
-  - A number of *state* nodes were renamed to *config*.
-  - A couple of dozen new port attributes (leaves) were added.
+- Many of the paths were changed from */interfaces/interface* to
+  */interfaces/virtual-interface*.
+- Several *state* nodes were changed to *config* nodes.
+- A number of new port attributes (leaves) were added.
 
 In the process, roughly 1500 lines of code were added to the file.
 Further changes are planned.
 
 ## 2. Problem Statement
 
-1.  yang\_parse\_tree\_paths is a common file. We cannot make arbitrary
-    changes to it without affecting other targets; particularly not changes
-    that alter existing paths.
-2.  The unmodified file has \~4100 lines of code, which is unwieldy.
-    The modified file has \~5600 lines, which is unmanageable.
-3.  Additional changes are planned.
+- yang\_parse\_tree\_paths is a common file. We cannot make arbitrary
+  changes to it without affecting other targets, especially not changes
+  that alter existing paths.
+- The unmodified file has \~4100 lines of code, which is unwieldy.
+  The modified file has \~5600 lines, which is unmanageable.
+- We expect to be making additional changes in the future.
 
 ## 3. Proposed Solution
 
@@ -30,22 +30,22 @@ each preferably having no more than 1000 lines of source code.
 
 Maintain the order of the functions in each file.
 
-  - This will allow the original file to be diffed with each of the
-    derivative files to verify the integrity of the refactoring.
+- This will allow the original file to be diffed with each of the
+  derivative files to verify the integrity of the refactoring.
 
 Ensure that the *AddSubtreeInterface* method and its supporting
 functions are separated from the rest of the code.
 
-  - This will allow us to replace *AddSubtreeInterface* and add new
-    supporting functions by choosing a different selection of files in
-    the DPDK build.
-  - The DPDK-specific files will be in *stratum/hal/lib/tdi/dpdk*.
+- This will allow us to replace *AddSubtreeInterface* and add new
+  supporting functions by selecting a different set of files in
+  the DPDK build.
+- The DPDK-specific files will be in *stratum/hal/lib/tdi/dpdk*.
 
 Move the YANG files to a new *stratum/hal/lib/yang* directory (paralleling
 *stratum/hal/lib/p4*).
 
-  - This avoids cluttering the *common* directory, which already has \~50
-    non-YANG files in it.
+- This avoids cluttering the *common* directory, which already has \~50
+  non-YANG files in it.
 
 ## 4. Outcome
 
@@ -137,7 +137,7 @@ Namespaced as <em>::stratum::hal::yang::interface</em></td>
 
 ### 5.1 DPDK support
 
-For DPDK, we expect to add the following to *stratum/hal/lib/tdi/dpdk*:
+For DPDK, we have added the following to *stratum/hal/lib/tdi/dpdk*:
 
 - dpdk_add_subtree_interface.cc
 - dpdk_parse_tree_interface.cc
@@ -147,18 +147,18 @@ For DPDK, we expect to add the following to *stratum/hal/lib/tdi/dpdk*:
 
 It might be worth looking into refactoring *yang\_parse\_tree\_test.cc*.
 
-  - At \~5600 lines, its size is excessive for a manually maintained
-    file.
-  - We might also (cough) want to add unit tests for the new
-    functionality.
+- At \~5600 lines, its size is excessive for a manually maintained
+  file.
+- We might also (cough) want to add unit tests for the new
+  functionality.
 
 ## 6. Alternatives
 
 We could limit the refactoring to *AddSubtreeInterface* and its
 support functions.
 
-  - This would reduce the impact on the existing code, but it would do
-    nothing for the maintainability of yang\_parse\_tree\_paths.cc.
+- This would reduce the impact on the existing code, but it would do
+  nothing for the maintainability of yang\_parse\_tree\_paths.cc.
 
 We would still need to create the following files in order to support DPDK:
 
@@ -167,3 +167,4 @@ We would still need to create the following files in order to support DPDK:
 - yang_parse_tree_helpers.h
 - yang_parse_tree_interface.cc
 - yang_parse_tree_interface.h
+

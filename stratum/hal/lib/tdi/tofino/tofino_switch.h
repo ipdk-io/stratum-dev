@@ -11,9 +11,8 @@
 #include <vector>
 
 #include "absl/synchronization/mutex.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
-#include "stratum/hal/lib/common/phal_interface.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 
 // Suppress clang errors
@@ -23,8 +22,6 @@
 namespace stratum {
 namespace hal {
 namespace tdi {
-
-class TofinoChassisManager;
 
 class TofinoSwitch : public SwitchInterface {
  public:
@@ -82,8 +79,7 @@ class TofinoSwitch : public SwitchInterface {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TofinoSwitch> CreateInstance(
-      PhalInterface* phal_interface, TofinoChassisManager* chassis_manager,
-      TdiSdeInterface* sde_interface,
+      TofinoChassisManager* chassis_manager,
       const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // TofinoSwitch is neither copyable nor movable.
@@ -95,10 +91,8 @@ class TofinoSwitch : public SwitchInterface {
  private:
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  TofinoSwitch(PhalInterface* phal_interface,
-	       TofinoChassisManager* chassis_manager,
-	       TdiSdeInterface* sde_interface,
-	       const std::map<int, TdiNode*>& device_id_to_tdi_node);
+  TofinoSwitch(TofinoChassisManager* chassis_manager,
+      const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // Helper to get TdiNode pointer from device_id number or return error
   // indicating invalid device_id.
@@ -107,14 +101,6 @@ class TofinoSwitch : public SwitchInterface {
   // Helper to get TdiNode pointer from node id or return error indicating
   // invalid/unknown/uninitialized node.
   ::util::StatusOr<TdiNode*> GetTdiNodeFromNodeId(uint64 node_id) const;
-
-  // Pointer to a PhalInterface implementation. The pointer has been also
-  // passed to a few managers for accessing HW. Note that there is only one
-  // instance of this class per chassis.
-  PhalInterface* phal_interface_;  // not owned by this class.
-
-  // Pointer to a TdiSdeInterface implementation that wraps PD API calls.
-  TdiSdeInterface* sde_interface_;  // not owned by this class.
 
   // Pointer to ChassisManager object. Note that there is only one instance
   // of this class.

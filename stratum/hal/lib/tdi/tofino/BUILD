@@ -58,9 +58,9 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tofino_sde_wrapper",
+    name = "tofino_sde_target",
     srcs = [
-        "tofino_sde_wrapper.cc",
+        "tofino_sde_target.cc",
     ],
     defines = ["TOFINO_TARGET"],
     deps = [
@@ -90,10 +90,8 @@ stratum_cc_library(
         "//stratum/glue/status:status_macros",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/hal/lib/common:phal_interface",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/tdi:tdi_node",
-        "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",

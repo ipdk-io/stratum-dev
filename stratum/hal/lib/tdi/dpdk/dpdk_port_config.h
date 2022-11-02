@@ -36,7 +36,7 @@ public:
   // Whether the port has been added.
   bool port_done;
 
-  // Whether the HOTPLUG port has been added.
+  // Whether the HOTPLUG config has been applied.
   bool hotplug_done;
 
   DpdkPortConfig() {
