@@ -272,13 +272,6 @@ bool DpdkChassisManager::IsPortParamSet(
     RETURN_IF_ERROR(sde_interface_->AddPort(unit, ctl_port_id, sde_params));
   }
 
-  if (config_params.admin_state() == ADMIN_STATE_ENABLED) {
-    LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
-              << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(sde_interface_->EnablePort(unit, sdk_port_id));
-    config->admin_state = ADMIN_STATE_ENABLED;
-  }
-
   return ::util::OkStatus();
 }
 
@@ -303,6 +296,10 @@ bool DpdkChassisManager::IsPortParamSet(
     const SingletonPort& singleton_port /* desired config */,
     const DpdkPortConfig& config_old /* current config */,
     /* out */ DpdkPortConfig* config /* new config */) {
+  /* TODO : None of port updates are supported by DPDK SDE,
+   * maybe we can remove this functionality or return unsupported
+   * for DPDK
+   */
   *config = config_old;
   // SingletonPort ID is the SDN/Stratum port ID
   uint32 port_id = singleton_port.id();
@@ -348,13 +345,11 @@ bool DpdkChassisManager::IsPortParamSet(
   if (need_disable) {
     LOG(INFO) << "Disabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(sde_interface_->DisablePort(unit, sdk_port_id));
     config->admin_state = ADMIN_STATE_DISABLED;
   }
   if (need_enable) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(sde_interface_->EnablePort(unit, sdk_port_id));
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
@@ -874,7 +869,6 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     if (config.admin_state == ADMIN_STATE_ENABLED) {
       VLOG(1) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(sde_interface_->EnablePort(unit, sdk_port_id));
       config_new->admin_state = ADMIN_STATE_ENABLED;
     }
 
