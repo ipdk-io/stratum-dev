@@ -42,7 +42,8 @@ constexpr int TofinoChassisManager::kMaxXcvrEventDepth;
 TofinoChassisManager::TofinoChassisManager(
     OperationMode mode,
     PhalInterface* phal_interface,
-    TdiSdeInterface* tdi_sde_interface)
+    TdiSdeInterface* tdi_sde_interface,
+    TofinoPortManager* tofino_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -60,7 +61,8 @@ TofinoChassisManager::TofinoChassisManager(
       node_id_to_deflect_on_drop_config_(),
       xcvr_port_key_to_xcvr_state_(),
       phal_interface_(ABSL_DIE_IF_NULL(phal_interface)),
-      tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)) {}
+      tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
+      tofino_port_manager_(ABSL_DIE_IF_NULL(tofino_port_manager)) {}
 
 TofinoChassisManager::TofinoChassisManager()
     : mode_(OPERATION_MODE_STANDALONE),
@@ -80,7 +82,8 @@ TofinoChassisManager::TofinoChassisManager()
       node_id_to_deflect_on_drop_config_(),
       xcvr_port_key_to_xcvr_state_(),
       phal_interface_(nullptr),
-      tdi_sde_interface_(nullptr) {}
+      tdi_sde_interface_(nullptr),
+      tofino_port_manager_(nullptr) {}
 
 TofinoChassisManager::~TofinoChassisManager() = default;
 
@@ -106,7 +109,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
             << " (SDK Port " << sdk_port_id << ").";
-  RETURN_IF_ERROR(tdi_sde_interface_->AddPort(
+  RETURN_IF_ERROR(tofino_port_manager_->AddPort(
       unit, sdk_port_id, singleton_port.speed_bps(), config_params.fec_mode()));
   config->speed_bps = singleton_port.speed_bps();
   config->admin_state = ADMIN_STATE_DISABLED;
@@ -114,11 +117,11 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
   if (config_params.mtu() != 0) {
     RETURN_IF_ERROR(
-        tdi_sde_interface_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+        tofino_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
   }
   config->mtu = config_params.mtu();
   if (config_params.autoneg() != TRI_STATE_UNKNOWN) {
-    RETURN_IF_ERROR(tdi_sde_interface_->SetPortAutonegPolicy(
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortAutonegPolicy(
         unit, sdk_port_id, config_params.autoneg()));
   }
   config->autoneg = config_params.autoneg();
@@ -127,7 +130,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
     LOG(INFO) << "Setting port " << port_id << " to loopback mode "
               << config_params.loopback_mode() << " (SDK Port " << sdk_port_id
               << ").";
-    RETURN_IF_ERROR(tdi_sde_interface_->SetPortLoopbackMode(
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortLoopbackMode(
         unit, sdk_port_id, config_params.loopback_mode()));
   }
   config->loopback_mode = config_params.loopback_mode();
@@ -135,12 +138,12 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   if (config_params.admin_state() == ADMIN_STATE_ENABLED) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(tdi_sde_interface_->EnablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(tofino_port_manager_->EnablePort(unit, sdk_port_id));
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
   RETURN_IF_ERROR(
-      tdi_sde_interface_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_FALSE));
+      tofino_port_manager_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_FALSE));
 
   return ::util::OkStatus();
 }
@@ -154,7 +157,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   // SingletonPort ID is the SDN/Stratum port ID
   uint32 port_id = singleton_port.id();
 
-  if (!tdi_sde_interface_->IsValidPort(unit, sdk_port_id)) {
+  if (!tofino_port_manager_->IsValidPort(unit, sdk_port_id)) {
     config->admin_state = ADMIN_STATE_UNKNOWN;
     config->speed_bps.reset();
     config->fec_mode.reset();
@@ -165,8 +168,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
   const auto& config_params = singleton_port.config_params();
   if (singleton_port.speed_bps() != config_old.speed_bps) {
-    RETURN_IF_ERROR(tdi_sde_interface_->DisablePort(unit, sdk_port_id));
-    RETURN_IF_ERROR(tdi_sde_interface_->DeletePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(tofino_port_manager_->DisablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(tofino_port_manager_->DeletePort(unit, sdk_port_id));
 
     ::util::Status status =
         AddPortHelper(node_id, unit, sdk_port_id, singleton_port, config);
@@ -220,7 +223,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
             << " (SDK Port " << sdk_port_id << ").";
     config->mtu.reset();
     RETURN_IF_ERROR(
-        tdi_sde_interface_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+        tofino_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
     config->mtu = config_params.mtu();
     config_changed = true;
   }
@@ -229,14 +232,14 @@ TofinoChassisManager::~TofinoChassisManager() = default;
             << " changed"
             << " (SDK Port " << sdk_port_id << ").";
     config->autoneg.reset();
-    RETURN_IF_ERROR(tdi_sde_interface_->SetPortAutonegPolicy(
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortAutonegPolicy(
         unit, sdk_port_id, config_params.autoneg()));
     config->autoneg = config_params.autoneg();
     config_changed = true;
   }
   if (config_params.loopback_mode() != config_old.loopback_mode) {
     config->loopback_mode.reset();
-    RETURN_IF_ERROR(tdi_sde_interface_->SetPortLoopbackMode(
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortLoopbackMode(
         unit, sdk_port_id, config_params.loopback_mode()));
     config->loopback_mode = config_params.loopback_mode();
     config_changed = true;
@@ -267,13 +270,13 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   if (need_disable) {
     LOG(INFO) << "Disabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(tdi_sde_interface_->DisablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(tofino_port_manager_->DisablePort(unit, sdk_port_id));
     config->admin_state = ADMIN_STATE_DISABLED;
   }
   if (need_enable) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(tdi_sde_interface_->EnablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(tofino_port_manager_->EnablePort(unit, sdk_port_id));
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
@@ -332,7 +335,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
         singleton_port_key;
 
     // Translate the logical SDN port to SDK port (BF device port ID)
-    ASSIGN_OR_RETURN(uint32 sdk_port, tdi_sde_interface_->GetPortIdFromPortKey(
+    ASSIGN_OR_RETURN(uint32 sdk_port, tofino_port_manager_->GetPortIdFromPortKey(
                                           *unit, singleton_port_key));
     node_id_to_port_id_to_sdk_port_id[node_id][port_id] = sdk_port;
     node_id_to_sdk_port_id_to_port_id[node_id][sdk_port] = port_id;
@@ -370,8 +373,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
         // something is wrong with the port, we make sure the port is deleted
         // first (and ignore the error status if there is one), then add the
         // port again.
-        if (tdi_sde_interface_->IsValidPort(unit, sdk_port_id)) {
-          tdi_sde_interface_->DeletePort(unit, sdk_port_id);
+        if (tofino_port_manager_->IsValidPort(unit, sdk_port_id)) {
+          tofino_port_manager_->DeletePort(unit, sdk_port_id);
         }
         RETURN_IF_ERROR(
             AddPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
@@ -453,7 +456,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
                 << "Unsupported port type in DropTarget "
                 << drop_target.ShortDebugString();
         }
-        RETURN_IF_ERROR(tdi_sde_interface_->SetDeflectOnDropDestination(
+        RETURN_IF_ERROR(tofino_port_manager_->SetDeflectOnDropDestination(
             unit, sdk_port_id, drop_target.queue()));
         LOG(INFO) << "Configured deflect-on-drop to SDK port " << sdk_port_id
                   << " in node " << node_id << ".";
@@ -478,7 +481,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
       // TODO(bocon): Collect these errors and keep trying to remove old ports
       LOG(INFO) << "Deleting port " << port_id << " in node " << node_id
                 << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(tdi_sde_interface_->DeletePort(unit, sdk_port_id));
+      RETURN_IF_ERROR(tofino_port_manager_->DeletePort(unit, sdk_port_id));
     }
   }
 
@@ -506,14 +509,14 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   switch (shaping_config.shaping_case()) {
     case TofinoConfig::BfPortShapingConfig::BfPerPortShapingConfig::
         kPacketShaping:
-      RETURN_IF_ERROR(tdi_sde_interface_->SetPortShapingRate(
+      RETURN_IF_ERROR(tofino_port_manager_->SetPortShapingRate(
           unit, sdk_port_id, true,
           shaping_config.packet_shaping().max_burst_packets(),
           shaping_config.packet_shaping().max_rate_pps()));
       break;
     case TofinoConfig::BfPortShapingConfig::BfPerPortShapingConfig::
         kByteShaping:
-      RETURN_IF_ERROR(tdi_sde_interface_->SetPortShapingRate(
+      RETURN_IF_ERROR(tofino_port_manager_->SetPortShapingRate(
           unit, sdk_port_id, false,
           shaping_config.byte_shaping().max_burst_bytes(),
           shaping_config.byte_shaping().max_rate_bps()));
@@ -524,7 +527,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
           << ".";
   }
   RETURN_IF_ERROR(
-      tdi_sde_interface_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_TRUE));
+      tofino_port_manager_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_TRUE));
   LOG(INFO) << "Configured port shaping on SDK port " << sdk_port_id
             << " in node " << node_id << ": "
             << shaping_config.ShortDebugString() << ".";
@@ -638,7 +641,7 @@ TofinoChassisManager::~TofinoChassisManager() = default;
     CHECK_RETURN_IF_FALSE(unit != nullptr)
         << "Node " << node_id << " not found for port " << port_id << ".";
     RETURN_IF_ERROR(
-        tdi_sde_interface_->GetPortIdFromPortKey(*unit, singleton_port_key)
+        tofino_port_manager_->GetPortIdFromPortKey(*unit, singleton_port_key)
             .status());
   }
 
@@ -868,7 +871,7 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
             << ".";
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
   ASSIGN_OR_RETURN(auto port_state,
-                   tdi_sde_interface_->GetPortState(unit, sdk_port_id));
+                   tofino_port_manager_->GetPortState(unit, sdk_port_id));
   LOG(INFO) << "State of port " << port_id << " in node " << node_id
             << " (SDK port " << sdk_port_id
             << "): " << PrintPortState(port_state);
@@ -895,7 +898,7 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   }
   ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
-  return tdi_sde_interface_->GetPortCounters(unit, sdk_port_id, counters);
+  return tofino_port_manager_->GetPortCounters(unit, sdk_port_id, counters);
 }
 
 ::util::StatusOr<std::map<uint64, int>> TofinoChassisManager::GetNodeIdToUnitMap()
@@ -944,7 +947,7 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     }
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
-    RETURN_IF_ERROR(tdi_sde_interface_->AddPort(
+    RETURN_IF_ERROR(tofino_port_manager_->AddPort(
         unit, sdk_port_id, *config.speed_bps, *config.fec_mode));
     config_new->speed_bps = *config.speed_bps;
     config_new->admin_state = ADMIN_STATE_DISABLED;
@@ -952,16 +955,16 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
     if (config.mtu) {
       RETURN_IF_ERROR(
-          tdi_sde_interface_->SetPortMtu(unit, sdk_port_id, *config.mtu));
+          tofino_port_manager_->SetPortMtu(unit, sdk_port_id, *config.mtu));
       config_new->mtu = *config.mtu;
     }
     if (config.autoneg) {
-      RETURN_IF_ERROR(tdi_sde_interface_->SetPortAutonegPolicy(unit, sdk_port_id,
+      RETURN_IF_ERROR(tofino_port_manager_->SetPortAutonegPolicy(unit, sdk_port_id,
                                                               *config.autoneg));
       config_new->autoneg = *config.autoneg;
     }
     if (config.loopback_mode) {
-      RETURN_IF_ERROR(tdi_sde_interface_->SetPortLoopbackMode(
+      RETURN_IF_ERROR(tofino_port_manager_->SetPortLoopbackMode(
           unit, sdk_port_id, *config.loopback_mode));
       config_new->loopback_mode = *config.loopback_mode;
     }
@@ -969,7 +972,7 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     if (config.admin_state == ADMIN_STATE_ENABLED) {
       VLOG(1) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(tdi_sde_interface_->EnablePort(unit, sdk_port_id));
+      RETURN_IF_ERROR(tofino_port_manager_->EnablePort(unit, sdk_port_id));
       config_new->admin_state = ADMIN_STATE_ENABLED;
     }
 
@@ -1011,7 +1014,7 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
             << drop_target.ShortDebugString();
     }
 
-    RETURN_IF_ERROR(tdi_sde_interface_->SetDeflectOnDropDestination(
+    RETURN_IF_ERROR(tofino_port_manager_->SetDeflectOnDropDestination(
         unit, sdk_port_id, drop_target.queue()));
     LOG(INFO) << "Configured deflect on drop target port " << sdk_port_id
               << " in node " << node_id << ".";
@@ -1036,9 +1039,9 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
 std::unique_ptr<TofinoChassisManager> TofinoChassisManager::CreateInstance(
     OperationMode mode, PhalInterface* phal_interface,
-    TdiSdeInterface* tdi_sde_interface) {
-  return absl::WrapUnique(
-      new TofinoChassisManager(mode, phal_interface, tdi_sde_interface));
+    TdiSdeInterface* tdi_sde_interface, TofinoPortManager* tofino_port_manager) {
+  return absl::WrapUnique(new TofinoChassisManager(
+        mode, phal_interface, tdi_sde_interface, tofino_port_manager));
 }
 
 void TofinoChassisManager::SendPortOperStateGnmiEvent(
@@ -1248,7 +1251,7 @@ void TofinoChassisManager::TransceiverEventHandler(int slot, int port,
     auto writer =
         ChannelWriter<PortStatusEvent>::Create(port_status_event_channel_);
     RETURN_IF_ERROR(
-        tdi_sde_interface_->RegisterPortStatusEventWriter(std::move(writer)));
+        tofino_port_manager_->RegisterPortStatusEventWriter(std::move(writer)));
     LOG(INFO) << "Port status notification callback registered successfully";
     // Create and hand-off Reader to new reader thread.
     auto reader =
@@ -1310,7 +1313,7 @@ void TofinoChassisManager::TransceiverEventHandler(int slot, int port,
   ::util::Status status = ::util::OkStatus();
   // Unregister the linkscan and transceiver module event Writers.
   APPEND_STATUS_IF_ERROR(status,
-                         tdi_sde_interface_->UnregisterPortStatusEventWriter());
+                         tofino_port_manager_->UnregisterPortStatusEventWriter());
   // Close Channel.
   if (!port_status_event_channel_ || !port_status_event_channel_->Close()) {
     ::util::Status error = MAKE_ERROR(ERR_INTERNAL)

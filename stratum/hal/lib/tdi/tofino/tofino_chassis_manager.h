@@ -15,6 +15,7 @@
 #include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
@@ -76,7 +77,8 @@ class TofinoChassisManager {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TofinoChassisManager> CreateInstance(
       OperationMode mode, PhalInterface* phal_interface,
-      TdiSdeInterface* tdi_sde_interface);
+      TdiSdeInterface* tdi_sde_interface,
+      TofinoPortManager* tofino_port_manager);
 
   // TofinoChassisManager is neither copyable nor movable.
   TofinoChassisManager(const TofinoChassisManager&) = delete;
@@ -120,7 +122,7 @@ class TofinoChassisManager {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   TofinoChassisManager(OperationMode mode, PhalInterface* phal_interface,
-		       TdiSdeInterface* tdi_sde_interface);
+      TdiSdeInterface* tdi_sde_interface, TofinoPortManager* tofino_port_manager);
 
   ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
                                                     uint32 port_id) const
@@ -293,6 +295,9 @@ class TofinoChassisManager {
 
   // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.
   TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.
+
+  // Pointer to a TofinoPortManager implementation that wraps the SDE calls.
+  TofinoPortManager* tofino_port_manager_;  // not owned by this class.
 
   friend class TofinoChassisManagerTest;
 };

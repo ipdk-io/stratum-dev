@@ -36,6 +36,7 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/utils.h"
@@ -60,6 +61,14 @@ namespace hal {
 namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
+
+constexpr absl::Duration TofinoPortManager::kWriteTimeout;
+constexpr int32 TofinoPortManager::kBfDefaultMtu;
+
+TofinoPortManager* TofinoPortManager::singleton_ = nullptr;
+ABSL_CONST_INIT absl::Mutex TofinoPortManager::init_lock_(absl::kConstInit);
+
+TofinoPortManager::TofinoPortManager() : port_status_event_writer_(nullptr) {}
 
 namespace {
 
@@ -138,21 +147,35 @@ namespace {
 bf_status_t sde_port_status_callback(
     bf_dev_id_t device, bf_dev_port_t dev_port, bool up, void* cookie) {
   absl::Time timestamp = absl::Now();
-  TdiSdeWrapper* tdi_sde_wrapper = TdiSdeWrapper::GetSingleton();
-  if (!tdi_sde_wrapper) {
-    LOG(ERROR) << "TdiSdeWrapper singleton instance is not initialized.";
+  TofinoPortManager* tofino_port_manager = TofinoPortManager::GetSingleton();
+  if (!tofino_port_manager) {
+    LOG(ERROR) << "TofinoPortManager singleton instance is not initialized.";
     return BF_INTERNAL_ERROR;
   }
   // Forward the event.
   auto status =
-      tdi_sde_wrapper->OnPortStatusEvent(device, dev_port, up, timestamp);
+      tofino_port_manager->OnPortStatusEvent(device, dev_port, up, timestamp);
 
   return status.ok() ? BF_SUCCESS : BF_INTERNAL_ERROR;
 }
 
 }  // namespace
 
-::util::StatusOr<PortState> TdiSdeWrapper::GetPortState(int device, int port) {
+TofinoPortManager* TofinoPortManager::CreateSingleton() {
+  absl::WriterMutexLock l(&init_lock_);
+  if (!singleton_) {
+    singleton_ = new TofinoPortManager();
+  }
+
+  return singleton_;
+}
+
+TofinoPortManager* TofinoPortManager::GetSingleton() {
+  absl::ReaderMutexLock l(&init_lock_);
+  return singleton_;
+}
+
+::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device, int port) {
   int state = 0;
   RETURN_IF_TDI_ERROR(
       bf_pal_port_oper_state_get(static_cast<bf_dev_id_t>(device),
@@ -160,7 +183,7 @@ bf_status_t sde_port_status_callback(
   return state ? PORT_STATE_UP : PORT_STATE_DOWN;
 }
 
-::util::Status TdiSdeWrapper::GetPortCounters(
+::util::Status TofinoPortManager::GetPortCounters(
     int device, int port, PortCounters* counters) {
   uint64_t stats[BF_NUM_RMON_COUNTERS] = {0};
   RETURN_IF_TDI_ERROR(
@@ -189,8 +212,23 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
+::util::Status TofinoPortManager::OnPortStatusEvent(
+    int device, int port, bool up, absl::Time timestamp) {
+  // Create PortStatusEvent message.
+  PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
+  TdiSdeInterface::PortStatusEvent event = {device, port, state, timestamp};
+
+  {
+    absl::ReaderMutexLock l(&port_status_event_writer_lock_);
+    if (!port_status_event_writer_) {
+      return ::util::OkStatus();
+    }
+    return port_status_event_writer_->Write(event, kWriteTimeout);
+  }
+}
+
+::util::Status TofinoPortManager::RegisterPortStatusEventWriter(
+    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   RETURN_IF_TDI_ERROR(
@@ -198,17 +236,22 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::GetPortInfo(
+::util::Status TofinoPortManager::UnregisterPortStatusEventWriter() {
+  absl::WriterMutexLock l(&port_status_event_writer_lock_);
+  port_status_event_writer_ = nullptr;
+  return ::util::OkStatus();
+}
+
+::util::Status TofinoPortManager::GetPortInfo(
     int device, int port, TargetDatapathId *target_dp_id) {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::HotplugPort(
-    int device, int port, HotplugConfigParams& hotplug_config) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "HotplugPort not implemented";
+::util::Status TofinoPortManager::AddPort(int device, int port) {
+  return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddPort(
+::util::Status TofinoPortManager::AddPort(
     int device, int port, uint64 speed_bps, FecMode fec_mode) {
   ASSIGN_OR_RETURN(auto bf_speed, PortSpeedHalToBf(speed_bps));
   ASSIGN_OR_RETURN(auto bf_fec_mode, FecModeHalToBf(fec_mode, speed_bps));
@@ -219,31 +262,25 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddPort(
-    int device, int port, const PortConfigParams& config) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED)
-      << "AddPort(device, port, config) not implemented";
-}
-
-::util::Status TdiSdeWrapper::DeletePort(int device, int port) {
+::util::Status TofinoPortManager::DeletePort(int device, int port) {
   RETURN_IF_TDI_ERROR(bf_pal_port_del(static_cast<bf_dev_id_t>(device),
                                       static_cast<bf_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::EnablePort(int device, int port) {
+::util::Status TofinoPortManager::EnablePort(int device, int port) {
   RETURN_IF_TDI_ERROR(bf_pal_port_enable(static_cast<bf_dev_id_t>(device),
                                          static_cast<bf_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::DisablePort(int device, int port) {
+::util::Status TofinoPortManager::DisablePort(int device, int port) {
   RETURN_IF_TDI_ERROR(bf_pal_port_disable(static_cast<bf_dev_id_t>(device),
                                           static_cast<bf_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::SetPortShapingRate(
+::util::Status TofinoPortManager::SetPortShapingRate(
     int device, int port, bool is_in_pps, uint32 burst_size,
     uint64 rate_per_second) {
   if (!is_in_pps) {
@@ -255,7 +292,7 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::EnablePortShaping(
+::util::Status TofinoPortManager::EnablePortShaping(
     int device, int port, TriState enable) {
   if (enable == TriState::TRI_STATE_TRUE) {
     RETURN_IF_TDI_ERROR(p4_pd_tm_enable_port_shaping(device, port));
@@ -266,7 +303,7 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::SetPortAutonegPolicy(
+::util::Status TofinoPortManager::SetPortAutonegPolicy(
     int device, int port, TriState autoneg) {
   ASSIGN_OR_RETURN(auto autoneg_v, AutonegHalToBf(autoneg));
   RETURN_IF_TDI_ERROR(bf_pal_port_autoneg_policy_set(
@@ -275,7 +312,7 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::SetPortMtu(int device, int port, int32 mtu) {
+::util::Status TofinoPortManager::SetPortMtu(int device, int port, int32 mtu) {
   if (mtu < 0) {
     RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid MTU value.";
   }
@@ -286,11 +323,11 @@ bf_status_t sde_port_status_callback(
   return ::util::OkStatus();
 }
 
-bool TdiSdeWrapper::IsValidPort(int device, int port) {
+bool TofinoPortManager::IsValidPort(int device, int port) {
   return bf_pal_port_is_valid(device, port) == BF_SUCCESS;
 }
 
-::util::Status TdiSdeWrapper::SetPortLoopbackMode(
+::util::Status TofinoPortManager::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
   if (loopback_mode == LOOPBACK_STATE_UNKNOWN) {
     // Do nothing if we try to set loopback mode to the default one (UNKNOWN).
@@ -353,7 +390,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return "9.11.0";
 }
 
-::util::StatusOr<uint32> TdiSdeWrapper::GetPortIdFromPortKey(
+::util::StatusOr<uint32> TofinoPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
   const int port = port_key.port;
   CHECK_RETURN_IF_FALSE(port >= 0)
@@ -384,19 +421,19 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return static_cast<uint32>(dev_port);
 }
 
-::util::StatusOr<int> TdiSdeWrapper::GetPcieCpuPort(int device) {
+::util::StatusOr<int> TofinoPortManager::GetPcieCpuPort(int device) {
   int port = p4_devport_mgr_pcie_cpu_port_get(device);
   CHECK_RETURN_IF_FALSE(port != -1);
   return port;
 }
 
-::util::Status TdiSdeWrapper::SetTmCpuPort(int device, int port) {
+::util::Status TofinoPortManager::SetTmCpuPort(int device, int port) {
   CHECK_RETURN_IF_FALSE(p4_pd_tm_set_cpuport(device, port) == 0)
       << "Unable to set CPU port " << port << " on device " << device;
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::SetDeflectOnDropDestination(
+::util::Status TofinoPortManager::SetDeflectOnDropDestination(
     int device, int port, int queue) {
   // The DoD destination must be a pipe-local port.
   p4_pd_tm_pipe_t pipe = DEV_PORT_TO_PIPE(port);
@@ -539,8 +576,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   RETURN_IF_ERROR(
       tdi_id_mapper_->PushForwardingPipelineConfig(device_config, tdi_info_));
 
-  ASSIGN_OR_RETURN(auto cpu_port, GetPcieCpuPort(dev_id));
-  RETURN_IF_ERROR(SetTmCpuPort(dev_id, cpu_port));
+  // ASSIGN_OR_RETURN(auto cpu_port, GetPcieCpuPort(dev_id));
+  // RETURN_IF_ERROR(SetTmCpuPort(dev_id, cpu_port));
 
   return ::util::OkStatus();
 }
