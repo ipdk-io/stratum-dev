@@ -1,4 +1,4 @@
-# CMake build file for Stratum code.
+# CMake build file for Stratum dpdk lib code.
 #
 # Copyright 2022 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
@@ -18,8 +18,6 @@ add_library(stratum_hal_lib_tdi_dpdk_o OBJECT
     dpdk_parse_tree_interface.cc
     dpdk_parse_tree_interface.h
 )
-
-target_compile_definitions(stratum_hal_lib_tdi_dpdk_o PRIVATE SDE_9_5_0)
 
 target_include_directories(stratum_hal_lib_tdi_dpdk_o PRIVATE
     ${STRATUM_INCLUDES}

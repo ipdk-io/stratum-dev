@@ -1,9 +1,9 @@
-# CMake build file for Stratum code.
+# CMake build file for Stratum hal tdi library.
 #
 # Copyright 2022 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 
-add_library(stratum_hal_lib_tdi_o OBJECT
+add_library(stratum_tdi_o OBJECT
     tdi_action_profile_manager.cc
     tdi_action_profile_manager.h
     tdi_counter_manager.cc
@@ -40,12 +40,12 @@ add_library(stratum_hal_lib_tdi_o OBJECT
     utils.h
 )
 
-target_include_directories(stratum_hal_lib_tdi_o PRIVATE
+target_include_directories(stratum_tdi_o PRIVATE
     ${STRATUM_INCLUDES}
     ${SDE_INSTALL_DIR}/include
 )
 
-add_dependencies(stratum_hal_lib_tdi_o stratum_proto)
+add_dependencies(stratum_tdi_o stratum_proto)
 
 if(TOFINO_TARGET)
   add_subdirectory(tofino)
@@ -53,7 +53,7 @@ elseif(DPDK_TARGET)
   add_subdirectory(dpdk)
 endif()
 
-add_library(stratum_hal_lib_tdi SHARED
+add_library(stratum_tdi
     $<TARGET_OBJECTS:stratum_glue_o>
     $<TARGET_OBJECTS:stratum_lib_o>
     $<TARGET_OBJECTS:stratum_public_o>
@@ -61,7 +61,7 @@ add_library(stratum_hal_lib_tdi SHARED
     $<TARGET_OBJECTS:stratum_hal_lib_phal_o>
     $<TARGET_OBJECTS:stratum_hal_lib_p4_o>
     $<TARGET_OBJECTS:stratum_hal_lib_yang_o>
-    $<TARGET_OBJECTS:stratum_hal_lib_tdi_o>
+    $<TARGET_OBJECTS:stratum_tdi_o>
 
     $<$<BOOL:${TOFINO_TARGET}>:$<TARGET_OBJECTS:stratum_hal_lib_yang_subtree_interface_o>>
     $<$<BOOL:${TOFINO_TARGET}>:$<TARGET_OBJECTS:stratum_hal_lib_tdi_tofino_o>>
@@ -69,7 +69,7 @@ add_library(stratum_hal_lib_tdi SHARED
     $<$<BOOL:${DPDK_TARGET}>:$<TARGET_OBJECTS:stratum_hal_lib_tdi_dpdk_o>>
 )
 
-target_link_libraries(stratum_hal_lib_tdi PUBLIC
+target_link_libraries(stratum_tdi PUBLIC
     absl::strings absl::synchronization absl::graphcycles_internal
     absl::stacktrace absl::symbolize absl::malloc_internal
     absl::debugging_internal absl::demangle_internal absl::time
@@ -83,10 +83,10 @@ target_link_libraries(stratum_hal_lib_tdi PUBLIC
     absl::bad_variant_access absl::low_level_hash
 )
 
-target_link_libraries(stratum_hal_lib_tdi PUBLIC glog gflags grpc protobuf grpc++)
-target_link_libraries(stratum_hal_lib_tdi PUBLIC pthread)
+target_link_libraries(stratum_tdi PUBLIC glog gflags grpc protobuf grpc++)
+target_link_libraries(stratum_tdi PUBLIC pthread)
 
-target_link_libraries(stratum_hal_lib_tdi PUBLIC
+target_link_libraries(stratum_tdi PUBLIC
     openconfig_proto
     stratum_proto
     gnmi_proto
@@ -95,12 +95,12 @@ target_link_libraries(stratum_hal_lib_tdi PUBLIC
 )
 
 if(TOFINO_TARGET)
-    target_link_libraries(stratum_hal_lib_tdi PUBLIC
+    target_link_libraries(stratum_tdi PUBLIC
         driver
         target_sys
     )
 elseif(DPDK_TARGET)
-    target_link_libraries(stratum_hal_lib_tdi PUBLIC
+    target_link_libraries(stratum_tdi PUBLIC
         driver
         bf_switchd_lib
         tdi
@@ -109,15 +109,13 @@ elseif(DPDK_TARGET)
         target_sys
     )
 
-    target_link_directories(stratum_hal_lib_tdi PUBLIC 
+    target_link_directories(stratum_tdi PUBLIC 
         ${SDE_INSTALL_DIR}/lib
         ${DPDK_LIBRARY_DIRS}
     )
 
-    target_link_options(stratum_hal_lib_tdi PUBLIC
+    target_link_options(stratum_tdi PUBLIC
         ${DPDK_LD_FLAGS}
         ${DPDK_LDFLAGS_OTHER}
     )
 endif()
-
-install(TARGETS stratum_hal_lib_tdi RUNTIME)

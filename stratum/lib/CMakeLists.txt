@@ -1,4 +1,4 @@
-# CMake build file for Stratum code.
+# CMake build file for Stratum lib code.
 #
 # Copyright 2022 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0

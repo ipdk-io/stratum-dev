@@ -6,7 +6,6 @@
 add_library(stratum_dpdk_o OBJECT
     dpdk_main.cc
     dpdk_main.h
-    main.cc
 )
 
 target_include_directories(stratum_dpdk_o PRIVATE
@@ -16,13 +15,17 @@ target_include_directories(stratum_dpdk_o PRIVATE
 
 add_dependencies(stratum_dpdk_o stratum_proto)
 
-add_executable(stratum_dpdk $<TARGET_OBJECTS:stratum_dpdk_o>)
-
-target_link_libraries(stratum_dpdk PRIVATE
-    -Wl,--whole-archive
-    stratum_hal_lib_tdi
-    -Wl,--no-whole-archive
+add_executable(stratum_dpdk 
+    main.cc
+    $<TARGET_OBJECTS:stratum_dpdk_o>
 )
+
+target_include_directories(stratum_dpdk PRIVATE
+    ${STRATUM_SOURCE_DIR}
+    ${PROTO_OUT_DIR}
+    ${SDE_INSTALL_DIR}/include)
+
+target_link_libraries(stratum_dpdk PRIVATE stratum_tdi)
 
 install(TARGETS stratum_dpdk RUNTIME)
 

@@ -20,9 +20,6 @@ add_executable(tdi_pipeline_builder
     $<TARGET_OBJECTS:stratum_public_o>
 )
 
-# Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
-target_compile_options(tdi_pipeline_builder PRIVATE -Wno-attributes)
-
 target_include_directories(tdi_pipeline_builder PRIVATE
     ${STRATUM_SOURCE_DIR}
     ${PROTO_OUT_DIR}
@@ -32,7 +29,7 @@ target_link_libraries(tdi_pipeline_builder PUBLIC stratum_proto p4runtime_proto)
 
 target_link_libraries(tdi_pipeline_builder PUBLIC
     protobuf gflags glog grpc grpc++
-    absl_raw_hash_set
+    absl::raw_hash_set
 )
 
 install(TARGETS tdi_pipeline_builder RUNTIME)
