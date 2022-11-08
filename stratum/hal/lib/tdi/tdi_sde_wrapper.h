@@ -98,9 +98,6 @@ class TableData : public TdiSdeInterface::TableDataInterface {
 // on real hardware to talk to the Tofino ASIC.
 class TdiSdeWrapper : public TdiSdeInterface {
  public:
-  // Default MTU for ports on Tofino.
-  static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
-
   // Wrapper around the TDI session object.
   class Session : public TdiSdeInterface::SessionInterface {
    public:
@@ -151,6 +148,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
       int table_id) override;
   ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
       int table_id, int action_id) override;
+  // TODO(delete after DPDK implements TdiPortManager)
+#ifdef DPDK_TARGET
   ::util::StatusOr<PortState> GetPortState(int device, int port) override;
   ::util::Status GetPortCounters(int device, int port,
                                  PortCounters* counters) override;
@@ -170,23 +169,10 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status DeletePort(int device, int port) override;
   ::util::Status EnablePort(int device, int port) override;
   ::util::Status DisablePort(int device, int port) override;
-  ::util::Status SetPortShapingRate(int device, int port, bool is_in_pps,
-                                    uint32 burst_size,
-                                    uint64 rate_per_second) override;
-  ::util::Status EnablePortShaping(int device, int port,
-                                   TriState enable) override;
-  ::util::Status SetPortAutonegPolicy(int device, int port,
-                                      TriState autoneg) override;
-  ::util::Status SetPortMtu(int device, int port, int32 mtu) override;
   bool IsValidPort(int device, int port) override;
-  ::util::Status SetPortLoopbackMode(int uint, int port,
-                                     LoopbackState loopback_mode) override;
   ::util::StatusOr<uint32> GetPortIdFromPortKey(
       int device, const PortKey& port_key) override;
-  ::util::StatusOr<int> GetPcieCpuPort(int device) override;
-  ::util::Status SetTmCpuPort(int device, int port) override;
-  ::util::Status SetDeflectOnDropDestination(int device, int port,
-                                             int queue) override;
+#endif
   ::util::StatusOr<bool> IsSoftwareModel(int device) override;
   std::string GetChipType(int device) const override;
   std::string GetSdeVersion() const override;
@@ -379,13 +365,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
       LOCKS_EXCLUDED(packet_rx_callback_lock_);
 #endif
 
-  // Called whenever a port status event is received from SDK. It forwards the
-  // port status event to the module who registered a callback by calling
-  // RegisterPortStatusEventWriter().
-  ::util::Status OnPortStatusEvent(int device, int dev_port, bool up,
-                                   absl::Time timestamp)
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-
   // TdiSdeWrapper is neither copyable nor movable.
   TdiSdeWrapper(const TdiSdeWrapper&) = delete;
   TdiSdeWrapper& operator=(const TdiSdeWrapper&) = delete;
@@ -402,9 +381,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
   static TdiSdeWrapper* singleton_ GUARDED_BY(init_lock_);
 
  private:
-  // Timeout for Write() operations on port status events.
-  static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
-
   // Private constructor, use CreateSingleton and GetSingleton().
   TdiSdeWrapper();
 

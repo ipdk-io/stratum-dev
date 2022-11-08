@@ -16,6 +16,7 @@
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_hal.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_switch.h"
 #include "stratum/lib/security/auth_policy_checker.h"
@@ -41,6 +42,8 @@ namespace tdi {
   const int device_id = 0;
 
   auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
+
+  auto tofino_port_manager = TofinoPortManager::CreateSingleton();
 
   RETURN_IF_ERROR(sde_wrapper->InitializeSde(
       FLAGS_tdi_sde_install, FLAGS_tdi_switchd_cfg, FLAGS_tdi_switchd_background));
@@ -80,8 +83,8 @@ namespace tdi {
       {device_id, tdi_node.get()},
   };
 
-  auto chassis_manager =
-      TofinoChassisManager::CreateInstance(mode, phal, sde_wrapper);
+  auto chassis_manager = TofinoChassisManager::CreateInstance(
+      mode, phal, sde_wrapper, tofino_port_manager);
 
   auto tdi_switch = TofinoSwitch::CreateInstance(
       chassis_manager.get(), device_id_to_tdi_node);

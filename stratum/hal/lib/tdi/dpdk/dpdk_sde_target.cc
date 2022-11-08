@@ -77,6 +77,12 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
+::util::Status TdiSdeWrapper::UnregisterPortStatusEventWriter() {
+  absl::WriterMutexLock l(&port_status_event_writer_lock_);
+  port_status_event_writer_ = nullptr;
+  return ::util::OkStatus();
+}
+
 namespace {
 dpdk_port_type_t get_target_port_type(DpdkPortType type) {
   switch(type) {
@@ -244,29 +250,6 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
   return MAKE_ERROR(ERR_UNIMPLEMENTED) << "DisablePort not implemented";
 }
 
-::util::Status TdiSdeWrapper::SetPortShapingRate(
-    int device, int port, bool is_in_pps, uint32 burst_size,
-    uint64 rate_per_second) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "SetPortShapingRate not supported";
-}
-
-::util::Status TdiSdeWrapper::EnablePortShaping(
-    int device, int port, TriState enable) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "EnablePortShaping not supported";
-}
-
-::util::Status TdiSdeWrapper::SetPortAutonegPolicy(
-    int device, int port, TriState autoneg) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "SetPortAutonegPolicy not supported";
-}
-
-::util::Status TdiSdeWrapper::SetPortMtu(int device, int port, int32 mtu) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "SetPortMtu not implemented";
-}
-
 // Should this return ::util::StatusOr<bool>?
 bool TdiSdeWrapper::IsValidPort(int device, int port) {
   // NOTE: Method returns bool. What is BF_SUCCESS (an enum) doing here?
@@ -274,12 +257,6 @@ bool TdiSdeWrapper::IsValidPort(int device, int port) {
   // that it is supposed to succeed, but BF_SUCCESS == 0, which when
   // converted to a Boolean is FALSE, so it is actually failure.
   return BF_SUCCESS;
-}
-
-::util::Status TdiSdeWrapper::SetPortLoopbackMode(
-    int device, int port, LoopbackState loopback_mode) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "SetPortLoopbackMode not supported";
 }
 
 ::util::StatusOr<bool> TdiSdeWrapper::IsSoftwareModel(int device) {
@@ -324,20 +301,6 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   RETURN_IF_TDI_ERROR(bf_pal_port_str_to_dev_port_map(
       static_cast<bf_dev_id_t>(device), port_string, &dev_port));
   return static_cast<uint32>(dev_port);
-}
-
-::util::StatusOr<int> TdiSdeWrapper::GetPcieCpuPort(int device) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "GetPcieCpuPort not supported";
-}
-
-::util::Status TdiSdeWrapper::SetTmCpuPort(int device, int port) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "SetTmCpuPort not supported";
-}
-
-::util::Status TdiSdeWrapper::SetDeflectOnDropDestination(
-    int device, int port, int queue) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED)
-      << "SetDeflectOnDropDestination not implemented";
 }
 
 ::util::Status TdiSdeWrapper::InitializeSde(

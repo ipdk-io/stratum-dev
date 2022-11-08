@@ -41,34 +41,10 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-constexpr absl::Duration TdiSdeWrapper::kWriteTimeout;
-constexpr int32 TdiSdeWrapper::kBfDefaultMtu;
-
 TdiSdeWrapper* TdiSdeWrapper::singleton_ = nullptr;
 ABSL_CONST_INIT absl::Mutex TdiSdeWrapper::init_lock_(absl::kConstInit);
 
 TdiSdeWrapper::TdiSdeWrapper() : port_status_event_writer_(nullptr) {}
-
-::util::Status TdiSdeWrapper::OnPortStatusEvent(
-    int device, int port, bool up, absl::Time timestamp) {
-  // Create PortStatusEvent message.
-  PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
-  PortStatusEvent event = {device, port, state, timestamp};
-
-  {
-    absl::ReaderMutexLock l(&port_status_event_writer_lock_);
-    if (!port_status_event_writer_) {
-      return ::util::OkStatus();
-    }
-    return port_status_event_writer_->Write(event, kWriteTimeout);
-  }
-}
-
-::util::Status TdiSdeWrapper::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
-  return ::util::OkStatus();
-}
 
 // Create and start an new session.
 ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>

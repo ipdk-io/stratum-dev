@@ -158,6 +158,51 @@ class TdiSdeInterface {
     virtual ::util::Status Reset(int action_id) = 0;
   };
 
+  // TdiPortManager is a proxy class for per target port management
+  class TdiPortManager {
+   public:
+    virtual ~TdiPortManager() {}
+
+    // Registers a writer through which to send any port status events. The
+    // message contains a tuple (device, port, state), where port refers to the
+    // Barefoot SDE device port. There can only be one writer.
+    virtual ::util::Status RegisterPortStatusEventWriter(
+        std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) = 0;
+
+    // Unregisters the port status writer.
+    virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
+
+    // Get Port Info
+    virtual ::util::Status GetPortInfo(int device, int port,
+                                       TargetDatapathId *target_dp_id) = 0;
+
+    // Get the operational state of a port.
+    virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
+
+    // Get the port counters of a port.
+    virtual ::util::Status GetPortCounters(int device, int port,
+                                           PortCounters* counters) = 0;
+
+    // Returns the SDE device port ID for the given PortKey.
+    virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
+        int device, const PortKey& port_key) = 0;
+
+    // Checks if a port is valid.
+    virtual bool IsValidPort(int device, int port) = 0;
+
+    // Add a new port.
+    virtual ::util::Status AddPort(int device, int port) = 0;
+
+    // Delete a port.
+    virtual ::util::Status DeletePort(int device, int port) = 0;
+
+    // Enable a port.
+    virtual ::util::Status EnablePort(int device, int port) = 0;
+
+    // Disable a port.
+    virtual ::util::Status DisablePort(int device, int port) = 0;
+  };
+
   virtual ~TdiSdeInterface() {}
 
   // Initializes the SDE. Must be called before any other methods.
@@ -183,6 +228,8 @@ class TdiSdeInterface {
   virtual ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
       int table_id, int action_id) = 0;
 
+  // TODO(delete after DPDK implements TdiPortManager)
+#ifdef DPDK_TARGET
   // Registers a writer through which to send any port status events. The
   // message contains a tuple (device, port, state), where port refers to the
   // Barefoot SDE device port. There can only be one writer.
@@ -217,17 +264,6 @@ class TdiSdeInterface {
   // Disable a port.
   virtual ::util::Status DisablePort(int device, int port) = 0;
 
-  // Set the port shaping properties on a port.
-  // If is_in_pps is true, the burst size and rate are measured in packets and
-  // pps. Else, they're in bytes and bps.
-  virtual ::util::Status SetPortShapingRate(int device, int port,
-                                            bool is_in_pps, uint32 burst_size,
-                                            uint64 rate_per_second) = 0;
-
-  // Enable port shaping on a port.
-  virtual ::util::Status EnablePortShaping(int device, int port,
-                                           TriState enable) = 0;
-
   // Get the operational state of a port.
   virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
 
@@ -235,33 +271,13 @@ class TdiSdeInterface {
   virtual ::util::Status GetPortCounters(int device, int port,
                                          PortCounters* counters) = 0;
 
-  // Set the auto negotiation policy on a port.
-  virtual ::util::Status SetPortAutonegPolicy(int device, int port,
-                                              TriState autoneg) = 0;
-
-  // Set the MTU on a port.
-  virtual ::util::Status SetPortMtu(int device, int port, int32 mtu) = 0;
-
   // Checks if a port is valid.
   virtual bool IsValidPort(int device, int port) = 0;
-
-  // Set the given port into the specified loopback mode.
-  virtual ::util::Status SetPortLoopbackMode(int device, int port,
-                                             LoopbackState loopback_mode) = 0;
 
   // Returns the SDE device port ID for the given PortKey.
   virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
       int device, const PortKey& port_key) = 0;
-
-  // Get the CPU port of a device.
-  virtual ::util::StatusOr<int> GetPcieCpuPort(int device) = 0;
-
-  // Set the CPU port in the traffic manager.
-  virtual ::util::Status SetTmCpuPort(int device, int port) = 0;
-
-  // Sets the (port, queue) deflect destination for dropped packets.
-  virtual ::util::Status SetDeflectOnDropDestination(int device, int port,
-                                                     int queue) = 0;
+#endif
 
   // Check whether we are running on the software model.
   virtual ::util::StatusOr<bool> IsSoftwareModel(int device) = 0;
