@@ -176,7 +176,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 }
 
 ::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device, int port) {
-  int state = 0;
+  bool state = false;
   RETURN_IF_TDI_ERROR(
       bf_pal_port_oper_state_get(static_cast<bf_dev_id_t>(device),
                                  static_cast<bf_dev_port_t>(port), &state));
@@ -576,8 +576,10 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   RETURN_IF_ERROR(
       tdi_id_mapper_->PushForwardingPipelineConfig(device_config, tdi_info_));
 
-  // ASSIGN_OR_RETURN(auto cpu_port, GetPcieCpuPort(dev_id));
-  // RETURN_IF_ERROR(SetTmCpuPort(dev_id, cpu_port));
+  int port = p4_devport_mgr_pcie_cpu_port_get(dev_id);
+  CHECK_RETURN_IF_FALSE(port != -1);
+  CHECK_RETURN_IF_FALSE(p4_pd_tm_set_cpuport(dev_id, port) == 0)
+      << "Unable to set CPU port " << port << " on device " << dev_id;
 
   return ::util::OkStatus();
 }
