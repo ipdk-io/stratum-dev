@@ -264,6 +264,7 @@ bool DpdkChassisManager::IsPortParamSet(
     // Packet direction for control port will always be host type
     sde_params.port_type = PORT_TYPE_TAP;
     sde_params.packet_dir = DEFAULT_PACKET_DIR;
+    sde_params.port_name = config->control_port;
 
     /* sdk_ctl_port_id is uniquely derived from the SDK_PORT_CONTROL_BASE range
      * and maps 1:1 to parent port's sdk_port_id.
