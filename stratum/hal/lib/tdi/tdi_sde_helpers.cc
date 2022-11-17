@@ -402,16 +402,16 @@ namespace helpers {
   // "full". The SDE does not support querying the usage on these.
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(0, &device);
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  auto flags = ::tdi::Flags(0);
   uint32 entries = 0;
   if (IsPreallocatedTable(*table)) {
     size_t table_size;
     RETURN_IF_TDI_ERROR(
-        table->sizeGet(*tdi_session, tdi_dev_target, *flags, &table_size));
+        table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
     entries = table_size;
   } else {
     RETURN_IF_TDI_ERROR(
-	table->usageGet(*tdi_session, tdi_dev_target, *flags, &entries));
+        table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
   }
 
   table_keys->resize(0);
@@ -425,9 +425,8 @@ namespace helpers {
     RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
     RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
     RETURN_IF_TDI_ERROR(table->entryGetFirst(
-        *tdi_session, tdi_dev_target,
-        *flags, table_key.get(),
-        table_data.get()));
+        *tdi_session, tdi_dev_target, flags,
+        table_key.get(), table_data.get()));
 
     table_keys->push_back(std::move(table_key));
     table_values->push_back(std::move(table_data));
@@ -446,7 +445,7 @@ namespace helpers {
     }
     uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(
-        *tdi_session, tdi_dev_target, *flags, *(*table_keys)[0], pairs.size(),
+        *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
         &pairs, &actual));
 
     table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
