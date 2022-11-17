@@ -56,7 +56,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-  CreateTableKey(const ::tdi::TdiInfo* tdi_info_, int table_id);
+  CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableKey> table_key_;
@@ -84,7 +84,7 @@ class TableData : public TdiSdeInterface::TableDataInterface {
 
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-  CreateTableData(const ::tdi::TdiInfo* tdi_info_, int table_id,
+  CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
                   int action_id);
 
   // Stores the underlying SDE object.
