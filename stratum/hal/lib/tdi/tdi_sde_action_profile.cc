@@ -67,15 +67,15 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   if (insert) {
     RETURN_IF_TDI_ERROR(table->entryAdd(*real_session->tdi_session_,
-                                        *dev_tgt, *flags, *table_key,
+                                        *dev_tgt, flags, *table_key,
                                         *real_table_data->table_data_))
         << "Could not add action profile member with: " << dump_args();
   } else {
     RETURN_IF_TDI_ERROR(table->entryMod(*real_session->tdi_session_,
-                                             *dev_tgt, *flags, *table_key,
+                                             *dev_tgt, flags, *table_key,
                                              *real_table_data->table_data_))
         << "Could not modify action profile member with: " << dump_args();
   }
@@ -127,9 +127,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryDel(*real_session->tdi_session_,
-                                      *dev_tgt, *flags, *table_key))
+                                      *dev_tgt, flags, *table_key))
       << "Could not delete action profile member with: " << dump_args();
   return ::util::OkStatus();
 }
@@ -149,7 +149,7 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
@@ -163,7 +163,7 @@ using namespace stratum::hal::tdi::helpers;
     // Key: $ACTION_MEMBER_ID
     RETURN_IF_ERROR(SetFieldExact(keys[0].get(), kActionMemberId, member_id));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
   } else {
     RETURN_IF_ERROR(GetAllEntries(real_session->tdi_session_, *dev_tgt,
@@ -231,14 +231,14 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   if (insert) {
     RETURN_IF_TDI_ERROR(table->entryAdd(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data))
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data))
         << "Could not add action profile group with: " << dump_args();
   } else {
     RETURN_IF_TDI_ERROR(table->entryMod(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data))
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data))
         << "Could not modify action profile group with: " << dump_args();
   }
 
@@ -294,9 +294,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryDel(*real_session->tdi_session_,
-                                            *dev_tgt, *flags, *table_key))
+                                            *dev_tgt, flags, *table_key))
       << "Could not delete action profile group with: " << dump_args();
 
   return ::util::OkStatus();
@@ -321,7 +321,7 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
@@ -335,7 +335,7 @@ using namespace stratum::hal::tdi::helpers;
     // Key: $SELECTOR_GROUP_ID
     RETURN_IF_ERROR(SetFieldExact(keys[0].get(), kSelectorGroupId, group_id));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
   } else {
     RETURN_IF_ERROR(GetAllEntries(real_session->tdi_session_, *dev_tgt,

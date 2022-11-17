@@ -64,9 +64,9 @@ using namespace stratum::hal::tdi::helpers;
    * pipeline id also should be set
    */
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryAdd(
-      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_,
+      *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_,
       *real_table_data->table_data_))
       << "Could not add table entry with: " << dump_args();
 
@@ -104,9 +104,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryMod(
-      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_,
+      *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_,
       *real_table_data->table_data_))
       << "Could not modify table entry with: " << dump_args();
   return ::util::OkStatus();
@@ -138,9 +138,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryDel(
-      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_))
+      *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_))
       << "Could not delete table entry with: " << dump_args();
   return ::util::OkStatus();
 }
@@ -164,9 +164,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryGet(
-      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_,
+      *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_,
       real_table_data->table_data_.get()));
   return ::util::OkStatus();
 }
@@ -220,10 +220,10 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->defaultEntrySet(
       *real_session->tdi_session_, *dev_tgt,
-      *flags, *real_table_data->table_data_));
+      flags, *real_table_data->table_data_));
   return ::util::OkStatus();
 }
 
@@ -241,9 +241,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(
-      table->defaultEntryReset(*real_session->tdi_session_, *dev_tgt, *flags));
+      table->defaultEntryReset(*real_session->tdi_session_, *dev_tgt, flags));
 
   return ::util::OkStatus();
 }
@@ -264,10 +264,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->defaultEntryGet(
-      *real_session->tdi_session_, *dev_tgt,
-      *flags,
+      *real_session->tdi_session_, *dev_tgt, flags,
       real_table_data->table_data_.get()));
 
   return ::util::OkStatus();

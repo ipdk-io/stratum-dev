@@ -105,25 +105,25 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   if (register_index) {
     // Single index target.
     // Register key: $REGISTER_INDEX
     RETURN_IF_ERROR(
         SetFieldExact(table_key.get(), kRegisterIndex, register_index.value()));
     RETURN_IF_TDI_ERROR(table->entryMod(
-        *real_session->tdi_session_, *dev_tgt, *flags,
+        *real_session->tdi_session_, *dev_tgt, flags,
         *table_key, *table_data));
   } else {
     // Wildcard write to all indices.
     size_t table_size;
     RETURN_IF_TDI_ERROR(table->sizeGet(*real_session->tdi_session_,
-                                       *dev_tgt, *flags, &table_size));
+                                       *dev_tgt, flags, &table_size));
     for (size_t i = 0; i < table_size; ++i) {
       // Register key: $REGISTER_INDEX
       RETURN_IF_ERROR(SetFieldExact(table_key.get(), kRegisterIndex, i));
       RETURN_IF_TDI_ERROR(table->entryMod(
-          *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+          *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
     }
   }
 
@@ -148,7 +148,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
@@ -165,7 +165,7 @@ namespace {
     RETURN_IF_ERROR(
         SetFieldExact(keys[0].get(), kRegisterIndex, register_index.value()));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
   } else {
     RETURN_IF_ERROR(GetAllEntries(real_session->tdi_session_, *dev_tgt,
