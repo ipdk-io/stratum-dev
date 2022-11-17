@@ -75,14 +75,14 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   if(byte_count.value() == 0 && packet_count.value() == 0) {
     LOG(INFO) << "Resetting counters";
     RETURN_IF_TDI_ERROR(table->clear(
-      *real_session->tdi_session_, *dev_tgt, *flags));
+      *real_session->tdi_session_, *dev_tgt, flags));
   } else {
     RETURN_IF_TDI_ERROR(table->entryMod(
-     *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+     *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
   }
 
   return ::util::OkStatus();
@@ -107,7 +107,7 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(counter_id, &table));
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
@@ -126,7 +126,7 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(
         SetFieldExact(keys[0].get(), kCounterIndex, counter_index.value()));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
 
   } else {

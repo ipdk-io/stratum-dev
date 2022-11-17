@@ -142,17 +142,17 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreNodeTable, &table));
   size_t table_size;
 
   RETURN_IF_TDI_ERROR(table->sizeGet(*real_session->tdi_session_,
-                                      *dev_tgt, *flags, &table_size));
+                                      *dev_tgt, flags, &table_size));
   uint32 usage;
   RETURN_IF_TDI_ERROR(table->usageGet(
       *real_session->tdi_session_, *dev_tgt,
-      *flags, &usage));
+      flags, &usage));
   std::unique_ptr<::tdi::TableKey> table_key;
   std::unique_ptr<::tdi::TableData> table_data;
   RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
@@ -163,7 +163,7 @@ namespace {
     RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMcNodeId, id));
     bf_status_t status;
     status = table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key,
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key,
         table_data.get());
     if (status == BF_OBJECT_NOT_FOUND) {
       return id;
@@ -201,7 +201,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
 
   ASSIGN_OR_RETURN(uint64 mc_node_id, GetFreeMulticastNodeId(dev_id, session));
 
@@ -215,7 +215,7 @@ namespace {
   // Data: $DEV_PORT
   RETURN_IF_ERROR(SetField(table_data.get(), kMcNodeDevPort, ports));
   RETURN_IF_TDI_ERROR(table->entryAdd(
-      *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+      *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
   return mc_node_id;
 }
 
@@ -232,7 +232,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreMgidTable, &table));
 
@@ -243,7 +243,7 @@ namespace {
   // Key: $MGID
   RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMgid, group_id));
   RETURN_IF_TDI_ERROR(table->entryGet(
-      *real_session->tdi_session_,*dev_tgt, *flags, *table_key,
+      *real_session->tdi_session_,*dev_tgt, flags, *table_key,
       table_data.get()));
   // Data: $MULTICAST_NODE_ID
   std::vector<uint32> mc_node_list;
@@ -265,7 +265,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreNodeTable, &table));
   auto table_id = table->tableInfoGet()->idGet();
@@ -276,7 +276,7 @@ namespace {
     RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
     RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMcNodeId, mc_node_id));
     RETURN_IF_TDI_ERROR(table->entryDel(*real_session->tdi_session_,
-                                         *dev_tgt, *flags, *table_key));
+                                         *dev_tgt, flags, *table_key));
   }
 
   return ::util::OkStatus();
@@ -298,7 +298,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;  // PRE node table.
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreNodeTable, &table));
   auto table_id = table->tableInfoGet()->idGet();
@@ -310,7 +310,7 @@ namespace {
   // Key: $MULTICAST_NODE_ID
   RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMcNodeId, mc_node_id));
   RETURN_IF_TDI_ERROR(table->entryGet(
-      *real_session->tdi_session_, *dev_tgt, *flags, *table_key,
+      *real_session->tdi_session_, *dev_tgt, flags, *table_key,
       table_data.get()));
   // Data: $DEV_PORT
   std::vector<uint32> dev_ports;
@@ -340,7 +340,7 @@ namespace {
   device->createTarget(&dev_tgt);
 
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table = nullptr;  // PRE MGID table.
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreMgidTable, &table));
   auto table_id = table->tableInfoGet()->idGet();
@@ -370,11 +370,11 @@ namespace {
 
   if (insert) {
     RETURN_IF_TDI_ERROR(table->entryAdd(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
 
   } else {
     RETURN_IF_TDI_ERROR(table->entryMod(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
   }
 
   return ::util::OkStatus();
@@ -409,7 +409,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;  // PRE MGID table.
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreMgidTable, &table));
   std::unique_ptr<::tdi::TableKey> table_key;
@@ -417,7 +417,7 @@ namespace {
   // Key: $MGID
   RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMgid, group_id));
   RETURN_IF_TDI_ERROR(table->entryDel(*real_session->tdi_session_,
-                                            *dev_tgt, *flags, *table_key));
+                                            *dev_tgt, flags, *table_key));
 
   return ::util::OkStatus();
 }
@@ -437,7 +437,7 @@ namespace {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;  // PRE MGID table.
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreMgidTable, &table));
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
@@ -451,7 +451,7 @@ namespace {
     // Key: $MGID
     RETURN_IF_ERROR(SetFieldExact(keys[0].get(), kMgid, group_id));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
   } else {
     RETURN_IF_ERROR(GetAllEntries(real_session->tdi_session_, *dev_tgt,

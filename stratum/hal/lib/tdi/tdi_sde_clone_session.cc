@@ -41,7 +41,7 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(
       tdi_info_->tableFromNameGet(kMirrorConfigTable, &table));
   std::unique_ptr<::tdi::TableKey> table_key;
@@ -72,10 +72,10 @@ using namespace stratum::hal::tdi::helpers;
 
   if (insert) {
     RETURN_IF_TDI_ERROR(table->entryAdd(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
   } else {
     RETURN_IF_TDI_ERROR(table->entryMod(
-        *real_session->tdi_session_, *dev_tgt, *flags, *table_key, *table_data));
+        *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
   }
 
   return ::util::OkStatus();
@@ -128,9 +128,9 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   RETURN_IF_TDI_ERROR(table->entryDel(*real_session->tdi_session_,
-                                      *dev_tgt, *flags, *table_key));
+                                      *dev_tgt, flags, *table_key));
 
   return ::util::OkStatus();
 }
@@ -154,7 +154,7 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(
       tdi_info_->tableFromNameGet(kMirrorConfigTable, &table));
@@ -173,7 +173,7 @@ using namespace stratum::hal::tdi::helpers;
     // Key: $sid
     RETURN_IF_ERROR(SetFieldExact(keys[0].get(), "$sid", session_id));
     RETURN_IF_TDI_ERROR(table->entryGet(
-        *real_session->tdi_session_, *dev_tgt, *flags, *keys[0],
+        *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
   } else {
     RETURN_IF_ERROR(GetAllEntries(real_session->tdi_session_, *dev_tgt,
