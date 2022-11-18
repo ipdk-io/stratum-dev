@@ -64,7 +64,7 @@ using namespace stratum::hal::tdi::helpers;
    * pipeline id also should be set
    */
 
-  ::tdi::Flags *flags = new ::tdi::Flags(0);
+  const auto flags = ::tdi::Flags(0);
   tdi_status_t status = table->entryAdd(
       *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_,
       *real_table_data->table_data_);
