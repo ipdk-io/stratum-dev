@@ -65,11 +65,12 @@ using namespace stratum::hal::tdi::helpers;
    */
 
   ::tdi::Flags *flags = new ::tdi::Flags(0);
-  RETURN_IF_TDI_ERROR(table->entryAdd(
+  tdi_status_t status = table->entryAdd(
       *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_,
-      *real_table_data->table_data_))
-      << "Could not add table entry with: " << dump_args();
-
+      *real_table_data->table_data_);
+  if (!((status == BF_SUCCESS) || (status == BF_ALREADY_EXISTS)))
+     return MAKE_ERROR(::util::error::Code::INTERNAL) <<
+             "Error deleting table entry with" << dump_args();
   return ::util::OkStatus();
 }
 
@@ -139,9 +140,11 @@ using namespace stratum::hal::tdi::helpers;
   device->createTarget(&dev_tgt);
 
   ::tdi::Flags *flags = new ::tdi::Flags(0);
-  RETURN_IF_TDI_ERROR(table->entryDel(
-      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_))
-      << "Could not delete table entry with: " << dump_args();
+  tdi_status_t status = table->entryDel(
+      *real_session->tdi_session_, *dev_tgt, *flags, *real_table_key->table_key_);
+  if (!((status == BF_SUCCESS) || (status == BF_OBJECT_NOT_FOUND)))
+     return MAKE_ERROR(::util::error::Code::INTERNAL) <<
+             "Error deleting table entry with" << dump_args();
   return ::util::OkStatus();
 }
 
