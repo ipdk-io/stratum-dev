@@ -44,7 +44,8 @@ using namespace stratum::hal::tdi::helpers;
 TdiSdeWrapper* TdiSdeWrapper::singleton_ = nullptr;
 ABSL_CONST_INIT absl::Mutex TdiSdeWrapper::init_lock_(absl::kConstInit);
 
-TdiSdeWrapper::TdiSdeWrapper() : port_status_event_writer_(nullptr) {}
+TdiSdeWrapper::TdiSdeWrapper() : port_status_event_writer_(nullptr),
+                                 tdi_info_(nullptr) {}
 
 // Create and start an new session.
 ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
