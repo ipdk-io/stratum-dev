@@ -115,7 +115,7 @@ template <typename T>
 
 ::util::Status GetAllEntries(
     std::shared_ptr<::tdi::Session> tdi_session,
-    ::tdi::Target tdi_dev_target, const ::tdi::Table* table,
+    ::tdi::Target &tdi_dev_target, const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>* table_values);
 
