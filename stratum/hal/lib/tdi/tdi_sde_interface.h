@@ -151,6 +151,12 @@ class TdiSdeInterface {
     virtual ::util::Status GetCounterData(uint64* bytes,
                                           uint64* packets) const = 0;
 
+    // Convenience function to update the meter config in the table data.
+    // This hides the IDs for the $METER_SPEC_* fields.
+    virtual ::util::Status SetMeterConfig(bool in_pps, uint64 cir,
+                                          uint64 cburst, uint64 pir,
+                                          uint64 pburst) = 0;
+
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;
 

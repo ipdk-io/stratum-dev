@@ -291,10 +291,38 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           << "Unsupported action type: " << table_entry.action().type_case();
   }
 
-  if (table_entry.has_counter_data()) {
-    RETURN_IF_ERROR(
-        table_data->SetCounterData(table_entry.counter_data().byte_count(),
-                                   table_entry.counter_data().packet_count()));
+  ASSIGN_OR_RETURN(auto table,
+                   p4_info_manager_->FindTableByID(table_entry.table_id()));
+
+
+  for (const auto& resource_id : table.direct_resource_ids()) {
+    ASSIGN_OR_RETURN(auto resource_type,
+                     p4_info_manager_->FindResourceTypeByID(resource_id));
+    if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
+      bool meter_units_in_packets;  // or bytes
+      ASSIGN_OR_RETURN(auto meter,
+                       p4_info_manager_->FindDirectMeterByID(resource_id));
+      switch (meter.spec().unit()) {
+        case ::p4::config::v1::MeterSpec::BYTES:
+          meter_units_in_packets = false;
+          break;
+        case ::p4::config::v1::MeterSpec::PACKETS:
+          meter_units_in_packets = true;
+          break;
+        default:
+          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
+                                          << meter.ShortDebugString() << ".";
+      }
+      RETURN_IF_ERROR(table_data->SetMeterConfig(
+          meter_units_in_packets, table_entry.meter_config().cir(),
+          table_entry.meter_config().cburst(), table_entry.meter_config().pir(),
+          table_entry.meter_config().pburst()));
+    }
+    if (resource_type == "Direct-Counter" && table_entry.has_counter_data()) {
+      RETURN_IF_ERROR(table_data->SetCounterData(
+          table_entry.counter_data().byte_count(),
+          table_entry.counter_data().packet_count()));
+    }
   }
 
   return ::util::OkStatus();

@@ -79,6 +79,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   ::util::Status GetSelectorGroupId(uint64* selector_group_id) const override;
   ::util::Status SetCounterData(uint64 bytes, uint64 packets) override;
   ::util::Status GetCounterData(uint64* bytes, uint64* packets) const override;
+  ::util::Status SetMeterConfig(bool in_pps, uint64 cir, uint64 cburst,
+                                uint64 pir, uint64 pburst) override;
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
 

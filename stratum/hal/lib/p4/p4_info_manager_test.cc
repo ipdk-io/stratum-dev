@@ -37,6 +37,7 @@ class P4InfoManagerTest : public testing::Test {
   static const int kFirstValueSetID = 30000000;
   static const int kFirstRegisterID = 40000000;
   static const int kFirstDirectCounterID = 50000000;
+  static const int kFirstDirectMeterID = 60000000;
 
   // The default constructor creates p4_test_manager_ with empty p4_test_info_.
   P4InfoManagerTest() : p4_test_manager_(new P4InfoManager(p4_test_info_)) {}
@@ -168,6 +169,13 @@ class P4InfoManagerTest : public testing::Test {
     auto new_counter = p4_test_info_.add_direct_counters();
     new_counter->mutable_preamble()->set_id(kFirstDirectCounterID);
     new_counter->mutable_preamble()->set_name("Direct-Counter-1");
+    SetUpNewP4Info();
+  }
+
+  void SetUpTestP4DirectMeters() {
+    auto new_meter = p4_test_info_.add_direct_meters();
+    new_meter->mutable_preamble()->set_id(kFirstDirectMeterID);
+    new_meter->mutable_preamble()->set_name("Direct-Meter-1");
     SetUpNewP4Info();
   }
 

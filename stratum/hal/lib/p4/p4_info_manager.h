@@ -88,6 +88,10 @@ class P4InfoManager {
   FindDirectCounterByID(uint32 counter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::DirectCounter>
   FindDirectCounterByName(const std::string& counter_name) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
+  FindDirectMeterByID(uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
+  FindDirectMeterByName(const std::string& meter_name) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Meter> FindMeterByID(
       uint32 meter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Meter> FindMeterByName(
@@ -100,6 +104,8 @@ class P4InfoManager {
       uint32 register_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByName(
       const std::string& register_name) const;
+  virtual ::util::StatusOr<const std::string> FindResourceTypeByID(
+      uint32 id_key) const;
 
   // GetSwitchStackAnnotations attempts to parse any @switchstack annotations
   // in the input object's P4Info Preamble.  If the P4 object has multiple
@@ -270,6 +276,7 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::ActionProfile> action_profile_map_;
   P4ResourceMap<::p4::config::v1::Counter> counter_map_;
   P4ResourceMap<::p4::config::v1::DirectCounter> direct_counter_map_;
+  P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
   P4ResourceMap<::p4::config::v1::Meter> meter_map_;
   P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
   P4ResourceMap<::p4::config::v1::Register> register_map_;
@@ -279,6 +286,7 @@ class P4InfoManager {
   absl::flat_hash_set<uint32> all_resource_ids_;
   absl::flat_hash_map<std::string, const ::p4::config::v1::Preamble*>
       all_resource_names_;
+  absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
 };
 
 }  // namespace hal
