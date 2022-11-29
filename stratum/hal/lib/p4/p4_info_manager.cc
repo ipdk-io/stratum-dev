@@ -353,9 +353,6 @@ void P4InfoManager::DumpNamesToIDs() const {
       APPEND_STATUS_IF_ERROR(status, insert_id_status);
     }
 
-    DCHECK(id_result.second) << "P4Info unexpected duplicate " << resource_type
-                             << " ID " << PrintP4ObjectID(id_key);
-
     const std::string name_key = preamble.name();
     auto name_result =
         all_resource_names_.insert(std::make_pair(name_key, &preamble));
