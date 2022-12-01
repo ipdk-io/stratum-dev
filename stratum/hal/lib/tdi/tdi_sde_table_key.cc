@@ -216,6 +216,7 @@ using namespace stratum::hal::tdi::helpers;
   if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
     *prefix = ByteStringToP4RuntimeByteString(*prefix);
   }
+  *prefix_length = lpmKey.prefix_len_;
 
   return ::util::OkStatus();
 }

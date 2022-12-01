@@ -413,7 +413,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       }
       case ::p4::config::v1::MatchField::LPM: {
         std::string prefix;
-        uint16 prefix_length;
+        uint16 prefix_length = 0;
         RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(), &prefix,
                                           &prefix_length));
         match.mutable_lpm()->set_value(prefix);
