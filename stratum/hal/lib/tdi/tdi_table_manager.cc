@@ -544,6 +544,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       result.mutable_meter_config()->set_pburst(static_cast<int64>(pburst));
     }
     if (resource_type == "Direct-Counter" && request.has_counter_data()) {
+      uint64 bytes = 0;
+      uint64 packets = 0;
       RETURN_IF_ERROR(table_data->GetCounterData(&bytes, &packets));
       result.mutable_counter_data()->set_byte_count(bytes);
       result.mutable_counter_data()->set_packet_count(packets);
@@ -901,11 +903,6 @@ TdiTableManager::ReadDirectMeterEntry(
     absl::ReaderMutexLock l(&lock_);
     RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
   }
-
-  // Sync table counters.
-  RETURN_IF_ERROR(tdi_sde_interface_->SynchronizeCounters(
-      device_, session, table_id,
-      absl::Milliseconds(FLAGS_tdi_table_sync_timeout_ms)));
 
   RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));

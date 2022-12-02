@@ -337,6 +337,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
           details->push_back(status.status());
           break;
         }
+        success &= status.ok();
+        details->push_back(status.status());
         resp.add_entities()->mutable_direct_counter_entry()->CopyFrom(
             status.ValueOrDie());
         break;
@@ -370,6 +372,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
           details->push_back(status.status());
           break;
         }
+        success &= status.ok();
+        details->push_back(status.status());
         resp.add_entities()->mutable_direct_meter_entry()->CopyFrom(
             status.ValueOrDie());
         break;
