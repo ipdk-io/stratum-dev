@@ -244,9 +244,11 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
       }
       priority: 10
     }
-    data {
-      byte_count: 200
-      packet_count: 100
+    config {
+      cir: 200
+      cburst: 2000
+      pir: 100
+      pburst: 1000
     }
   )PROTO";
 

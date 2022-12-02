@@ -148,14 +148,6 @@ class P4InfoManagerTest : public testing::Test {
     SetUpNewP4Info();
   }
 
-  void SetUpTestP4DirectMeters() {
-    // TODO(unknown): Tests get only one basic meter preamble at present.
-    auto new_meter = p4_test_info_.add_direct_meters();
-    new_meter->mutable_preamble()->set_id(kFirstDirectMeterID);
-    new_meter->mutable_preamble()->set_name("Direct-Meter-1");
-    SetUpNewP4Info();
-  }
-
   void SetUpTestP4ValueSets() {
     // TODO(teverman): Tests get only one basic value set preamble at present.
     auto new_value_set = p4_test_info_.add_value_sets();
