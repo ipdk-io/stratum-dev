@@ -473,17 +473,18 @@ std::unique_ptr<BfrtTableManager> BfrtTableManager::CreateInstance(
       param->set_value(value);
     }
   }
+  else {
+        // Action profile member id
+        uint64 action_member_id;
+        if (table_data->GetActionMemberId(&action_member_id).ok()) {
+                result.mutable_action()->set_action_profile_member_id(action_member_id);
+    }
 
-  // Action profile member id
-  uint64 action_member_id;
-  if (table_data->GetActionMemberId(&action_member_id).ok()) {
-    result.mutable_action()->set_action_profile_member_id(action_member_id);
-  }
-
-  // Action profile group id
-  uint64 selector_group_id;
-  if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
-    result.mutable_action()->set_action_profile_group_id(selector_group_id);
+        // Action profile group id
+        uint64 selector_group_id;
+        if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
+                result.mutable_action()->set_action_profile_group_id(selector_group_id);
+    }
   }
 
   // Counter data, if applicable.
