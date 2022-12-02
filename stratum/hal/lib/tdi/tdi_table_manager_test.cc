@@ -75,6 +75,7 @@ class TdiTableManagerTest : public ::testing::Test {
             }
             const_default_action_id: 16836487
             direct_resource_ids: 318814845
+            direct_resource_ids: 361104180
             size: 1024
           }
           actions {
@@ -95,6 +96,16 @@ class TdiTableManagerTest : public ::testing::Test {
             }
             spec {
               unit: BOTH
+            }
+            direct_table_id: 33583783
+          }
+          direct_meters {
+            preamble {
+              id: 361104180
+              name: "Ingress.control.meter1"
+            }
+            spec {
+              unit: BYTES
             }
             direct_table_id: 33583783
           }
@@ -188,6 +199,61 @@ TEST_F(TdiTableManagerTest, WriteDirectCounterEntryTest) {
   ASSERT_OK(ParseProtoFromString(kDirectCounterEntryText, &entry));
 
   EXPECT_OK(tdi_table_manager_->WriteDirectCounterEntry(
+      session_mock, ::p4::v1::Update::MODIFY, entry));
+}
+
+TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
+  ASSERT_OK(PushTestConfig());
+  constexpr int kP4TableId = 33583783;
+  constexpr int kTdiRtTableId = 20;
+  constexpr int kTdiPriority = 16777205;  // Inverted
+  auto table_key_mock = absl::make_unique<TableKeyMock>();
+  auto table_data_mock = absl::make_unique<TableDataMock>();
+  auto session_mock = std::make_shared<SessionMock>();
+
+  EXPECT_CALL(*table_key_mock, SetPriority(kTdiPriority))
+      .WillOnce(Return(::util::OkStatus()));
+  EXPECT_CALL(*table_data_mock, SetMeterConfig(false, 200, 2000, 100, 1000))
+      .WillOnce(Return(::util::OkStatus()));
+  EXPECT_CALL(*tdi_sde_wrapper_mock_, GetTdiRtId(kP4TableId))
+      .WillOnce(Return(kTdiRtTableId));
+  // TODO(max): figure out how to expect the session mock here.
+  EXPECT_CALL(*tdi_sde_wrapper_mock_,
+              ModifyTableEntry(kDevice1, _, kTdiRtTableId, table_key_mock.get(),
+                               table_data_mock.get()))
+      .WillOnce(Return(::util::OkStatus()));
+  EXPECT_CALL(*tdi_sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
+      .WillOnce(Return(ByMove(
+          ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>(
+              std::move(table_key_mock)))));
+  EXPECT_CALL(*tdi_sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
+      .WillOnce(Return(ByMove(
+          ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>(
+              std::move(table_data_mock)))));
+
+  const std::string kDirectMeterEntryText = R"PROTO(
+    table_entry {
+      table_id: 33583783
+      match {
+        field_id: 1
+        exact { value: "\000\001" }
+      }
+      match {
+        field_id: 2
+        ternary { value: "\x000" mask: "\xfff" }
+      }
+      priority: 10
+    }
+    data {
+      byte_count: 200
+      packet_count: 100
+    }
+  )PROTO";
+
+  ::p4::v1::DirectMeterEntry entry;
+  ASSERT_OK(ParseProtoFromString(kDirectMeterEntryText, &entry));
+
+  EXPECT_OK(tdi_table_manager_->WriteDirectMeterEntry(
       session_mock, ::p4::v1::Update::MODIFY, entry));
 }
 

@@ -294,7 +294,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   ASSIGN_OR_RETURN(auto table,
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
 
-
   for (const auto& resource_id : table.direct_resource_ids()) {
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
@@ -515,12 +514,40 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
   }
 
-  // Counter data, if applicable.
-  uint64 bytes, packets;
-  if (request.has_counter_data() &&
-      table_data->GetCounterData(&bytes, &packets).ok()) {
-    result.mutable_counter_data()->set_byte_count(bytes);
-    result.mutable_counter_data()->set_packet_count(packets);
+  for (const auto& resource_id : table.direct_resource_ids()) {
+    ASSIGN_OR_RETURN(auto resource_type,
+                     p4_info_manager_->FindResourceTypeByID(resource_id));
+    if (resource_type == "Direct-Meter" && request.has_meter_config()) {
+      bool meter_units_in_packets;  // or bytes
+      ASSIGN_OR_RETURN(auto meter,
+                       p4_info_manager_->FindDirectMeterByID(resource_id));
+      switch (meter.spec().unit()) {
+        case ::p4::config::v1::MeterSpec::BYTES:
+          meter_units_in_packets = false;
+          break;
+        case ::p4::config::v1::MeterSpec::PACKETS:
+          meter_units_in_packets = true;
+          break;
+        default:
+          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
+                                          << meter.ShortDebugString() << ".";
+      }
+      uint64 cir = 0;
+      uint64 cburst = 0;
+      uint64 pir = 0;
+      uint64 pburst = 0;
+      RETURN_IF_ERROR(
+          table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
+      result.mutable_meter_config()->set_cir(static_cast<int64>(cir));
+      result.mutable_meter_config()->set_cburst(static_cast<int64>(cburst));
+      result.mutable_meter_config()->set_pir(static_cast<int64>(pir));
+      result.mutable_meter_config()->set_pburst(static_cast<int64>(pburst));
+    }
+    if (resource_type == "Direct-Counter" && request.has_counter_data()) {
+      RETURN_IF_ERROR(table_data->GetCounterData(&bytes, &packets));
+      result.mutable_counter_data()->set_byte_count(bytes);
+      result.mutable_counter_data()->set_packet_count(packets);
+    }
   }
 
   return result;
@@ -736,6 +763,81 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   return ::util::OkStatus();
 }
 
+// Modify the meter config of a table entry.
+::util::Status TdiTableManager::WriteDirectMeterEntry(
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const ::p4::v1::Update::Type type,
+    const ::p4::v1::DirectMeterEntry& direct_meter_entry) {
+  CHECK_RETURN_IF_FALSE(type == ::p4::v1::Update::MODIFY)
+      << "Update type of DirectMeterEntry "
+      << direct_meter_entry.ShortDebugString() << " must be MODIFY.";
+
+  // Read table entry first.
+  const auto& table_entry = direct_meter_entry.table_entry();
+  CHECK_RETURN_IF_FALSE(table_entry.action().action().action_id() == 0)
+      << "Found action on DirectMeterEntry "
+      << direct_meter_entry.ShortDebugString();
+  ASSIGN_OR_RETURN(uint32 table_id,
+                   tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
+  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_data,
+                   tdi_sde_interface_->CreateTableData(
+                       table_id, table_entry.action().action().action_id()));
+
+  absl::ReaderMutexLock l(&lock_);
+  RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
+
+  // Fetch existing entry with action data. This is needed since the P4RT
+  // request does not provide the action ID and data, but we have to provide the
+  // current values in the later modify call to the SDE, else we would modify
+  // the table entry.
+  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+      device_, session, table_id, table_key.get(), table_data.get()));
+
+  // P4RT spec requires that the referenced table entry must exist. Therefore we
+  // do this check late.
+  if (!direct_meter_entry.has_config()) {
+    // Nothing to be updated.
+    return ::util::OkStatus();
+  }
+
+
+  ASSIGN_OR_RETURN(auto table,
+                   p4_info_manager_->FindTableByID(table_entry.table_id()));
+
+  for (const auto& resource_id : table.direct_resource_ids()) {
+    ASSIGN_OR_RETURN(auto resource_type,
+                     p4_info_manager_->FindResourceTypeByID(resource_id));
+    if (resource_type == "Direct-Meter") {
+      bool meter_units_in_packets;  // or bytes
+      ASSIGN_OR_RETURN(auto meter,
+                       p4_info_manager_->FindDirectMeterByID(resource_id));
+      switch (meter.spec().unit()) {
+        case ::p4::config::v1::MeterSpec::BYTES:
+          meter_units_in_packets = false;
+          break;
+        case ::p4::config::v1::MeterSpec::PACKETS:
+          meter_units_in_packets = true;
+          break;
+        default:
+          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
+                                          << meter.ShortDebugString() << ".";
+      }
+      RETURN_IF_ERROR(table_data->SetMeterConfig(
+          meter_units_in_packets, direct_meter_entry.config().cir(),
+          direct_meter_entry.config().cburst(),
+          direct_meter_entry.config().pir(),
+          direct_meter_entry.config().pburst()));
+      break;
+    }
+  }
+
+  RETURN_IF_ERROR(tdi_sde_interface_->ModifyTableEntry(
+      device_, session, table_id, table_key.get(), table_data.get()));
+
+  return ::util::OkStatus();
+}
+
 // Read the counter data of a table entry.
 ::util::StatusOr<::p4::v1::DirectCounterEntry>
 TdiTableManager::ReadDirectCounterEntry(
@@ -774,6 +876,53 @@ TdiTableManager::ReadDirectCounterEntry(
   RETURN_IF_ERROR(table_data->GetCounterData(&bytes, &packets));
   result.mutable_data()->set_byte_count(static_cast<int64>(bytes));
   result.mutable_data()->set_packet_count(static_cast<int64>(packets));
+
+  return result;
+}
+
+// Read the meter config of a table entry.
+::util::StatusOr<::p4::v1::DirectMeterEntry>
+TdiTableManager::ReadDirectMeterEntry(
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const ::p4::v1::DirectMeterEntry& direct_meter_entry) {
+  const auto& table_entry = direct_meter_entry.table_entry();
+  CHECK_RETURN_IF_FALSE(table_entry.action().action().action_id() == 0)
+      << "Found action on DirectMeterEntry "
+      << direct_meter_entry.ShortDebugString();
+
+  ASSIGN_OR_RETURN(uint32 table_id,
+                   tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
+  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_data,
+                   tdi_sde_interface_->CreateTableData(
+                       table_id, table_entry.action().action().action_id()));
+
+  {
+    absl::ReaderMutexLock l(&lock_);
+    RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
+  }
+
+  // Sync table counters.
+  RETURN_IF_ERROR(tdi_sde_interface_->SynchronizeCounters(
+      device_, session, table_id,
+      absl::Milliseconds(FLAGS_tdi_table_sync_timeout_ms)));
+
+  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+      device_, session, table_id, table_key.get(), table_data.get()));
+
+  // TODO(max): build response entry from returned data
+  ::p4::v1::DirectMeterEntry result = direct_meter_entry;
+
+  uint64 cir = 0;
+  uint64 cburst = 0;
+  uint64 pir = 0;
+  uint64 pburst = 0;
+  RETURN_IF_ERROR(
+      table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
+  result.mutable_config()->set_cir(static_cast<int64>(cir));
+  result.mutable_config()->set_cburst(static_cast<int64>(cburst));
+  result.mutable_config()->set_pir(static_cast<int64>(pir));
+  result.mutable_config()->set_pburst(static_cast<int64>(pburst));
 
   return result;
 }

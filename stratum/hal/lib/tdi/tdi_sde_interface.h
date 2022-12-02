@@ -157,6 +157,11 @@ class TdiSdeInterface {
                                           uint64 cburst, uint64 pir,
                                           uint64 pburst) = 0;
 
+    // Get the meter values.
+    virtual ::util::Status GetMeterConfig(bool in_pps, uint64* cir,
+                                          uint64* cburst, uint64* pir,
+                                          uint64* pburst) const = 0;
+
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;
 

@@ -112,6 +112,31 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
+::util::Status TableData::GetMeterConfig(bool in_pps, uint64* cir,
+                                         uint64* cburst, uint64* pir,
+                                         uint64* pburst) const {
+  if (in_pps) {
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, cir));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterCommitedBurstPackets, cburst));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirPps, pir));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterPeakBurstPackets, pburst));
+  } else {
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirKbps, cir));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterCommitedBurstKbits, cburst));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirKbps, pir));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterPeakBurstKbits, pburst));
+    *cir = KbitsToBytesPerSecond(*cir);
+    *cburst = KbitsToBytesPerSecond(*cburst);
+    *pir = KbitsToBytesPerSecond(*pir);
+    *pburst = KbitsToBytesPerSecond(*pburst);
+  }
+  return ::util::OkStatus();
+}
+
 // The P4Runtime `CounterData` message has no mechanism to differentiate between
 // byte-only, packet-only or both counter types. This make it impossible to
 // recognize a counter reset (set, e.g., bytes to zero) request from a set
