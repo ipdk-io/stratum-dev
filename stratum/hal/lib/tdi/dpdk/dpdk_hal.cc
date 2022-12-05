@@ -20,6 +20,10 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
+#ifdef KRNLMON_SUPPORT
+#include "krnlmon_main.h"
+#endif
+
 // TODO(unknown): Use FLAG_DEFINE for all flags.
 DEFINE_string(external_stratum_urls, stratum::kExternalStratumUrls,
               "Comma-separated list of URLs for server to listen to for "
@@ -231,9 +235,22 @@ DpdkHal::~DpdkHal() {
                << FLAGS_local_stratum_url << "...";
   }
 
+#ifdef KRNLMON_SUPPORT
+  //TODO: See if this can be moved to dpdk_main.cc
+  int krnlmon_status = krnlmon_init();
+  if (krnlmon_status) {
+      return MAKE_ERROR(ERR_INTERNAL)
+             << "Failed to start krnlmon thread";
+  }
+#endif
+
   // Block until external_server_->Shutdown() is called.
   // We don't wait on internal_service.
   external_server_->Wait();
+
+#ifdef KRNLMON_SUPPORT
+  krnlmon_shutdown();
+#endif
 
   return Teardown();
 }
