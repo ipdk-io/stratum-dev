@@ -68,10 +68,14 @@ using namespace stratum::hal::tdi::helpers;
   tdi_status_t status = table->entryAdd(
       *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_,
       *real_table_data->table_data_);
-  if (!((status == BF_SUCCESS) || (status == BF_ALREADY_EXISTS)))
+  if (status == BF_ALREADY_EXISTS) {
+     return MAKE_ERROR(::util::error::Code::ALREADY_EXISTS) <<
+             "Duplicate table entry with " << dump_args();
+  } else if (status != BF_SUCCESS) {
      return MAKE_ERROR(::util::error::Code::INTERNAL) <<
-             "Error deleting table entry with" << dump_args();
-  
+             "Error adding table entry with " << dump_args();
+  }
+
   return ::util::OkStatus();
 }
 
@@ -143,9 +147,14 @@ using namespace stratum::hal::tdi::helpers;
   const auto flags = ::tdi::Flags(0);
   tdi_status_t status = table->entryDel(
       *real_session->tdi_session_, *dev_tgt, flags, *real_table_key->table_key_);
-  if (!((status == BF_SUCCESS) || (status == BF_OBJECT_NOT_FOUND)))
+
+  if (status == BF_OBJECT_NOT_FOUND) {
+     return MAKE_ERROR(::util::error::Code::NOT_FOUND) <<
+             "No matching table entry with " << dump_args();
+  } else if (status != BF_SUCCESS) {
      return MAKE_ERROR(::util::error::Code::INTERNAL) <<
-             "Error deleting table entry with" << dump_args();
+             "Error deleting table entry with " << dump_args();
+  }
 
   return ::util::OkStatus();
 }
