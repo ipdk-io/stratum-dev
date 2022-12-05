@@ -473,17 +473,18 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       param->set_param_id(expected_param.id());
       param->set_value(value);
     }
-  } else {
-    // Action profile member id
-    uint64 action_member_id;
-    if (table_data->GetActionMemberId(&action_member_id).ok()) {
-      result.mutable_action()->set_action_profile_member_id(action_member_id);
+  }
+  else {
+        // Action profile member id
+        uint64 action_member_id;
+        if (table_data->GetActionMemberId(&action_member_id).ok()) {
+                result.mutable_action()->set_action_profile_member_id(action_member_id);
     }
 
-    // Action profile group id
-    uint64 selector_group_id;
-    if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
-      result.mutable_action()->set_action_profile_group_id(selector_group_id);
+        // Action profile group id
+        uint64 selector_group_id;
+        if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
+                result.mutable_action()->set_action_profile_group_id(selector_group_id);
     }
   }
 

@@ -394,43 +394,65 @@ namespace helpers {
     std::shared_ptr<::tdi::Session> tdi_session,
     ::tdi::Target tdi_dev_target, const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
-    std::vector<std::unique_ptr<::tdi::TableData>>* table_values) {
+    std::vector<std::unique_ptr<::tdi::TableData>>* table_datums) {
   CHECK_RETURN_IF_FALSE(table_keys) << "table_keys is null";
-  CHECK_RETURN_IF_FALSE(table_values) << "table_values is null";
+  CHECK_RETURN_IF_FALSE(table_datums) << "table_datums is null";
 
   // Get number of entries. Some types of tables are preallocated and are always
   // "full". The SDE does not support querying the usage on these.
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(0, &device);
-  const auto flags = ::tdi::Flags(0);
-  uint32 entries = 0;
+  std::unique_ptr<::tdi::TableKey> table_key;
+  std::unique_ptr<::tdi::TableData> table_data;
+  tdi_status_t tdi_status;
+  std::unique_ptr<::tdi::Target> dev_tgt;
+  device->createTarget(&dev_tgt);
+  uint32 entries = 0, actual = 0;
+  auto table_type = static_cast<tdi_table_type_e>(table->tableInfoGet()->tableTypeGet());
+
+  ::tdi::Flags *flags = new ::tdi::Flags(0);
   if (IsPreallocatedTable(*table)) {
     size_t table_size;
-    RETURN_IF_TDI_ERROR(
-        table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
+    tdi_status =
+        table->sizeGet(*tdi_session, tdi_dev_target, *flags, &table_size);
     entries = table_size;
   } else {
-    RETURN_IF_TDI_ERROR(
-	table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
+    size_t table_size;
+    tdi_status = table->sizeGet(
+        *tdi_session, tdi_dev_target,
+        *flags, &table_size);
+    entries = table_size;
   }
 
   table_keys->resize(0);
-  table_values->resize(0);
+  table_datums->resize(0);
   if (entries == 0) return ::util::OkStatus();
 
   // Get first entry.
   {
-    std::unique_ptr<::tdi::TableKey> table_key;
-    std::unique_ptr<::tdi::TableData> table_data;
-    RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
-    RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
-    RETURN_IF_TDI_ERROR(table->entryGetFirst(
-        *tdi_session, tdi_dev_target,
-        flags, table_key.get(),
-        table_data.get()));
+    tdi_status = table->keyAllocate(&table_key);
+    if (tdi_status != TDI_SUCCESS) {
+       goto internal_error;
+    }
+    tdi_status = table->dataAllocate(&table_data);
+    if (tdi_status != TDI_SUCCESS) {
+       goto internal_error;
+    }
+    tdi_status = table->entryGetFirst(
+        *tdi_session, *dev_tgt,
+        *flags, table_key.get(),
+        table_data.get());
+    if (tdi_status != TDI_SUCCESS) {
+        //SDE iterates through all the tables, and if no entry is present for that table,
+        //TDI_OBJECT_NOT_FOUND is returned in which case it's no operation for flow dump for that table.
+        if (tdi_status == TDI_OBJECT_NOT_FOUND) {
+            return ::util::OkStatus();
+        }
+       goto internal_error;
+    }
 
     table_keys->push_back(std::move(table_key));
-    table_values->push_back(std::move(table_data));
+    table_datums->push_back(std::move(table_data));
   }
   if (entries == 1) return ::util::OkStatus();
 
@@ -440,26 +462,46 @@ namespace helpers {
     std::vector<std::unique_ptr<::tdi::TableData>> data(keys.size());
     ::tdi::Table::keyDataPairs pairs;
     for (size_t i = 0; i < keys.size(); ++i) {
-      RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[i]));
-      RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
+      tdi_status = table->keyAllocate(&keys[i]);
+      if (tdi_status != TDI_SUCCESS) {
+         goto internal_error;
+      }
+      tdi_status = table->dataAllocate(&data[i]);
+      if (tdi_status != TDI_SUCCESS) {
+         goto internal_error;
+      }
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
-    uint32 actual = 0;
-    RETURN_IF_TDI_ERROR(table->entryGetNextN(
-        *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
-        &pairs, &actual));
+    actual = 0;
+    tdi_status = table->entryGetNextN(
+        *tdi_session, *dev_tgt, *flags, *(*table_keys)[0], pairs.size(),
+        &pairs, &actual);
+    if (tdi_status != TDI_SUCCESS) {
+       goto internal_error;
+    }
 
-    table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
-                       std::make_move_iterator(keys.end()));
-    table_values->insert(table_values->end(),
+    auto keys_end=keys.begin();
+    auto data_end=data.begin();
+    std::advance(keys_end,actual);
+    std::advance(data_end,actual);
+    table_keys->insert(table_keys->end(),
+                         std::make_move_iterator(keys.begin()),
+                         std::make_move_iterator(keys_end));
+    table_datums->insert(table_datums->end(),
                          std::make_move_iterator(data.begin()),
-                         std::make_move_iterator(data.end()));
+                         std::make_move_iterator(data_end));
+
   }
 
-  CHECK(table_keys->size() == table_values->size());
-  CHECK(table_keys->size() == entries);
+  CHECK(table_keys->size() == table_datums->size());
 
+  delete(flags);
   return ::util::OkStatus();
+
+internal_error:
+  delete (flags);
+  RETURN_ERROR(ERR_INTERNAL)
+             << "Error retreiving information from TDI";
 }
 
 // TDI does not provide a target-neutral way for us to determine whether a
