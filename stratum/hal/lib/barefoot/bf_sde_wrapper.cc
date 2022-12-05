@@ -473,42 +473,32 @@ template <typename T>
 }
 
 ::util::Status GetAllEntries(
-    std::shared_ptr<tdi::Session> tdirt_session,
-    tdi::Target tdi_dev_target, const tdi::Table* table,
-    std::vector<std::unique_ptr<tdi::TableKey>>* table_keys,
-    std::vector<std::unique_ptr<tdi::TableData>>* table_datums) {
+    std::shared_ptr<bfrt::BfRtSession> bfrt_session,
+    bf_rt_target_t bf_dev_target, const bfrt::BfRtTable* table,
+    std::vector<std::unique_ptr<bfrt::BfRtTableKey>>* table_keys,
+    std::vector<std::unique_ptr<bfrt::BfRtTableData>>* table_datums) {
   CHECK_RETURN_IF_FALSE(table_keys) << "table_keys is null";
   CHECK_RETURN_IF_FALSE(table_datums) << "table_datums is null";
 
   // Get number of entries. Some types of tables are preallocated and are always
   // "full". The SDE does not support querying the usage on these.
-  const tdi::Device *device = nullptr;
-  tdi::DevMgr::getInstance().deviceGet(0, &device);
-  std::unique_ptr<tdi::TableKey> table_key;
-  std::unique_ptr<tdi::TableData> table_data;
-  tdi_status_t tdi_status;
-  std::unique_ptr<tdi::Target> dev_tgt;
-  device->createTarget(&dev_tgt);
-  uint32 entries = 0, actual = 0;
-  auto table_type = static_cast<tdi_rt_table_type_e>(table->tableInfoGet()->tableTypeGet());
-
-  tdi::Flags *flags = new tdi::Flags(0);
-  if (table_type == TDI_RT_TABLE_TYPE_COUNTER ||
-      table_type == TDI_RT_TABLE_TYPE_METER) {
+  uint32 entries;
+  bfrt::BfRtTable::TableType table_type;
+  RETURN_IF_BFRT_ERROR(table->tableTypeGet(&table_type));
+  if (table_type == bfrt::BfRtTable::TableType::METER ||
+      table_type == bfrt::BfRtTable::TableType::COUNTER) {
     size_t table_size;
 #if defined(SDE_9_4_0) || defined(SDE_9_5_0)
-    tdi_status =
-        table->sizeGet(*tdirt_session, tdi_dev_target, *flags, &table_size);
+    RETURN_IF_BFRT_ERROR(
+        table->tableSizeGet(*bfrt_session, bf_dev_target, &table_size));
 #else
-    tdi_status = table->tableSizeGet(&table_size);
+    RETURN_IF_BFRT_ERROR(table->tableSizeGet(&table_size));
 #endif  // SDE_9_4_0
     entries = table_size;
   } else {
-    size_t table_size;
-    tdi_status = table->sizeGet(
-        *tdirt_session, tdi_dev_target,
-        *flags, &table_size);
-    entries = table_size;
+    RETURN_IF_BFRT_ERROR(table->tableUsageGet(
+        *bfrt_session, bf_dev_target,
+        bfrt::BfRtTable::BfRtTableGetFlag::GET_FROM_SW, &entries));
   }
 
   table_keys->resize(0);
@@ -517,26 +507,14 @@ template <typename T>
 
   // Get first entry.
   {
-    tdi_status = table->keyAllocate(&table_key);
-    if (tdi_status != TDI_SUCCESS) {
-       goto internal_error;
-    }
-    tdi_status = table->dataAllocate(&table_data);
-    if (tdi_status != TDI_SUCCESS) {
-       goto internal_error;
-    }
-    tdi_status = table->entryGetFirst(
-        *tdirt_session, *dev_tgt,
-        *flags, table_key.get(),
-        table_data.get());
-    if (tdi_status != TDI_SUCCESS) {
-        //SDE iterates through all the tables, and if no entry is present for that table,
-        //TDI_OBJECT_NOT_FOUND is returned in which case it's no operation for flow dump for that table.
-        if (tdi_status == TDI_OBJECT_NOT_FOUND) {
-            return ::util::OkStatus();
-        }
-       goto internal_error;
-    }
+    std::unique_ptr<bfrt::BfRtTableKey> table_key;
+    std::unique_ptr<bfrt::BfRtTableData> table_data;
+    RETURN_IF_BFRT_ERROR(table->keyAllocate(&table_key));
+    RETURN_IF_BFRT_ERROR(table->dataAllocate(&table_data));
+    RETURN_IF_BFRT_ERROR(table->tableEntryGetFirst(
+        *bfrt_session, bf_dev_target,
+        bfrt::BfRtTable::BfRtTableGetFlag::GET_FROM_SW, table_key.get(),
+        table_data.get()));
 
     table_keys->push_back(std::move(table_key));
     table_datums->push_back(std::move(table_data));
@@ -545,50 +523,30 @@ template <typename T>
 
   // Get all entries following the first.
   {
-    std::vector<std::unique_ptr<tdi::TableKey>> keys(entries - 1);
-    std::vector<std::unique_ptr<tdi::TableData>> data(keys.size());
-    tdi::Table::keyDataPairs pairs;
+    std::vector<std::unique_ptr<bfrt::BfRtTableKey>> keys(entries - 1);
+    std::vector<std::unique_ptr<bfrt::BfRtTableData>> data(keys.size());
+    bfrt::BfRtTable::keyDataPairs pairs;
     for (size_t i = 0; i < keys.size(); ++i) {
-      tdi_status = table->keyAllocate(&keys[i]);
-      if (tdi_status != TDI_SUCCESS) {
-         goto internal_error;
-      }
-      tdi_status = table->dataAllocate(&data[i]);
-      if (tdi_status != TDI_SUCCESS) {
-         goto internal_error;
-      }
+      RETURN_IF_BFRT_ERROR(table->keyAllocate(&keys[i]));
+      RETURN_IF_BFRT_ERROR(table->dataAllocate(&data[i]));
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
-    actual = 0;
-    tdi_status = table->entryGetNextN(
-        *tdirt_session, *dev_tgt, *flags, *(*table_keys)[0], pairs.size(),
-        &pairs, &actual);
-    if (tdi_status != TDI_SUCCESS) {
-       goto internal_error;
-    }
+    uint32 actual = 0;
+    RETURN_IF_BFRT_ERROR(table->tableEntryGetNext_n(
+        *bfrt_session, bf_dev_target, *(*table_keys)[0], pairs.size(),
+        bfrt::BfRtTable::BfRtTableGetFlag::GET_FROM_SW, &pairs, &actual));
 
-    auto keys_end=keys.begin();
-    auto data_end=data.begin();
-    std::advance(keys_end,actual);
-    std::advance(data_end,actual);
-    table_keys->insert(table_keys->end(),
-                         std::make_move_iterator(keys.begin()),
-                         std::make_move_iterator(keys_end));
+    table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
+                       std::make_move_iterator(keys.end()));
     table_datums->insert(table_datums->end(),
                          std::make_move_iterator(data.begin()),
-                         std::make_move_iterator(data_end));
-
+                         std::make_move_iterator(data.end()));
   }
 
   CHECK(table_keys->size() == table_datums->size());
+  CHECK(table_keys->size() == entries);
 
-  delete(flags);
   return ::util::OkStatus();
-
-internal_error:
-  delete (flags);
-  RETURN_ERROR(ERR_INTERNAL)
-             << "Error retreiving information from TDI";
 }
 
 }  // namespace
