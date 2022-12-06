@@ -647,7 +647,7 @@ TEST_F(P4InfoManagerTest, TestFindDirectMeter) {
   }
 }
 
-// Verifies lookup failure with an unknown meter ID.
+// Verifies lookup failure with an unknown direct meter ID.
 TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownID) {
   SetUpTestP4DirectMeters();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -658,7 +658,7 @@ TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown meter name.
+// Verifies lookup failure with an unknown direct meter name.
 TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownName) {
   SetUpTestP4DirectMeters();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());

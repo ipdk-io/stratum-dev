@@ -104,7 +104,10 @@ stratum_cc_library(
 stratum_cc_library(
     name = "tofino_chassis_manager",
     srcs = ["tofino_chassis_manager.cc"],
-    hdrs = ["tofino_chassis_manager.h", "tofino_port_manager.h"],
+    hdrs = [
+        "tofino_chassis_manager.h",
+        "tofino_port_manager.h"
+    ],
     deps = [
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/glue:integral_types",
