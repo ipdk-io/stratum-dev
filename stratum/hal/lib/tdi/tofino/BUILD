@@ -62,6 +62,7 @@ stratum_cc_library(
     srcs = [
         "tofino_sde_target.cc",
     ],
+    hdrs = ["tofino_port_manager.h"],
     defines = ["TOFINO_TARGET"],
     deps = [
         "//stratum/glue:integral_types",
@@ -103,7 +104,10 @@ stratum_cc_library(
 stratum_cc_library(
     name = "tofino_chassis_manager",
     srcs = ["tofino_chassis_manager.cc"],
-    hdrs = ["tofino_chassis_manager.h"],
+    hdrs = [
+        "tofino_chassis_manager.h",
+        "tofino_port_manager.h"
+    ],
     deps = [
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/glue:integral_types",
@@ -121,6 +125,7 @@ stratum_cc_library(
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/lib:error",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",

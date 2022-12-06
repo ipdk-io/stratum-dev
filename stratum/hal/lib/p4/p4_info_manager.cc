@@ -33,6 +33,7 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       action_profile_map_("Action-Profile"),
       counter_map_("Counter"),
       direct_counter_map_("Direct-Counter"),
+      direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register") {}
@@ -43,6 +44,7 @@ P4InfoManager::P4InfoManager()
       action_profile_map_("Action-Profile"),
       counter_map_("Counter"),
       direct_counter_map_("Direct-Counter"),
+      direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register") {}
@@ -72,6 +74,8 @@ P4InfoManager::~P4InfoManager() {}
       status, counter_map_.BuildMaps(p4_info_.counters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(status, direct_counter_map_.BuildMaps(
                                      p4_info_.direct_counters(), preamble_cb));
+  APPEND_STATUS_IF_ERROR(status, direct_meter_map_.BuildMaps(
+                                     p4_info_.direct_meters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(status,
                          meter_map_.BuildMaps(p4_info_.meters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
@@ -134,6 +138,16 @@ P4InfoManager::FindDirectCounterByName(const std::string& counter_name) const {
   return direct_counter_map_.FindByName(counter_name);
 }
 
+::util::StatusOr<const ::p4::config::v1::DirectMeter>
+P4InfoManager::FindDirectMeterByID(uint32 meter_id) const {
+  return direct_meter_map_.FindByID(meter_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::DirectMeter>
+P4InfoManager::FindDirectMeterByName(const std::string& meter_name) const {
+  return direct_meter_map_.FindByName(meter_name);
+}
+
 ::util::StatusOr<const ::p4::config::v1::Meter> P4InfoManager::FindMeterByID(
     uint32 meter_id) const {
   return meter_map_.FindByID(meter_id);
@@ -162,6 +176,16 @@ P4InfoManager::FindRegisterByID(uint32 register_id) const {
 ::util::StatusOr<const ::p4::config::v1::Register>
 P4InfoManager::FindRegisterByName(const std::string& register_name) const {
   return register_map_.FindByName(register_name);
+}
+
+::util::StatusOr<const std::string>
+P4InfoManager::FindResourceTypeByID(uint32 id_key) const {
+  auto iter = id_to_resource_type_map_.find(id_key);
+  if (iter == id_to_resource_type_map_.end()) {
+    return MAKE_ERROR(ERR_INVALID_P4_INFO)
+           << "P4Info ID " << PrintP4ObjectID(id_key) << " is not found";
+  }
+  return iter->second;
 }
 
 ::util::StatusOr<P4Annotation> P4InfoManager::GetSwitchStackAnnotations(
@@ -272,6 +296,7 @@ void P4InfoManager::DumpNamesToIDs() const {
   action_profile_map_.DumpNamesToIDs();
   counter_map_.DumpNamesToIDs();
   direct_counter_map_.DumpNamesToIDs();
+  direct_meter_map_.DumpNamesToIDs();
   meter_map_.DumpNamesToIDs();
   value_set_map_.DumpNamesToIDs();
   register_map_.DumpNamesToIDs();
@@ -311,6 +336,16 @@ void P4InfoManager::DumpNamesToIDs() const {
     uint32 id_key = preamble.id();
     auto id_result = all_resource_ids_.insert(id_key);
     if (!id_result.second) {
+      ::util::Status insert_id_status = MAKE_ERROR(ERR_INVALID_P4_INFO)
+                                        << "P4Info " << resource_type << " ID "
+                                        << PrintP4ObjectID(id_key)
+                                        << " is not unique";
+      APPEND_STATUS_IF_ERROR(status, insert_id_status);
+    }
+
+    auto id_type_result =
+        id_to_resource_type_map_.emplace(id_key, resource_type);
+    if (!id_type_result.second) {
       ::util::Status insert_id_status = MAKE_ERROR(ERR_INVALID_P4_INFO)
                                         << "P4Info " << resource_type << " ID "
                                         << PrintP4ObjectID(id_key)
