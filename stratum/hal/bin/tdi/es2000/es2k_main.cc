@@ -35,7 +35,7 @@ DEFINE_string(es2k_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
 DEFINE_bool(es2k_infrap4d_background, false,
             "Run infrap4d in the background with no interactive features");
-DEFINE_string(es2k_infrap4d_cfg, CONFIG_PREFIX "es2k_skip_p4.conf",
+DEFINE_string(es2k_infrap4d_cfg, CONFIG_PREFIX "es2000_skip_p4.conf",
               "Path to the infrap4d json config file");
 DECLARE_string(chassis_config_file);
 
