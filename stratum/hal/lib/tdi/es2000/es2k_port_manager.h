@@ -44,7 +44,7 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status EnablePort(int device, int port);
   ::util::Status DisablePort(int device, int port);
 
-  // Es2k specific methods
+  // ES2000 specific methods
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode);
   ::util::Status SetPortShapingRate(
@@ -92,7 +92,7 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   // Timeout for Write() operations on port status events.
   static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
 
-  // Default MTU for ports on Es2k.
+  // Default MTU for ports on ES2000.
   static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
 
   // RM Mutex to protect the port status writer.

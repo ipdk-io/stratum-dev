@@ -1,0 +1,10 @@
+description: "Default Chassis Config for MEV Backend"
+chassis {
+  platform: PLT_P4_IPU_ES2000
+  name: "MEV"
+}
+nodes {
+  id: 1
+  slot: 1
+  index: 1
+}

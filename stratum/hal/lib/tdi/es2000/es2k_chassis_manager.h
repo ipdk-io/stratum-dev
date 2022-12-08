@@ -62,19 +62,11 @@ class Es2kChassisManager {
   virtual ::util::Status ReplayPortsConfig(uint64 node_id)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
-#if 0
-  virtual ::util::Status GetFrontPanelPortInfo(uint64 node_id, uint32 port_id,
-                                               FrontPanelPortInfo* fp_port_info)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
-#endif
   virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToUnitMap() const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
-#if 0
-  virtual std::string GetChipType(int device) const;
-#endif
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kChassisManager> CreateInstance(
       OperationMode mode,
@@ -134,11 +126,7 @@ class Es2kChassisManager {
   // plane port.
   ::util::StatusOr<uint32> GetSdkPortId(uint64 node_id, uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
-#if 0
-  // Registers/Unregisters all the event Writers (if not done yet).
-  ::util::Status RegisterEventWriters() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
-  ::util::Status UnregisterEventWriters() LOCKS_EXCLUDED(chassis_lock);
-#endif
+
   // Cleans up the internal state. Resets all the internal port maps and
   // deletes the pointers.
   void CleanupInternalState() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
@@ -163,13 +151,7 @@ class Es2kChassisManager {
   // Invoked with "this" as the argument in pthread_create.
   static void* TransceiverEventHandlerThreadFunc(void* arg)
       LOCKS_EXCLUDED(chassis_lock, gnmi_event_lock_);
-#if 0
-  // Reads and processes transceiver events using the given ChannelReader.
-  // Called by TransceiverEventHandlerThreadFunc.
-  void ReadTransceiverEvents(
-      const std::unique_ptr<ChannelReader<PhalInterface::TransceiverEvent>>&
-          reader) LOCKS_EXCLUDED(chassis_lock);
-#endif
+
   // Port status event handler. This method is executed by a ChannelReader
   // thread which processes SDE port status events. Port is the sdk port number
   // used by the SDE. NOTE: This method should never be executed directly from a
@@ -216,16 +198,7 @@ class Es2kChassisManager {
   // Channel for receiving port status events from the TdiSdeInterface.
   std::shared_ptr<Channel<TdiSdeInterface::PortStatusEvent>>
       port_status_event_channel_ GUARDED_BY(chassis_lock);
-#if 0
-  // The id of the transceiver module insert/removal event ChannelWriter, as
-  // returned by PhalInterface::RegisterTransceiverEventChannelWriter(). Used to
-  // remove the handler later if needed.
-  int xcvr_event_writer_id_;
 
-  // Channel for receiving transceiver events from the Phal.
-  std::shared_ptr<Channel<PhalInterface::TransceiverEvent>> xcvr_event_channel_
-      GUARDED_BY(chassis_lock);
-#endif
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_

@@ -216,11 +216,6 @@ Es2kSwitch::~Es2kSwitch() {}
           status.Update(device_id.status());
         } else {
           auto* node_info = resp.mutable_node_info();
-#if 0
-          node_info->set_vendor_name("Barefoot");
-          node_info->set_chip_name(
-              chassis_manager_->GetChipType(device_id.ValueOrDie()));
-#endif
         }
         break;
       }

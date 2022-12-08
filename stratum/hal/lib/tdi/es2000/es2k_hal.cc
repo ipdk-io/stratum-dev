@@ -132,17 +132,6 @@ Es2kHal::~Es2kHal() {
 
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
 
-#if 0 //Check with Sandeep: Does MEV have such limitation?
-  // DPDK cannot configure the pipeline until after the ports have been
-  // created, so we ensure that the saved configuration file is empty
-  // on startup.
-  FILE* pipeline_cfg_file =
-    fopen(FLAGS_forwarding_pipeline_configs_file.c_str(), "wb");
-  if (pipeline_cfg_file != NULL) {
-    LOG(INFO) << "Truncating saved pipeline configuration file.";
-    fclose(pipeline_cfg_file);
-  }
-#endif
   // Set up all the services. For a cold boot, we push the saved configs
   // to the switch as part of setup. For a warm boot, we only recover the
   // internal state of the class.

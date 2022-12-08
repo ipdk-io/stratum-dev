@@ -46,10 +46,6 @@ Es2kChassisManager::Es2kChassisManager(
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
-#if 0
-      xcvr_event_writer_id_(kInvalidWriterId),
-      xcvr_event_channel_(nullptr),
-#endif
       gnmi_event_writer_(nullptr),
       unit_to_node_id_(),
       node_id_to_unit_(),
@@ -67,10 +63,6 @@ Es2kChassisManager::Es2kChassisManager()
     : mode_(OPERATION_MODE_STANDALONE),
       initialized_(false),
       port_status_event_channel_(nullptr),
-#if 0
-      xcvr_event_writer_id_(kInvalidWriterId),
-      xcvr_event_channel_(nullptr),
-#endif
       gnmi_event_writer_(nullptr),
       unit_to_node_id_(),
       node_id_to_unit_(),
@@ -244,14 +236,6 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     config_changed = true;
   }
 
-#if 0
-  if (config_old.shaping_config) {
-    RETURN_IF_ERROR(ApplyPortShapingConfig(node_id, unit, sdk_port_id,
-                                           *config_old.shaping_config));
-    config_changed = true;
-  }
-#endif
-
   bool need_disable = false, need_enable = false;
   if (config_params.admin_state() == ADMIN_STATE_DISABLED) {
     // if the new admin state is disabled, we need to disable the port if it was
@@ -287,10 +271,6 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 
 ::util::Status Es2kChassisManager::PushChassisConfig(
     const ChassisConfig& config) {
-#if 0
-  RETURN_IF_ERROR(phal_interface_->PushChassisConfig(config));
-  if (!initialized_) RETURN_IF_ERROR(RegisterEventWriters());
-#endif
   // new maps
   std::map<int, uint64> unit_to_node_id;
   std::map<uint64, int> node_id_to_unit;
@@ -398,75 +378,6 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     }
   }
 
-#if 0
-  if (config.has_vendor_config() &&
-      config.vendor_config().has_es2k_config()) {
-    // Handle port shaping.
-    const auto& node_id_to_port_shaping_config =
-        config.vendor_config().es2k_config().node_id_to_port_shaping_config();
-    for (const auto& key : node_id_to_port_shaping_config) {
-      const uint64 node_id = key.first;
-      const Es2kConfig::BfPortShapingConfig& port_id_to_shaping_config =
-          key.second;
-      CHECK_RETURN_IF_FALSE(node_id_to_port_id_to_sdk_port_id.count(node_id));
-      CHECK_RETURN_IF_FALSE(node_id_to_unit.count(node_id));
-      int unit = node_id_to_unit[node_id];
-      for (const auto& e :
-           port_id_to_shaping_config.per_port_shaping_configs()) {
-        const uint32 port_id = e.first;
-        const Es2kConfig::BfPortShapingConfig::BfPerPortShapingConfig&
-            shaping_config = e.second;
-        CHECK_RETURN_IF_FALSE(
-            node_id_to_port_id_to_sdk_port_id[node_id].count(port_id));
-        const uint32 sdk_port_id =
-            node_id_to_port_id_to_sdk_port_id[node_id][port_id];
-        RETURN_IF_ERROR(
-            ApplyPortShapingConfig(node_id, unit, sdk_port_id, shaping_config));
-        node_id_to_port_id_to_port_config[node_id][port_id].shaping_config =
-            shaping_config;
-      }
-    }
-
-    // Handle deflect-on-drop config.
-    const auto& node_id_to_deflect_on_drop_configs =
-        config.vendor_config()
-            .es2k_config()
-            .node_id_to_deflect_on_drop_configs();
-    for (const auto& key : node_id_to_deflect_on_drop_configs) {
-      const uint64 node_id = key.first;
-      const auto& deflect_config = key.second;
-      for (const auto& drop_target : deflect_config.drop_targets()) {
-        CHECK_RETURN_IF_FALSE(node_id_to_port_id_to_sdk_port_id.count(node_id));
-        CHECK_RETURN_IF_FALSE(node_id_to_unit.count(node_id));
-        const int unit = node_id_to_unit[node_id];
-        uint32 sdk_port_id;
-        switch (drop_target.port_type_case()) {
-          case Es2kConfig::DeflectOnPacketDropConfig::DropTarget::kPort: {
-            const uint32 port_id = drop_target.port();
-            CHECK_RETURN_IF_FALSE(
-                node_id_to_port_id_to_sdk_port_id[node_id].count(port_id));
-            sdk_port_id = node_id_to_port_id_to_sdk_port_id[node_id][port_id];
-            break;
-          }
-          case Es2kConfig::DeflectOnPacketDropConfig::DropTarget::kSdkPort: {
-            sdk_port_id = drop_target.sdk_port();
-            break;
-          }
-          default:
-            RETURN_ERROR(ERR_INVALID_PARAM)
-                << "Unsupported port type in DropTarget "
-                << drop_target.ShortDebugString();
-        }
-        RETURN_IF_ERROR(es2k_port_manager_->SetDeflectOnDropDestination(
-            unit, sdk_port_id, drop_target.queue()));
-        LOG(INFO) << "Configured deflect-on-drop to SDK port " << sdk_port_id
-                  << " in node " << node_id << ".";
-      }
-      CHECK_RETURN_IF_FALSE(gtl::InsertIfNotPresent(
-          &node_id_to_deflect_on_drop_config, node_id, deflect_config));
-    }
-  }
-#endif
   // Clean up from old config.
   for (const auto& node_ports_old : node_id_to_port_id_to_port_config_) {
     auto node_id = node_ports_old.first;
@@ -517,6 +428,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
   switch (config.chassis().platform()) {
     case PLT_GENERIC_BAREFOOT_TOFINO:
     case PLT_GENERIC_BAREFOOT_TOFINO2:
+    case PLT_P4_IPU_ES2000:
       break;
     default:
       return MAKE_ERROR(ERR_INVALID_PARAM)
@@ -954,22 +866,6 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return status;
 }
 
-#if 0
-::util::Status Es2kChassisManager::GetFrontPanelPortInfo(
-    uint64 node_id, uint32 port_id, FrontPanelPortInfo* fp_port_info) {
-  auto* port_id_to_port_key =
-      gtl::FindOrNull(node_id_to_port_id_to_singleton_port_key_, node_id);
-  CHECK_RETURN_IF_FALSE(port_id_to_port_key != nullptr)
-      << "Node " << node_id << " is not configured or not known.";
-  auto* port_key = gtl::FindOrNull(*port_id_to_port_key, port_id);
-  CHECK_RETURN_IF_FALSE(port_key != nullptr)
-      << "Node " << node_id << ", port " << port_id
-      << " is not configured or not known.";
-  return phal_interface_->GetFrontPanelPortInfo(port_key->slot, port_key->port,
-                                                fp_port_info);
-}
-#endif
-
 std::unique_ptr<Es2kChassisManager> Es2kChassisManager::CreateInstance(
     OperationMode mode, TdiSdeInterface* tdi_sde_interface, Es2kPortManager* es2k_port_manager) {
   return absl::WrapUnique(new Es2kChassisManager(
@@ -1073,206 +969,6 @@ void Es2kChassisManager::PortStatusEventHandler(int device, int port,
             << ".";
 }
 
-#if 0
-void* Es2kChassisManager::TransceiverEventHandlerThreadFunc(void* arg) {
-  CHECK(arg != nullptr);
-  // Retrieve arguments.
-  auto* args = reinterpret_cast<ReaderArgs<TransceiverEvent>*>(arg);
-  auto* manager = args->manager;
-  std::unique_ptr<ChannelReader<TransceiverEvent>> reader =
-      std::move(args->reader);
-  delete args;
-  manager->ReadTransceiverEvents(reader);
-  return nullptr;
-}
-
-void Es2kChassisManager::ReadTransceiverEvents(
-    const std::unique_ptr<ChannelReader<TransceiverEvent>>& reader) {
-  do {
-    // Check switch shutdown.
-    // TODO(max): This check should be on the shutdown variable.
-    {
-      absl::ReaderMutexLock l(&chassis_lock);
-      if (!initialized_) break;
-    }
-    TransceiverEvent event;
-    // Block on the next transceiver event message from the Channel.
-    int code = reader->Read(&event, absl::InfiniteDuration()).error_code();
-    // Exit if the Channel is closed.
-    if (code == ERR_CANCELLED) break;
-    // Read should never timeout.
-    if (code == ERR_ENTRY_NOT_FOUND) {
-      LOG(ERROR) << "Read with infinite timeout failed with ENTRY_NOT_FOUND.";
-      continue;
-    }
-    // Handle received message.
-    TransceiverEventHandler(event.slot, event.port, event.state);
-  } while (true);
-}
-
-void Es2kChassisManager::TransceiverEventHandler(int slot, int port,
-                                               HwState new_state) {
-  absl::WriterMutexLock l(&chassis_lock);
-
-  PortKey xcvr_port_key(slot, port);
-  LOG(INFO) << "Transceiver event for port " << xcvr_port_key.ToString() << ": "
-            << HwState_Name(new_state) << ".";
-
-  // See if we know about this transceiver module. Find a mutable state pointer
-  // so we can override it later.
-  HwState* mutable_state =
-      gtl::FindOrNull(xcvr_port_key_to_xcvr_state_, xcvr_port_key);
-  if (mutable_state == nullptr) {
-    LOG(ERROR) << "Detected unknown " << xcvr_port_key.ToString()
-               << " in TransceiverEventHandler. This should not happen!";
-    return;
-  }
-  HwState old_state = *mutable_state;
-
-  // This handler is supposed to return present or non present for the state of
-  // the transceiver modules. Other values do no make sense.
-  if (new_state != HW_STATE_PRESENT && new_state != HW_STATE_NOT_PRESENT) {
-    LOG(ERROR) << "Invalid state for transceiver " << xcvr_port_key.ToString()
-               << " in TransceiverEventHandler: " << HwState_Name(new_state)
-               << ".";
-    return;
-  }
-
-  // Discard some invalid situations and report the error. Then save the new
-  // state
-  if (old_state == HW_STATE_READY && new_state == HW_STATE_PRESENT) {
-    LOG(ERROR) << "Got present for a ready transceiver "
-               << xcvr_port_key.ToString() << " in TransceiverEventHandler.";
-    return;
-  }
-  if (old_state == HW_STATE_UNKNOWN && new_state == HW_STATE_NOT_PRESENT) {
-    LOG(ERROR) << "Got not-present for an unknown transceiver "
-               << xcvr_port_key.ToString() << " in TransceiverEventHandler.";
-    return;
-  }
-  *mutable_state = new_state;
-
-  // TODO(antonin): set autoneg based on media type...
-  FrontPanelPortInfo fp_port_info;
-  auto status =
-      phal_interface_->GetFrontPanelPortInfo(slot, port, &fp_port_info);
-  if (!status.ok()) {
-    LOG(ERROR) << "Failure in TransceiverEventHandler: " << status;
-    return;
-  }
-
-  // Finally, before we exit we make sure if the port was HW_STATE_PRESENT,
-  // it is set to HW_STATE_READY to show it has been configured and ready.
-  if (*mutable_state == HW_STATE_PRESENT) {
-    LOG(INFO) << "Transceiver " << xcvr_port_key.ToString() << " is ready.";
-    *mutable_state = HW_STATE_READY;
-  }
-}
-
-
-::util::Status Es2kChassisManager::RegisterEventWriters() {
-  if (initialized_) {
-    return MAKE_ERROR(ERR_INTERNAL)
-           << "RegisterEventWriters() can be called only before the class is "
-           << "initialized.";
-  }
-  // If we have not done that yet, create port status event Channel, register
-  // Writer, and create Reader thread.
-  if (!port_status_event_channel_) {
-    port_status_event_channel_ =
-        Channel<PortStatusEvent>::Create(kMaxPortStatusEventDepth);
-    // Create and hand-off Writer to the TdiSdeInterface.
-    auto writer =
-        ChannelWriter<PortStatusEvent>::Create(port_status_event_channel_);
-    RETURN_IF_ERROR(
-        es2k_port_manager_->RegisterPortStatusEventWriter(std::move(writer)));
-    LOG(INFO) << "Port status notification callback registered successfully";
-    // Create and hand-off Reader to new reader thread.
-    auto reader =
-        ChannelReader<PortStatusEvent>::Create(port_status_event_channel_);
-    pthread_t port_status_event_reader_tid;
-    int ret = pthread_create(
-        &port_status_event_reader_tid, nullptr,
-        PortStatusEventHandlerThreadFunc,
-        new ReaderArgs<PortStatusEvent>{this, std::move(reader)});
-    if (ret != 0) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to create port status thread. Err: " << ret << ".";
-    }
-    // We don't care about the return value. The thread should exit following
-    // the closing of the Channel in UnregisterEventWriters().
-    ret = pthread_detach(port_status_event_reader_tid);
-    if (ret != 0) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to detach port status thread. Err: " << ret << ".";
-    }
-  }
-
-  // If we have not done that yet, create transceiver module insert/removal
-  // event Channel, register ChannelWriter, and create ChannelReader thread.
-  if (xcvr_event_writer_id_ == kInvalidWriterId) {
-    xcvr_event_channel_ = Channel<TransceiverEvent>::Create(kMaxXcvrEventDepth);
-    // Create and hand-off ChannelWriter to the PhalInterface.
-    auto writer = ChannelWriter<TransceiverEvent>::Create(xcvr_event_channel_);
-    int priority = PhalInterface::kTransceiverEventWriterPriorityHigh;
-    ASSIGN_OR_RETURN(xcvr_event_writer_id_,
-                     phal_interface_->RegisterTransceiverEventWriter(
-                         std::move(writer), priority));
-    // Create and hand-off ChannelReader to new reader thread.
-    auto reader = ChannelReader<TransceiverEvent>::Create(xcvr_event_channel_);
-    pthread_t xcvr_event_reader_tid;
-    int ret = pthread_create(
-        &xcvr_event_reader_tid, nullptr, TransceiverEventHandlerThreadFunc,
-        new ReaderArgs<TransceiverEvent>{this, std::move(reader)});
-    if (ret != 0) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to create transceiver event thread. Err: " << ret
-             << ".";
-    }
-    // We don't care about the return value of the thread. It should exit once
-    // the Channel is closed in UnregisterEventWriters().
-    ret = pthread_detach(xcvr_event_reader_tid);
-    if (ret != 0) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to detach transceiver event thread. Err: " << ret
-             << ".";
-    }
-  }
-
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kChassisManager::UnregisterEventWriters() {
-  absl::WriterMutexLock l(&chassis_lock);
-  ::util::Status status = ::util::OkStatus();
-  // Unregister the linkscan and transceiver module event Writers.
-  APPEND_STATUS_IF_ERROR(status,
-                         es2k_port_manager_->UnregisterPortStatusEventWriter());
-  // Close Channel.
-  if (!port_status_event_channel_ || !port_status_event_channel_->Close()) {
-    ::util::Status error = MAKE_ERROR(ERR_INTERNAL)
-                           << "Error when closing port status change"
-                           << " event channel.";
-    APPEND_STATUS_IF_ERROR(status, error);
-  }
-  port_status_event_channel_.reset();
-  if (xcvr_event_writer_id_ != kInvalidWriterId) {
-    APPEND_STATUS_IF_ERROR(status,
-                           phal_interface_->UnregisterTransceiverEventWriter(
-                               xcvr_event_writer_id_));
-    xcvr_event_writer_id_ = kInvalidWriterId;
-    // Close Channel.
-    if (!xcvr_event_channel_ || !xcvr_event_channel_->Close()) {
-      ::util::Status error = MAKE_ERROR(ERR_INTERNAL)
-                             << "Error when closing transceiver event channel.";
-      APPEND_STATUS_IF_ERROR(status, error);
-    }
-    xcvr_event_channel_.reset();
-  }
-
-  return status;
-}
-#endif
 ::util::StatusOr<int> Es2kChassisManager::GetUnitFromNodeId(
     uint64 node_id) const {
   if (!initialized_) {
@@ -1284,11 +980,7 @@ void Es2kChassisManager::TransceiverEventHandler(int slot, int port,
 
   return *unit;
 }
-#if 0 //See if we need it, old OVS arch didn't have this
-std::string Es2kChassisManager::GetChipType(int device) const {
-  return tdi_sde_interface_->GetChipType(device);
-}
-#endif
+
 void Es2kChassisManager::CleanupInternalState() {
   unit_to_node_id_.clear();
   node_id_to_unit_.clear();
@@ -1307,13 +999,6 @@ void Es2kChassisManager::CleanupInternalState() {
     absl::ReaderMutexLock l(&chassis_lock);
     if (!initialized_) return status;
   }
-#if 0
-  // It is fine to release the chassis lock here (it is actually needed to call
-  // UnregisterEventWriters or there would be a deadlock). Because initialized_
-  // is set to true, RegisterEventWriters cannot be called.
-  APPEND_STATUS_IF_ERROR(status, UnregisterEventWriters());
-  APPEND_STATUS_IF_ERROR(status, phal_interface_->Shutdown());
-#endif
   {
     absl::WriterMutexLock l(&chassis_lock);
     initialized_ = false;
