@@ -392,7 +392,7 @@ namespace helpers {
 
 ::util::Status GetAllEntries(
     std::shared_ptr<::tdi::Session> tdi_session,
-    ::tdi::Target tdi_dev_target, const ::tdi::Table* table,
+    ::tdi::Target &tdi_dev_target, const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>* table_values) {
   CHECK_RETURN_IF_FALSE(table_keys) << "table_keys is null";
@@ -403,8 +403,6 @@ namespace helpers {
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(0, &device);
   const auto flags = ::tdi::Flags(0);
-  std::unique_ptr<::tdi::TableKey> table_key;
-  std::unique_ptr<::tdi::TableData> table_data;
   tdi_status_t tdi_status;
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
@@ -430,6 +428,8 @@ namespace helpers {
 
   // Get first entry.
   {
+    std::unique_ptr<::tdi::TableKey> table_key;
+    std::unique_ptr<::tdi::TableData> table_data;
     RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
     RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
     tdi_status = table->entryGetFirst(
@@ -444,7 +444,6 @@ namespace helpers {
         }
        RETURN_IF_TDI_ERROR(tdi_status);
     }
-
     table_keys->push_back(std::move(table_key));
     table_values->push_back(std::move(table_data));
   }
@@ -460,9 +459,9 @@ namespace helpers {
       RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
-    actual = 0;
+    uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(
-        *tdi_session, *dev_tgt, flags, *(*table_keys)[0], pairs.size(),
+        *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
         &pairs, &actual));
 
     auto keys_end=keys.begin();

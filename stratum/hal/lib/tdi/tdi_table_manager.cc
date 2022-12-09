@@ -500,8 +500,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       param->set_param_id(expected_param.id());
       param->set_value(value);
     }
-  } 
-  else {
+  }else {
     // Action profile member id
     uint64 action_member_id;
     if (table_data->GetActionMemberId(&action_member_id).ok()) {
@@ -513,7 +512,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
       result.mutable_action()->set_action_profile_group_id(selector_group_id);
     }
-  }
+  } 
 
   for (const auto& resource_id : table.direct_resource_ids()) {
     ASSIGN_OR_RETURN(auto resource_type,
