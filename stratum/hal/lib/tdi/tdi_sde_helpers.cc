@@ -459,7 +459,7 @@ namespace helpers {
       RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
-    uint32 actual = 0;
+    actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(
         *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
         &pairs, &actual));

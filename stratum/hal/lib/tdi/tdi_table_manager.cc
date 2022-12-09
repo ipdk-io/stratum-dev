@@ -500,7 +500,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       param->set_param_id(expected_param.id());
       param->set_value(value);
     }
-  }else {
+  } else {
     // Action profile member id
     uint64 action_member_id;
     if (table_data->GetActionMemberId(&action_member_id).ok()) {
