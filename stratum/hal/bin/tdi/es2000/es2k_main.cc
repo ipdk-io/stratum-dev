@@ -29,13 +29,12 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
-#define CONFIG_PREFIX "/usr/share/stratum/es2000/"
+#define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/es2000/"
+#define DEFAULT_LOG_DIR "/var/log/stratum/"
 
 DEFINE_string(es2k_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
-DEFINE_bool(es2k_infrap4d_background, false,
-            "Run infrap4d in the background with no interactive features");
-DEFINE_string(es2k_infrap4d_cfg, CONFIG_PREFIX "es2000_skip_p4.conf",
+DEFINE_string(es2k_infrap4d_cfg, DEFAULT_CONFIG_PREFIX "es2000_skip_p4.conf",
               "Path to the infrap4d json config file");
 DECLARE_string(chassis_config_file);
 
@@ -45,13 +44,35 @@ namespace tdi {
 
 ::util::Status Es2kMain(int argc, char* argv[]) {
   // Default value for DPDK.
-  FLAGS_chassis_config_file = CONFIG_PREFIX "es2k_port_config.pb.txt";
-  InitGoogle(argv[0], &argc, &argv, true);
+  FLAGS_chassis_config_file = DEFAULT_CONFIG_PREFIX "es2k_port_config.pb.txt";
+  FLAGS_log_dir = DEFAULT_LOG_DIR;
+  FLAGS_logtostderr = false;
+  FLAGS_alsologtostderr = false;
+
+  /* Note:
+   * InitGoogle by default initializes following options if not explicitly
+   * set by user through command line
+   * logtostderr = true
+   * colorlogtostderr = true
+   * stderrthreshold = 0 (Copy log messages at or above this level to stderr
+   * in addition to logfiles. The numbers of severity levels INFO, WARNING,
+   * ERROR, and FATAL are 0, 1, 2, and 3, respectively.)
+   * minloglevel = 0. Log messages at or above this level. Again, the numbers
+   * of severity levels INFO, WARNING, ERROR, and FATAL are 0, 1, 2, and 3,
+   * respectively)
+   * To be able to define our own requirements for logging when running infrap4d
+   * as process, InitGoogle call is removed and ParseCommandLineFlags is called
+   * separately
+   */
+
+  // Parse command line flags
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   InitStratumLogging();
 
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate
   // components with "device_id" instead of "node_id".
   const int device_id = 0;
+  const bool es2k_infrap4d_background = true;
 
   auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
 
@@ -59,7 +80,7 @@ namespace tdi {
 
   RETURN_IF_ERROR(sde_wrapper->InitializeSde(
       FLAGS_es2k_sde_install, FLAGS_es2k_infrap4d_cfg,
-      FLAGS_es2k_infrap4d_background));
+      es2k_infrap4d_background));
 
   /* ========== */
   // NOTE: Rework for DPDK
