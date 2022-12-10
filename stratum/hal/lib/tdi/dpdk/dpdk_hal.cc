@@ -21,7 +21,13 @@
 #include "stratum/lib/utils.h"
 
 #ifdef KRNLMON_SUPPORT
-#include "krnlmon_main.h"
+extern int rpc_start_cookie;
+extern pthread_cond_t rpc_start_cond;
+extern pthread_mutex_t rpc_start_lock;
+
+extern int rpc_stop_cookie;
+extern pthread_cond_t rpc_stop_cond;
+extern pthread_mutex_t rpc_stop_lock;
 #endif
 
 // TODO(unknown): Use FLAG_DEFINE for all flags.
@@ -236,12 +242,11 @@ DpdkHal::~DpdkHal() {
   }
 
 #ifdef KRNLMON_SUPPORT
-  //TODO: See if this can be moved to dpdk_main.cc
-  int krnlmon_status = krnlmon_init();
-  if (krnlmon_status) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to start krnlmon thread";
-  }
+  //Notify the krnlmon start thread that stratum server is listening
+  pthread_mutex_lock(&rpc_start_lock);
+  rpc_start_cookie = 1;
+  pthread_cond_signal(&rpc_start_cond);
+  pthread_mutex_unlock(&rpc_start_lock);
 #endif
 
   // Block until external_server_->Shutdown() is called.
@@ -249,8 +254,13 @@ DpdkHal::~DpdkHal() {
   external_server_->Wait();
 
 #ifdef KRNLMON_SUPPORT
-  krnlmon_shutdown();
+  //Notify the krnlmon stop thread that stratum server has stopped
+  pthread_mutex_lock(&rpc_stop_lock);
+  rpc_stop_cookie = 1;
+  pthread_cond_signal(&rpc_stop_cond);
+  pthread_mutex_unlock(&rpc_stop_lock);
 #endif
+
 
   return Teardown();
 }
