@@ -409,20 +409,11 @@ namespace helpers {
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
   uint32 entries = 0, actual = 0;
-  auto table_type = static_cast<tdi_table_type_e>(table->tableInfoGet()->tableTypeGet());
 
-  if (IsPreallocatedTable(*table)) {
-    size_t table_size;
-    RETURN_IF_TDI_ERROR(
-        table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
-    entries = table_size;
-  } else {
-    size_t table_size;
-    RETURN_IF_TDI_ERROR(table->sizeGet(
-        *tdi_session, tdi_dev_target,
-        flags, &table_size));
-    entries = table_size;
-  }
+  size_t table_size = 0;
+  RETURN_IF_TDI_ERROR(
+    table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
+  entries = table_size;
 
   table_keys->resize(0);
   table_values->resize(0);
@@ -434,7 +425,7 @@ namespace helpers {
     std::unique_ptr<::tdi::TableData> table_data;
     RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
     RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
-    tdi_status = table->entryGetFirst(
+    auto tdi_status = table->entryGetFirst(
         *tdi_session, *dev_tgt,
         flags, table_key.get(),
         table_data.get());
@@ -462,7 +453,7 @@ namespace helpers {
       RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
-    actual = 0;
+    uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(
         *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
         &pairs, &actual));
@@ -472,18 +463,15 @@ namespace helpers {
     std::advance(keys_end,actual);
     std::advance(data_end,actual);
     table_keys->insert(table_keys->end(),
-                         std::make_move_iterator(keys.begin()),
-                         std::make_move_iterator(keys_end));
+      std::make_move_iterator(keys.begin()),
+      std::make_move_iterator(keys_end));
     table_values->insert(table_values->end(),
-                         std::make_move_iterator(data.begin()),
-                         std::make_move_iterator(data_end));
-
+      std::make_move_iterator(data.begin()),
+      std::make_move_iterator(data_end));
   }
 
   CHECK(table_keys->size() == table_values->size());
-
   return ::util::OkStatus();
-
 }
 
 // TDI does not provide a target-neutral way for us to determine whether a
