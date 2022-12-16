@@ -36,7 +36,7 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_port_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/utils.h"

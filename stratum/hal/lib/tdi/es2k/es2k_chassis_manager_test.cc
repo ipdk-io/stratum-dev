@@ -4,7 +4,7 @@
 
 // adapted from bf_chassis_manager_test.cc
 
-#include "stratum/hal/lib/tdi/es2000/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 
 #include <string>
 #include <utility>

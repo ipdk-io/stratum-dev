@@ -6,7 +6,7 @@
 // adapted from ipdk/ipdk_hal_test.cc, which was
 // adapted from common/hal_test.cc
 
-#include "stratum/hal/lib/tdi/es2000/es2k_hal.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"

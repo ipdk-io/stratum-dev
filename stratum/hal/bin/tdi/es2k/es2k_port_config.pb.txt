@@ -1,7 +1,7 @@
-description: "Default Chassis Config for MEV Backend"
+description: "Default Chassis Config for ES2000 Backend"
 chassis {
   platform: PLT_P4_IPU_ES2000
-  name: "MEV"
+  name: "ES2000"
 }
 nodes {
   id: 1

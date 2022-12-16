@@ -2,9 +2,9 @@
 # Copyright 2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-# This Starlark rule imports the ES2000 SDE shared libraries and headers.
+# This Starlark rule imports the ES2K SDE shared libraries and headers.
 # The SDE_INSTALL or SDE_INSTALL_TAR environment variable needs to be set;
-# otherwise, the Stratum rules for ES2000 platforms cannot be built.
+# otherwise, the Stratum rules for ES2K platforms cannot be built.
 
 def _impl(repository_ctx):
     if ("SDE_INSTALL" not in repository_ctx.os.environ and
@@ -12,7 +12,7 @@ def _impl(repository_ctx):
         print("SDE_INSTALL_TAR is not defined")
         repository_ctx.file("BUILD", "")
         return
-    local_install_path = "es2000-bin"
+    local_install_path = "es2k-bin"
     if "SDE_INSTALL_TAR" in repository_ctx.os.environ:
         sde_install_tar_path = repository_ctx.os.environ["SDE_INSTALL_TAR"]
         repository_ctx.extract(sde_install_tar_path, local_install_path)
@@ -28,7 +28,7 @@ def _impl(repository_ctx):
     )
     print("Detected SDE version: " + ver + ".")
 
-es2000_configure = repository_rule(
+es2k_configure = repository_rule(
     implementation = _impl,
     local = True,
     environ = ["SDE_INSTALL", "SDE_INSTALL_TAR"],

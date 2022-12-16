@@ -5,8 +5,8 @@
 
 // The Hardware Abstraction Layer (HAL) of the stratum stack.
 
-#ifndef STRATUM_HAL_LIB_TDI_ES2000_ES2K_HAL_H_
-#define STRATUM_HAL_LIB_TDI_ES2000_ES2K_HAL_H_
+#ifndef STRATUM_HAL_LIB_TDI_ES2K_HAL_H_
+#define STRATUM_HAL_LIB_TDI_ES2K_HAL_H_
 
 #include <pthread.h>
 #include <signal.h>
@@ -157,4 +157,4 @@ class Es2kHal final {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_ES2000_ES2K_HAL_H_
+#endif  // STRATUM_HAL_LIB_TDI_ES2K_HAL_H_

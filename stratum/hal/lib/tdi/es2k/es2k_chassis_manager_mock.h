@@ -3,14 +3,14 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_TDI_ES2000_ES2K_CHASSIS_MANAGER_MOCK_H_
-#define STRATUM_HAL_LIB_TDI_ES2000_ES2K_CHASSIS_MANAGER_MOCK_H_
+#ifndef STRATUM_HAL_LIB_TDI_ES2K_CHASSIS_MANAGER_MOCK_H_
+#define STRATUM_HAL_LIB_TDI_ES2K_CHASSIS_MANAGER_MOCK_H_
 
 #include <map>
 #include <memory>
 
 #include "gmock/gmock.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 
 namespace stratum {
 namespace hal {
@@ -47,4 +47,4 @@ class Es2kChassisManagerMock : public Es2kChassisManager {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_ES2000_ES2K_CHASSIS_MANAGER_MOCK_H_
+#endif  // STRATUM_HAL_LIB_TDI_ES2K_CHASSIS_MANAGER_MOCK_H_

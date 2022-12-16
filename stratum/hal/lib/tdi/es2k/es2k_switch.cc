@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/lib/tdi/es2000/es2k_switch.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 
 #include <algorithm>
 #include <map>
@@ -14,7 +14,7 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"
