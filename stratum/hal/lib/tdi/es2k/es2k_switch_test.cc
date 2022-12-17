@@ -6,7 +6,7 @@
 // adapted from ipdk_switch_test, which was
 // adapted from bcm_switch_test
 
-#include "stratum/hal/lib/tdi/es2000/es2k_switch.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 
 #include <utility>
 

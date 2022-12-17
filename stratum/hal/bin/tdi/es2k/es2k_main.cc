@@ -3,7 +3,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/es2000/es2k_main.h"
+#include "stratum/hal/bin/tdi/es2k/es2k_main.h"
 
 #include <map>
 #include <memory>
@@ -16,9 +16,9 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_chassis_manager.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_hal.h"
-#include "stratum/hal/lib/tdi/es2000/es2k_switch.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
@@ -29,12 +29,12 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
-#define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/es2000/"
+#define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/es2k/"
 #define DEFAULT_LOG_DIR "/var/log/stratum/"
 
 DEFINE_string(es2k_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
-DEFINE_string(es2k_infrap4d_cfg, DEFAULT_CONFIG_PREFIX "es2000_skip_p4.conf",
+DEFINE_string(es2k_infrap4d_cfg, DEFAULT_CONFIG_PREFIX "es2k_skip_p4.conf",
               "Path to the infrap4d json config file");
 DECLARE_string(chassis_config_file);
 

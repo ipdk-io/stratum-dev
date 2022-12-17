@@ -62,7 +62,7 @@ stratum_cc_library(
     srcs = [
         "es2k_sde_target.cc",
     ],
-    defines = ["ES2000_TARGET"],
+    defines = ["ES2K_TARGET"],
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -92,7 +92,7 @@ stratum_cc_library(
         "//stratum/glue:logging",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/tdi:tdi_node",
-        "//stratum/hal/lib/tdi/es2000:es2k_chassis_manager",
+        "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -204,7 +204,7 @@ stratum_cc_test(
         "//stratum/hal/lib/p4:p4_table_mapper_mock",
         "//stratum/hal/lib/tdi:tdi_node_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
-        "//stratum/hal/lib/tdi/es2000:es2k_chassis_manager_mock",
+        "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager_mock",
         "//stratum/lib/channel:channel_mock",
         "//stratum/lib/test_utils:matchers",
         "//stratum/lib:utils",

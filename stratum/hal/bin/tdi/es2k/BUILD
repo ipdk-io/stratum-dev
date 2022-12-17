@@ -25,25 +25,25 @@ stratum_es2k_common_deps = [
 ]
 
 stratum_cc_binary(
-    name = "stratum_es2000",
+    name = "stratum_es2k",
     srcs = [
         "es2k_main.cc",
         "es2k_main.h",
         "main.cc",
     ],
     arches = HOST_ARCHES,
-    defines = ["ES2000_TARGET"],
+    defines = ["ES2K_TARGET"],
     data = [
         # NOTE: Replace with dpdk conf files
         "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",
         "//stratum/hal/bin/barefoot:tofino_skip_p4_no_bsp.conf",
     ],
     deps = [
-        "//stratum/hal/lib/tdi/es2000:es2k_chassis_manager",
-        "//stratum/hal/lib/tdi/es2000:es2k_hal",
-        "//stratum/hal/lib/tdi/es2000:es2k_sde_target",
-        "//stratum/hal/lib/tdi/es2000:es2k_sde_utils",
-        "//stratum/hal/lib/tdi/es2000:es2k_switch",
+        "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
+        "//stratum/hal/lib/tdi/es2k:es2k_hal",
+        "//stratum/hal/lib/tdi/es2k:es2k_sde_target",
+        "//stratum/hal/lib/tdi/es2k:es2k_sde_utils",
+        "//stratum/hal/lib/tdi/es2k:es2k_switch",
         "//stratum/hal/lib/tdi:tdi_action_profile_manager",
         "//stratum/hal/lib/tdi:tdi_counter_manager",
         "//stratum/hal/lib/tdi:tdi_node",

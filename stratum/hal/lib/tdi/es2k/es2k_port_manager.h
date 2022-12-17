@@ -2,8 +2,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_TDI_ES2000_ES2K_PORT_MANAGER_H_
-#define STRATUM_HAL_LIB_TDI_ES2000_ES2K_PORT_MANAGER_H_
+#ifndef STRATUM_HAL_LIB_TDI_ES2K_PORT_MANAGER_H_
+#define STRATUM_HAL_LIB_TDI_ES2K_PORT_MANAGER_H_
 
 #include <map>
 #include <memory>
@@ -44,7 +44,7 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status EnablePort(int device, int port);
   ::util::Status DisablePort(int device, int port);
 
-  // ES2000 specific methods
+  // ES2K specific methods
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode);
   ::util::Status SetPortShapingRate(
@@ -92,7 +92,7 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   // Timeout for Write() operations on port status events.
   static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
 
-  // Default MTU for ports on ES2000.
+  // Default MTU for ports on ES2K.
   static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
 
   // RM Mutex to protect the port status writer.
@@ -108,4 +108,4 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_ES2000_ES2K_PORT_MANAGER_H_
+#endif  // STRATUM_HAL_LIB_TDI_ES2K_PORT_MANAGER_H_

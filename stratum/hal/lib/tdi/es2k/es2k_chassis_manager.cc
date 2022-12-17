@@ -2,7 +2,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/lib/tdi/es2000/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 
 #include <map>
 #include <memory>
