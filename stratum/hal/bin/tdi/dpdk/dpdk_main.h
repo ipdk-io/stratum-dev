@@ -5,12 +5,15 @@
 #define STRATUM_HAL_BIN_TDI_DPDK_DPDK_MAIN_H_
 
 #include "stratum/glue/status/status.h"
+#include "absl/synchronization/notification.h"
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
-::util::Status DpdkMain(int argc, char* argv[]);
+::util::Status DpdkMain(int argc, char* argv[],
+                        absl::Notification* ready_sync = nullptr,
+                        absl::Notification* done_sync = nullptr);
 
 }  // namespace tdi
 }  // namespace hal
