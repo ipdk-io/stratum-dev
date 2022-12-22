@@ -172,7 +172,7 @@ DpdkSwitch::~DpdkSwitch() {}
       case DataRequest::Request::kMacAddress:
       case DataRequest::Request::kLacpRouterMac:
       case DataRequest::Request::kPortCounters:
-      case DataRequest::Request::kSdnPortId: {
+      case DataRequest::Request::kTargetDpId: {
         auto port_data = chassis_manager_->GetPortData(req);
         if (!port_data.ok()) {
           status.Update(port_data.status());
