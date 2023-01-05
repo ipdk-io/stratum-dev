@@ -248,6 +248,9 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config);
 ::util::Status ConvertStringToLogSeverity(const std::string& severity_string,
                                           LoggingConfig* logging_config);
 
+// A helper method that constructs the IPsecNotification message
+std::string ConvertIPsecNotificationToString(const IPsecNotification& notif);
+
 }  // namespace hal
 }  // namespace stratum
 
