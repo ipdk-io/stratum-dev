@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_INTERFACE_H_
@@ -84,6 +84,9 @@ class TdiSdeInterface {
     // Sets an exact match key field.
     virtual ::util::Status SetExact(int id, const std::string& value) = 0;
 
+    // Sets an exact match key field.
+    virtual ::util::Status SetExact(std::string field_name, uint64 value) = 0;
+
     // Gets an exact match key field.
     virtual ::util::Status GetExact(int id, std::string* value) const = 0;
 
@@ -126,8 +129,17 @@ class TdiSdeInterface {
     // Sets a table data action parameter.
     virtual ::util::Status SetParam(int id, const std::string& value) = 0;
 
+    // Sets a table data action parameter.
+    virtual ::util::Status SetParam(std::string field_name, uint64 value) = 0;
+
+    // Sets a table data action parameter.
+    virtual ::util::Status SetParam(std::string field_name, const std::string& value) = 0;
+
     // Get a table data action parameter.
     virtual ::util::Status GetParam(int id, std::string* value) const = 0;
+
+    // Get a table data action parameter.
+    virtual ::util::Status GetParam(std::string name, uint64* value) const = 0;
 
     // Sets the $ACTION_MEMBER_ID field.
     virtual ::util::Status SetActionMemberId(uint64 action_member_id) = 0;
@@ -555,6 +567,15 @@ class TdiSdeInterface {
   // Gets the action profile ID of an action selector.
   virtual ::util::StatusOr<uint32> GetActionProfileTdiRtId(
       uint32 action_selector_id) const = 0;
+
+  // Gets the Tdi table id from the Table name.
+  virtual ::util::StatusOr<uint32> GetTableId(std::string &table_name) const = 0;
+
+  virtual ::util::Status InitNotificationTableWithCallback(int dev_id,
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    std::string &table_name,
+    void (*callback)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
+    void *cookie) const = 0;
 
  protected:
   // Default constructor. To be called by the Mock class instance only.

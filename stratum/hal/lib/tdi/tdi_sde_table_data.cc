@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Target-agnostic SDE wrapper Table Data methods.
@@ -72,6 +72,36 @@ using namespace stratum::hal::tdi::helpers;
   if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
     *value = ByteStringToP4RuntimeByteString(*value);
   }
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::SetParam(std::string field_name, uint64 value) {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->setValue(field_id, value));
+
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::SetParam(std::string field_name, const std::string& value) {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->setValue(field_id, value));
+
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::GetParam(std::string field_name, uint64* value) const {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->getValue(field_id, value));
+
   return ::util::OkStatus();
 }
 
