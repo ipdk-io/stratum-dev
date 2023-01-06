@@ -3,20 +3,12 @@
 
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 
-#include <algorithm>
-#include <set>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
-#include "gflags/gflags.h"
-#include "p4/config/v1/p4info.pb.h"
-#include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/utils.h"
-#include "stratum/hal/lib/p4/utils.h"
 #include "stratum/lib/utils.h"
 
 namespace stratum {

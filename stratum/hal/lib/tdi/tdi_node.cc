@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_node.h"
@@ -26,6 +26,7 @@ namespace hal {
 namespace tdi {
 
 TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
+                 TdiFixedFunctionManager* tdi_fixed_function_manager,
                  TdiActionProfileManager* tdi_action_profile_manager,
                  TdiPacketioManager* tdi_packetio_manager,
                  TdiPreManager* tdi_pre_manager,
@@ -37,6 +38,7 @@ TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
       tdi_config_(),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_table_manager_(ABSL_DIE_IF_NULL(tdi_table_manager)),
+      tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
       tdi_action_profile_manager_(
           ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
       tdi_packetio_manager_(tdi_packetio_manager),
@@ -51,6 +53,7 @@ TdiNode::TdiNode()
       tdi_config_(),
       tdi_sde_interface_(nullptr),
       tdi_table_manager_(nullptr),
+      tdi_fixed_function_manager_(nullptr),
       tdi_action_profile_manager_(nullptr),
       tdi_packetio_manager_(nullptr),
       tdi_pre_manager_(nullptr),
@@ -63,6 +66,7 @@ TdiNode::~TdiNode() = default;
 // Factory function for creating the instance of the class.
 std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     TdiTableManager* tdi_table_manager,
+    TdiFixedFunctionManager* tdi_fixed_function_manager,
     TdiActionProfileManager* tdi_action_profile_manager,
     TdiPacketioManager* tdi_packetio_manager,
     TdiPreManager* tdi_pre_manager,
@@ -70,8 +74,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     TdiSdeInterface* tdi_sde_interface, int device_id,
     bool initialized, uint64 node_id) {
   return absl::WrapUnique(new TdiNode(
-      tdi_table_manager, tdi_action_profile_manager, tdi_packetio_manager,
-      tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
+      tdi_table_manager, tdi_fixed_function_manager, tdi_action_profile_manager,
+      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
       initialized, node_id));
 }
 

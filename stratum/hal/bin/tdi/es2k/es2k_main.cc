@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/bin/tdi/es2k/es2k_main.h"
@@ -21,6 +21,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
+#include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
@@ -95,6 +96,9 @@ namespace tdi {
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
 
+  auto tdi_fixed_function_manager = 
+      TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);
+
   auto action_profile_manager =
       TdiActionProfileManager::CreateInstance(sde_wrapper, device_id);
 
@@ -108,9 +112,10 @@ namespace tdi {
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto es2k_node = TdiNode::CreateInstance(
-      table_manager.get(), action_profile_manager.get(),
-      packetio_manager.get(), pre_manager.get(),
-      counter_manager.get(), sde_wrapper, device_id);
+      table_manager.get(), tdi_fixed_function_manager.get(),
+      action_profile_manager.get(), packetio_manager.get(),
+      pre_manager.get(), counter_manager.get(),
+      sde_wrapper, device_id);
 
   std::map<int, TdiNode*> device_id_to_tdi_node = {
       {device_id, es2k_node.get()},

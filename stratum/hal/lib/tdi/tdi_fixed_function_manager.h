@@ -4,22 +4,12 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_FIXED_FUNCTION_MANAGER_H_
 #define STRATUM_HAL_LIB_TDI_TDI_FIXED_FUNCTION_MANAGER_H_
 
-#include <memory>
-#include <vector>
-
-#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
-#include "p4/v1/p4runtime.grpc.pb.h"
-#include "p4/v1/p4runtime.pb.h"
-#include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/common/writer_interface.h"
-#include "stratum/hal/lib/p4/p4_info_manager.h"
-#include "stratum/lib/timer_daemon.h"
 
 namespace stratum {
 namespace hal {
