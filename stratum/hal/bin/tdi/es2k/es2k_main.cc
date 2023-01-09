@@ -29,9 +29,11 @@
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
+#include "stratum/lib/security/credentials_manager.h"
 
 #define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/es2k/"
 #define DEFAULT_LOG_DIR "/var/log/stratum/"
+#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
 
 DEFINE_string(es2k_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
@@ -65,6 +67,11 @@ namespace tdi {
    * as process, InitGoogle call is removed and ParseCommandLineFlags is called
    * separately
    */
+
+  // Default certificate file location for TLS-mode
+  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
+  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
+  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
 
   // Parse command line flags
   gflags::ParseCommandLineFlags(&argc, &argv, true);
