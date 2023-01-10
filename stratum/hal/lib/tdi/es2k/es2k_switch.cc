@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
@@ -26,8 +26,10 @@ namespace tdi {
 
 Es2kSwitch::Es2kSwitch(
     Es2kChassisManager* chassis_manager,
+    IPsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
+      ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager_)),
       device_id_to_tdi_node_(device_id_to_tdi_node),
       node_id_to_tdi_node_() {
   for (const auto& entry : device_id_to_tdi_node_) {
@@ -252,9 +254,10 @@ Es2kSwitch::~Es2kSwitch() {}
 
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
     Es2kChassisManager* chassis_manager,
+    IPsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
-      new Es2kSwitch(chassis_manager, device_id_to_tdi_node));
+      new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_tdi_node));
 }
 
 ::util::StatusOr<TdiNode*> Es2kSwitch::GetTdiNodeFromDeviceId(

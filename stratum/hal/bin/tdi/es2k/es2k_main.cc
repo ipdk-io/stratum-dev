@@ -22,6 +22,7 @@
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
+#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
@@ -31,9 +32,9 @@
 #include "stratum/lib/security/auth_policy_checker.h"
 #include "stratum/lib/security/credentials_manager.h"
 
-#define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/es2k/"
-#define DEFAULT_LOG_DIR "/var/log/stratum/"
-#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
+#define DEFAULT_CERTS_DIR       "/usr/share/stratum/certs/"
+#define DEFAULT_CONFIG_PREFIX   "/usr/share/stratum/es2k/"
+#define DEFAULT_LOG_DIR         "/var/log/stratum/"
 
 DEFINE_string(es2k_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
@@ -131,8 +132,11 @@ namespace tdi {
   auto chassis_manager =
       Es2kChassisManager::CreateInstance(mode, sde_wrapper, es2k_port_manager);
 
+  auto ipsec_manager = 
+      IPsecManager::CreateInstance(sde_wrapper, tdi_fixed_function_manager.get());
+
   auto es2k_switch = Es2kSwitch::CreateInstance(
-      chassis_manager.get(), device_id_to_tdi_node);
+      chassis_manager.get(), ipsec_manager.get(), device_id_to_tdi_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 
