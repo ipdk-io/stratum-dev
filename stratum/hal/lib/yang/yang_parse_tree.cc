@@ -33,6 +33,7 @@ void TreeNode::CopySubtree(const TreeNode& src) {
   on_update_handler_ = src.on_update_handler_;
   on_replace_handler_ = src.on_replace_handler_;
   on_delete_handler_ = src.on_delete_handler_;
+  on_delete_with_val_handler_ = src.on_delete_with_val_handler_;
   // Set the parent.
   parent_ = src.parent_;
   // Copy the supported_* flags.
@@ -176,6 +177,8 @@ void YangParseTree::ProcessPushedConfig(
   AddSubtreeChassis(change.new_config_.chassis());
   // Add all system-related gNMI paths.
   AddSubtreeSystem();
+  // Add all IPsec-related gNMI paths.
+  AddSubtreeIPsec();
   // Add all node-related gNMI paths.
   for (const auto& node : change.new_config_.nodes()) {
     AddSubtreeNode(node);
@@ -224,6 +227,11 @@ YangParseTree::YangParseTree(SwitchInterface* switch_interface)
   AddSubtreeAllInterfaces();
   AddSubtreeAllComponents();
   AddRoot();
+}
+
+::util::Status YangParseTree::SetupIPsecManager(IPsecManager* ipsec_mgr) {
+  ipsec_manager_ = ipsec_mgr;
+  return ::util::OkStatus();
 }
 
 TreeNode* YangParseTree::AddNode(const ::gnmi::Path& path) {
@@ -321,6 +329,10 @@ void YangParseTree::AddSubtreeChassis(const Chassis& chassis) {
 
 void YangParseTree::AddSubtreeSystem() {
   YangParseTreePaths::AddSubtreeSystem(this);
+}
+
+void YangParseTree::AddSubtreeIPsec() {
+  YangParseTreePaths::AddSubtreeIPsec(this);
 }
 
 void YangParseTree::AddSubtreeAllInterfaces() {

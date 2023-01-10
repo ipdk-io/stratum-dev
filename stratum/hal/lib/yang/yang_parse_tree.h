@@ -18,10 +18,13 @@
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 #include "stratum/lib/macros.h"
 
 namespace stratum {
 namespace hal {
+
+using namespace stratum::hal::tdi;  // this is needed to use IPsecManager
 
 class EventHandlerRecord;
 class GnmiEvent;
@@ -37,6 +40,9 @@ using TreeNodeSetHandler = std::function<::util::Status(
     CopyOnWriteChassisConfig* config)>;
 using TreeNodeDeleteHandler = std::function<::util::Status(
     const ::gnmi::Path& path, CopyOnWriteChassisConfig* config)>;
+using TreeNodeDeleteWithValHandler = std::function<::util::Status(
+    const ::gnmi::Path& path, const std::vector<std::string>& val,
+    CopyOnWriteChassisConfig* config)>;
 
 using EventHandlerRecordPtr = std::weak_ptr<EventHandlerRecord>;
 using TreeNodeEventRegistration =
@@ -104,6 +110,14 @@ class TreeNode {
   // a set-delete request is processed with a user-specified one.
   TreeNode* SetOnDeleteHandler(const TreeNodeDeleteHandler& handler) {
     on_delete_handler_ = handler;
+    supports_on_delete_ = true;
+    return this;
+  }
+
+  // Overrides the default-not-supported handler procedure called when
+  // a set-delete request is processed with a user-specified one.
+  TreeNode* SetOnDeleteWithValHandler(const TreeNodeDeleteWithValHandler& handler) {
+    on_delete_with_val_handler_ = handler;
     supports_on_delete_ = true;
     return this;
   }
@@ -226,6 +240,14 @@ class TreeNode {
   GnmiDeleteHandler GetOnDeleteHandler() const {
     return [this](const ::gnmi::Path& path, CopyOnWriteChassisConfig* config) {
       return on_delete_handler_(path, config);
+    };
+  }
+
+  // Returns a functor that will execute handlers of this node.
+  GnmiDeleteWithValHandler GetOnDeleteWithValHandler() const {
+    return [this](const ::gnmi::Path& path, const std::vector<std::string>& val,
+                  CopyOnWriteChassisConfig* config) {
+      return on_delete_with_val_handler_(path, val, config);
     };
   }
 
@@ -352,6 +374,13 @@ class TreeNode {
     return MAKE_ERROR() << "unsupported mode: DELETE for: '"
                         << path.ShortDebugString() << "'";
   };
+  // Special delete handler (developed for IPsec feature) with a protobuf::Message argument
+  TreeNodeDeleteWithValHandler on_delete_with_val_handler_ =
+      [](const ::gnmi::Path& path, const std::vector<std::string>&,
+         CopyOnWriteChassisConfig*) -> ::util::Status {
+    return MAKE_ERROR() << "unsupported mode: DELETE(-with-val) for: '"
+                        << path.ShortDebugString() << "'";
+  };
   const TreeNode* parent_;
   std::string name_;
   // Some nodes are mapped to ::gnmi::PathElem 'name' key value. This variable
@@ -376,6 +405,8 @@ class YangParseTree {
   explicit YangParseTree(SwitchInterface* switch_interface)
       LOCKS_EXCLUDED(root_access_lock_);
   virtual ~YangParseTree() {}
+
+  ::util::Status SetupIPsecManager(IPsecManager* ipsec_mgr);
 
   // Registers a writer for sending gNMI events.
   virtual ::util::Status RegisterEventNotifyWriter(
@@ -431,6 +462,9 @@ class YangParseTree {
   // Add supported leaf handles for the system.
   void AddSubtreeSystem() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
+  // Add supported leaf handles for IPsec.
+  void AddSubtreeIPsec() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+
   // Configure the root element.
   void AddRoot() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
@@ -446,6 +480,11 @@ class YangParseTree {
     absl::WriterMutexLock r(&root_access_lock_);
 
     return switch_interface_;
+  }
+
+  IPsecManager* GetIPsecManager() LOCKS_EXCLUDED(root_access_lock_) {
+    absl::WriterMutexLock r(&root_access_lock_);
+    return ipsec_manager_;
   }
 
   // A getter providing a functor setting TARGET_DEFINED mode of a leaf to be
@@ -489,6 +528,8 @@ class YangParseTree {
       EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   SwitchInterface* switch_interface_ GUARDED_BY(root_access_lock_);
+
+  IPsecManager* ipsec_manager_ GUARDED_BY(root_access_lock_);
 
   // A channel between YangParseTree object and GnmiPublisher objest.
   // It is used to send notifications that a leaf has changed.
