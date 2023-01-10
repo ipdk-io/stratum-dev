@@ -34,6 +34,13 @@ GnmiPublisher::~GnmiPublisher() {}
     CopyOnWriteChassisConfig* config) {
   absl::WriterMutexLock l(&access_lock_);
 
+  // Check for IPsec use-case
+  std::vector<std::string> keys;
+  if (IsPathSupportedIPsec(path, keys)) {
+      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
+      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+  }
+
   // Map the input path to the supported one - walk the tree of known elements
   // element by element starting from the root and if the element is found the
   // move to the next one. If not found, return an error.
@@ -53,6 +60,13 @@ GnmiPublisher::~GnmiPublisher() {}
     CopyOnWriteChassisConfig* config) {
   absl::WriterMutexLock l(&access_lock_);
 
+  // Check for IPsec use-case
+  std::vector<std::string> keys;
+  if (IsPathSupportedIPsec(path, keys)) {
+      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
+      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+  }
+
   // Map the input path to the supported one - walk the tree of known elements
   // element by element starting from the root and if the element is found the
   // move to the next one. If not found, return an error.
@@ -71,6 +85,15 @@ GnmiPublisher::~GnmiPublisher() {}
                                            CopyOnWriteChassisConfig* config) {
   absl::WriterMutexLock l(&access_lock_);
 
+  // Check for IPsec use-case
+  bool ipsec_path = false;
+  std::vector<std::string> keys;
+  if (IsPathSupportedIPsec(path, keys)) {
+      ipsec_path = true;
+      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
+      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+  }
+
   // Map the input path to the supported one - walk the tree of known elements
   // element by element starting from the root and if the element is found the
   // move to the next one. If not found, return an error.
@@ -81,8 +104,13 @@ GnmiPublisher::~GnmiPublisher() {}
            << "The path (" << path.ShortDebugString() << ") is unsupported!";
   }
 
-  // Call the handler and return the status of this call.
-  return node->GetOnDeleteHandler()(path, config);
+  if (ipsec_path) {
+    // Call the DeleteWithVal handler
+    return node->GetOnDeleteWithValHandler()(path, keys, config);
+  } else {
+    // Call the handler and return the status of this call.
+    return node->GetOnDeleteHandler()(path, config);
+  }
 }
 
 ::util::Status GnmiPublisher::HandleChange(const GnmiEvent& event) {
@@ -312,6 +340,39 @@ void* GnmiPublisher::ThreadReadGnmiEvents(void* arg) {
   }
 
   return status;
+}
+
+bool GnmiPublisher::IsPathSupportedIPsec(const ::gnmi::Path& path, std::vector<std::string>& keys) const {
+  std::vector<std::string> supported_path;
+  supported_path.push_back("ipsec-offload");
+  supported_path.push_back("sad");
+  supported_path.push_back("sad-entry");
+  supported_path.push_back("config");
+
+  int element = 0;
+  std::vector<std::string>::iterator iter;
+  for (iter=supported_path.begin(); iter!=supported_path.end(); ++iter) {
+    if (path.elem(element).name() != *iter) {
+      return false;
+    }
+
+    // This block extracts the key from the path
+    if (element == 2) { // sad-entry
+      // get the keys
+      auto* search1 =gtl::FindOrNull(path.elem(element).key(), "offload-id");
+      auto* search2 =gtl::FindOrNull(path.elem(element).key(), "direction"); 
+      auto* search3 = gtl::FindOrNull(path.elem(element).key(), "name");
+      if(search1 != nullptr && search2 != nullptr) {
+        keys.push_back(*search1);
+        keys.push_back(*search2);
+      } else if (search3 != nullptr) {
+        keys.push_back(*search3);
+      }
+    }
+
+    ++element;
+  }
+  return true;
 }
 
 }  // namespace hal
