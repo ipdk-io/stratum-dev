@@ -227,7 +227,7 @@ DpdkHal::~DpdkHal() {
     } else {
       log_output_str = "[secure mode] ";
       auto credentials_manager = stratum::CredentialsManager::CreateInstance(true);
-      if(!credentials_manager.ok()) {
+      if (!credentials_manager.ok()) {
         LOG(ERROR) << "Credentials Manager initialization failed. Unable to open ports for gRPC";
       } else {
         auto resp = credentials_manager.ConsumeValueOrDie();
