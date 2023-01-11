@@ -36,7 +36,7 @@ using namespace stratum::hal::tdi::helpers;
 
   const ::tdi::Table* table;
   const ::tdi::Device *device = nullptr;
-  const ::tdi::DataFieldInfo *dataFieldInfo;
+  const ::tdi::ActionInfo *actionInfo;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
@@ -48,27 +48,27 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::TableData> table_data;
   RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
   tdi_id_t action_id;
-  dataFieldInfo = table->tableInfoGet()->dataFieldGet("$normal");
-  RETURN_IF_NULL(dataFieldInfo);
-  action_id = dataFieldInfo->idGet();
+  actionInfo = table->tableInfoGet()->actionGet("normal");
+  RETURN_IF_NULL(actionInfo);
+  action_id = actionInfo->idGet();
   RETURN_IF_TDI_ERROR(table->dataAllocate(action_id, &table_data));
 
   // Key: $sid
-  RETURN_IF_ERROR(SetFieldExact(table_key.get(), "$sid", session_id));
+  RETURN_IF_ERROR(SetFieldExact(table_key.get(), "sid", session_id));
   // Data: $direction
-  RETURN_IF_ERROR(SetField(table_data.get(), "$direction", "BOTH"));
+  RETURN_IF_ERROR(SetField(table_data.get(), "direction", "BOTH"));
   // Data: $session_enable
-  RETURN_IF_ERROR(SetFieldBool(table_data.get(), "$session_enable", true));
+  RETURN_IF_ERROR(SetFieldBool(table_data.get(), "session_enable", true));
   // Data: $ucast_egress_port
   RETURN_IF_ERROR(
-      SetField(table_data.get(), "$ucast_egress_port", egress_port));
+      SetField(table_data.get(), "ucast_egress_port", egress_port));
   // Data: $ucast_egress_port_valid
   RETURN_IF_ERROR(
-      SetFieldBool(table_data.get(), "$ucast_egress_port_valid", true));
+      SetFieldBool(table_data.get(), "ucast_egress_port_valid", true));
   // Data: $ingress_cos
-  RETURN_IF_ERROR(SetField(table_data.get(), "$ingress_cos", cos));
+  RETURN_IF_ERROR(SetField(table_data.get(), "ingress_cos", cos));
   // Data: $max_pkt_len
-  RETURN_IF_ERROR(SetField(table_data.get(), "$max_pkt_len", max_pkt_len));
+  RETURN_IF_ERROR(SetField(table_data.get(), "max_pkt_len", max_pkt_len));
 
   if (insert) {
     RETURN_IF_TDI_ERROR(table->entryAdd(
@@ -106,7 +106,7 @@ using namespace stratum::hal::tdi::helpers;
     uint32 session_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  const ::tdi::DataFieldInfo *dataFieldInfo;
+  const ::tdi::ActionInfo *actionInfo;
   CHECK_RETURN_IF_FALSE(real_session);
 
   const ::tdi::Table* table;
@@ -116,12 +116,12 @@ using namespace stratum::hal::tdi::helpers;
   std::unique_ptr<::tdi::TableData> table_data;
   RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
   tdi_id_t action_id;
-  dataFieldInfo = table->tableInfoGet()->dataFieldGet("$normal");
-  RETURN_IF_NULL(dataFieldInfo);
-  action_id = dataFieldInfo->idGet();
+  actionInfo = table->tableInfoGet()->actionGet("normal");
+  RETURN_IF_NULL(actionInfo);
+  action_id = actionInfo->idGet();
   RETURN_IF_TDI_ERROR(table->dataAllocate(action_id, &table_data));
   // Key: $sid
-  RETURN_IF_ERROR(SetFieldExact(table_key.get(), "$sid", session_id));
+  RETURN_IF_ERROR(SetFieldExact(table_key.get(), "sid", session_id));
 
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -146,7 +146,7 @@ using namespace stratum::hal::tdi::helpers;
   CHECK_RETURN_IF_FALSE(max_pkt_lens);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  const ::tdi::DataFieldInfo *dataFieldInfo;
+  const ::tdi::ActionInfo *actionInfo;
   CHECK_RETURN_IF_FALSE(real_session);
 
   const ::tdi::Device *device = nullptr;
@@ -159,9 +159,9 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(
       tdi_info_->tableFromNameGet(kMirrorConfigTable, &table));
   tdi_id_t action_id;
-  dataFieldInfo = table->tableInfoGet()->dataFieldGet("$normal");
-  RETURN_IF_NULL(dataFieldInfo);
-  action_id = dataFieldInfo->idGet();
+  actionInfo = table->tableInfoGet()->actionGet("normal");
+  RETURN_IF_NULL(actionInfo);
+  action_id = actionInfo->idGet();
   std::vector<std::unique_ptr<::tdi::TableKey>> keys;
   std::vector<std::unique_ptr<::tdi::TableData>> datums;
   // Is this a wildcard read?
@@ -171,7 +171,7 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[0]));
     RETURN_IF_TDI_ERROR(table->dataAllocate(action_id, &datums[0]));
     // Key: $sid
-    RETURN_IF_ERROR(SetFieldExact(keys[0].get(), "$sid", session_id));
+    RETURN_IF_ERROR(SetFieldExact(keys[0].get(), "sid", session_id));
     RETURN_IF_TDI_ERROR(table->entryGet(
         *real_session->tdi_session_, *dev_tgt, flags, *keys[0],
         datums[0].get()));
@@ -189,28 +189,28 @@ using namespace stratum::hal::tdi::helpers;
     const std::unique_ptr<::tdi::TableKey>& table_key = keys[i];
     // Key: $sid
     uint32_t session_id = 0;
-    RETURN_IF_ERROR(GetFieldExact(*table_key, "$sid", &session_id));
+    RETURN_IF_ERROR(GetFieldExact(*table_key, "sid", &session_id));
     session_ids->push_back(session_id);
     // Data: $ingress_cos
     uint64 ingress_cos;
-    RETURN_IF_ERROR(GetField(*table_data, "$ingress_cos", &ingress_cos));
+    RETURN_IF_ERROR(GetField(*table_data, "ingress_cos", &ingress_cos));
     coss->push_back(ingress_cos);
     // Data: $max_pkt_len
     uint64 pkt_len;
-    RETURN_IF_ERROR(GetField(*table_data, "$max_pkt_len", &pkt_len));
+    RETURN_IF_ERROR(GetField(*table_data, "max_pkt_len", &pkt_len));
     max_pkt_lens->push_back(pkt_len);
     // Data: $ucast_egress_port
     uint64 port;
-    RETURN_IF_ERROR(GetField(*table_data, "$ucast_egress_port", &port));
+    RETURN_IF_ERROR(GetField(*table_data, "ucast_egress_port", &port));
     egress_ports->push_back(port);
     // Data: $session_enable
     bool session_enable;
-    RETURN_IF_ERROR(GetFieldBool(*table_data, "$session_enable", &session_enable));
+    RETURN_IF_ERROR(GetFieldBool(*table_data, "session_enable", &session_enable));
     CHECK_RETURN_IF_FALSE(session_enable)
         << "Found a session that is not enabled.";
     // Data: $ucast_egress_port_valid
     bool ucast_egress_port_valid;
-    RETURN_IF_ERROR(GetFieldBool(*table_data, "$ucast_egress_port_valid",
+    RETURN_IF_ERROR(GetFieldBool(*table_data, "ucast_egress_port_valid",
                              &ucast_egress_port_valid));
     CHECK_RETURN_IF_FALSE(ucast_egress_port_valid)
         << "Found a unicast egress port that is not set valid.";
