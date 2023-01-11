@@ -60,10 +60,10 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
       FLAGS_server_cert_file.empty()) {
     if (secure_only) {
-      LOG(WARNING) << "No crt/key files provided, cannot initiate gRPC server credentials";
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC server credentials";
       server_credentials_ = nullptr;
     } else {
-      LOG(WARNING) << "No key files provided, using insecure server credentials!";
+      LOG(WARNING) << "No certificate/key files provided, using insecure server credentials!";
       server_credentials_ = ::grpc::InsecureServerCredentials();
     }
   } else {
@@ -84,7 +84,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       tls_opts->watch_identity_key_cert_pairs();
       server_credentials_ = TlsServerCredentials(*tls_opts);
     } else {
-      LOG(WARNING) << "Key files provided, but cannot open. Unable to initiate server_credentials.";
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate server_credentials.";
       server_credentials_ = nullptr;
     }
   }
@@ -93,7 +93,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
       FLAGS_client_cert_file.empty()) {
     if (secure_only) {
-      LOG(WARNING) << "No crt/key files provided, cannot initiate gRPC server credentials";
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC client credentials";
     } else {
       client_credentials_ = ::grpc::InsecureChannelCredentials();
       LOG(WARNING) << "No key files provided, using insecure client credentials!";
@@ -118,7 +118,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       }
       client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
     } else {
-      LOG(WARNING) << "Key files provided, but cannot open. Unable to initiate client_credentials.";
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate client_credentials.";
       client_credentials_ = nullptr;
     }
   }

@@ -71,6 +71,8 @@ namespace tdi {
   FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
   FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
   FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
+  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
+  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
 
   // Parse command line flags
   gflags::ParseCommandLineFlags(&argc, &argv, true);

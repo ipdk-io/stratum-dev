@@ -18,6 +18,8 @@
 DECLARE_string(ca_cert_file);
 DECLARE_string(server_key_file);
 DECLARE_string(server_cert_file);
+DECLARE_string(client_key_file);
+DECLARE_string(client_cert_file);
 
 namespace stratum {
 

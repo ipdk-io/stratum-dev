@@ -52,8 +52,8 @@ DEFINE_uint32(grpc_max_recv_msg_size, 256 * 1024 * 1024,
               "grpc server max receive message size (0 = gRPC default).");
 DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
-DEFINE_bool(grpc_open_insecure_ports, false,
-              "grpc server open insecure ports for gNMI & P4RT (false = closed)");
+DEFINE_bool(grpc_open_insecure_mode, false,
+              "grpc open server ports in insecure mode for gNMI, gNOI & P4RT (false = closed)");
 
 DECLARE_string(forwarding_pipeline_configs_file);
 
@@ -214,7 +214,7 @@ DpdkHal::~DpdkHal() {
     ::grpc::ServerBuilder builder;
     SetGrpcServerKeepAliveArgs(&builder);
 
-    if (FLAGS_grpc_open_insecure_ports) {
+    if (FLAGS_grpc_open_insecure_mode) {
       // User has chosen to open insecure ports
       LOG(WARNING) << "Warning: Flag set to open gRPC insecure ports";
       log_output_str = "[insecure mode] ";
@@ -229,12 +229,17 @@ DpdkHal::~DpdkHal() {
       auto credentials_manager = stratum::CredentialsManager::CreateInstance(true);
       if (!credentials_manager.ok()) {
         LOG(ERROR) << "Credentials Manager initialization failed. Unable to open ports for gRPC";
+        // assert(credentials_manager.ok()); // Without gRPC, InfraP4D cannot do much. Exit process
+        // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+        exit(1);        
       } else {
         auto resp = credentials_manager.ConsumeValueOrDie();
         auto server_credentials = resp.get()->GenerateExternalFacingServerCredentials();
         if (server_credentials == nullptr) {
-          return MAKE_ERROR(ERR_INTERNAL)
-             << "Unable to initiate server credentials. This is an internal error.";
+          LOG(ERROR) << "Unable to initiate server credentials. This is an internal error.";
+          // assert(server_credentials); // Without gRPC, InfraP4D cannot do much. Exit process
+          // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+          exit(1);        
         } else {
 
           builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
