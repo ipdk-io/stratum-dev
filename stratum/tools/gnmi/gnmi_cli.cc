@@ -1,5 +1,4 @@
 // Copyright 2019-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <csignal>
@@ -251,7 +250,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   });
 
   ASSIGN_OR_RETURN(auto credentials_manager,
-                   CredentialsManager::CreateInstance());
+                   CredentialsManager::CreateInstance(true));
   auto channel = ::grpc::CreateChannel(
       FLAGS_grpc_addr,
       credentials_manager->GenerateExternalFacingClientCredentials());
@@ -328,4 +327,3 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
 int main(int argc, char** argv) {
   return stratum::tools::gnmi::Main(argc, argv).error_code();
 }
-
