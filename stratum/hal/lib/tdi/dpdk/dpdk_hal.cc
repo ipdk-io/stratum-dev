@@ -240,13 +240,12 @@ DpdkHal::~DpdkHal() {
           // assert(server_credentials); // Without gRPC, InfraP4D cannot do much. Exit process
           // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
           exit(1);        
-        } else {
+        }
 
-          builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
-          
-          for (const auto& url : external_stratum_urls) {
-            builder.AddListeningPort(url, server_credentials);
-          }
+        builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
+
+        for (const auto& url : external_stratum_urls) {
+          builder.AddListeningPort(url, server_credentials);
         }
 
       }

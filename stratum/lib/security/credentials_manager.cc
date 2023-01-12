@@ -67,7 +67,8 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       server_credentials_ = ::grpc::InsecureServerCredentials();
     }
   } else {
-    // Check if certificate files exist/accessible
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
     std::ifstream ifile1, ifile2, ifile3;
     ifile1.open(FLAGS_server_key_file);
     ifile2.open(FLAGS_server_cert_file);
@@ -99,7 +100,8 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       LOG(WARNING) << "No key files provided, using insecure client credentials!";
     }
   } else {
-    // Check if certificate files exist/accessible
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
     std::ifstream ifile4, ifile5, ifile6;
     ifile4.open(FLAGS_client_key_file);
     ifile5.open(FLAGS_client_cert_file);
