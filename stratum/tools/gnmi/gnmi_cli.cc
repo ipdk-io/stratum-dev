@@ -22,6 +22,8 @@
 #include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
 
+#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
+
 DEFINE_string(grpc_addr, stratum::kLocalStratumUrl, "gNMI server address");
 DEFINE_string(bool_val, "", "Boolean value to be set");
 DEFINE_string(int_val, "", "Integer value to be set (64-bit)");
@@ -218,6 +220,17 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
 }
 
 ::util::Status Main(int argc, char** argv) {
+
+  // Default certificate file location for TLS-mode
+  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
+  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
+  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
+  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
+  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
+
+  // Parse command line flags
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   ::gflags::SetUsageMessage(kUsage);
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();
