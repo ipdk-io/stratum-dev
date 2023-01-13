@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/lib/security/credentials_manager.h"
@@ -7,124 +8,156 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <fstream>
+#include <iostream>
 
 #include "absl/memory/memory.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "gflags/gflags.h"
-#include "grpcpp/security/server_credentials.h"
-#include "grpcpp/security/tls_credentials_options.h"
 #include "stratum/glue/logging.h"
-#include "stratum/glue/status/status.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
-DEFINE_string(ca_cert, "", "CA certificate path");
-DEFINE_string(server_key, "", "gRPC Server pricate key path");
-DEFINE_string(server_cert, "", "gRPC Server certificate path");
+DEFINE_string(ca_cert_file, "", "Path to CA certificate file");
+DEFINE_string(server_key_file, "", "Path to gRPC server private key file");
+DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
+DEFINE_string(client_key_file, "", "Path to gRPC client key file");
+DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
 
 namespace stratum {
 
-CredentialsManager::~CredentialsManager() {}
+using ::grpc::experimental::FileWatcherCertificateProvider;
+using ::grpc::experimental::TlsChannelCredentialsOptions;
+using ::grpc::experimental::TlsServerCredentials;
+using ::grpc::experimental::TlsServerCredentialsOptions;
+
+constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
+
 CredentialsManager::CredentialsManager() {}
+
+CredentialsManager::~CredentialsManager() {}
+
+::util::StatusOr<std::unique_ptr<CredentialsManager>>
+CredentialsManager::CreateInstance(bool secure_only /*=false*/) {
+  auto instance = absl::WrapUnique(new CredentialsManager());
+  RETURN_IF_ERROR(instance->Initialize(secure_only));
+  return std::move(instance);
+}
 
 std::shared_ptr<::grpc::ServerCredentials>
 CredentialsManager::GenerateExternalFacingServerCredentials() const {
   return server_credentials_;
 }
 
-::util::StatusOr<std::unique_ptr<CredentialsManager>>
-CredentialsManager::CreateInstance() {
-  auto instance_ = absl::WrapUnique(new CredentialsManager());
-  RETURN_IF_ERROR(instance_->Initialize());
-  return std::move(instance_);
+std::shared_ptr<::grpc::ChannelCredentials>
+CredentialsManager::GenerateExternalFacingClientCredentials() const {
+  return client_credentials_;
 }
 
-::util::Status CredentialsManager::Initialize() {
-  if (FLAGS_ca_cert.empty() && FLAGS_server_key.empty() &&
-      FLAGS_server_cert.empty()) {
-    LOG(WARNING) << "Using insecure server credentials";
-    server_credentials_ = ::grpc::InsecureServerCredentials();
-  } else {
-    // Load default credentials
-    ::util::Status status;
-    std::string pem_root_certs_;
-    std::string server_private_key_;
-    std::string server_cert_;
-    status.Update(ReadFileToString(FLAGS_ca_cert, &pem_root_certs_));
-    status.Update(ReadFileToString(FLAGS_server_key, &server_private_key_));
-    status.Update(ReadFileToString(FLAGS_server_cert, &server_cert_));
-    if (!status.ok()) {
-      RETURN_ERROR().without_logging()
-          << "Unable to load credentials: " << status.error_message();
+::util::Status CredentialsManager::Initialize(bool secure_only) {
+  // Server credentials.
+  if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
+      FLAGS_server_cert_file.empty()) {
+    if (secure_only) {
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC server credentials";
+      server_credentials_ = nullptr;
+    } else {
+      LOG(WARNING) << "No certificate/key files provided, using insecure server credentials!";
+      server_credentials_ = ::grpc::InsecureServerCredentials();
     }
-    credentials_reload_interface_ =
-        std::make_shared<CredentialsReloadInterface>(
-            pem_root_certs_, server_private_key_, server_cert_);
-    auto credential_reload_config = std::make_shared<TlsCredentialReloadConfig>(
-        credentials_reload_interface_);
-
-    tls_opts_ = std::make_shared<TlsCredentialsOptions>(
-        GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE, GRPC_TLS_SERVER_VERIFICATION,
-        nullptr, credential_reload_config, nullptr);
-    server_credentials_ = TlsServerCredentials(*tls_opts_);
+  } else {
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
+    std::ifstream ifile1, ifile2, ifile3;
+    ifile1.open(FLAGS_server_key_file);
+    ifile2.open(FLAGS_server_cert_file);
+    ifile3.open(FLAGS_ca_cert_file);
+    if(ifile1 && ifile2 && ifile3) {
+      auto certificate_provider =
+          std::make_shared<FileWatcherCertificateProvider>(
+              FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
+              kFileRefreshIntervalSeconds);
+      auto tls_opts =
+          std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
+      tls_opts->set_cert_request_type(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
+      tls_opts->watch_root_certs();
+      tls_opts->watch_identity_key_cert_pairs();
+      server_credentials_ = TlsServerCredentials(*tls_opts);
+    } else {
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate server_credentials.";
+      server_credentials_ = nullptr;
+    }
   }
+
+  // Client credentials.
+  if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
+      FLAGS_client_cert_file.empty()) {
+    if (secure_only) {
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC client credentials";
+    } else {
+      client_credentials_ = ::grpc::InsecureChannelCredentials();
+      LOG(WARNING) << "No key files provided, using insecure client credentials!";
+    }
+  } else {
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
+    std::ifstream ifile4, ifile5, ifile6;
+    ifile4.open(FLAGS_client_key_file);
+    ifile5.open(FLAGS_client_cert_file);
+    ifile6.open(FLAGS_ca_cert_file);
+    if(ifile4 && ifile5 && ifile6) {
+      auto certificate_provider =
+          std::make_shared<FileWatcherCertificateProvider>(
+              FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
+              kFileRefreshIntervalSeconds);
+      auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
+      tls_opts->set_certificate_provider(certificate_provider);
+      tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+      tls_opts->watch_root_certs();
+      if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
+        tls_opts->watch_identity_key_cert_pairs();
+      }
+      client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
+    } else {
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate client_credentials.";
+      client_credentials_ = nullptr;
+    }
+  }
+
   return ::util::OkStatus();
 }
 
-::util::Status CredentialsManager::LoadNewCredential(
-    const std::string root_certs, const std::string cert_chain,
-    const std::string private_key) {
-  return credentials_reload_interface_->LoadNewCredential(
-      root_certs, cert_chain, private_key);
+::util::Status CredentialsManager::LoadNewServerCredentials(
+    const std::string& root_certs, const std::string& cert_chain,
+    const std::string& private_key) {
+  ::util::Status status;
+  // TODO(Kevin): Validate the provided key material if possible
+  // TODO(max): According to the API of FileWatcherCertificateProvider, any key
+  // and certifcate update must happen atomically. The below code does not
+  // guarantee that.
+  status.Update(WriteStringToFile(root_certs, FLAGS_ca_cert_file));
+  status.Update(WriteStringToFile(cert_chain, FLAGS_server_cert_file));
+  status.Update(WriteStringToFile(private_key, FLAGS_server_key_file));
+  absl::SleepFor(absl::Seconds(kFileRefreshIntervalSeconds + 1));
+
+  return status;
 }
 
-CredentialsReloadInterface::CredentialsReloadInterface(
-    std::string pem_root_certs, std::string server_private_key,
-    std::string server_cert)
-    : reload_credential_(true),
-      pem_root_certs_(pem_root_certs),
-      server_private_key_(server_private_key),
-      server_cert_(server_cert) {}
+::util::Status CredentialsManager::LoadNewClientCredentials(
+    const std::string& root_certs, const std::string& cert_chain,
+    const std::string& private_key) {
+  ::util::Status status;
+  // TODO(Kevin): Validate the provided key material if possible
+  // TODO(max): According to the API of FileWatcherCertificateProvider, any key
+  // and certifcate update must happen atomically. The below code does not
+  // guarantee that.
+  status.Update(WriteStringToFile(root_certs, FLAGS_ca_cert_file));
+  status.Update(WriteStringToFile(cert_chain, FLAGS_client_cert_file));
+  status.Update(WriteStringToFile(private_key, FLAGS_client_key_file));
+  absl::SleepFor(absl::Seconds(kFileRefreshIntervalSeconds + 1));
 
-int CredentialsReloadInterface::Schedule(TlsCredentialReloadArg* arg) {
-  absl::WriterMutexLock l(&credential_lock_);
-  if (arg == nullptr) {
-    arg->set_status(GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_FAIL);
-    return 1;
-  }
-  if (!reload_credential_) {
-    arg->set_status(GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_UNCHANGED);
-    return 0;
-  }
-
-  TlsKeyMaterialsConfig::PemKeyCertPair pem_key_cert_pair_ = {
-      server_private_key_, server_cert_};
-
-  arg->set_pem_root_certs(pem_root_certs_);
-  arg->add_pem_key_cert_pair(pem_key_cert_pair_);
-  arg->set_status(GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_NEW);
-  reload_credential_ = false;
-  return 0;
-}
-
-void CredentialsReloadInterface::Cancel(TlsCredentialReloadArg* arg) {
-  if (arg == nullptr) return;
-  arg->set_status(GRPC_SSL_CERTIFICATE_CONFIG_RELOAD_FAIL);
-  arg->set_error_details("Cancelled.");
-}
-
-::util::Status CredentialsReloadInterface::LoadNewCredential(
-    const std::string root_certs, const std::string cert_chain,
-    const std::string private_key) {
-  absl::WriterMutexLock l(&credential_lock_);
-  // TODO(Yi): verify if key and cert are valid format
-  CHECK_RETURN_IF_FALSE(!root_certs.empty());
-  CHECK_RETURN_IF_FALSE(!cert_chain.empty());
-  CHECK_RETURN_IF_FALSE(!private_key.empty());
-  pem_root_certs_ = root_certs;
-  server_cert_ = cert_chain;
-  server_private_key_ = private_key;
-  reload_credential_ = true;
-  return ::util::OkStatus();
+  return status;
 }
 
 }  // namespace stratum

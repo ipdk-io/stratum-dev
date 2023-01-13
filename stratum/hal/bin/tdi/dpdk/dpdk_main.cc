@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/bin/tdi/dpdk/dpdk_main.h"
@@ -28,9 +28,11 @@
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
+#include "stratum/lib/security/credentials_manager.h"
 
 #define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/dpdk/"
 #define DEFAULT_LOG_DIR "/var/log/stratum/"
+#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
 
 DEFINE_string(dpdk_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
@@ -64,6 +66,13 @@ namespace tdi {
    * as process, InitGoogle call is removed and ParseCommandLineFlags is called
    * separately
    */
+
+  // Default certificate file location for TLS-mode
+  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
+  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
+  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
+  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
+  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
 
   // Parse command line flags
   gflags::ParseCommandLineFlags(&argc, &argv, true);
