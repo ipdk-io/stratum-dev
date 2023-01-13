@@ -113,8 +113,6 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
               kFileRefreshIntervalSeconds);
       auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
       tls_opts->set_certificate_provider(certificate_provider);
-      // TODO(5abeel): Disabling due to compiler error
-      //tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
       tls_opts->watch_root_certs();
       if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
         tls_opts->watch_identity_key_cert_pairs();
