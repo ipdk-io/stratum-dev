@@ -113,7 +113,15 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
               kFileRefreshIntervalSeconds);
       auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
       tls_opts->set_certificate_provider(certificate_provider);
-      tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+#if 0
+      // Commenting out set_server_verification_option() since this was removed from
+      // ::grpc::TlsChannelCredentialsOptions in v1.50.0. Including this file causes
+      // a compilation error, since this API does not exist anymore. 
+      // ::grpc::TlsChannelCredentialsOptions() now has set_verify_server_certs() instead
+      // and the default is true.
+
+      //tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+#endif
       tls_opts->watch_root_certs();
       if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
         tls_opts->watch_identity_key_cert_pairs();
