@@ -410,10 +410,16 @@ namespace helpers {
   device->createTarget(&dev_tgt);
   uint32 entries = 0, actual = 0;
 
-  size_t table_size = 0;
-  RETURN_IF_TDI_ERROR(
-    table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
-  entries = table_size;
+  if (IsPreallocatedTable(*table)) {
+    size_t table_size;
+    RETURN_IF_TDI_ERROR(
+        table->sizeGet(*tdi_session, tdi_dev_target, flags, &table_size));
+    entries = table_size;
+  } else {
+    LOG(ERROR)<< "calling usage GET";
+    RETURN_IF_TDI_ERROR(
+        table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
+  }
 
   table_keys->resize(0);
   table_values->resize(0);
