@@ -229,11 +229,6 @@ YangParseTree::YangParseTree(SwitchInterface* switch_interface)
   AddRoot();
 }
 
-::util::Status YangParseTree::SetupIPsecManager(IPsecManager* ipsec_mgr) {
-  ipsec_manager_ = ipsec_mgr;
-  return ::util::OkStatus();
-}
-
 TreeNode* YangParseTree::AddNode(const ::gnmi::Path& path) {
   // No need to lock the mutex - it is locked by the method calling this one.
   TreeNode* node = &root_;

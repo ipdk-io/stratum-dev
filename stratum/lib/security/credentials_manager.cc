@@ -60,14 +60,15 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
       FLAGS_server_cert_file.empty()) {
     if (secure_only) {
-      LOG(WARNING) << "No crt/key files provided, cannot initiate gRPC server credentials";
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC server credentials";
       server_credentials_ = nullptr;
     } else {
-      LOG(WARNING) << "No key files provided, using insecure server credentials!";
+      LOG(WARNING) << "No certificate/key files provided, using insecure server credentials!";
       server_credentials_ = ::grpc::InsecureServerCredentials();
     }
   } else {
-    // Check if certificate files exist/accessible
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
     std::ifstream ifile1, ifile2, ifile3;
     ifile1.open(FLAGS_server_key_file);
     ifile2.open(FLAGS_server_cert_file);
@@ -84,7 +85,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       tls_opts->watch_identity_key_cert_pairs();
       server_credentials_ = TlsServerCredentials(*tls_opts);
     } else {
-      LOG(WARNING) << "Key files provided, but cannot open. Unable to initiate server_credentials.";
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate server_credentials.";
       server_credentials_ = nullptr;
     }
   }
@@ -93,13 +94,14 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
       FLAGS_client_cert_file.empty()) {
     if (secure_only) {
-      LOG(WARNING) << "No crt/key files provided, cannot initiate gRPC server credentials";
+      LOG(WARNING) << "No certificate/key files provided, cannot initiate gRPC client credentials";
     } else {
       client_credentials_ = ::grpc::InsecureChannelCredentials();
       LOG(WARNING) << "No key files provided, using insecure client credentials!";
     }
   } else {
-    // Check if certificate files exist/accessible
+    // Verify that the certificate files exist and can be read
+    // If files are not present or not accesible, method will return with nullptr
     std::ifstream ifile4, ifile5, ifile6;
     ifile4.open(FLAGS_client_key_file);
     ifile5.open(FLAGS_client_cert_file);
@@ -111,14 +113,22 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
               kFileRefreshIntervalSeconds);
       auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
       tls_opts->set_certificate_provider(certificate_provider);
-      tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+#if 0
+      // Commenting out set_server_verification_option() since this was removed from
+      // ::grpc::TlsChannelCredentialsOptions in v1.50.0. Including this file causes
+      // a compilation error, since this API does not exist anymore. 
+      // ::grpc::TlsChannelCredentialsOptions() now has set_verify_server_certs() instead
+      // and the default is true.
+
+      //tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+#endif
       tls_opts->watch_root_certs();
       if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
         tls_opts->watch_identity_key_cert_pairs();
       }
       client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
     } else {
-      LOG(WARNING) << "Key files provided, but cannot open. Unable to initiate client_credentials.";
+      LOG(ERROR) << "Cannot access certificate/key files. Unable to initiate client_credentials.";
       client_credentials_ = nullptr;
     }
   }

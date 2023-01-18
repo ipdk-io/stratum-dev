@@ -90,6 +90,11 @@ class Es2kSwitch : public SwitchInterface {
   Es2kSwitch(Es2kSwitch&&) = delete;
   Es2kSwitch& operator=(Es2kSwitch&&) = delete;
 
+  IPsecManager* GetIPsecManager()
+    LOCKS_EXCLUDED(chassis_lock) {
+    return ipsec_manager_;
+  }
+
  private:
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.

@@ -18,13 +18,10 @@
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 #include "stratum/hal/lib/common/writer_interface.h"
-#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 #include "stratum/lib/macros.h"
 
 namespace stratum {
 namespace hal {
-
-using namespace stratum::hal::tdi;  // this is needed to use IPsecManager
 
 class EventHandlerRecord;
 class GnmiEvent;
@@ -406,8 +403,6 @@ class YangParseTree {
       LOCKS_EXCLUDED(root_access_lock_);
   virtual ~YangParseTree() {}
 
-  ::util::Status SetupIPsecManager(IPsecManager* ipsec_mgr);
-
   // Registers a writer for sending gNMI events.
   virtual ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) {
@@ -482,11 +477,6 @@ class YangParseTree {
     return switch_interface_;
   }
 
-  IPsecManager* GetIPsecManager() LOCKS_EXCLUDED(root_access_lock_) {
-    absl::WriterMutexLock r(&root_access_lock_);
-    return ipsec_manager_;
-  }
-
   // A getter providing a functor setting TARGET_DEFINED mode of a leaf to be
   // STREAM:SAMPLE.
   const TreeNode::TargetDefinedModeFunc& GetStreamSampleModeFunc() {
@@ -528,8 +518,6 @@ class YangParseTree {
       EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   SwitchInterface* switch_interface_ GUARDED_BY(root_access_lock_);
-
-  IPsecManager* ipsec_manager_ GUARDED_BY(root_access_lock_);
 
   // A channel between YangParseTree object and GnmiPublisher objest.
   // It is used to send notifications that a leaf has changed.

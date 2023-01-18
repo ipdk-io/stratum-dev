@@ -15,9 +15,14 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 
+// Declaring the flags in the header file, so that all other files that
+// "#include" the header file already get the flags declared. This is one of
+// the recommended methods of using gflags according to documentation
 DECLARE_string(ca_cert_file);
 DECLARE_string(server_key_file);
 DECLARE_string(server_cert_file);
+DECLARE_string(client_key_file);
+DECLARE_string(client_cert_file);
 
 namespace stratum {
 
@@ -48,7 +53,9 @@ class CredentialsManager {
                                                   const std::string& key);
 
   // Factory functions for creating the instance of the class.
-  // If TLS certificates are unavailable, the flag secure_only=false allows insecure_mode for gRPC port
+  // CreateInstance updated to have a flag parameter with a default to false
+  // which maintains backward compatibility. If caller uses secure_only=true
+  // the CredentialsManager will only attempt to initiate using TLS certificates
   static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance(bool secure_only=false);
 
   // CredentialsManager is neither copyable nor movable.

@@ -15,13 +15,15 @@
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/hal/lib/common/utils.h"
 
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
+
 namespace stratum {
 namespace hal {
 
 using namespace stratum::hal::yang::helpers;
 
 namespace {
-    
+
 ////////////////////////////////////////////////////////////////////////////////
 // /ipsec-offload/ipsec-spi/rx-spi
 void SetUpIPsecFetchSPI(TreeNode* node,
@@ -30,7 +32,13 @@ void SetUpIPsecFetchSPI(TreeNode* node,
                                 const ::gnmi::Path& path,
                                 GnmiSubscribeStream* stream) {
     uint32 fetched_spi=0;
-    auto status = tree->GetIPsecManager()->GetSpiData(fetched_spi);
+//    auto status = tree->GetIPsecManager()->GetSpiData(fetched_spi);
+    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
+    if (!es2ksw_ptr) {
+      LOG(ERROR) << "Error casting SwitchInterface to Es2KSwitch";
+    } else {
+      auto status = es2ksw_ptr->GetIPsecManager()->GetSpiData(fetched_spi);
+    }
     return SendResponse(GetResponse(path, fetched_spi), stream);
   };
   auto on_change_functor = UnsupportedFunc();
@@ -67,7 +75,12 @@ void SetUpIPsecSAConfig(TreeNode* node,
     // Instead of SetValue() to copy to another proto message,
     // and calling via switch_interface, this message is passed
     // directly with the 'msg' defined on stack (instead of heap).
-    tree->GetIPsecManager()->SetConfigSADEntry(&msg);
+//    tree->GetIPsecManager()->SetConfigSADEntry(&msg);
+    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
+    if (!es2ksw_ptr) {
+      return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
+    }
+    es2ksw_ptr->GetIPsecManager()->SetConfigSADEntry(&msg);
 
     // In gnmi_publisher.cc::HandleUpdate() we had stripped the key from the
     // incoming gnmi::Path message (because this tree node is generic for all
@@ -91,25 +104,33 @@ void SetUpIPsecSAConfig(TreeNode* node,
     ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
     auto* elem = path_ptr->mutable_elem(2);
     
-    // TODO: remove later after gnmi-cli is fixed
-    // gnmi-cli does not support multiple keys. For now, will make two calls to 
+    // TODO: remove later after gnmi_cli is fixed
+    // gnmi_cli does not support multiple keys. For now, will make two calls to 
     // DeleteSADEntry in both directions if only one key passed.
     // Note: if using a gnmi client which supports multiple keys,
     // will work as expected
+
+    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
+    if (!es2ksw_ptr) {
+      return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
+    }
+
     uint32 offload_id = static_cast<uint32>(std::stoul(val.at(0)));
     bool direction;
     if (val.size() == 1) {
       direction = true;
-      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
       direction = false;
-      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-      
+//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
     } else if (val.size() == 2) {
       direction = (val.at(1).compare("1") == 0) ? true : false;
-      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-
+//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
       (*elem->mutable_key())["direction"] = val.at(1);
