@@ -8,6 +8,7 @@
 #include <cmath>
 #include <regex>    // NOLINT
 #include <sstream>  // IWYU pragma: keep
+#include <sys/stat.h>
 
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
@@ -477,6 +478,19 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config) {
     return "UNKNOWN";
   }
 }
+
+::util::Status VerifyRegularFile(const std::string& filename) {
+    struct stat buf;
+    int x;
+    x = lstat (filename.c_str(), &buf);
+    if (S_ISREG(buf.st_mode)) {
+      return ::util::OkStatus();
+    }
+  
+    return MAKE_ERROR(ERR_INTERNAL)
+      << filename << " is not a regular file!";
+}
+
 
 }  // namespace hal
 }  // namespace stratum

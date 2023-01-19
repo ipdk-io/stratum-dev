@@ -21,6 +21,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/openconfig_converter.h"
+#include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 #include "stratum/public/lib/error.h"
@@ -94,6 +95,8 @@ ConfigMonitoringService::~ConfigMonitoringService() {
   // config push will initialize the switch if it is done for the first time.
   LOG(INFO) << "Pushing the saved chassis config read from "
             << FLAGS_chassis_config_file << "...";
+  // Verify that FLAGS_chassis_config_file is a regular file and not a symlink
+  RETURN_IF_ERROR(VerifyRegularFile(FLAGS_chassis_config_file));
   auto config = absl::make_unique<ChassisConfig>();
   ::util::Status status =
       ReadProtoFromTextFile(FLAGS_chassis_config_file, config.get());

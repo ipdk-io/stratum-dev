@@ -8,7 +8,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <fstream>
 #include <iostream>
 
 #include "absl/memory/memory.h"
@@ -16,6 +15,7 @@
 #include "absl/time/time.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
@@ -67,13 +67,11 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       server_credentials_ = ::grpc::InsecureServerCredentials();
     }
   } else {
-    // Verify that the certificate files exist and can be read
+    // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    std::ifstream ifile1, ifile2, ifile3;
-    ifile1.open(FLAGS_server_key_file);
-    ifile2.open(FLAGS_server_cert_file);
-    ifile3.open(FLAGS_ca_cert_file);
-    if(ifile1 && ifile2 && ifile3) {
+    if (stratum::hal::VerifyRegularFile(FLAGS_ca_cert_file) == ::util::OkStatus() &&
+        stratum::hal::VerifyRegularFile(FLAGS_server_cert_file) == ::util::OkStatus() &&
+        stratum::hal::VerifyRegularFile(FLAGS_server_key_file) == ::util::OkStatus()) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
@@ -100,13 +98,11 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       LOG(WARNING) << "No key files provided, using insecure client credentials!";
     }
   } else {
-    // Verify that the certificate files exist and can be read
+    // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    std::ifstream ifile4, ifile5, ifile6;
-    ifile4.open(FLAGS_client_key_file);
-    ifile5.open(FLAGS_client_cert_file);
-    ifile6.open(FLAGS_ca_cert_file);
-    if(ifile4 && ifile5 && ifile6) {
+    if (stratum::hal::VerifyRegularFile(FLAGS_ca_cert_file) == ::util::OkStatus() &&
+        stratum::hal::VerifyRegularFile(FLAGS_client_cert_file) == ::util::OkStatus() &&
+        stratum::hal::VerifyRegularFile(FLAGS_client_key_file) == ::util::OkStatus()) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
@@ -120,7 +116,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       // ::grpc::TlsChannelCredentialsOptions() now has set_verify_server_certs() instead
       // and the default is true.
 
-      //tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+      tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
 #endif
       tls_opts->watch_root_certs();
       if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
