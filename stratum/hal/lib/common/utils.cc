@@ -479,16 +479,10 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config) {
   }
 }
 
-::util::Status VerifyRegularFile(const std::string& filename) {
+bool IsRegularFile(const std::string& filename) {
     struct stat buf;
-    int x;
-    x = lstat (filename.c_str(), &buf);
-    if (S_ISREG(buf.st_mode)) {
-      return ::util::OkStatus();
-    }
-  
-    return MAKE_ERROR(ERR_INTERNAL)
-      << filename << " is not a regular file!";
+    int rc = lstat(filename.c_str(), &buf);
+    return (rc==0 && S_ISREG(buf.st_mode));
 }
 
 

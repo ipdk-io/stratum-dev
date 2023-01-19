@@ -95,8 +95,10 @@ ConfigMonitoringService::~ConfigMonitoringService() {
   // config push will initialize the switch if it is done for the first time.
   LOG(INFO) << "Pushing the saved chassis config read from "
             << FLAGS_chassis_config_file << "...";
-  // Verify that FLAGS_chassis_config_file is a regular file and not a symlink
-  RETURN_IF_ERROR(VerifyRegularFile(FLAGS_chassis_config_file));
+  if (!IsRegularFile(FLAGS_chassis_config_file)) {
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+          << "'"<< FLAGS_chassis_config_file << "' is not a regular file";
+  }
   auto config = absl::make_unique<ChassisConfig>();
   ::util::Status status =
       ReadProtoFromTextFile(FLAGS_chassis_config_file, config.get());

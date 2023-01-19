@@ -69,9 +69,9 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   } else {
     // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    if (stratum::hal::VerifyRegularFile(FLAGS_ca_cert_file) == ::util::OkStatus() &&
-        stratum::hal::VerifyRegularFile(FLAGS_server_cert_file) == ::util::OkStatus() &&
-        stratum::hal::VerifyRegularFile(FLAGS_server_key_file) == ::util::OkStatus()) {
+    if (stratum::hal::IsRegularFile(FLAGS_ca_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_server_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_server_key_file)) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
@@ -100,9 +100,9 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
   } else {
     // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    if (stratum::hal::VerifyRegularFile(FLAGS_ca_cert_file) == ::util::OkStatus() &&
-        stratum::hal::VerifyRegularFile(FLAGS_client_cert_file) == ::util::OkStatus() &&
-        stratum::hal::VerifyRegularFile(FLAGS_client_key_file) == ::util::OkStatus()) {
+    if (stratum::hal::IsRegularFile(FLAGS_ca_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_client_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_client_key_file)) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
