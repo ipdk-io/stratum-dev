@@ -437,7 +437,7 @@ namespace helpers {
     if (tdi_status != TDI_SUCCESS) {
         //SDE iterates through all the tables, and if no entry is present for that table,
         //TDI_OBJECT_NOT_FOUND is returned in which case it's no operation for flow dump for that table.
-        if (tdi_status == TDI_OBJECT_NOT_FOUND) {
+        if (tdi_status == TDI_OBJECT_NOT_FOUND || tdi_status == TDI_NOT_SUPPORTED) {
             return ::util::OkStatus();
         }
        RETURN_IF_TDI_ERROR(tdi_status);
