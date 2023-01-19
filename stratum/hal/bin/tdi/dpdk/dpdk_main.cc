@@ -10,6 +10,7 @@
 #include <ostream>
 #include <string>
 
+#include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/logging.h"
@@ -44,7 +45,8 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-::util::Status DpdkMain(int argc, char* argv[]) {
+::util::Status DpdkMain(int argc, char* argv[], absl::Notification* ready_sync,
+                        absl::Notification* done_sync) {
   // Default value for DPDK.
   FLAGS_chassis_config_file = DEFAULT_CONFIG_PREFIX "dpdk_port_config.pb.txt";
   FLAGS_log_dir = DEFAULT_LOG_DIR;
@@ -138,7 +140,7 @@ namespace tdi {
   auto* hal = DpdkHal::CreateSingleton(
       // NOTE: Shouldn't first parameter be 'mode'?
       stratum::hal::OPERATION_MODE_STANDALONE, dpdk_switch.get(),
-      auth_policy_checker.get());
+      auth_policy_checker.get(), ready_sync, done_sync);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.
