@@ -25,6 +25,13 @@ DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
 DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
 
+DEFINE_string(grpc_client_cert_req_type, "NO_REQUEST_CLIENT_CERT",
+              "TLS server credentials option for client certificate verification. \
+              Available options are: \
+              NO_REQUEST_CLIENT_CERT, REQUEST_CLIENT_CERT_NO_VERIFY, \
+              REQUEST_CLIENT_CERT_AND_VERIFY,  REQUIRE_CLIENT_CERT_NO_VERIFY, \
+              REQUIRE_CLIENT_CERT_AND_VERIFY");
+
 namespace stratum {
 
 using ::grpc::experimental::FileWatcherCertificateProvider;
@@ -34,9 +41,27 @@ using ::grpc::experimental::TlsServerCredentialsOptions;
 
 constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
 
-CredentialsManager::CredentialsManager() {}
+CredentialsManager::CredentialsManager()
+  : client_cert_verification_map_() {
+    InitClientCertVerificationMap();
+}
 
 CredentialsManager::~CredentialsManager() {}
+
+::util::Status CredentialsManager::InitClientCertVerificationMap() {
+  client_cert_verification_map_["NO_REQUEST_CLIENT_CERT"] =
+    GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
+  client_cert_verification_map_["REQUEST_CLIENT_CERT_NO_VERIFY"] =
+    GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY;
+  client_cert_verification_map_["REQUEST_CLIENT_CERT_AND_VERIFY"] =
+    GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY;
+  client_cert_verification_map_["REQUIRE_CLIENT_CERT_NO_VERIFY"] =
+    GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY;
+  client_cert_verification_map_["REQUIRE_CLIENT_CERT_AND_VERIFY"] =
+    GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
+
+  return ::util::OkStatus();
+}
 
 ::util::StatusOr<std::unique_ptr<CredentialsManager>>
 CredentialsManager::CreateInstance(bool secure_only /*=false*/) {
@@ -78,7 +103,14 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
               kFileRefreshIntervalSeconds);
       auto tls_opts =
           std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
-      tls_opts->set_cert_request_type(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
+      auto client_cert_verify_option = gtl::FindOrNull(client_cert_verification_map_,
+                                                       FLAGS_grpc_client_cert_req_type);
+      if (client_cert_verify_option == nullptr) {
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+          << "gRPC client certification verification option '"
+          << FLAGS_grpc_client_cert_req_type << "' is invalid";
+      }
+      tls_opts->set_cert_request_type(*client_cert_verify_option);
       tls_opts->watch_root_certs();
       tls_opts->watch_identity_key_cert_pairs();
       server_credentials_ = TlsServerCredentials(*tls_opts);
