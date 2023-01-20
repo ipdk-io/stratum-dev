@@ -26,11 +26,11 @@ DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
 
 DEFINE_string(grpc_client_cert_req_type, "NO_REQUEST_CLIENT_CERT",
-              "TLS server credentials option for client certificate verification. \
-              Available options are: \
-              NO_REQUEST_CLIENT_CERT, REQUEST_CLIENT_CERT_NO_VERIFY, \
-              REQUEST_CLIENT_CERT_AND_VERIFY,  REQUIRE_CLIENT_CERT_NO_VERIFY, \
-              REQUIRE_CLIENT_CERT_AND_VERIFY");
+              "TLS server credentials option for client certificate verification. "
+              "Available options are: "
+              "NO_REQUEST_CLIENT_CERT, REQUEST_CLIENT_CERT_NO_VERIFY, "
+              "REQUEST_CLIENT_CERT_AND_VERIFY,  REQUIRE_CLIENT_CERT_NO_VERIFY, "
+              "REQUIRE_CLIENT_CERT_AND_VERIFY");
 
 namespace stratum {
 
@@ -41,27 +41,9 @@ using ::grpc::experimental::TlsServerCredentialsOptions;
 
 constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
 
-CredentialsManager::CredentialsManager()
-  : client_cert_verification_map_() {
-    InitClientCertVerificationMap();
-}
+CredentialsManager::CredentialsManager() {}
 
 CredentialsManager::~CredentialsManager() {}
-
-::util::Status CredentialsManager::InitClientCertVerificationMap() {
-  client_cert_verification_map_["NO_REQUEST_CLIENT_CERT"] =
-    GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
-  client_cert_verification_map_["REQUEST_CLIENT_CERT_NO_VERIFY"] =
-    GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY;
-  client_cert_verification_map_["REQUEST_CLIENT_CERT_AND_VERIFY"] =
-    GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY;
-  client_cert_verification_map_["REQUIRE_CLIENT_CERT_NO_VERIFY"] =
-    GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY;
-  client_cert_verification_map_["REQUIRE_CLIENT_CERT_AND_VERIFY"] =
-    GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
-
-  return ::util::OkStatus();
-}
 
 ::util::StatusOr<std::unique_ptr<CredentialsManager>>
 CredentialsManager::CreateInstance(bool secure_only /*=false*/) {
