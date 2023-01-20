@@ -73,11 +73,14 @@ class CredentialsManager {
  private:
   static constexpr unsigned int kFileRefreshIntervalSeconds = 1;
 
-  std::map<std::string, grpc_ssl_client_certificate_request_type>
-    client_cert_verification_map_;
-
-  // Function to initialize the certificate verification map
-  ::util::Status InitClientCertVerificationMap();
+  const std::map<std::string, grpc_ssl_client_certificate_request_type>
+    client_cert_verification_map_ = {
+      {"NO_REQUEST_CLIENT_CERT", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
+      {"REQUEST_CLIENT_CERT_NO_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+      {"REQUEST_CLIENT_CERT_AND_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
+      {"REQUIRE_CLIENT_CERT_NO_VERIFY", GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+      {"REQUIRE_CLIENT_CERT_AND_VERIFY", GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}
+    };
 
   // Function to initialize the credentials manager.
   ::util::Status Initialize(bool secure_only);
