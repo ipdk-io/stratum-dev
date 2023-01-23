@@ -5,6 +5,11 @@
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 
+#ifdef KRNLMON_SUPPORT
+#undef NDEBUG
+#include <assert.h>
+#endif
+
 #include <limits.h>
 #include <utility>
 #include <stdio.h>
@@ -277,11 +282,15 @@ DpdkHal::~DpdkHal() {
   }
 
 #ifdef KRNLMON_SUPPORT
-  //Notify the krnlmon start thread that stratum server is listening
-  pthread_mutex_lock(&rpc_start_lock);
+  int rc;
+  // Notify the krnlmon start thread that stratum server is listening
+  rc = pthread_mutex_lock(&rpc_start_lock);
+  assert_perror(rc);
   rpc_start_cookie = 1;
-  pthread_cond_signal(&rpc_start_cond);
-  pthread_mutex_unlock(&rpc_start_lock);
+  rc = pthread_cond_signal(&rpc_start_cond);
+  assert_perror(rc);
+  rc = pthread_mutex_unlock(&rpc_start_lock);
+  assert_perror(rc);
 #endif
 
   // Block until external_server_->Shutdown() is called.
@@ -289,11 +298,14 @@ DpdkHal::~DpdkHal() {
   external_server_->Wait();
 
 #ifdef KRNLMON_SUPPORT
-  //Notify the krnlmon stop thread that stratum server has stopped
-  pthread_mutex_lock(&rpc_stop_lock);
+  // Notify the krnlmon stop thread that stratum server has stopped
+  rc = pthread_mutex_lock(&rpc_stop_lock);
+  assert_perror(rc);
   rpc_stop_cookie = 1;
-  pthread_cond_signal(&rpc_stop_cond);
-  pthread_mutex_unlock(&rpc_stop_lock);
+  rc = pthread_cond_signal(&rpc_stop_cond);
+  assert_perror(rc);
+  rc = pthread_mutex_unlock(&rpc_stop_lock);
+  assert_perror(rc);
 #endif
 
 
@@ -322,6 +334,7 @@ DpdkHal* DpdkHal::CreateSingleton(OperationMode mode,
       LOG(ERROR) << "RegisterSignalHandlers() failed: " << status;
       delete singleton_;
       singleton_ = nullptr;
+      return nullptr;
     }
 
     status = singleton_->InitializeServer();
