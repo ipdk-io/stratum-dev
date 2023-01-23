@@ -73,6 +73,11 @@ namespace tdi {
   FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
   FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
   FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
+  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
+  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
+
+  // Overriding Stratum default to a stricter client certificate verification
+  FLAGS_grpc_client_cert_req_type = "REQUIRE_CLIENT_CERT_AND_VERIFY";
 
   // Parse command line flags
   gflags::ParseCommandLineFlags(&argc, &argv, true);

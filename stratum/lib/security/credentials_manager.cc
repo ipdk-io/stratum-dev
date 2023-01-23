@@ -8,7 +8,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <fstream>
 #include <iostream>
 
 #include "absl/memory/memory.h"
@@ -16,6 +15,7 @@
 #include "absl/time/time.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
@@ -24,6 +24,13 @@ DEFINE_string(server_key_file, "", "Path to gRPC server private key file");
 DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
 DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
+
+DEFINE_string(grpc_client_cert_req_type, "NO_REQUEST_CLIENT_CERT",
+              "TLS server credentials option for client certificate verification. "
+              "Available options are: "
+              "NO_REQUEST_CLIENT_CERT, REQUEST_CLIENT_CERT_NO_VERIFY, "
+              "REQUEST_CLIENT_CERT_AND_VERIFY,  REQUIRE_CLIENT_CERT_NO_VERIFY, "
+              "REQUIRE_CLIENT_CERT_AND_VERIFY");
 
 namespace stratum {
 
@@ -67,20 +74,25 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       server_credentials_ = ::grpc::InsecureServerCredentials();
     }
   } else {
-    // Verify that the certificate files exist and can be read
+    // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    std::ifstream ifile1, ifile2, ifile3;
-    ifile1.open(FLAGS_server_key_file);
-    ifile2.open(FLAGS_server_cert_file);
-    ifile3.open(FLAGS_ca_cert_file);
-    if(ifile1 && ifile2 && ifile3) {
+    if (stratum::hal::IsRegularFile(FLAGS_ca_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_server_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_server_key_file)) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
               kFileRefreshIntervalSeconds);
       auto tls_opts =
           std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
-      tls_opts->set_cert_request_type(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
+      auto client_cert_verify_option = gtl::FindOrNull(client_cert_verification_map_,
+                                                       FLAGS_grpc_client_cert_req_type);
+      if (client_cert_verify_option == nullptr) {
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+          << "gRPC client certification verification option '"
+          << FLAGS_grpc_client_cert_req_type << "' is invalid";
+      }
+      tls_opts->set_cert_request_type(*client_cert_verify_option);
       tls_opts->watch_root_certs();
       tls_opts->watch_identity_key_cert_pairs();
       server_credentials_ = TlsServerCredentials(*tls_opts);
@@ -100,13 +112,11 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       LOG(WARNING) << "No key files provided, using insecure client credentials!";
     }
   } else {
-    // Verify that the certificate files exist and can be read
+    // Verify that the certificate files exist and are regular (non-symlink) files
     // If files are not present or not accesible, method will return with nullptr
-    std::ifstream ifile4, ifile5, ifile6;
-    ifile4.open(FLAGS_client_key_file);
-    ifile5.open(FLAGS_client_cert_file);
-    ifile6.open(FLAGS_ca_cert_file);
-    if(ifile4 && ifile5 && ifile6) {
+    if (stratum::hal::IsRegularFile(FLAGS_ca_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_client_cert_file) &&
+        stratum::hal::IsRegularFile(FLAGS_client_key_file)) {
       auto certificate_provider =
           std::make_shared<FileWatcherCertificateProvider>(
               FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
@@ -120,7 +130,7 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
       // ::grpc::TlsChannelCredentialsOptions() now has set_verify_server_certs() instead
       // and the default is true.
 
-      //tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+      tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
 #endif
       tls_opts->watch_root_certs();
       if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
