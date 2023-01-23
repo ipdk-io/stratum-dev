@@ -83,6 +83,8 @@ public:
     params_set = 0;
     port_done = false;
     hotplug_done = false;
+    cfg = {};
+    hotplug = {};
   }
 
 private:
