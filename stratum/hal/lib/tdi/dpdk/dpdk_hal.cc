@@ -348,9 +348,9 @@ DpdkHal* DpdkHal::GetSingleton() {
   }
 
 ::util::Status DpdkHal::InitializeServer() {
-  CHECK_IS_NULL(config_monitoring_service_);
-  CHECK_IS_NULL(p4_service_);
-  CHECK_IS_NULL(external_server_);
+  CHECK_IS_NULL(config_monitoring_service_.get());
+  CHECK_IS_NULL(p4_service_.get());
+  CHECK_IS_NULL(external_server_.get());
   // FIXME(boc) google only
   // CHECK_IS_NULL(internal_server_);
 
