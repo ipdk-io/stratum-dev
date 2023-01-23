@@ -36,7 +36,8 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
-      register_map_("Register") {}
+      register_map_("Register"),
+      all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
     : table_map_("Table"),
@@ -47,7 +48,8 @@ P4InfoManager::P4InfoManager()
       direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
-      register_map_("Register") {}
+      register_map_("Register"),
+      all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
 
