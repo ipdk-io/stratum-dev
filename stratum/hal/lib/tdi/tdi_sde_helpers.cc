@@ -403,7 +403,13 @@ namespace helpers {
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(0, &device);
   const auto flags = ::tdi::Flags(0);
-  uint32 entries = 0;
+  std::unique_ptr<::tdi::TableKey> table_key;
+  std::unique_ptr<::tdi::TableData> table_data;
+  tdi_status_t tdi_status;
+  std::unique_ptr<::tdi::Target> dev_tgt;
+  device->createTarget(&dev_tgt);
+  uint32 entries = 0, actual = 0;
+
   if (IsPreallocatedTable(*table)) {
     size_t table_size;
     RETURN_IF_TDI_ERROR(
@@ -411,7 +417,7 @@ namespace helpers {
     entries = table_size;
   } else {
     RETURN_IF_TDI_ERROR(
-	table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
+        table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
   }
 
   table_keys->resize(0);
@@ -424,10 +430,18 @@ namespace helpers {
     std::unique_ptr<::tdi::TableData> table_data;
     RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
     RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
-    RETURN_IF_TDI_ERROR(table->entryGetFirst(
-        *tdi_session, tdi_dev_target,
+    auto tdi_status = table->entryGetFirst(
+        *tdi_session, *dev_tgt,
         flags, table_key.get(),
-        table_data.get()));
+        table_data.get());
+    if (tdi_status != TDI_SUCCESS) {
+        //SDE iterates through all the tables, and if no entry is present for that table,
+        //TDI_OBJECT_NOT_FOUND is returned in which case it's no operation for flow dump for that table.
+        if (tdi_status == TDI_OBJECT_NOT_FOUND || tdi_status == TDI_NOT_SUPPORTED) {
+            return ::util::OkStatus();
+        }
+       RETURN_IF_TDI_ERROR(tdi_status);
+    }
 
     table_keys->push_back(std::move(table_key));
     table_values->push_back(std::move(table_data));
@@ -449,16 +463,19 @@ namespace helpers {
         *tdi_session, tdi_dev_target, flags, *(*table_keys)[0], pairs.size(),
         &pairs, &actual));
 
-    table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
-                       std::make_move_iterator(keys.end()));
+    auto keys_end=keys.begin();
+    auto data_end=data.begin();
+    std::advance(keys_end,actual);
+    std::advance(data_end,actual);
+    table_keys->insert(table_keys->end(),
+      std::make_move_iterator(keys.begin()),
+      std::make_move_iterator(keys_end));
     table_values->insert(table_values->end(),
-                         std::make_move_iterator(data.begin()),
-                         std::make_move_iterator(data.end()));
+      std::make_move_iterator(data.begin()),
+      std::make_move_iterator(data_end));
   }
 
   CHECK(table_keys->size() == table_values->size());
-  CHECK(table_keys->size() == entries);
-
   return ::util::OkStatus();
 }
 
