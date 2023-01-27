@@ -45,34 +45,45 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-static void InitCommandLineFlags() {
-  // Chassis config file
-  FLAGS_chassis_config_file = DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt";
-
-  // Logging options
-  FLAGS_log_dir = DEFAULT_LOG_DIR;
-  FLAGS_logtostderr = false;
-  FLAGS_alsologtostderr = false;
-
-  // Certificate options
-  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
-  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
-  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
-  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
-  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
-
-  // Client certificate verification requirement
-  FLAGS_grpc_client_cert_req_type = "REQUIRE_CLIENT_CERT_AND_VERIFY";
+static void SetDefault(const char *name, const char *value) {
+  ::gflags::SetCommandLineOptionWithMode(name, value, ::gflags::SET_FLAGS_DEFAULT);
 }
 
-::util::Status DpdkMain(int argc, char* argv[], absl::Notification* ready_sync,
-                        absl::Notification* done_sync) {
+void InitCommandLineFlags() {
+  // Chassis config file
+  SetDefault("chassis_config_file", DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt");
+
+  // Logging options
+  SetDefault("log_dir", DEFAULT_LOG_DIR);
+  SetDefault("logtostderr", "false");
+  SetDefault("alsologtostderr", "false");
+
+  // Certificate options
+  SetDefault("ca_cert_file", DEFAULT_CERTS_DIR "ca.crt");
+  SetDefault("server_key_file", DEFAULT_CERTS_DIR "stratum.key");
+  SetDefault("server_cert_file", DEFAULT_CERTS_DIR "stratum.crt");
+  SetDefault("client_key_file", DEFAULT_CERTS_DIR "client.key");
+  SetDefault("client_cert_file", DEFAULT_CERTS_DIR "client.crt");
+
+  // Client certificate verification requirement
+  SetDefault("grpc_client_cert_req_type", "REQUIRE_CLIENT_CERT_AND_VERIFY");
+}
+
+void ParseCommandLine(int argc, char* argv[]) {
   // Set our own default flag values
   InitCommandLineFlags();
 
   // Parse command-line flags
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+}
 
+::util::Status DpdkMain(int argc, char* argv[]) {
+  ParseCommandLine(argc, argv);
+  return DpdkMain(nullptr, nullptr);
+}
+
+::util::Status DpdkMain(absl::Notification* ready_sync,
+                        absl::Notification* done_sync) {
   InitStratumLogging();
 
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate

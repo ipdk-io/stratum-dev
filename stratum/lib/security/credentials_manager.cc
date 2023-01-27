@@ -27,10 +27,9 @@ DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
 
 DEFINE_string(grpc_client_cert_req_type, "NO_REQUEST_CLIENT_CERT",
               "TLS server credentials option for client certificate verification. "
-              "Available options are: "
-              "NO_REQUEST_CLIENT_CERT, REQUEST_CLIENT_CERT_NO_VERIFY, "
-              "REQUEST_CLIENT_CERT_AND_VERIFY,  REQUIRE_CLIENT_CERT_NO_VERIFY, "
-              "REQUIRE_CLIENT_CERT_AND_VERIFY");
+              "Available options are: NO_REQUEST_CLIENT_CERT, "
+              "REQUEST_CLIENT_CERT_NO_VERIFY, REQUEST_CLIENT_CERT_AND_VERIFY, "
+              "REQUIRE_CLIENT_CERT_NO_VERIFY, REQUIRE_CLIENT_CERT_AND_VERIFY");
 
 namespace stratum {
 
