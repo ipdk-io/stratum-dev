@@ -49,7 +49,7 @@ static void SetDefault(const char *name, const char *value) {
   ::gflags::SetCommandLineOptionWithMode(name, value, ::gflags::SET_FLAGS_DEFAULT);
 }
 
-void InitCommandLineFlags() {
+static void InitCommandLineFlags() {
   // Chassis config file
   SetDefault("chassis_config_file", DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt");
 
@@ -69,16 +69,16 @@ void InitCommandLineFlags() {
   SetDefault("grpc_client_cert_req_type", "REQUIRE_CLIENT_CERT_AND_VERIFY");
 }
 
-void ParseCommandLine(int argc, char* argv[]) {
-  // Set our own default flag values
+void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
+  // Set our own default values
   InitCommandLineFlags();
 
   // Parse command-line flags
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  gflags::ParseCommandLineFlags(&argc, &argv, remove_flags);
 }
 
 ::util::Status DpdkMain(int argc, char* argv[]) {
-  ParseCommandLine(argc, argv);
+  ParseCommandLine(argc, argv, true);
   return DpdkMain(nullptr, nullptr);
 }
 

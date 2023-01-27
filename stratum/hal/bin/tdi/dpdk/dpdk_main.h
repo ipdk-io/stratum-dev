@@ -16,7 +16,7 @@ namespace tdi {
 ::util::Status DpdkMain(absl::Notification* ready_sync = nullptr,
                         absl::Notification* done_sync = nullptr);
 
-void InitCommandLineFlags();
+void ParseCommandLine(int argc, char* argv[], bool remove_flags);
 
 } // namespace tdi
 } // namespace hal
