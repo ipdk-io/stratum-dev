@@ -10,6 +10,7 @@
 #include <ostream>
 #include <string>
 
+#include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/logging.h"
@@ -30,13 +31,13 @@
 #include "stratum/lib/security/auth_policy_checker.h"
 #include "stratum/lib/security/credentials_manager.h"
 
-#define DEFAULT_CONFIG_PREFIX "/usr/share/stratum/dpdk/"
-#define DEFAULT_LOG_DIR "/var/log/stratum/"
 #define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
+#define DEFAULT_CONFIG_DIR "/usr/share/stratum/dpdk/"
+#define DEFAULT_LOG_DIR "/var/log/stratum/"
 
 DEFINE_string(dpdk_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
-DEFINE_string(dpdk_infrap4d_cfg, DEFAULT_CONFIG_PREFIX "dpdk_skip_p4.conf",
+DEFINE_string(dpdk_infrap4d_cfg, DEFAULT_CONFIG_DIR "dpdk_skip_p4.conf",
               "Path to the infrap4d json config file");
 DECLARE_string(chassis_config_file);
 
@@ -44,42 +45,45 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+static void SetDefault(const char *name, const char *value) {
+  ::gflags::SetCommandLineOptionWithMode(name, value, ::gflags::SET_FLAGS_DEFAULT);
+}
+
+static void InitCommandLineFlags() {
+  // Chassis config file
+  SetDefault("chassis_config_file", DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt");
+
+  // Logging options
+  SetDefault("log_dir", DEFAULT_LOG_DIR);
+  SetDefault("logtostderr", "false");
+  SetDefault("alsologtostderr", "false");
+
+  // Certificate options
+  SetDefault("ca_cert_file", DEFAULT_CERTS_DIR "ca.crt");
+  SetDefault("server_key_file", DEFAULT_CERTS_DIR "stratum.key");
+  SetDefault("server_cert_file", DEFAULT_CERTS_DIR "stratum.crt");
+  SetDefault("client_key_file", DEFAULT_CERTS_DIR "client.key");
+  SetDefault("client_cert_file", DEFAULT_CERTS_DIR "client.crt");
+
+  // Client certificate verification requirement
+  SetDefault("grpc_client_cert_req_type", "REQUIRE_CLIENT_CERT_AND_VERIFY");
+}
+
+void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
+  // Set our own default values
+  InitCommandLineFlags();
+
+  // Parse command-line flags
+  gflags::ParseCommandLineFlags(&argc, &argv, remove_flags);
+}
+
 ::util::Status DpdkMain(int argc, char* argv[]) {
-  // Default value for DPDK.
-  FLAGS_chassis_config_file = DEFAULT_CONFIG_PREFIX "dpdk_port_config.pb.txt";
-  FLAGS_log_dir = DEFAULT_LOG_DIR;
-  FLAGS_logtostderr = false;
-  FLAGS_alsologtostderr = false;
+  ParseCommandLine(argc, argv, true);
+  return DpdkMain(nullptr, nullptr);
+}
 
-  /* Note:
-   * InitGoogle by default initializes following options if not explicitly
-   * set by user through command line
-   * logtostderr = true
-   * colorlogtostderr = true
-   * stderrthreshold = 0 (Copy log messages at or above this level to stderr
-   * in addition to logfiles. The numbers of severity levels INFO, WARNING,
-   * ERROR, and FATAL are 0, 1, 2, and 3, respectively.)
-   * minloglevel = 0. Log messages at or above this level. Again, the numbers
-   * of severity levels INFO, WARNING, ERROR, and FATAL are 0, 1, 2, and 3,
-   * respectively)
-   * To be able to define our own requirements for logging when running infrap4d
-   * as process, InitGoogle call is removed and ParseCommandLineFlags is called
-   * separately
-   */
-
-  // Default certificate file location for TLS-mode
-  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
-  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
-  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
-  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
-  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
-
-  // Overriding Stratum default to a stricter client certificate verification
-  FLAGS_grpc_client_cert_req_type = "REQUIRE_CLIENT_CERT_AND_VERIFY";
-
-  // Parse command line flags
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
+::util::Status DpdkMain(absl::Notification* ready_sync,
+                        absl::Notification* done_sync) {
   InitStratumLogging();
 
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate
@@ -141,7 +145,7 @@ namespace tdi {
   auto* hal = DpdkHal::CreateSingleton(
       // NOTE: Shouldn't first parameter be 'mode'?
       stratum::hal::OPERATION_MODE_STANDALONE, dpdk_switch.get(),
-      auth_policy_checker.get());
+      auth_policy_checker.get(), ready_sync, done_sync);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.

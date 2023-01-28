@@ -5,11 +5,6 @@
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 
-#ifdef KRNLMON_SUPPORT
-#undef NDEBUG
-#include <assert.h>
-#endif
-
 #include <limits.h>
 #include <utility>
 #include <stdio.h>
@@ -19,22 +14,13 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
-#include "stratum/lib/utils.h"
 #include "stratum/lib/security/credentials_manager.h"
-
-#ifdef KRNLMON_SUPPORT
-extern int rpc_start_cookie;
-extern pthread_cond_t rpc_start_cond;
-extern pthread_mutex_t rpc_start_lock;
-
-extern int rpc_stop_cookie;
-extern pthread_cond_t rpc_stop_cond;
-extern pthread_mutex_t rpc_stop_lock;
-#endif
+#include "stratum/lib/utils.h"
 
 // TODO(unknown): Use FLAG_DEFINE for all flags.
 DEFINE_string(external_stratum_urls, stratum::kExternalStratumUrls,
@@ -58,7 +44,7 @@ DEFINE_uint32(grpc_max_recv_msg_size, 256 * 1024 * 1024,
 DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
 DEFINE_bool(grpc_open_insecure_mode, false,
-              "grpc open server ports in insecure mode for gNMI, gNOI & P4RT (false = closed)");
+            "open grpc server ports in insecure mode for gNMI, gNOI, and P4RT");
 
 DECLARE_string(forwarding_pipeline_configs_file);
 
@@ -103,7 +89,9 @@ int DpdkHal::pipe_read_fd_ = -1;
 int DpdkHal::pipe_write_fd_ = -1;
 
 DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
-                 AuthPolicyChecker* auth_policy_checker)
+                 AuthPolicyChecker* auth_policy_checker,
+                 absl::Notification* ready_sync,
+                 absl::Notification* done_sync)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -112,7 +100,9 @@ DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
       p4_service_(nullptr),
       external_server_(nullptr),
       old_signal_handlers_(),
-      signal_waiter_tid_(0) {}
+      signal_waiter_tid_(0),
+      ready_sync_(ready_sync),
+      done_sync_(done_sync) {}
 
 DpdkHal::~DpdkHal() {
   // TODO(unknown): Handle this error?
@@ -281,33 +271,19 @@ DpdkHal::~DpdkHal() {
                << FLAGS_local_stratum_url << "...";
   }
 
-#ifdef KRNLMON_SUPPORT
-  int rc;
-  // Notify the krnlmon start thread that stratum server is listening
-  rc = pthread_mutex_lock(&rpc_start_lock);
-  assert_perror(rc);
-  rpc_start_cookie = 1;
-  rc = pthread_cond_signal(&rpc_start_cond);
-  assert_perror(rc);
-  rc = pthread_mutex_unlock(&rpc_start_lock);
-  assert_perror(rc);
-#endif
+  // Signal that the server is listening.
+  if (ready_sync_ != nullptr) {
+    ready_sync_->Notify();
+  }
 
   // Block until external_server_->Shutdown() is called.
   // We don't wait on internal_service.
   external_server_->Wait();
 
-#ifdef KRNLMON_SUPPORT
-  // Notify the krnlmon stop thread that stratum server has stopped
-  rc = pthread_mutex_lock(&rpc_stop_lock);
-  assert_perror(rc);
-  rpc_stop_cookie = 1;
-  rc = pthread_cond_signal(&rpc_stop_cond);
-  assert_perror(rc);
-  rc = pthread_mutex_unlock(&rpc_stop_lock);
-  assert_perror(rc);
-#endif
-
+  // Signal that the server is terminating.
+  if (done_sync_ != nullptr) {
+    done_sync_->Notify();
+  }
 
   return Teardown();
 }
@@ -324,10 +300,13 @@ void DpdkHal::HandleSignal(int value) {
 
 DpdkHal* DpdkHal::CreateSingleton(OperationMode mode,
                                   SwitchInterface* switch_interface,
-                                  AuthPolicyChecker* auth_policy_checker) {
+                                  AuthPolicyChecker* auth_policy_checker,
+                                  absl::Notification* ready_sync,
+                                  absl::Notification* done_sync) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
-    singleton_ = new DpdkHal(mode, switch_interface, auth_policy_checker);
+    singleton_ = new DpdkHal(mode, switch_interface, auth_policy_checker,
+                             ready_sync, done_sync);
 
     ::util::Status status = singleton_->RegisterSignalHandlers();
     if (!status.ok()) {
