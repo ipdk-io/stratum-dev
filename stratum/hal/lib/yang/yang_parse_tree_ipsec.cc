@@ -11,15 +11,15 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/hal/lib/common/utils.h"
 
-#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
-
 namespace stratum {
 namespace hal {
 
+using ::stratum::hal::tdi::Es2kSwitch;
 using namespace stratum::hal::yang::helpers;
 
 namespace {
@@ -33,8 +33,8 @@ void SetUpIPsecFetchSPI(TreeNode* node,
                                 GnmiSubscribeStream* stream) {
     uint32 fetched_spi=0;
 //    auto status = tree->GetIPsecManager()->GetSpiData(fetched_spi);
-    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
-    if (!es2ksw_ptr) {
+    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
+    if (es2ksw_ptr == nullptr) {
       LOG(ERROR) << "Error casting SwitchInterface to Es2KSwitch";
     } else {
       auto status = es2ksw_ptr->GetIPsecManager()->GetSpiData(fetched_spi);
@@ -76,8 +76,8 @@ void SetUpIPsecSAConfig(TreeNode* node,
     // and calling via switch_interface, this message is passed
     // directly with the 'msg' defined on stack (instead of heap).
 //    tree->GetIPsecManager()->SetConfigSADEntry(&msg);
-    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
-    if (!es2ksw_ptr) {
+    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
+    if (es2ksw_ptr == nullptr) {
       return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
     }
     es2ksw_ptr->GetIPsecManager()->SetConfigSADEntry(&msg);
@@ -110,8 +110,8 @@ void SetUpIPsecSAConfig(TreeNode* node,
     // Note: if using a gnmi client which supports multiple keys,
     // will work as expected
 
-    auto es2ksw_ptr = dynamic_cast<stratum::hal::tdi::Es2kSwitch*>(tree->GetSwitchInterface());
-    if (!es2ksw_ptr) {
+    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
+    if (es2ksw_ptr == nullptr) {
       return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
     }
 
