@@ -43,7 +43,7 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 ::util::Status TdiFixedFunctionManager::WriteSadbEntry(
   std::shared_ptr<TdiSdeInterface::SessionInterface> session,
   std::string table_name, enum IPsecSadOp op_type,
-  IPsecSADConfig *sadb_config) {
+  const IPsecSADConfig &sadb_config) {
 
   absl::ReaderMutexLock l(&lock_);
 
@@ -98,69 +98,69 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 
 ::util::Status TdiFixedFunctionManager::BuildSadbTableKey(
   TdiSdeInterface::TableKeyInterface* table_key,
-  IPsecSADConfig *sadb_config) {
+  const IPsecSADConfig &sadb_config) {
   CHECK_RETURN_IF_FALSE(table_key);
   RETURN_IF_ERROR(table_key->SetExact(
-      kIpsecSadbOffloadId, sadb_config->offload_id()));
+      kIpsecSadbOffloadId, sadb_config.offload_id()));
   RETURN_IF_ERROR(table_key->SetExact(
-      kIpsecSadbDir, ((uint8)sadb_config->direction())));
+      kIpsecSadbDir, ((uint8)sadb_config.direction())));
   return ::util::OkStatus();
 }
 
 ::util::Status TdiFixedFunctionManager::BuildSadbTableData(
   TdiSdeInterface::TableDataInterface* table_data,
-  IPsecSADConfig *sadb_config) {
+  const IPsecSADConfig &sadb_config) {
   CHECK_RETURN_IF_FALSE(table_data);
 
   //Set the req_id Value
-  RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbReqId, sadb_config->req_id()));
+  RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbReqId, sadb_config.req_id()));
 
   //Set the Spi Value
-  RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbSpi, sadb_config->spi()));
+  RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbSpi, sadb_config.spi()));
 
   //Set the ext_seq_num Value
   RETURN_IF_ERROR(table_data->SetParam(
-      kIpsecSadbSeqNum, ((uint8)sadb_config->ext_seq_num())));
+      kIpsecSadbSeqNum, ((uint8)sadb_config.ext_seq_num())));
 
   //Set the anti_replay_window_size Value
   RETURN_IF_ERROR(table_data->SetParam(
-      kIpsecSadbReplayWindow, sadb_config->anti_replay_window_size()));
+      kIpsecSadbReplayWindow, sadb_config.anti_replay_window_size()));
 
   //Set the Proto-Param Value
   RETURN_IF_ERROR(table_data->SetParam(
-      kIpsecSadbProtoParams, ((uint8)sadb_config->protocol_parameters())));
+      kIpsecSadbProtoParams, ((uint8)sadb_config.protocol_parameters())));
 
   //Set the Ipsec Mode Value
   RETURN_IF_ERROR(table_data->SetParam(
-      kIpsecSadbMode, ((uint8)sadb_config->mode())));
+      kIpsecSadbMode, ((uint8)sadb_config.mode())));
 
-  if(sadb_config->has_esp_payload()) {
+  if(sadb_config.has_esp_payload()) {
       //Set the Encyption Algorithm Value
       RETURN_IF_ERROR(table_data->SetParam(
           kIpsecSadbEspAlgo,
-          ((uint16)sadb_config->esp_payload().encryption().encryption_algorithm())));
+          ((uint16)sadb_config.esp_payload().encryption().encryption_algorithm())));
 
       //Set the Encyption Key Value
       RETURN_IF_ERROR(table_data->SetParam(
           kIpsecSadbEspKey,
-          sadb_config->esp_payload().encryption().key()));
+          sadb_config.esp_payload().encryption().key()));
 
       //Set the Encyption Keylen Value
       RETURN_IF_ERROR(table_data->SetParam(
         kIpsecSadbEspKeylen,
-        ((uint8)sadb_config->esp_payload().encryption().key_len())));
+        ((uint8)sadb_config.esp_payload().encryption().key_len())));
   }
 
-  if(sadb_config->has_sa_lifetime_hard()) {
+  if(sadb_config.has_sa_lifetime_hard()) {
       //Set the Lifetime Hard Value
       RETURN_IF_ERROR(table_data->SetParam(
-          kIpsecSaLtHard, sadb_config->sa_lifetime_hard().bytes()));
+          kIpsecSaLtHard, sadb_config.sa_lifetime_hard().bytes()));
    }
 
-  if(sadb_config->has_sa_lifetime_soft()) {
+  if(sadb_config.has_sa_lifetime_soft()) {
       //Set the Lifetime Soft Value
       RETURN_IF_ERROR(table_data->SetParam(
-          kIpsecSaLtSoft, sadb_config->sa_lifetime_soft().bytes()));
+          kIpsecSaLtSoft, sadb_config.sa_lifetime_soft().bytes()));
   }
 
   return ::util::OkStatus();

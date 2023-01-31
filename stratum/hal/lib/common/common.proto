@@ -1371,6 +1371,77 @@ message TargetDatapathId {
   uint32 tdi_portout_id = 2; // Port ID for Pipeline in Output Direction
 }
 
+//-----------------------------------------------------------------------------
+// IPsec related enums and messages
+//-----------------------------------------------------------------------------
+enum IpsecMode {
+  IPSEC_MODE_TRANSPORT = 0;
+  IPSEC_MODE_TUNNEL = 1;
+}
+
+enum IpsecProtocolParams {
+  IPSEC_PROTOCOL_PARAMS_ESP = 0;
+}
+
+enum IpsecLifetimeAction {
+  IPSEC_LIFETIME_ACTION_UNSET = 0;
+  IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
+  IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
+  IPSEC_LIFETIME_ACTION_REPLACE = 3;
+}
+
+message IPsecEspSa {
+  IPsecEncryption encryption = 1;
+}
+
+message IPsecEncryption {
+  uint32 encryption_algorithm = 1;
+  string key = 2;
+  uint32 key_len = 3;
+}
+
+message IPsecSaLifetimeHard {
+  oneof value { 
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+}
+
+message IPsecSaLifetimeSoft {
+  oneof value {
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+  IpsecLifetimeAction action = 5;
+}
+
+message IPsecSADConfig {
+  uint32 offload_id = 1;
+  bool direction = 2; // true = egress, false = ingress
+  uint64 req_id = 3;
+  uint32 spi = 4;
+  bool ext_seq_num = 5;
+  uint32 anti_replay_window_size = 6;
+  IpsecProtocolParams protocol_parameters = 7;
+  IpsecMode mode = 8;
+  IPsecEspSa esp_payload = 9;
+  IPsecSaLifetimeHard sa_lifetime_hard = 10;
+  IPsecSaLifetimeSoft sa_lifetime_soft = 11;
+}
+
+message IPsecNotification {
+  uint32 device_id = 1;
+  uint32 ipsec_sa_spi = 2;
+  bool soft_liftime_expire = 3;
+  uint32 ipsec_sa_protocol = 4;
+  string ipsec_sa_dest_address = 5;
+  bool address_family = 6;
+}
+
 // DataRequest is a message used internally to request data about a component
 // or a set of components through SwitchInterface. It is specifically used in
 // ConfigMonitoringService, as part of gNMI Get/Subscribe RPC implementation.
@@ -1539,81 +1610,17 @@ message SetRequest {
         OpticalTransceiverInfo optical_transceiver_info = 3;
       }
     }
+    message IPsecSADConfigIntrnl {
+      IPsecSADConfig ipsec_sad_info = 1;
+    }
     oneof request {
       Port port = 1;
       Node node = 2;
       Chassis chassis = 3;
       OpticalNetworkInterface optical_network_interface = 4;
+      IPsecSADConfigIntrnl ipsec_sad_intrnl = 5;
     }
   }
   repeated Request requests = 1;
 }
 
-// IPsec related enums and messages
-enum IpsecMode {
-  IPSEC_MODE_TRANSPORT = 0;
-  IPSEC_MODE_TUNNEL = 1;
-}
-
-enum IpsecProtocolParams {
-  IPSEC_PROTOCOL_PARAMS_ESP = 0;
-}
-
-enum IpsecLifetimeAction {
-  IPSEC_LIFETIME_ACTION_UNSET = 0;
-  IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
-  IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
-  IPSEC_LIFETIME_ACTION_REPLACE = 3;
-}
-
-message IPsecEspSa {
-  IPsecEncryption encryption = 1;
-}
-
-message IPsecEncryption {
-  uint32 encryption_algorithm = 1;
-  string key = 2;
-  uint32 key_len = 3;
-}
-
-message IPsecSaLifetimeHard {
-  oneof value { 
-    uint32 time = 1;
-    uint64 bytes = 2;
-    uint32 packets = 3;
-    uint32 idle = 4;
-  }
-}
-
-message IPsecSaLifetimeSoft {
-  oneof value {
-    uint32 time = 1;
-    uint64 bytes = 2;
-    uint32 packets = 3;
-    uint32 idle = 4;
-  }
-  IpsecLifetimeAction action = 5;
-}
-
-message IPsecSADConfig {
-  uint32 offload_id = 1;
-  bool direction = 2; // true = egress, false = ingress
-  uint64 req_id = 3;
-  uint32 spi = 4;
-  bool ext_seq_num = 5;
-  uint32 anti_replay_window_size = 6;
-  IpsecProtocolParams protocol_parameters = 7;
-  IpsecMode mode = 8;
-  IPsecEspSa esp_payload = 9;
-  IPsecSaLifetimeHard sa_lifetime_hard = 10;
-  IPsecSaLifetimeSoft sa_lifetime_soft = 11;
-}
-
-message IPsecNotification {
-  uint32 device_id = 1;
-  uint32 ipsec_sa_spi = 2;
-  bool soft_liftime_expire = 3;
-  uint32 ipsec_sa_protocol = 4;
-  string ipsec_sa_dest_address = 5;
-  bool address_family = 6;
-}

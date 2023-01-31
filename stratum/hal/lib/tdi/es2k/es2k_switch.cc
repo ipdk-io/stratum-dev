@@ -241,9 +241,21 @@ Es2kSwitch::~Es2kSwitch() {}
 ::util::Status Es2kSwitch::SetValue(
     uint64 node_id, const SetRequest& request,
     std::vector<::util::Status>* details) {
-  LOG(INFO) << "Es2kSwitch::SetValue is not implemented yet. Changes will "
-            << "be applied when ChassisConfig is pushed again. "
-            << request.ShortDebugString() << ".";
+
+  for (const auto& req : request.requests()) {
+    ::util::Status status = ::util::OkStatus();
+    switch (req.request_case()) {
+      case SetRequest::Request::RequestCase::kIpsecSadIntrnl: {
+        absl::WriterMutexLock l(&chassis_lock);
+        status.Update(ipsec_manager_->SetConfigSADEntry(req.ipsec_sad_intrnl().ipsec_sad_info()));
+        break;
+      }
+      default:
+        status = MAKE_ERROR(ERR_INTERNAL)
+                 << req.ShortDebugString() << " Not supported yet!";
+    }
+    if (details) details->push_back(status);
+  }
 
   return ::util::OkStatus();
 }

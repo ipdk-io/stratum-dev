@@ -35,7 +35,7 @@ class TdiFixedFunctionManager {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       std::string table_name,
       enum IPsecSadOp type,
-      IPsecSADConfig *sadb_config) LOCKS_EXCLUDED(lock_);
+      const IPsecSADConfig &sadb_config) LOCKS_EXCLUDED(lock_);
 
   // Fetch the SPI value from the TDI table
    ::util::Status FetchSpi(
@@ -54,11 +54,11 @@ class TdiFixedFunctionManager {
 
   // Builds the IPSEC SADB table key information.
   ::util::Status BuildSadbTableKey(TdiSdeInterface::TableKeyInterface* table_key,
-      IPsecSADConfig *sadb_config) SHARED_LOCKS_REQUIRED(lock_);
+      const IPsecSADConfig &sadb_config) SHARED_LOCKS_REQUIRED(lock_);
 
   // Builds the IPSEC SADB table data information.
   ::util::Status BuildSadbTableData(TdiSdeInterface::TableDataInterface* table_data,
-      IPsecSADConfig *sadb_config);
+      const IPsecSADConfig &sadb_config); SHARED_LOCKS_REQUIRED(lock_);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and

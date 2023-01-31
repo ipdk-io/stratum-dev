@@ -72,15 +72,8 @@ void SetUpIPsecSAConfig(TreeNode* node,
     IPsecSADConfig msg;
     RETURN_IF_ERROR(ParseProtoFromString(typed_val->proto_bytes(), &msg));
 
-    // Instead of SetValue() to copy to another proto message,
-    // and calling via switch_interface, this message is passed
-    // directly with the 'msg' defined on stack (instead of heap).
-//    tree->GetIPsecManager()->SetConfigSADEntry(&msg);
-    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
-    if (es2ksw_ptr == nullptr) {
-      return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
-    }
-    es2ksw_ptr->GetIPsecManager()->SetConfigSADEntry(&msg);
+    // Send the message through SwitchInterface to IPsecManager
+    RETURN_IF_ERROR(SetValue(tree, msg));
 
     // In gnmi_publisher.cc::HandleUpdate() we had stripped the key from the
     // incoming gnmi::Path message (because this tree node is generic for all
@@ -110,27 +103,19 @@ void SetUpIPsecSAConfig(TreeNode* node,
     // Note: if using a gnmi client which supports multiple keys,
     // will work as expected
 
-    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
-    if (es2ksw_ptr == nullptr) {
-      return MAKE_ERROR(ERR_INTERNAL) << "Error casting SwitchInterface to Es2KSwitch";
-    }
-
     uint32 offload_id = static_cast<uint32>(std::stoul(val.at(0)));
     bool direction;
     if (val.size() == 1) {
       direction = true;
 //      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
       direction = false;
 //      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
 
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
     } else if (val.size() == 2) {
       direction = (val.at(1).compare("1") == 0) ? true : false;
 //      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-      es2ksw_ptr->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
       (*elem->mutable_key())["direction"] = val.at(1);

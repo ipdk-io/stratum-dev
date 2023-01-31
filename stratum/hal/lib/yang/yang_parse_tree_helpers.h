@@ -130,6 +130,23 @@ template <typename U, typename V>
   return (details.size() == 1) ? details.at(0) : ::util::OkStatus();
 }
 
+// IPsec ConfigSADEntry version
+template <typename V>
+::util::Status SetValue(YangParseTree* tree,
+                        const V& value) {
+  // Create a set request.
+  SetRequest req;
+  auto* request = req.add_requests()->mutable_ipsec_sad_intrnl();
+  *(request->mutable_ipsec_sad_info()) = value;
+
+  std::vector<::util::Status> details;
+  tree->GetSwitchInterface()
+      ->SetValue(/*node_id*/ 0, req, &details)
+      .IgnoreError();
+  // Return status of the operation.
+  return (details.size() == 1) ? details.at(0) : ::util::OkStatus();
+}
+
 // A family of helper functions that create a functor that reads a value of
 // type U from an event of type T. 'get_func' points to the method that reads
 // the actual value from the event.

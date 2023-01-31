@@ -57,7 +57,7 @@ class IPsecManager {
   virtual ::util::Status GetSpiData(uint32 &fetched_spi)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
-  virtual ::util::Status SetConfigSADEntry(IPsecSADConfig *msg)
+  virtual ::util::Status SetConfigSADEntry(const IPsecSADConfig &msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   virtual ::util::Status DeleteConfigSADEntry(uint32 &offload_id, bool &direction)
@@ -105,7 +105,9 @@ class IPsecManager {
   // class.
   IPsecManager(TdiSdeInterface* tdi_sde_interface, TdiFixedFunctionManager* tdi_fixed_function_manager);
 
-  virtual ::util::Status writeConfigSADEntry(std::string table_name, enum IPsecSadOp op_type, IPsecSADConfig *msg)
+  virtual ::util::Status writeConfigSADEntry(std::string table_name,
+                                             enum IPsecSadOp op_type,
+                                             const IPsecSADConfig &msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   // WriterInterface<GnmiEventPtr> object for sending event notifications.

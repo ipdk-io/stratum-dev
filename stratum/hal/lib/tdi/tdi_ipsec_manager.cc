@@ -95,7 +95,7 @@ IPsecManager::~IPsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::SetConfigSADEntry(IPsecSADConfig *msg) {
+::util::Status IPsecManager::SetConfigSADEntry(const IPsecSADConfig &msg) {
   // TODO (5abeel): Initilizing the notification callback on FetchSPI because TDI layer
   // is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
@@ -120,24 +120,24 @@ IPsecManager::~IPsecManager() = default;
 
   return writeConfigSADEntry(IPSEC_CONFIG_SADB_TABLE_NAME,
                              IPsecSadOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                             &msg);
+                             msg);
 }
 
 ::util::Status IPsecManager::writeConfigSADEntry(std::string table_name,
                                                  enum IPsecSadOp op_type,
-                                                 IPsecSADConfig *msg) {
+                                                 const IPsecSADConfig &msg) {
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   auto status = tdi_fixed_function_manager_->WriteSadbEntry(session, table_name, op_type, msg);
   if (status != ::util::OkStatus()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
-           << "One or more write operations failed offload-id=" << msg->offload_id()
-           << ", direction=" << msg->direction()
+           << "One or more write operations failed offload-id=" << msg.offload_id()
+           << ", direction=" << msg.direction()
            << ", op type=" << op_type
            << ", table_name=" << table_name;
   }
   LOG(INFO) << "ConfigSA write operation completed successfully for "
-            << "offload-id=" << msg->offload_id()
-            << ", direction=" << msg->direction()
+            << "offload-id=" << msg.offload_id()
+            << ", direction=" << msg.direction()
             << ", op type=" << op_type
             << ", table_name=" << table_name;
   return ::util::OkStatus();
