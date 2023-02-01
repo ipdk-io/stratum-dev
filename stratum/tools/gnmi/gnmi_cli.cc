@@ -7,34 +7,35 @@
 #include <string>
 #include <vector>
 
-#define STRIP_FLAG_HELP 1  // remove additional flag help text from gflag
+#include "absl/cleanup/cleanup.h"
 #include "gflags/gflags.h"
 #include "gnmi/gnmi.grpc.pb.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/security/credentials.h"
 #include "grpcpp/security/tls_credentials_options.h"
 #include "re2/re2.h"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
+#include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
+#include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
 
-DEFINE_string(grpc_addr, "127.0.0.1:9339", "gNMI server address");
+#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
+
+DEFINE_string(grpc_addr, stratum::kLocalStratumUrl, "gNMI server address");
 DEFINE_string(bool_val, "", "Boolean value to be set");
 DEFINE_string(int_val, "", "Integer value to be set (64-bit)");
 DEFINE_string(uint_val, "", "Unsigned integer value to be set (64-bit)");
 DEFINE_string(string_val, "", "String value to be set");
 DEFINE_string(float_val, "", "Floating point value to be set");
 DEFINE_string(bytes_val_file, "", "A file to be sent as bytes value");
+DEFINE_string(proto_bytes, "", "Floating point value to be set");
 
 DEFINE_uint64(interval, 5000, "Subscribe poll interval in ms");
 DEFINE_bool(replace, false, "Use replace instead of update");
 DEFINE_string(get_type, "ALL", "The gNMI get request type");
-DEFINE_string(ca_cert, "", "CA certificate");
-DEFINE_string(client_cert, "", "Client certificate");
-DEFINE_string(client_key, "", "Client key");
 
 #define PRINT_MSG(msg, prompt)                   \
   do {                                           \
@@ -70,7 +71,6 @@ positional arguments:
   path                                              gNMI path
 
 optional arguments:
-  --help            show this help message and exit
   --grpc_addr GRPC_ADDR    gNMI server address
   --bool_val BOOL_VAL      [SetRequest only] Set boolean value
   --int_val INT_VAL        [SetRequest only] Set int value (64-bit)
@@ -81,9 +81,6 @@ optional arguments:
   --interval INTERVAL      [Sample subscribe only] Sample subscribe poll interval in ms
   --replace                [SetRequest only] Use replace instead of update
   --get-type               [GetRequest only] Use specific data type for get request (ALL,CONFIG,STATE,OPERATIONAL)
-  --ca-cert                CA certificate
-  --client-cert            gRPC Client certificate
-  --client-key             gRPC Client key
 )USAGE";
 
 // Pipe file descriptors used to transfer signals from the handler to the cancel
@@ -177,6 +174,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     update->mutable_val()->set_uint_val(stoull(FLAGS_uint_val));
   } else if (!FLAGS_float_val.empty()) {
     update->mutable_val()->set_float_val(stof(FLAGS_float_val));
+  } else if (!FLAGS_proto_bytes.empty()) {
+    update->mutable_val()->set_proto_bytes(FLAGS_proto_bytes);
   } else if (!FLAGS_string_val.empty()) {
     update->mutable_val()->set_string_val(FLAGS_string_val);
   } else if (!FLAGS_bytes_val_file.empty()) {
@@ -221,12 +220,23 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
 }
 
 ::util::Status Main(int argc, char** argv) {
+
+  // Default certificate file location for TLS-mode
+  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
+  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
+  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
+  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
+  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
+
+  // Parse command line flags
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   ::gflags::SetUsageMessage(kUsage);
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();
   if (argc < 2) {
     std::cout << kUsage << std::endl;
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid number of arguments.";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid number of arguments.";
   }
 
   ::grpc::ClientContext ctx;
@@ -239,8 +249,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   CHECK_RETURN_IF_FALSE(std::signal(SIGINT, HandleSignal) != SIG_ERR);
   pthread_t context_cancel_tid;
   CHECK_RETURN_IF_FALSE(pthread_create(&context_cancel_tid, nullptr,
-                                       ContextCancelThreadFunc, nullptr) == 0);
-  auto cleaner = gtl::MakeCleanup([&context_cancel_tid, &ctx] {
+                           ContextCancelThreadFunc, nullptr) == 0);
+  auto cleaner = absl::MakeCleanup([&context_cancel_tid, &ctx] {
     int signal = SIGINT;
     write(pipe_write_fd_, &signal, sizeof(signal));
     if (pthread_join(context_cancel_tid, nullptr) != 0) {
@@ -252,37 +262,11 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     ctx.TryCancel();
   });
 
-  std::shared_ptr<::grpc::ChannelCredentials> channel_credentials =
-      ::grpc::InsecureChannelCredentials();
-#if 0
-  if (!FLAGS_ca_cert.empty()) {
-    ::grpc::string pem_root_certs;
-    ::grpc::experimental::TlsKeyMaterialsConfig::PemKeyCertPair
-        pem_key_cert_pair;
-    auto key_materials_config =
-        std::make_shared<::grpc::experimental::TlsKeyMaterialsConfig>();
-    ::util::Status status;
-    status.Update(::stratum::ReadFileToString(FLAGS_ca_cert, &pem_root_certs));
-    key_materials_config->set_pem_root_certs(pem_root_certs);
-
-    if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
-      status.Update(::stratum::ReadFileToString(FLAGS_client_cert,
-                                                &pem_key_cert_pair.cert_chain));
-      status.Update(::stratum::ReadFileToString(
-          FLAGS_client_key, &pem_key_cert_pair.private_key));
-      key_materials_config->add_pem_key_cert_pair(pem_key_cert_pair);
-    }
-
-    auto cred_opts = ::grpc::experimental::TlsCredentialsOptions(
-        GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE, GRPC_TLS_SERVER_VERIFICATION,
-        key_materials_config, nullptr, nullptr);
-
-    if (status.ok()) {
-      channel_credentials = ::grpc::experimental::TlsCredentials(cred_opts);
-    }
-  }
-#endif
-  auto channel = ::grpc::CreateChannel(FLAGS_grpc_addr, channel_credentials);
+  ASSIGN_OR_RETURN(auto credentials_manager,
+                   CredentialsManager::CreateInstance(true));
+  auto channel = ::grpc::CreateChannel(
+      FLAGS_grpc_addr,
+      credentials_manager->GenerateExternalFacingClientCredentials());
   auto stub = ::gnmi::gNMI::NewStub(channel);
   std::string cmd = std::string(argv[1]);
 
@@ -296,8 +280,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   }
 
   if (argc < 3) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Missing path for " << cmd << " request.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Missing path for " << cmd << " request.";
   }
   std::string path = std::string(argv[2]);
 
@@ -323,8 +307,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     auto stream_reader_writer = stub->Subscribe(&ctx);
     ::gnmi::SubscribeRequest req = BuildGnmiSubOnchangeRequest(path);
     PRINT_MSG(req, "REQUEST");
-    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req))
-        << "Can not write request.";
+    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");
@@ -335,15 +318,14 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     ::gnmi::SubscribeRequest req =
         BuildGnmiSubSampleRequest(path, FLAGS_interval);
     PRINT_MSG(req, "REQUEST");
-    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req))
-        << "Can not write request.";
+    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");
     }
     RETURN_IF_GRPC_ERROR(stream_reader_writer->Finish());
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Unknown command: " << cmd;
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Unknown command: " << cmd;
   }
   LOG(INFO) << "Done.";
 

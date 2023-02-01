@@ -60,6 +60,12 @@ class TableDataMock : public TdiSdeInterface::TableDataInterface {
   MOCK_METHOD2(SetCounterData, ::util::Status(uint64 bytes, uint64 packets));
   MOCK_CONST_METHOD2(GetCounterData,
                      ::util::Status(uint64* bytes, uint64* packets));
+  MOCK_METHOD5(SetMeterConfig,
+               ::util::Status(bool in_pps, uint64 cir, uint64 cburst,
+                              uint64 pir, uint64 pburst));
+  MOCK_CONST_METHOD5(GetMeterConfig,
+                     ::util::Status(bool in_pps, uint64* cir, uint64* cburst,
+                                    uint64* pir, uint64* pburst));
   MOCK_CONST_METHOD1(GetActionId, ::util::Status(int* action_id));
   MOCK_METHOD1(Reset, ::util::Status(int action_id));
 };

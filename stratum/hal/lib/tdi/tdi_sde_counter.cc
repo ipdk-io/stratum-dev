@@ -57,18 +57,19 @@ using namespace stratum::hal::tdi::helpers;
   if (byte_count.has_value()) {
     tdi_id_t field_id;
     dataFieldInfo = table->tableInfoGet()->dataFieldGet(kCounterBytes);
-    RETURN_IF_NULL(dataFieldInfo);
-    field_id = dataFieldInfo->idGet();
-    RETURN_IF_TDI_ERROR(table_data->setValue(field_id, byte_count.value()));
+    if (dataFieldInfo) {
+      field_id = dataFieldInfo->idGet();
+      RETURN_IF_TDI_ERROR(table_data->setValue(field_id, byte_count.value()));
+    }
   }
   // Counter data: $COUNTER_SPEC_PKTS
   if (packet_count.has_value()) {
     tdi_id_t field_id;
     dataFieldInfo = table->tableInfoGet()->dataFieldGet(kCounterPackets);
-    RETURN_IF_NULL(dataFieldInfo);
-    field_id = dataFieldInfo->idGet();
-    RETURN_IF_TDI_ERROR(
-          table_data->setValue(field_id, packet_count.value()));
+    if (dataFieldInfo) {
+      field_id = dataFieldInfo->idGet();
+      RETURN_IF_TDI_ERROR(table_data->setValue(field_id, packet_count.value()));
+    }
   }
   const ::tdi::Device *device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -76,14 +77,8 @@ using namespace stratum::hal::tdi::helpers;
   device->createTarget(&dev_tgt);
 
   const auto flags = ::tdi::Flags(0);
-  if(byte_count.value() == 0 && packet_count.value() == 0) {
-    LOG(INFO) << "Resetting counters";
-    RETURN_IF_TDI_ERROR(table->clear(
-      *real_session->tdi_session_, *dev_tgt, flags));
-  } else {
-    RETURN_IF_TDI_ERROR(table->entryMod(
-     *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
-  }
+  RETURN_IF_TDI_ERROR(table->entryMod(
+    *real_session->tdi_session_, *dev_tgt, flags, *table_key, *table_data));
 
   return ::util::OkStatus();
 }
