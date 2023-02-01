@@ -73,7 +73,9 @@ void SetUpIPsecSAConfig(TreeNode* node,
     RETURN_IF_ERROR(ParseProtoFromString(typed_val->proto_bytes(), &msg));
 
     // Send the message through SwitchInterface to IPsecManager
-    RETURN_IF_ERROR(SetValue(tree, msg));
+    RETURN_IF_ERROR(SetValue(tree,
+                             IPsecSadbOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
+                             msg));
 
     // In gnmi_publisher.cc::HandleUpdate() we had stripped the key from the
     // incoming gnmi::Path message (because this tree node is generic for all
@@ -98,24 +100,38 @@ void SetUpIPsecSAConfig(TreeNode* node,
     auto* elem = path_ptr->mutable_elem(2);
     
     // TODO: remove later after gnmi_cli is fixed
-    // gnmi_cli does not support multiple keys. For now, will make two calls to 
-    // DeleteSADEntry in both directions if only one key passed.
+    // gnmi_cli does not support multiple keys. For now, will make two
+    // calls to delete in both directions if only one key passed.
     // Note: if using a gnmi client which supports multiple keys,
     // will work as expected
 
+    // Delete op in TdiFixedFunctionManager::WriteSadbEntry() only accesses
+    // the offload_id and direction, so create a IPsecSADConfig with the
+    // offload_id and direction set and call writeConfigSADEntry
+
     uint32 offload_id = static_cast<uint32>(std::stoul(val.at(0)));
-    bool direction;
+    IPsecSADConfig msg;
+    msg.set_offload_id(offload_id);
+
     if (val.size() == 1) {
-      direction = true;
-//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
-      direction = false;
-//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+      msg.set_direction(true);
+      // Send the message through SwitchInterface to IPsecManager
+      RETURN_IF_ERROR(SetValue(tree,
+                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                              msg));
+      msg.set_direction(false);
+      RETURN_IF_ERROR(SetValue(tree,
+                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                              msg));
 
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
     } else if (val.size() == 2) {
-      direction = (val.at(1).compare("1") == 0) ? true : false;
-//      tree->GetIPsecManager()->DeleteConfigSADEntry(offload_id, direction);
+      bool direction = (val.at(1).compare("1") == 0) ? true : false;
+      msg.set_direction(direction);
+      RETURN_IF_ERROR(SetValue(tree,
+                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                              msg));
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
       (*elem->mutable_key())["direction"] = val.at(1);

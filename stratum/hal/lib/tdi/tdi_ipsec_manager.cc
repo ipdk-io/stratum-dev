@@ -95,9 +95,10 @@ IPsecManager::~IPsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::SetConfigSADEntry(const IPsecSADConfig &msg) {
-  // TODO (5abeel): Initilizing the notification callback on FetchSPI because TDI layer
-  // is not initialized until 'set-pipe' is completed by user via P4RT
+::util::Status IPsecManager::WriteConfigSADEntry(const IPsecSadbOp op_type,
+                                               const IPsecSADConfig &msg) {
+  // TODO (5abeel): Initilizing the notification callback on FetchSPI because
+  // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
       auto status = InitializeNotificationCallback();
       if (status == ::util::OkStatus()) {
@@ -105,43 +106,24 @@ IPsecManager::~IPsecManager() = default;
       }
   }
 
-  return writeConfigSADEntry(IPSEC_CONFIG_SADB_TABLE_NAME,
-                             IPsecSadOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
-                             msg);
-}
-
-::util::Status IPsecManager::DeleteConfigSADEntry(uint32 &offload_id, bool &direction) {
-  // Delete op in TdiFixedFunctionManager::WriteSadbEntry() only accesses the offload_id
-  // and direction, so create a IPsecSADConfig with the offload_id and direction set and
-  // call writeConfigSADEntry
-  IPsecSADConfig msg;
-  msg.set_offload_id(offload_id);
-  msg.set_direction(direction);
-
-  return writeConfigSADEntry(IPSEC_CONFIG_SADB_TABLE_NAME,
-                             IPsecSadOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                             msg);
-}
-
-::util::Status IPsecManager::writeConfigSADEntry(std::string table_name,
-                                                 enum IPsecSadOp op_type,
-                                                 const IPsecSADConfig &msg) {
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
-  auto status = tdi_fixed_function_manager_->WriteSadbEntry(session, table_name, op_type, msg);
+  auto status = tdi_fixed_function_manager_->WriteSadbEntry(session,
+                                          IPSEC_CONFIG_SADB_TABLE_NAME,
+                                          op_type,
+                                          msg);
   if (status != ::util::OkStatus()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more write operations failed offload-id=" << msg.offload_id()
            << ", direction=" << msg.direction()
            << ", op type=" << op_type
-           << ", table_name=" << table_name;
+           << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   }
   LOG(INFO) << "ConfigSA write operation completed successfully for "
             << "offload-id=" << msg.offload_id()
             << ", direction=" << msg.direction()
             << ", op type=" << op_type
-            << ", table_name=" << table_name;
+            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   return ::util::OkStatus();
-
 }
 
 void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,

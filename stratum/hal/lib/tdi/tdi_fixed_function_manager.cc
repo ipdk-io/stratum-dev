@@ -42,7 +42,8 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 
 ::util::Status TdiFixedFunctionManager::WriteSadbEntry(
   std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-  std::string table_name, enum IPsecSadOp op_type,
+  std::string table_name,
+  const IPsecSadbOp op_type,
   const IPsecSADConfig &sadb_config) {
 
   absl::ReaderMutexLock l(&lock_);

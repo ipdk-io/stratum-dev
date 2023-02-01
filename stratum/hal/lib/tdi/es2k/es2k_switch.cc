@@ -245,9 +245,11 @@ Es2kSwitch::~Es2kSwitch() {}
   for (const auto& req : request.requests()) {
     ::util::Status status = ::util::OkStatus();
     switch (req.request_case()) {
-      case SetRequest::Request::RequestCase::kIpsecSadIntrnl: {
+      case SetRequest::Request::RequestCase::kIpsecSadbIntrnl: {
         absl::WriterMutexLock l(&chassis_lock);
-        status.Update(ipsec_manager_->SetConfigSADEntry(req.ipsec_sad_intrnl().ipsec_sad_info()));
+        auto op_type = req.ipsec_sadb_intrnl().ipsec_sadb_op();
+        auto payload = req.ipsec_sadb_intrnl().ipsec_sadb_info();
+        status.Update(ipsec_manager_->WriteConfigSADEntry(op_type, payload));
         break;
       }
       default:

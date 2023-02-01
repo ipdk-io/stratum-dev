@@ -15,12 +15,6 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-enum IPsecSadOp {
-  IPSEC_SADB_CONFIG_OP_ADD_ENTRY = 0,
-  IPSEC_SADB_CONFIG_OP_MOD_ENTRY = 1, // MOD_ENTRY is for future use
-  IPSEC_SADB_CONFIG_OP_DEL_ENTRY = 2
-};
-
 class TdiFixedFunctionManager {
  public:
   // Initializes Notification table callback
@@ -34,7 +28,7 @@ class TdiFixedFunctionManager {
   ::util::Status WriteSadbEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       std::string table_name,
-      enum IPsecSadOp type,
+      const IPsecSadbOp op_type,
       const IPsecSADConfig &sadb_config) LOCKS_EXCLUDED(lock_);
 
   // Fetch the SPI value from the TDI table

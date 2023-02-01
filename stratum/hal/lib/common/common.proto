@@ -1390,6 +1390,12 @@ enum IpsecLifetimeAction {
   IPSEC_LIFETIME_ACTION_REPLACE = 3;
 }
 
+enum IPsecSadbOp {
+  IPSEC_SADB_CONFIG_OP_ADD_ENTRY = 0;
+  IPSEC_SADB_CONFIG_OP_MOD_ENTRY = 1;
+  IPSEC_SADB_CONFIG_OP_DEL_ENTRY = 2;
+}
+
 message IPsecEspSa {
   IPsecEncryption encryption = 1;
 }
@@ -1610,15 +1616,16 @@ message SetRequest {
         OpticalTransceiverInfo optical_transceiver_info = 3;
       }
     }
-    message IPsecSADConfigIntrnl {
-      IPsecSADConfig ipsec_sad_info = 1;
+    message IPsecSADBConfigIntrnl {
+      IPsecSadbOp ipsec_sadb_op = 1;
+      IPsecSADConfig ipsec_sadb_info = 2;
     }
     oneof request {
       Port port = 1;
       Node node = 2;
       Chassis chassis = 3;
       OpticalNetworkInterface optical_network_interface = 4;
-      IPsecSADConfigIntrnl ipsec_sad_intrnl = 5;
+      IPsecSADBConfigIntrnl ipsec_sadb_intrnl = 5;
     }
   }
   repeated Request requests = 1;
