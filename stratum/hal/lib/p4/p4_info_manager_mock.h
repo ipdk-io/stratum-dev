@@ -49,6 +49,12 @@ class P4InfoManagerMock : public P4InfoManager {
                      ::util::StatusOr<const ::p4::config::v1::Meter>(
                          const std::string& meter_name));
   MOCK_CONST_METHOD1(
+      FindDirectMeterByID,
+      ::util::StatusOr<const ::p4::config::v1::DirectMeter>(uint32 meter_id));
+  MOCK_CONST_METHOD1(FindDirectMeterByName,
+                     ::util::StatusOr<const ::p4::config::v1::DirectMeter>(
+                         const std::string& meter_name));
+  MOCK_CONST_METHOD1(
       FindValueSetByID,
       ::util::StatusOr<const ::p4::config::v1::ValueSet>(uint32 value_set_id));
   MOCK_CONST_METHOD1(FindValueSetByName,

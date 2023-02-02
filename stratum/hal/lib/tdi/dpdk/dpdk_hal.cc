@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
@@ -14,15 +14,13 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
+#include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
-
-#ifdef KRNLMON_SUPPORT
-#include "krnlmon_main.h"
-#endif
 
 // TODO(unknown): Use FLAG_DEFINE for all flags.
 DEFINE_string(external_stratum_urls, stratum::kExternalStratumUrls,
@@ -45,6 +43,8 @@ DEFINE_uint32(grpc_max_recv_msg_size, 256 * 1024 * 1024,
               "grpc server max receive message size (0 = gRPC default).");
 DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
+DEFINE_bool(grpc_open_insecure_mode, false,
+            "open grpc server ports in insecure mode for gNMI, gNOI, and P4RT");
 
 DECLARE_string(forwarding_pipeline_configs_file);
 
@@ -89,7 +89,9 @@ int DpdkHal::pipe_read_fd_ = -1;
 int DpdkHal::pipe_write_fd_ = -1;
 
 DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
-                 AuthPolicyChecker* auth_policy_checker)
+                 AuthPolicyChecker* auth_policy_checker,
+                 absl::Notification* ready_sync,
+                 absl::Notification* done_sync)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -98,7 +100,9 @@ DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
       p4_service_(nullptr),
       external_server_(nullptr),
       old_signal_handlers_(),
-      signal_waiter_tid_(0) {}
+      signal_waiter_tid_(0),
+      ready_sync_(ready_sync),
+      done_sync_(done_sync) {}
 
 DpdkHal::~DpdkHal() {
   // TODO(unknown): Handle this error?
@@ -201,14 +205,45 @@ DpdkHal::~DpdkHal() {
   const std::vector<std::string> external_stratum_urls =
       absl::StrSplit(FLAGS_external_stratum_urls, ',');
   {
+    std::string log_output_str;
     ::grpc::ServerBuilder builder;
     SetGrpcServerKeepAliveArgs(&builder);
 
-    builder.AddListeningPort(FLAGS_local_stratum_url,
-                             ::grpc::InsecureServerCredentials());
+    if (FLAGS_grpc_open_insecure_mode) {
+      // User has chosen to open insecure ports
+      LOG(WARNING) << "Warning: Flag set to open gRPC insecure ports";
+      log_output_str = "[insecure mode] ";
+      builder.AddListeningPort(FLAGS_local_stratum_url,
+                              ::grpc::InsecureServerCredentials());
 
-    for (const auto& url : external_stratum_urls) {
-      builder.AddListeningPort(url, ::grpc::InsecureServerCredentials());
+      for (const auto& url : external_stratum_urls) {
+        builder.AddListeningPort(url, ::grpc::InsecureServerCredentials());
+      }
+    } else {
+      log_output_str = "[secure mode] ";
+      auto credentials_manager = stratum::CredentialsManager::CreateInstance(true);
+      if (!credentials_manager.ok()) {
+        LOG(ERROR) << "Credentials Manager initialization failed. Unable to open ports for gRPC";
+        // assert(credentials_manager.ok()); // Without gRPC, InfraP4D cannot do much. Exit process
+        // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+        exit(1);        
+      } else {
+        auto resp = credentials_manager.ConsumeValueOrDie();
+        auto server_credentials = resp.get()->GenerateExternalFacingServerCredentials();
+        if (server_credentials == nullptr) {
+          LOG(ERROR) << "Unable to initiate server credentials. This is an internal error.";
+          // assert(server_credentials); // Without gRPC, InfraP4D cannot do much. Exit process
+          // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+          exit(1);        
+        }
+
+        builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
+
+        for (const auto& url : external_stratum_urls) {
+          builder.AddListeningPort(url, server_credentials);
+        }
+
+      }
     }
 
     if (FLAGS_grpc_max_recv_msg_size > 0) {
@@ -230,27 +265,25 @@ DpdkHal::~DpdkHal() {
              << "Failed to start Stratum external facing services. This is an "
              << "internal error.";
     }
-    LOG(ERROR) << "Stratum external facing services are listening to "
+    LOG(ERROR) << log_output_str
+               << "Stratum external facing services are listening to "
                << absl::StrJoin(external_stratum_urls, ", ") << ", "
                << FLAGS_local_stratum_url << "...";
   }
 
-#ifdef KRNLMON_SUPPORT
-  //TODO: See if this can be moved to dpdk_main.cc
-  int krnlmon_status = krnlmon_init();
-  if (krnlmon_status) {
-      return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to start krnlmon thread";
+  // Signal that the server is listening.
+  if (ready_sync_ != nullptr) {
+    ready_sync_->Notify();
   }
-#endif
 
   // Block until external_server_->Shutdown() is called.
   // We don't wait on internal_service.
   external_server_->Wait();
 
-#ifdef KRNLMON_SUPPORT
-  krnlmon_shutdown();
-#endif
+  // Signal that the server is terminating.
+  if (done_sync_ != nullptr) {
+    done_sync_->Notify();
+  }
 
   return Teardown();
 }
@@ -267,16 +300,20 @@ void DpdkHal::HandleSignal(int value) {
 
 DpdkHal* DpdkHal::CreateSingleton(OperationMode mode,
                                   SwitchInterface* switch_interface,
-                                  AuthPolicyChecker* auth_policy_checker) {
+                                  AuthPolicyChecker* auth_policy_checker,
+                                  absl::Notification* ready_sync,
+                                  absl::Notification* done_sync) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
-    singleton_ = new DpdkHal(mode, switch_interface, auth_policy_checker);
+    singleton_ = new DpdkHal(mode, switch_interface, auth_policy_checker,
+                             ready_sync, done_sync);
 
     ::util::Status status = singleton_->RegisterSignalHandlers();
     if (!status.ok()) {
       LOG(ERROR) << "RegisterSignalHandlers() failed: " << status;
       delete singleton_;
       singleton_ = nullptr;
+      return nullptr;
     }
 
     status = singleton_->InitializeServer();
@@ -303,9 +340,9 @@ DpdkHal* DpdkHal::GetSingleton() {
   }
 
 ::util::Status DpdkHal::InitializeServer() {
-  CHECK_IS_NULL(config_monitoring_service_);
-  CHECK_IS_NULL(p4_service_);
-  CHECK_IS_NULL(external_server_);
+  CHECK_IS_NULL(config_monitoring_service_.get());
+  CHECK_IS_NULL(p4_service_.get());
+  CHECK_IS_NULL(external_server_.get());
   // FIXME(boc) google only
   // CHECK_IS_NULL(internal_server_);
 

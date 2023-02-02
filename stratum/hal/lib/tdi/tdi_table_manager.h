@@ -57,6 +57,13 @@ class TdiTableManager {
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
       LOCKS_EXCLUDED(lock_);
 
+  // Modify the meter config of a table entry.
+  ::util::Status WriteDirectMeterEntry(
+      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const ::p4::v1::Update::Type type,
+      const ::p4::v1::DirectMeterEntry& direct_meter_entry)
+      LOCKS_EXCLUDED(lock_);
+
   // Modify the data of a register entry.
   ::util::Status WriteRegisterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
@@ -73,6 +80,12 @@ class TdiTableManager {
   ::util::StatusOr<::p4::v1::DirectCounterEntry> ReadDirectCounterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
+      LOCKS_EXCLUDED(lock_);
+
+  // Read the meter config of a table entry.
+  ::util::StatusOr<::p4::v1::DirectMeterEntry> ReadDirectMeterEntry(
+      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const ::p4::v1::DirectMeterEntry& direct_meter_entry)
       LOCKS_EXCLUDED(lock_);
 
   // Read the data of a register entry.

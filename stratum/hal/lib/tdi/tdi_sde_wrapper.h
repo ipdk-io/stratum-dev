@@ -56,7 +56,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-  CreateTableKey(const ::tdi::TdiInfo* tdi_info_, int table_id);
+  CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableKey> table_key_;
@@ -79,12 +79,16 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   ::util::Status GetSelectorGroupId(uint64* selector_group_id) const override;
   ::util::Status SetCounterData(uint64 bytes, uint64 packets) override;
   ::util::Status GetCounterData(uint64* bytes, uint64* packets) const override;
+  ::util::Status SetMeterConfig(bool in_pps, uint64 cir, uint64 cburst,
+                                uint64 pir, uint64 pburst) override;
+  ::util::Status GetMeterConfig(bool in_pps, uint64* cir, uint64* cburst,
+                                uint64* pir, uint64* pburst) const override;
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
 
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-  CreateTableData(const ::tdi::TdiInfo* tdi_info_, int table_id,
+  CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
                   int action_id);
 
   // Stores the underlying SDE object.
