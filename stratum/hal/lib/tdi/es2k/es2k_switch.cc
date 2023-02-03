@@ -221,6 +221,18 @@ Es2kSwitch::~Es2kSwitch() {}
         }
         break;
       }
+      // IPsecOffload request
+      case DataRequest::Request::kIpsecOffloadInfo: {
+        uint32 fetched_spi=0;
+        auto fetch_status = ipsec_manager_->GetSpiData(fetched_spi);
+        if (!fetch_status.ok()) {
+          status.Update(fetch_status);
+        } else {
+          auto* info = resp.mutable_ipsec_offload_info();
+          info->set_spi(fetched_spi);
+        }
+        break;
+      }
       default:
         status =
             MAKE_ERROR(ERR_UNIMPLEMENTED)
@@ -245,10 +257,11 @@ Es2kSwitch::~Es2kSwitch() {}
   for (const auto& req : request.requests()) {
     ::util::Status status = ::util::OkStatus();
     switch (req.request_case()) {
-      case SetRequest::Request::RequestCase::kIpsecSadbIntrnl: {
+      case SetRequest::Request::RequestCase::kIpsecOffloadConfig: {
         absl::WriterMutexLock l(&chassis_lock);
-        auto op_type = req.ipsec_sadb_intrnl().ipsec_sadb_op();
-        auto payload = req.ipsec_sadb_intrnl().ipsec_sadb_info();
+        auto op_type = req.ipsec_offload_config().ipsec_sadb_config_op();
+        auto payload = req.ipsec_offload_config().ipsec_sadb_config_info();
+//        printf("es2ksw. op_type=%d, offload-id=%d, key=%s\n", op_type, payload.offload_id(), payload.esp_payload().encryption().key().c_str());
         status.Update(ipsec_manager_->WriteConfigSADEntry(op_type, payload));
         break;
       }

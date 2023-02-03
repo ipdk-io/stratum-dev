@@ -133,13 +133,13 @@ template <typename U, typename V>
 // IPsec ConfigSADEntry version
 template <typename V>
 ::util::Status SetValue(YangParseTree* tree,
-                        IPsecSadbOp op_type,
+                        IPsecSadbConfigOp op_type,
                         const V& value) {
   // Create a set request.
   SetRequest req;
-  auto* request = req.add_requests()->mutable_ipsec_sadb_intrnl();
-  request->set_ipsec_sadb_op(op_type);
-  *(request->mutable_ipsec_sadb_info()) = value;
+  auto* request = req.add_requests()->mutable_ipsec_offload_config();
+  request->set_ipsec_sadb_config_op(op_type);
+  *(request->mutable_ipsec_sadb_config_info()) = value;
 
   std::vector<::util::Status> details;
   tree->GetSwitchInterface()

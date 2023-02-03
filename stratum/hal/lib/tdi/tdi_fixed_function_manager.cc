@@ -43,8 +43,8 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 ::util::Status TdiFixedFunctionManager::WriteSadbEntry(
   std::shared_ptr<TdiSdeInterface::SessionInterface> session,
   std::string table_name,
-  const IPsecSadbOp op_type,
-  const IPsecSADConfig &sadb_config) {
+  const IPsecSadbConfigOp op_type,
+  const IPsecSADBConfig &sadb_config) {
 
   absl::ReaderMutexLock l(&lock_);
 
@@ -99,7 +99,7 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 
 ::util::Status TdiFixedFunctionManager::BuildSadbTableKey(
   TdiSdeInterface::TableKeyInterface* table_key,
-  const IPsecSADConfig &sadb_config) {
+  const IPsecSADBConfig &sadb_config) {
   CHECK_RETURN_IF_FALSE(table_key);
   RETURN_IF_ERROR(table_key->SetExact(
       kIpsecSadbOffloadId, sadb_config.offload_id()));
@@ -110,7 +110,7 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
 
 ::util::Status TdiFixedFunctionManager::BuildSadbTableData(
   TdiSdeInterface::TableDataInterface* table_data,
-  const IPsecSADConfig &sadb_config) {
+  const IPsecSADBConfig &sadb_config) {
   CHECK_RETURN_IF_FALSE(table_data);
 
   //Set the req_id Value

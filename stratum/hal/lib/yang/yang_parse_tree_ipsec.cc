@@ -29,17 +29,31 @@ namespace {
 void SetUpIPsecFetchSPI(TreeNode* node,
                         YangParseTree* tree) {
   auto poll_functor = [tree](const GnmiEvent& event,
-                                const ::gnmi::Path& path,
-                                GnmiSubscribeStream* stream) {
-    uint32 fetched_spi=0;
+                             const ::gnmi::Path& path,
+                             GnmiSubscribeStream* stream) {
+    uint32 spi=0;
 //    auto status = tree->GetIPsecManager()->GetSpiData(fetched_spi);
-    auto es2ksw_ptr = dynamic_cast<Es2kSwitch*>(tree->GetSwitchInterface());
-    if (es2ksw_ptr == nullptr) {
-      LOG(ERROR) << "Error casting SwitchInterface to Es2KSwitch";
-    } else {
-      auto status = es2ksw_ptr->GetIPsecManager()->GetSpiData(fetched_spi);
-    }
-    return SendResponse(GetResponse(path, fetched_spi), stream);
+//    return SendResponse(GetResponse(path, fetched_spi), stream);
+
+    // Create a data retrieval request.
+    DataRequest req;
+    auto* request = req.add_requests()->mutable_ipsec_offload_info();
+    request->set_spi(spi);
+    // In-place definition of method retrieving data from generic response
+    // and saving into 'resp' local variable.
+    std::string resp{};
+    DataResponseWriter writer([&resp](const DataResponse& in) {
+      if (!in.has_ipsec_offload_info()) return false;
+      resp = in.ipsec_offload_info().spi();
+      return true;
+    });
+    // Query the switch. The returned status is ignored as there is no way to
+    // notify the controller that something went wrong. The error is logged when
+    // it is created.
+    tree->GetSwitchInterface()
+        ->RetrieveValue(/*node_id*/ 0, req, &writer, /* details= */ nullptr)
+        .IgnoreError();
+    return SendResponse(GetResponse(path, resp), stream);
   };
   auto on_change_functor = UnsupportedFunc();
   node->SetOnPollHandler(poll_functor)
@@ -66,15 +80,16 @@ void SetUpIPsecSAConfig(TreeNode* node,
       return MAKE_ERROR(ERR_INVALID_PARAM) << "Expects a Proto Bytes stream!";
     }
 
-    // printf("on_set_functor called with:\n%s\n", typed_val->ShortDebugString().c_str());
+    // printf("on_set_functor called with:\n%s\n",
+    //                  typed_val->ShortDebugString().c_str());
 
     // Conversion from yang proto to common proto
-    IPsecSADConfig msg;
+    IPsecSADBConfig msg;
     RETURN_IF_ERROR(ParseProtoFromString(typed_val->proto_bytes(), &msg));
 
     // Send the message through SwitchInterface to IPsecManager
     RETURN_IF_ERROR(SetValue(tree,
-                             IPsecSadbOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
+                             IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
                              msg));
 
     // In gnmi_publisher.cc::HandleUpdate() we had stripped the key from the
@@ -106,23 +121,23 @@ void SetUpIPsecSAConfig(TreeNode* node,
     // will work as expected
 
     // Delete op in TdiFixedFunctionManager::WriteSadbEntry() only accesses
-    // the offload_id and direction, so create a IPsecSADConfig with the
+    // the offload_id and direction, so create a IPsecSADBConfig with the
     // offload_id and direction set and call writeConfigSADEntry
 
     uint32 offload_id = static_cast<uint32>(std::stoul(val.at(0)));
-    IPsecSADConfig msg;
+    IPsecSADBConfig msg;
     msg.set_offload_id(offload_id);
 
     if (val.size() == 1) {
       msg.set_direction(true);
       // Send the message through SwitchInterface to IPsecManager
       RETURN_IF_ERROR(SetValue(tree,
-                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                              msg));
+                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                               msg));
       msg.set_direction(false);
       RETURN_IF_ERROR(SetValue(tree,
-                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                              msg));
+                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                               msg));
 
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
@@ -130,8 +145,8 @@ void SetUpIPsecSAConfig(TreeNode* node,
       bool direction = (val.at(1).compare("1") == 0) ? true : false;
       msg.set_direction(direction);
       RETURN_IF_ERROR(SetValue(tree,
-                              IPsecSadbOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                              msg));
+                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
+                               msg));
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
       (*elem->mutable_key())["direction"] = val.at(1);

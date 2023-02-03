@@ -23,10 +23,14 @@
 #include "stratum/lib/utils.h"
 #include "stratum/glue/logging.h"
 
-#define IPSEC_CONFIG_SADB_TABLE_NAME  "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config"
-#define IPSEC_FETCH_SPI_TABLE_NAME    "ipsec-offload.ipsec-offload.ipsec-spi"
-#define IPSEC_NOTIFICATION_TABLE_NAME "ipsec-offload"
-#define IPSEC_STATE_SADB_TABLE_NAME   "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-state"
+#define IPSEC_CONFIG_SADB_TABLE_NAME \
+  "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config"
+#define IPSEC_FETCH_SPI_TABLE_NAME \
+  "ipsec-offload.ipsec-offload.ipsec-spi"
+#define IPSEC_NOTIFICATION_TABLE_NAME \
+  "ipsec-offload"
+#define IPSEC_STATE_SADB_TABLE_NAME \
+  "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-state"
 
 namespace stratum {
 namespace hal {
@@ -42,30 +46,39 @@ void ipsec_notification_callback(uint32_t dev_id,
                                  char *ipsec_sa_dest_address,
                                  bool ipv4,
                                  void *cookie) {
-  //printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, ipsec_sa_protocol=%d, \
+  //printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, \
+  //       ipsec_sa_protocol=%d, \
   //       ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
-  //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol, ipsec_sa_dest_address, ipv4, cookie);
+  //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
+  //       ipsec_sa_dest_address, ipv4, cookie);
   auto ipsec_mgr_hdl = reinterpret_cast<IPsecManager *>(cookie);
-  ipsec_mgr_hdl->SendSADExpireNotificationEvent(dev_id, ipsec_sa_spi, soft_lifetime_expire,
-                                                ipsec_sa_protocol, ipsec_sa_dest_address, ipv4);
+  ipsec_mgr_hdl->SendSADExpireNotificationEvent(dev_id,
+                                                ipsec_sa_spi,
+                                                soft_lifetime_expire,
+                                                ipsec_sa_protocol,
+                                                ipsec_sa_dest_address,
+                                                ipv4);
 }
 
-IPsecManager::IPsecManager(TdiSdeInterface* tdi_sde_interface, TdiFixedFunctionManager* tdi_fixed_function_manager)
+IPsecManager::IPsecManager(TdiSdeInterface* tdi_sde_interface,
+                           TdiFixedFunctionManager* tdi_fixed_function_manager)
     : tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
+      gnmi_event_writer_(nullptr),
       notif_initialized_(false) {}
 
 IPsecManager::IPsecManager()
     : tdi_sde_interface_(nullptr),
       tdi_fixed_function_manager_(nullptr),
-      gnmi_event_writer_(nullptr) {}
+      gnmi_event_writer_(nullptr),
+      notif_initialized_(false) {}
 
 IPsecManager::~IPsecManager() = default;
 
 ::util::Status IPsecManager::InitializeNotificationCallback() {
-  auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(IPSEC_NOTIFICATION_TABLE_NAME,
-                                                                               &ipsec_notification_callback,
-                                                                               this);
+  auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
+      IPSEC_NOTIFICATION_TABLE_NAME, &ipsec_notification_callback, this);
+
   if (status != ::util::OkStatus()) {
     LOG(ERROR) << "Failed to register IPsec notification callback";
   }
@@ -73,8 +86,8 @@ IPsecManager::~IPsecManager() = default;
 }
 
 ::util::Status IPsecManager::GetSpiData(uint32 &fetched_spi) {
-  // TODO (5abeel): Initilizing the notification callback on FetchSPI because TDI layer
-  // is not initialized until 'set-pipe' is completed by user via P4RT
+  // TODO (5abeel): Initilizing the notification callback on FetchSPI because
+  // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
       auto status = InitializeNotificationCallback();
       if (status == ::util::OkStatus()) {
@@ -90,13 +103,13 @@ IPsecManager::~IPsecManager() = default;
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
   }
-  LOG(INFO) << "FetchSPI read operation successful with SPI value = "
-            << fetched_spi;
+//  LOG(INFO) << "FetchSPI read operation successful with SPI value = "
+//            << fetched_spi;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::WriteConfigSADEntry(const IPsecSadbOp op_type,
-                                               const IPsecSADConfig &msg) {
+::util::Status IPsecManager::WriteConfigSADEntry(const IPsecSadbConfigOp op_type,
+                                                 const IPsecSADBConfig &msg) {
   // TODO (5abeel): Initilizing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
@@ -113,16 +126,17 @@ IPsecManager::~IPsecManager() = default;
                                           msg);
   if (status != ::util::OkStatus()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
-           << "One or more write operations failed offload-id=" << msg.offload_id()
+           << "One or more write operations failed. "
+           << "offload-id=" << msg.offload_id()
            << ", direction=" << msg.direction()
            << ", op type=" << op_type
            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   }
-  LOG(INFO) << "ConfigSA write operation completed successfully for "
-            << "offload-id=" << msg.offload_id()
-            << ", direction=" << msg.direction()
-            << ", op type=" << op_type
-            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
+//  LOG(INFO) << "WriteSADEntry operation completed successfully for "
+//            << "offload-id=" << msg.offload_id()
+//            << ", direction=" << msg.direction()
+//            << ", op type=" << op_type
+//            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   return ::util::OkStatus();
 }
 
@@ -149,7 +163,8 @@ void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
 }
 
 std::unique_ptr<IPsecManager> IPsecManager::CreateInstance(
-    TdiSdeInterface* tdi_sde_interface, TdiFixedFunctionManager* tdi_fixed_function_manager) {
+    TdiSdeInterface* tdi_sde_interface,
+    TdiFixedFunctionManager* tdi_fixed_function_manager) {
   return absl::WrapUnique(
       new IPsecManager(tdi_sde_interface, tdi_fixed_function_manager));
 }

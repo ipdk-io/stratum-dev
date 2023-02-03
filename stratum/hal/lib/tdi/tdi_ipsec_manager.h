@@ -57,8 +57,8 @@ class IPsecManager {
   virtual ::util::Status GetSpiData(uint32 &fetched_spi)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
-  virtual ::util::Status WriteConfigSADEntry(const IPsecSadbOp op_type,
-                                             const IPsecSADConfig &msg)
+  virtual ::util::Status WriteConfigSADEntry(const IPsecSadbConfigOp op_type,
+                                             const IPsecSADBConfig &msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   // IPsecManager is neither copyable nor movable.
