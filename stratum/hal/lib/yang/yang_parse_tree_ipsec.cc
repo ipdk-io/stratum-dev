@@ -31,17 +31,12 @@ void SetUpIPsecFetchSPI(TreeNode* node,
   auto poll_functor = [tree](const GnmiEvent& event,
                              const ::gnmi::Path& path,
                              GnmiSubscribeStream* stream) {
-    uint32 spi=0;
-//    auto status = tree->GetIPsecManager()->GetSpiData(fetched_spi);
-//    return SendResponse(GetResponse(path, fetched_spi), stream);
-
     // Create a data retrieval request.
     DataRequest req;
     auto* request = req.add_requests()->mutable_ipsec_offload_info();
-    request->set_spi(spi);
     // In-place definition of method retrieving data from generic response
     // and saving into 'resp' local variable.
-    std::string resp{};
+    uint32 resp{};
     DataResponseWriter writer([&resp](const DataResponse& in) {
       if (!in.has_ipsec_offload_info()) return false;
       resp = in.ipsec_offload_info().spi();
