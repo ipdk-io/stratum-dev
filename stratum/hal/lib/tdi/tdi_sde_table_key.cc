@@ -220,6 +220,7 @@ using namespace stratum::hal::tdi::helpers;
   if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
     *prefix = ByteStringToP4RuntimeByteString(*prefix);
   }
+  *prefix_length = lpmKey.prefix_len_;
 
   return ::util::OkStatus();
 }
@@ -261,9 +262,9 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info_, int table_id) {
+TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id) {
   const ::tdi::Table* table;
-  RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
+  RETURN_IF_TDI_ERROR(tdi_info->tableFromIdGet(table_id, &table));
   std::unique_ptr<::tdi::TableKey> table_key;
   RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
   auto key = std::unique_ptr<TdiSdeInterface::TableKeyInterface>(

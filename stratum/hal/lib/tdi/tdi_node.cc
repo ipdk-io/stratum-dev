@@ -256,6 +256,9 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
         break;
       }
       case ::p4::v1::Entity::kDirectMeterEntry:
+        status = tdi_table_manager_->WriteDirectMeterEntry(
+            session, update.type(), update.entity().direct_meter_entry());
+        break;
       case ::p4::v1::Entity::kValueSetEntry:
       case ::p4::v1::Entity::kDigestEntry:
       default:
@@ -338,6 +341,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
           details->push_back(status.status());
           break;
         }
+        success &= status.ok();
+        details->push_back(status.status());
         resp.add_entities()->mutable_direct_counter_entry()->CopyFrom(
             status.ValueOrDie());
         break;
@@ -363,7 +368,20 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
         details->push_back(status);
         break;
       }
-      case ::p4::v1::Entity::kDirectMeterEntry:
+      case ::p4::v1::Entity::kDirectMeterEntry: {
+        auto status = tdi_table_manager_->ReadDirectMeterEntry(
+            session, entity.direct_meter_entry());
+        if (!status.ok()) {
+          success = false;
+          details->push_back(status.status());
+          break;
+        }
+        success &= status.ok();
+        details->push_back(status.status());
+        resp.add_entities()->mutable_direct_meter_entry()->CopyFrom(
+            status.ValueOrDie());
+        break;
+      }
       case ::p4::v1::Entity::kValueSetEntry:
       case ::p4::v1::Entity::kDigestEntry:
       default: {

@@ -45,6 +45,7 @@ TdiSdeWrapper* TdiSdeWrapper::singleton_ = nullptr;
 ABSL_CONST_INIT absl::Mutex TdiSdeWrapper::init_lock_(absl::kConstInit);
 
 TdiSdeWrapper::TdiSdeWrapper() : port_status_event_writer_(nullptr),
+                                 device_to_packet_rx_writer_(),
                                  tdi_info_(nullptr) {}
 
 // Create and start an new session.

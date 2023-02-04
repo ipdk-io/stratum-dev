@@ -143,7 +143,7 @@ bool DpdkChassisManager::IsPortParamSet(
     SetRequest::Request::Port::ValueCase value_case) {
 
   auto& config = node_id_to_port_id_to_port_config_[node_id][port_id];
-  config.SetParam(value_case, singleton_port);
+  RETURN_IF_ERROR(config.SetParam(value_case, singleton_port));
 
   if (config.HasAnyOf(GNMI_CONFIG_PORT_TYPE) && !config.port_done) {
     if (IsConfigComplete(config)) {
