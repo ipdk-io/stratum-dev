@@ -19,7 +19,6 @@
 namespace stratum {
 namespace hal {
 
-using ::stratum::hal::tdi::Es2kSwitch;
 using namespace stratum::hal::yang::helpers;
 
 namespace {

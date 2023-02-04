@@ -109,7 +109,7 @@ namespace tdi {
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
 
-  auto tdi_fixed_function_manager = 
+  auto fixed_function_manager =
       TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);
 
   auto action_profile_manager =
@@ -125,7 +125,7 @@ namespace tdi {
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto es2k_node = TdiNode::CreateInstance(
-      table_manager.get(), tdi_fixed_function_manager.get(),
+      table_manager.get(), fixed_function_manager.get(),
       action_profile_manager.get(), packetio_manager.get(),
       pre_manager.get(), counter_manager.get(),
       sde_wrapper, device_id);
@@ -138,7 +138,7 @@ namespace tdi {
       Es2kChassisManager::CreateInstance(mode, sde_wrapper, es2k_port_manager);
 
   auto ipsec_manager = 
-      IPsecManager::CreateInstance(sde_wrapper, tdi_fixed_function_manager.get());
+      IPsecManager::CreateInstance(sde_wrapper, fixed_function_manager.get());
 
   auto es2k_switch = Es2kSwitch::CreateInstance(
       chassis_manager.get(), ipsec_manager.get(), device_id_to_tdi_node);

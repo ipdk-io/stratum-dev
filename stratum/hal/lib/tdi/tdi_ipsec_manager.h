@@ -57,8 +57,8 @@ class IPsecManager {
   virtual ::util::Status GetSpiData(uint32 &fetched_spi)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
-  virtual ::util::Status WriteConfigSADEntry(const IPsecSadbConfigOp op_type,
-                                             const IPsecSADBConfig &msg)
+  virtual ::util::Status WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
+                                              IPsecSADBConfig &msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   // IPsecManager is neither copyable nor movable.
@@ -101,7 +101,8 @@ class IPsecManager {
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  IPsecManager(TdiSdeInterface* tdi_sde_interface, TdiFixedFunctionManager* tdi_fixed_function_manager);
+  IPsecManager(TdiSdeInterface* tdi_sde_interface,
+               TdiFixedFunctionManager* tdi_fixed_function_manager);
 
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
@@ -111,6 +112,7 @@ class IPsecManager {
   // Pointer to TdiSdeInterface implementation and FixedFunctionManager
   TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.
   TdiFixedFunctionManager* tdi_fixed_function_manager_;  // not owned by this class.
+
   bool notif_initialized_;
 
   friend class IPsecManagerTest;

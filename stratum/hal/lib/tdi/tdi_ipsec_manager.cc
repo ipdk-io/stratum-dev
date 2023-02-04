@@ -103,13 +103,11 @@ IPsecManager::~IPsecManager() = default;
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
   }
-//  LOG(INFO) << "FetchSPI read operation successful with SPI value = "
-//            << fetched_spi;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::WriteConfigSADEntry(const IPsecSadbConfigOp op_type,
-                                                 const IPsecSADBConfig &msg) {
+::util::Status IPsecManager::WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
+                                                  IPsecSADBConfig &msg) {
   // TODO (5abeel): Initilizing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
@@ -132,11 +130,6 @@ IPsecManager::~IPsecManager() = default;
            << ", op type=" << op_type
            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   }
-//  LOG(INFO) << "WriteSADEntry operation completed successfully for "
-//            << "offload-id=" << msg.offload_id()
-//            << ", direction=" << msg.direction()
-//            << ", op type=" << op_type
-//            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   return ::util::OkStatus();
 }
 

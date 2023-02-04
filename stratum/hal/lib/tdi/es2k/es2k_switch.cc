@@ -29,7 +29,7 @@ Es2kSwitch::Es2kSwitch(
     IPsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
-      ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager_)),
+      ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
       device_id_to_tdi_node_(device_id_to_tdi_node),
       node_id_to_tdi_node_() {
   for (const auto& entry : device_id_to_tdi_node_) {
@@ -260,9 +260,9 @@ Es2kSwitch::~Es2kSwitch() {}
       case SetRequest::Request::RequestCase::kIpsecOffloadConfig: {
         absl::WriterMutexLock l(&chassis_lock);
         auto op_type = req.ipsec_offload_config().ipsec_sadb_config_op();
-        auto payload = req.ipsec_offload_config().ipsec_sadb_config_info();
-//        printf("es2ksw. op_type=%d, offload-id=%d, key=%s\n", op_type, payload.offload_id(), payload.esp_payload().encryption().key().c_str());
-        status.Update(ipsec_manager_->WriteConfigSADEntry(op_type, payload));
+        auto payload = const_cast<IPsecSADBConfig&>(
+                          req.ipsec_offload_config().ipsec_sadb_config_info());
+        status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
         break;
       }
       default:
