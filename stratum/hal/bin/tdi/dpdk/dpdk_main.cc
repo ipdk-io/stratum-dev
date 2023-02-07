@@ -124,20 +124,20 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
-  auto dpdk_node = TdiNode::CreateInstance(
+  auto tdi_node = TdiNode::CreateInstance(
       table_manager.get(), action_profile_manager.get(),
       packetio_manager.get(), pre_manager.get(),
       counter_manager.get(), sde_wrapper, device_id);
 
-  std::map<int, TdiNode*> device_id_to_dpdk_node = {
-      {device_id, dpdk_node.get()},
+  std::map<int, TdiNode*> device_id_to_tdi_node = {
+      {device_id, tdi_node.get()},
   };
 
   auto chassis_manager =
       DpdkChassisManager::CreateInstance(mode, sde_wrapper);
 
   auto dpdk_switch = DpdkSwitch::CreateInstance(
-      chassis_manager.get(), sde_wrapper, device_id_to_dpdk_node);
+      chassis_manager.get(), sde_wrapper, device_id_to_tdi_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 

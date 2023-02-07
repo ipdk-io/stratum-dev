@@ -1,12 +1,12 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // The Hardware Abstraction Layer (HAL) of the stratum stack.
 
-#ifndef STRATUM_HAL_LIB_TDI_ES2K_HAL_H_
-#define STRATUM_HAL_LIB_TDI_ES2K_HAL_H_
+#ifndef STRATUM_HAL_LIB_TDI_ES2K_ES2K_HAL_H_
+#define STRATUM_HAL_LIB_TDI_ES2K_ES2K_HAL_H_
 
 #include <pthread.h>
 #include <signal.h>
@@ -18,6 +18,7 @@
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "grpcpp/grpcpp.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/config_monitoring_service.h"
@@ -77,8 +78,10 @@ class Es2kHal final {
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
   static Es2kHal* CreateSingleton(OperationMode mode,
-                                    SwitchInterface* switch_interface,
-                                    AuthPolicyChecker* auth_policy_checker)
+                                  SwitchInterface* switch_interface,
+                                  AuthPolicyChecker* auth_policy_checker,
+                                  absl::Notification* ready_sync = nullptr,
+                                  absl::Notification* done_sync = nullptr)
       LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
@@ -96,7 +99,9 @@ class Es2kHal final {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
-            AuthPolicyChecker* auth_policy_checker);
+          AuthPolicyChecker* auth_policy_checker,
+          absl::Notification* ready_sync,
+          absl::Notification* done_sync);
 
   // Initializes the HAL server and all the services it provides. Called in
   // CreateSingleton() as soon as the class instance is created.
@@ -106,7 +111,7 @@ class Es2kHal final {
   ::util::Status RegisterSignalHandlers();
   ::util::Status UnregisterSignalHandlers();
 
-  // Thread function waiting for a signal in the pipe and then initialting the
+  // Thread function waiting for a signal in the pipe and then initiating the
   // HAL shutdown.
   static void* SignalWaiterThreadFunc(void*);
 
@@ -147,6 +152,12 @@ class Es2kHal final {
   // Thread id for the signal waiter thread.
   pthread_t signal_waiter_tid_;
 
+  // Object to signal when Hal is ready. Not owned by this class.
+  absl::Notification* ready_sync_;
+
+  // Object to signal when Hal is done. Not owned by this class;
+  absl::Notification* done_sync_;
+
   // The lock used for initialization of the singleton.
   static absl::Mutex init_lock_;
 
@@ -157,4 +168,4 @@ class Es2kHal final {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_ES2K_HAL_H_
+#endif  // STRATUM_HAL_LIB_TDI_ES2K_ES2K_HAL_H_

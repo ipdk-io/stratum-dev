@@ -1,22 +1,25 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
 
 #include <limits.h>
 #include <utility>
+#include <stdio.h>
 
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
+#include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
 
 // TODO(unknown): Use FLAG_DEFINE for all flags.
@@ -40,6 +43,8 @@ DEFINE_uint32(grpc_max_recv_msg_size, 256 * 1024 * 1024,
               "grpc server max receive message size (0 = gRPC default).");
 DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
+DEFINE_bool(grpc_open_insecure_mode, false,
+            "open grpc server ports in insecure mode for gNMI, gNOI, and P4RT");
 
 namespace stratum {
 namespace hal {
@@ -82,7 +87,9 @@ int Es2kHal::pipe_read_fd_ = -1;
 int Es2kHal::pipe_write_fd_ = -1;
 
 Es2kHal::Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
-                     AuthPolicyChecker* auth_policy_checker)
+                 AuthPolicyChecker* auth_policy_checker,
+                 absl::Notification* ready_sync,
+                 absl::Notification* done_sync)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -91,7 +98,9 @@ Es2kHal::Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
       p4_service_(nullptr),
       external_server_(nullptr),
       old_signal_handlers_(),
-      signal_waiter_tid_(0) {}
+      signal_waiter_tid_(0),
+      ready_sync_(ready_sync),
+      done_sync_(done_sync) {}
 
 Es2kHal::~Es2kHal() {
   // TODO(unknown): Handle this error?
@@ -117,7 +126,7 @@ Es2kHal::~Es2kHal() {
   CHECK_RETURN_IF_FALSE(!FLAGS_persistent_config_dir.empty())
       << "persistent_config_dir flag needs to be explicitly given.";
 
-  LOG(INFO) << "HAL sanity checks all passed.";
+  LOG(INFO) << "All HAL sanity checks passed.";
 
   return ::util::OkStatus();
 }
@@ -218,9 +227,19 @@ Es2kHal::~Es2kHal() {
                << FLAGS_local_stratum_url << "...";
   }
 
+  // Signal that the server is listening.
+  if (ready_sync_ != nullptr) {
+    ready_sync_->Notify();
+  }
+
   // Block until external_server_->Shutdown() is called.
   // We don't wait on internal_service.
   external_server_->Wait();
+
+  // Signal that the server is terminating.
+  if (done_sync_ != nullptr) {
+    done_sync_->Notify();
+  }
 
   return Teardown();
 }
@@ -235,19 +254,22 @@ void Es2kHal::HandleSignal(int value) {
   external_server_->Shutdown(absl::ToChronoTime(absl::Now()));
 }
 
-Es2kHal* Es2kHal::CreateSingleton(
-    OperationMode mode,
-    SwitchInterface* switch_interface,
-    AuthPolicyChecker* auth_policy_checker) {
+Es2kHal* Es2kHal::CreateSingleton(OperationMode mode,
+                                  SwitchInterface* switch_interface,
+                                  AuthPolicyChecker* auth_policy_checker,
+                                  absl::Notification* ready_sync,
+                                  absl::Notification* done_sync) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
-    singleton_ = new Es2kHal(mode, switch_interface, auth_policy_checker);
+    singleton_ = new Es2kHal(mode, switch_interface, auth_policy_checker,
+                             ready_sync, done_sync);
 
     ::util::Status status = singleton_->RegisterSignalHandlers();
     if (!status.ok()) {
       LOG(ERROR) << "RegisterSignalHandlers() failed: " << status;
       delete singleton_;
       singleton_ = nullptr;
+      return nullptr;
     }
 
     status = singleton_->InitializeServer();
@@ -274,9 +296,9 @@ Es2kHal* Es2kHal::GetSingleton() {
   }
 
 ::util::Status Es2kHal::InitializeServer() {
-  CHECK_IS_NULL(config_monitoring_service_);
-  CHECK_IS_NULL(p4_service_);
-  CHECK_IS_NULL(external_server_);
+  CHECK_IS_NULL(config_monitoring_service_.get());
+  CHECK_IS_NULL(p4_service_.get());
+  CHECK_IS_NULL(external_server_.get());
   // FIXME(boc) google only
   // CHECK_IS_NULL(internal_server_);
 
