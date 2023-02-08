@@ -21,6 +21,7 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
+#include "stratum/lib/security/credentials_manager.h"
 
 // TODO(unknown): Use FLAG_DEFINE for all flags.
 DEFINE_string(external_stratum_urls, stratum::kExternalStratumUrls,
@@ -193,14 +194,45 @@ Es2kHal::~Es2kHal() {
   const std::vector<std::string> external_stratum_urls =
       absl::StrSplit(FLAGS_external_stratum_urls, ',');
   {
+    std::string log_output_str;
     ::grpc::ServerBuilder builder;
     SetGrpcServerKeepAliveArgs(&builder);
 
-    builder.AddListeningPort(FLAGS_local_stratum_url,
-                             ::grpc::InsecureServerCredentials());
+    if (FLAGS_grpc_open_insecure_mode) {
+      // User has chosen to open insecure ports
+      LOG(WARNING) << "Warning: Flag set to open gRPC insecure ports";
+      log_output_str = "[insecure mode] ";
+      builder.AddListeningPort(FLAGS_local_stratum_url,
+                              ::grpc::InsecureServerCredentials());
 
-    for (const auto& url : external_stratum_urls) {
-      builder.AddListeningPort(url, ::grpc::InsecureServerCredentials());
+      for (const auto& url : external_stratum_urls) {
+        builder.AddListeningPort(url, ::grpc::InsecureServerCredentials());
+      }
+    } else {
+      log_output_str = "[secure mode] ";
+      auto credentials_manager = stratum::CredentialsManager::CreateInstance(true);
+      if (!credentials_manager.ok()) {
+        LOG(ERROR) << "Credentials Manager initialization failed. Unable to open ports for gRPC";
+        // assert(credentials_manager.ok()); // Without gRPC, InfraP4D cannot do much. Exit process
+        // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+        exit(1);
+      } else {
+        auto resp = credentials_manager.ConsumeValueOrDie();
+        auto server_credentials = resp.get()->GenerateExternalFacingServerCredentials();
+        if (server_credentials == nullptr) {
+          LOG(ERROR) << "Unable to initiate server credentials. This is an internal error.";
+          // assert(server_credentials); // Without gRPC, InfraP4D cannot do much. Exit process
+          // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
+          exit(1);
+        }
+
+        builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
+
+        for (const auto& url : external_stratum_urls) {
+          builder.AddListeningPort(url, server_credentials);
+        }
+
+      }
     }
 
     if (FLAGS_grpc_max_recv_msg_size > 0) {
@@ -222,7 +254,8 @@ Es2kHal::~Es2kHal() {
              << "Failed to start Stratum external-facing services. This is an "
              << "internal error.";
     }
-    LOG(ERROR) << "Stratum external-facing services are listening to "
+    LOG(ERROR) << log_output_str
+               << "Stratum external-facing services are listening to "
                << absl::StrJoin(external_stratum_urls, ", ") << ", "
                << FLAGS_local_stratum_url << "...";
   }

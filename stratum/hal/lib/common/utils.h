@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_UTILS_H_
@@ -250,6 +251,9 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config);
 
 // Checks whether filename is a regular file and not a symlink
 bool IsRegularFile(const std::string& filename);
+
+// A helper method that constructs the IPsecNotification message
+std::string ConvertIPsecNotificationToString(const IPsecNotification& notif);
 
 }  // namespace hal
 }  // namespace stratum

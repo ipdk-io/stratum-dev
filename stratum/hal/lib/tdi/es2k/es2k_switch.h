@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_SWITCH_H_
@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "absl/synchronization/mutex.h"
+#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/common/switch_interface.h"
@@ -80,6 +81,7 @@ class Es2kSwitch : public SwitchInterface {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kSwitch> CreateInstance(
       Es2kChassisManager* chassis_manager,
+      IPsecManager* ipsec_manager,
       const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // Es2kSwitch is neither copyable nor movable.
@@ -88,10 +90,16 @@ class Es2kSwitch : public SwitchInterface {
   Es2kSwitch(Es2kSwitch&&) = delete;
   Es2kSwitch& operator=(Es2kSwitch&&) = delete;
 
+  IPsecManager* GetIPsecManager()
+    LOCKS_EXCLUDED(chassis_lock) {
+    return ipsec_manager_;
+  }
+
  private:
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   Es2kSwitch(Es2kChassisManager* chassis_manager,
+      IPsecManager* ipsec_manager,
       const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // Helper to get TdiNode pointer from device_id number or return error
@@ -105,6 +113,10 @@ class Es2kSwitch : public SwitchInterface {
   // Pointer to ChassisManager object. Note that there is only one instance
   // of this class.
   Es2kChassisManager* chassis_manager_;  // not owned by the class.
+
+  // Pointer to IPsecManager object. Note that there is only one instance
+  // of this class.
+  IPsecManager* ipsec_manager_;  // not owned by the class.
 
   // Map from zero-based device_id number corresponding to a node/ASIC to a
   // pointer to TdiNode which contain all the per-node managers for that

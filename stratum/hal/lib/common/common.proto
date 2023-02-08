@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This file include all the common internal messages used by Stratum stack.
@@ -1370,6 +1371,87 @@ message TargetDatapathId {
   uint32 tdi_portout_id = 2; // Port ID for Pipeline in Output Direction
 }
 
+//-----------------------------------------------------------------------------
+// IPsec related enums and messages
+//-----------------------------------------------------------------------------
+enum IpsecMode {
+  IPSEC_MODE_TRANSPORT = 0;
+  IPSEC_MODE_TUNNEL = 1;
+}
+
+enum IpsecProtocolParams {
+  IPSEC_PROTOCOL_PARAMS_ESP = 0;
+}
+
+enum IpsecLifetimeAction {
+  IPSEC_LIFETIME_ACTION_UNSET = 0;
+  IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
+  IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
+  IPSEC_LIFETIME_ACTION_REPLACE = 3;
+}
+
+enum IPsecSadbConfigOp {
+  IPSEC_SADB_CONFIG_OP_ADD_ENTRY = 0;
+  IPSEC_SADB_CONFIG_OP_MOD_ENTRY = 1;
+  IPSEC_SADB_CONFIG_OP_DEL_ENTRY = 2;
+}
+
+message IPsecEspSa {
+  IPsecEncryption encryption = 1;
+}
+
+message IPsecEncryption {
+  uint32 encryption_algorithm = 1;
+  string key = 2;
+  uint32 key_len = 3;
+}
+
+message IPsecSaLifetimeHard {
+  oneof value { 
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+}
+
+message IPsecSaLifetimeSoft {
+  oneof value {
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+  IpsecLifetimeAction action = 5;
+}
+
+message IPsecSADBConfig {
+  uint32 offload_id = 1;
+  bool direction = 2; // true = egress, false = ingress
+  uint64 req_id = 3;
+  uint32 spi = 4;
+  bool ext_seq_num = 5;
+  uint32 anti_replay_window_size = 6;
+  IpsecProtocolParams protocol_parameters = 7;
+  IpsecMode mode = 8;
+  IPsecEspSa esp_payload = 9;
+  IPsecSaLifetimeHard sa_lifetime_hard = 10;
+  IPsecSaLifetimeSoft sa_lifetime_soft = 11;
+}
+
+message IPsecNotification {
+  uint32 device_id = 1;
+  uint32 ipsec_sa_spi = 2;
+  bool soft_liftime_expire = 3;
+  uint32 ipsec_sa_protocol = 4;
+  string ipsec_sa_dest_address = 5;
+  bool address_family = 6;
+}
+
+message IPsecOffloadInfo {
+  int32 spi = 1;
+}
+
 // DataRequest is a message used internally to request data about a component
 // or a set of components through SwitchInterface. It is specifically used in
 // ConfigMonitoringService, as part of gNMI Get/Subscribe RPC implementation.
@@ -1398,6 +1480,9 @@ message DataRequest {
       int32 module = 1;
       int32 network_interface = 2;
     }
+    message IPsecOffloadInfo {
+      int32 spi = 1;
+    }
     oneof request {
       Port oper_status = 1;
       Port admin_status = 2;
@@ -1421,6 +1506,7 @@ message DataRequest {
       Node node_info = 21;
       Port sdn_port_id = 22;
       Port target_dp_id = 23;
+      IPsecOffloadInfo ipsec_offload_info = 24;
     }
   }
   repeated Request requests = 1;
@@ -1466,6 +1552,7 @@ message DataResponse {
     HotplugConfig hotplug_config = 33;
     TargetDatapathId target_dp_id = 34;
     PacketDirValue packet_dir = 35;
+    IPsecOffloadInfo ipsec_offload_info = 36;
   }
 }
 
@@ -1538,12 +1625,18 @@ message SetRequest {
         OpticalTransceiverInfo optical_transceiver_info = 3;
       }
     }
+    message IPsecOffloadConfig {
+      IPsecSadbConfigOp ipsec_sadb_config_op = 1;
+      IPsecSADBConfig ipsec_sadb_config_info = 2;
+    }
     oneof request {
       Port port = 1;
       Node node = 2;
       Chassis chassis = 3;
       OpticalNetworkInterface optical_network_interface = 4;
+      IPsecOffloadConfig ipsec_offload_config = 5;
     }
   }
   repeated Request requests = 1;
 }
+

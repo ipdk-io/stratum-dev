@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
@@ -26,8 +26,10 @@ namespace tdi {
 
 Es2kSwitch::Es2kSwitch(
     Es2kChassisManager* chassis_manager,
+    IPsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
+      ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
       device_id_to_tdi_node_(device_id_to_tdi_node),
       node_id_to_tdi_node_() {
   for (const auto& entry : device_id_to_tdi_node_) {
@@ -219,6 +221,18 @@ Es2kSwitch::~Es2kSwitch() {}
         }
         break;
       }
+      // IPsecOffload request
+      case DataRequest::Request::kIpsecOffloadInfo: {
+        uint32 fetched_spi=0;
+        auto fetch_status = ipsec_manager_->GetSpiData(fetched_spi);
+        if (!fetch_status.ok()) {
+          status.Update(fetch_status);
+        } else {
+          auto* info = resp.mutable_ipsec_offload_info();
+          info->set_spi(fetched_spi);
+        }
+        break;
+      }
       default:
         status =
             MAKE_ERROR(ERR_UNIMPLEMENTED)
@@ -239,9 +253,24 @@ Es2kSwitch::~Es2kSwitch() {}
 ::util::Status Es2kSwitch::SetValue(
     uint64 node_id, const SetRequest& request,
     std::vector<::util::Status>* details) {
-  LOG(INFO) << "Es2kSwitch::SetValue is not implemented yet. Changes will "
-            << "be applied when ChassisConfig is pushed again. "
-            << request.ShortDebugString() << ".";
+
+  for (const auto& req : request.requests()) {
+    ::util::Status status = ::util::OkStatus();
+    switch (req.request_case()) {
+      case SetRequest::Request::RequestCase::kIpsecOffloadConfig: {
+        absl::WriterMutexLock l(&chassis_lock);
+        auto op_type = req.ipsec_offload_config().ipsec_sadb_config_op();
+        auto payload = const_cast<IPsecSADBConfig&>(
+                          req.ipsec_offload_config().ipsec_sadb_config_info());
+        status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
+        break;
+      }
+      default:
+        status = MAKE_ERROR(ERR_INTERNAL)
+                 << req.ShortDebugString() << " Not supported yet!";
+    }
+    if (details) details->push_back(status);
+  }
 
   return ::util::OkStatus();
 }
@@ -252,9 +281,10 @@ Es2kSwitch::~Es2kSwitch() {}
 
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
     Es2kChassisManager* chassis_manager,
+    IPsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
-      new Es2kSwitch(chassis_manager, device_id_to_tdi_node));
+      new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_tdi_node));
 }
 
 ::util::StatusOr<TdiNode*> Es2kSwitch::GetTdiNodeFromDeviceId(

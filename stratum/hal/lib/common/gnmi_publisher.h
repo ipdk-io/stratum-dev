@@ -140,6 +140,16 @@ class GnmiPublisher {
   // the switch and cleaning-up.
   virtual ::util::Status UnregisterEventWriter() LOCKS_EXCLUDED(access_lock_);
 
+  // IPsec is a special use-case, since yang tree nodes are not initialized and
+  // maintained for each key of yang list (the SADConfig messages need to be stateless
+  // and scale is too high to maintain tree nodes in memory -- tens of millions of entries).
+  // Instead, a single tree node is maintained without any keys which services all
+  // gnmi SET/DELETE requests. The tree node is initialized to to be at /ipsec-offload/sad/sad-entr/config
+  // The contents of the message will contain the key, which subsequently get handled
+  // at lower layers.
+  virtual bool IsPathSupportedIPsec(const ::gnmi::Path& path, std::vector<std::string>& keys) const
+      LOCKS_EXCLUDED(access_lock_);
+
  private:
   // ReaderArgs encapsulates the arguments for a Channel reader thread.
   template <typename T>

@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_NODE_H_
@@ -18,6 +18,7 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
+#include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
@@ -66,6 +67,7 @@ class TdiNode {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TdiNode> CreateInstance(
       TdiTableManager* tdi_table_manager,
+      TdiFixedFunctionManager* tdi_fixed_function_manager,
       TdiActionProfileManager* tdi_action_profile_manager,
       TdiPacketioManager* tdi_packetio_manager,
       TdiPreManager* tdi_pre_manager,
@@ -88,6 +90,7 @@ class TdiNode {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   TdiNode(TdiTableManager* tdi_table_manager,
+          TdiFixedFunctionManager* tdi_fixed_function_manager,
           TdiActionProfileManager* tdi_action_profile_manager,
           TdiPacketioManager* tdi_packetio_manager,
           TdiPreManager* tdi_pre_manager,
@@ -131,6 +134,7 @@ class TdiNode {
 
   // Managers. Not owned by this class.
   TdiTableManager* tdi_table_manager_;
+  TdiFixedFunctionManager* tdi_fixed_function_manager_;
   TdiActionProfileManager* tdi_action_profile_manager_;
   TdiPacketioManager* tdi_packetio_manager_;
   TdiPreManager* tdi_pre_manager_;

@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_WRAPPER_H_
@@ -23,6 +23,15 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/lib/channel/channel.h"
 
+#include "tdi/common/tdi_info.hpp"
+#include "tdi/common/tdi_table.hpp"
+#include "tdi/common/tdi_table_key.hpp"
+#include "tdi/common/tdi_defs.h"
+#include "tdi_rt/tdi_rt_defs.h"
+#include "tdi/common/tdi_init.hpp"
+#include "tdi/common/tdi_json_parser/tdi_table_info.hpp"
+#include "tdi/arch/pna/pna_defs.h"
+
 #ifdef TOFINO_TARGET
 #include "pkt_mgr/pkt_mgr_intf.h"
 #endif
@@ -38,6 +47,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // TableKeyInterface public methods.
   ::util::Status SetExact(int id, const std::string& value) override;
+  ::util::Status SetExact(std::string field_name, uint64 value) override;
   ::util::Status GetExact(int id, std::string* value) const override;
   ::util::Status SetTernary(int id, const std::string& value,
                             const std::string& mask) override;
@@ -73,6 +83,9 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   // TableDataInterface public methods.
   ::util::Status SetParam(int id, const std::string& value) override;
   ::util::Status GetParam(int id, std::string* value) const override;
+  ::util::Status SetParam(std::string field_name, uint64 value) override;
+  ::util::Status SetParam(std::string field_name,  const std::string& value) override;
+  ::util::Status GetParam(std::string field_name, uint64* value) const override;
   ::util::Status SetActionMemberId(uint64 action_member_id) override;
   ::util::Status GetActionMemberId(uint64* action_member_id) const override;
   ::util::Status SetSelectorGroupId(uint64 selector_group_id) override;
@@ -350,6 +363,17 @@ class TdiSdeWrapper : public TdiSdeInterface {
       uint32 action_profile_id) const override LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetActionProfileTdiRtId(
       uint32 action_selector_id) const override LOCKS_EXCLUDED(data_lock_);
+
+  // Gets the Tdi table id from the Table name.
+  ::util::StatusOr<uint32> GetTableId(std::string &table_name) const override
+      LOCKS_EXCLUDED(data_lock_);
+
+  ::util::Status InitNotificationTableWithCallback(int dev_id,
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    std::string &table_name,
+    void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
+    void *cookie) const
+        LOCKS_EXCLUDED(data_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.

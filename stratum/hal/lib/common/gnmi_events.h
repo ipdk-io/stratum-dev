@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_GNMI_EVENTS_H_
@@ -76,6 +77,36 @@ class TimerEvent : public GnmiEventProcess<TimerEvent> {};
 
 // A Poll event.
 class PollEvent : public GnmiEventProcess<PollEvent> {};
+
+// An IPsec-Notification has been triggered event.
+class IPsecNotificationEvent : public GnmiEventProcess<IPsecNotificationEvent> {
+ public:
+  IPsecNotificationEvent(uint64 time_created, const IPsecNotification& notif)
+      : time_created_(time_created), notif_(notif) {}
+
+  IPsecNotificationEvent(uint64 time_created,
+                          uint32_t dev_id,
+                          uint32_t ipsec_sa_spi,
+                          bool soft_lifetime_expire,
+                          uint8_t ipsec_sa_protocol,
+                          char *ipsec_sa_dest_address,
+                          bool ipv4)
+      : time_created_(time_created) {
+    notif_.set_device_id(dev_id);
+    notif_.set_ipsec_sa_spi(ipsec_sa_spi);
+    notif_.set_soft_liftime_expire(soft_lifetime_expire);
+    notif_.set_ipsec_sa_protocol(ipsec_sa_protocol);
+    notif_.set_ipsec_sa_dest_address(ipsec_sa_dest_address);
+    notif_.set_address_family(ipv4);
+  }
+
+  uint64 GetTimeCreated() const { return time_created_; }
+  IPsecNotification GetNotification() const { return notif_; }
+
+ private:
+  const uint64 time_created_;
+  IPsecNotification notif_;
+};
 
 // An event signaling that an alarm has been triggered.
 class AlarmEvent : public GnmiEventProcess<AlarmEvent> {
@@ -580,6 +611,10 @@ using GnmiSetHandler = std::function<::util::Status(
 
 using GnmiDeleteHandler = std::function<::util::Status(
     const ::gnmi::Path& path, CopyOnWriteChassisConfig* config)>;
+
+using GnmiDeleteWithValHandler = std::function<::util::Status(
+    const ::gnmi::Path& path, const std::vector<std::string>& val,
+    CopyOnWriteChassisConfig* config)>;
 
 // A class used to keep information about a subscription.
 class EventHandlerRecord {
