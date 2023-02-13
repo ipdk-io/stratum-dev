@@ -11,7 +11,6 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/hal/lib/common/utils.h"
