@@ -262,7 +262,7 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id) {
+TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info, uint32 table_id) {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info->tableFromIdGet(table_id, &table));
   std::unique_ptr<::tdi::TableKey> table_key;

@@ -245,8 +245,8 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-TableData::CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
-                           int action_id) {
+TableData::CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,
+                           uint32 action_id) {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info->tableFromIdGet(table_id, &table));
   std::unique_ptr<::tdi::TableData> table_data;

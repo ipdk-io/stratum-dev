@@ -18,6 +18,7 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
+#include "stratum/hal/lib/tdi/tdi_lut_manager.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
@@ -74,7 +75,8 @@ class TdiNode {
       TdiCounterManager* tdi_counter_manager,
       TdiSdeInterface* tdi_sde_interface, int device_id,
       // Note: bfrt_node defaults are (true, 1)
-      bool initialized = false, uint64 node_id = 0);
+      bool initialized = false, uint64 node_id = 0,
+      TdiLutManager* tdi_lut_manager = nullptr);
 
   // TdiNode is neither copyable nor movable.
   TdiNode(const TdiNode&) = delete;
@@ -96,7 +98,8 @@ class TdiNode {
           TdiPreManager* tdi_pre_manager,
           TdiCounterManager* tdi_counter_manager,
           TdiSdeInterface* tdi_sde_interface, int device_id,
-          bool initialized, uint64 node_id);
+          bool initialized, uint64 node_id,
+          TdiLutManager* tdi_lut_manager);
 
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata
   ::util::Status WriteExternEntry(
@@ -134,6 +137,7 @@ class TdiNode {
 
   // Managers. Not owned by this class.
   TdiTableManager* tdi_table_manager_;
+  TdiLutManager* tdi_lut_manager_;
   TdiFixedFunctionManager* tdi_fixed_function_manager_;
   TdiActionProfileManager* tdi_action_profile_manager_;
   TdiPacketioManager* tdi_packetio_manager_;

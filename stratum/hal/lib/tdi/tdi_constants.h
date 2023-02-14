@@ -12,10 +12,14 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+// PNA Extern types
+constexpr uint32 kMvlutExactMatch = 129;
+constexpr uint32 kMvlutTernaryMatch = 130;
+
 // TNA Extern types
-constexpr uint32 kTnaExternActionProfileId = 129;
-constexpr uint32 kTnaExternActionSelectorId = 130;
-constexpr uint32 kTnaExternDirectCounter = 132;
+constexpr uint32 kTnaExternActionProfileId = 131;
+constexpr uint32 kTnaExternActionSelectorId = 132;
+constexpr uint32 kTnaExternDirectCounter = 133;
 
 // Built-in table and field names.
 constexpr char kMcNodeDevPort[] = "$DEV_PORT";

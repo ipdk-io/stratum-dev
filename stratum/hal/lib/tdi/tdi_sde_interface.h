@@ -244,12 +244,12 @@ class TdiSdeInterface {
 
   // Allocates a new table key object.
   virtual ::util::StatusOr<std::unique_ptr<TableKeyInterface>> CreateTableKey(
-      int table_id) = 0;
+      uint32 table_id) = 0;
 
   // Allocates a new table data object. Action id can be zero when not known or
   // not applicable.
   virtual ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
-      int table_id, int action_id) = 0;
+      uint32 table_id, uint32 action_id) = 0;
 
   // TODO(delete after DPDK implements TdiPortManager)
 #ifdef DPDK_TARGET

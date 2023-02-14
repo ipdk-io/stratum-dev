@@ -55,13 +55,13 @@ TdiSdeWrapper::CreateSession() {
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-TdiSdeWrapper::CreateTableKey(int table_id) {
+TdiSdeWrapper::CreateTableKey(uint32 table_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return TableKey::CreateTableKey(tdi_info_, table_id);
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-TdiSdeWrapper::CreateTableData(int table_id, int action_id) {
+TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return TableData::CreateTableData(tdi_info_, table_id, action_id);
 }

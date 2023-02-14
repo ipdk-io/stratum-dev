@@ -32,12 +32,14 @@ TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
                  TdiPreManager* tdi_pre_manager,
                  TdiCounterManager* tdi_counter_manager,
                  TdiSdeInterface* tdi_sde_interface, int device_id,
-                 bool initialized, uint64 node_id)
+                 bool initialized, uint64 node_id,
+                 TdiLutManager* tdi_lut_manager)
     : pipeline_initialized_(false),
       initialized_(initialized),
       tdi_config_(),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_table_manager_(ABSL_DIE_IF_NULL(tdi_table_manager)),
+      tdi_lut_manager_(tdi_lut_manager),
       tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
       tdi_action_profile_manager_(
           ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
@@ -59,7 +61,8 @@ TdiNode::TdiNode()
       tdi_pre_manager_(nullptr),
       tdi_counter_manager_(nullptr),
       node_id_(0),
-      device_id_(-1) {}
+      device_id_(-1),
+      tdi_lut_manager_(nullptr) {}
 
 TdiNode::~TdiNode() = default;
 
@@ -72,11 +75,13 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     TdiPreManager* tdi_pre_manager,
     TdiCounterManager* tdi_counter_manager,
     TdiSdeInterface* tdi_sde_interface, int device_id,
-    bool initialized, uint64 node_id) {
+    bool initialized, uint64 node_id,
+    TdiLutManager* tdi_lut_manager) {
   return absl::WrapUnique(new TdiNode(
       tdi_table_manager, tdi_fixed_function_manager, tdi_action_profile_manager,
-      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
-      initialized, node_id));
+      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
+      tdi_sde_interface, device_id,
+      initialized, node_id, tdi_lut_manager));
 }
 
 ::util::Status TdiNode::PushChassisConfig(const ChassisConfig& config,
@@ -447,6 +452,12 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::ExternEntry& entry) {
   switch (entry.extern_type_id()) {
+    case kMvlutExactMatch:
+    case kMvlutTernaryMatch:
+      if (tdi_lut_manager_)
+        return tdi_lut_manager_->WriteTableEntry(session, type, entry);
+      else
+        return MAKE_ERROR() << "TdiLutManager instance not initialized";
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
       return tdi_action_profile_manager_->WriteActionProfileEntry(session,
@@ -462,6 +473,12 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     const ::p4::v1::ExternEntry& entry,
     WriterInterface<::p4::v1::ReadResponse>* writer) {
   switch (entry.extern_type_id()) {
+    case kMvlutExactMatch:
+    case kMvlutTernaryMatch:
+      if (tdi_lut_manager_)
+        return tdi_lut_manager_->ReadTableEntry(session, entry, writer);
+      else
+        return MAKE_ERROR() << "TdiLutManager instance not initialized";
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
       return tdi_action_profile_manager_->ReadActionProfileEntry(

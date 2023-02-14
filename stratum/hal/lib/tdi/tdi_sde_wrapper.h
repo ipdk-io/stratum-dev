@@ -66,7 +66,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-  CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id);
+  CreateTableKey(const ::tdi::TdiInfo* tdi_info, uint32 table_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableKey> table_key_;
@@ -101,8 +101,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
 
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-  CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
-                  int action_id);
+  CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,
+                  uint32 action_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableData> table_data_;
@@ -162,9 +162,9 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
   CreateSession() override;
   ::util::StatusOr<std::unique_ptr<TableKeyInterface>> CreateTableKey(
-      int table_id) override;
+      uint32 table_id) override;
   ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
-      int table_id, int action_id) override;
+      uint32 table_id, uint32 action_id) override;
   // TODO(delete after DPDK implements TdiPortManager)
 #ifdef DPDK_TARGET
   ::util::StatusOr<PortState> GetPortState(int device, int port) override;
