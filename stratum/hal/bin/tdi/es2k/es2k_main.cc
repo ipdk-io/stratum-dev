@@ -29,6 +29,7 @@
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
+#include "stratum/hal/lib/tdi/tdi_lut_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 #include "stratum/lib/security/credentials_manager.h"
@@ -91,6 +92,8 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate
   // components with "device_id" instead of "node_id".
   const int device_id = 0;
+  const uint64 node_id = 0;
+  const bool initialized = false;
   const bool es2k_infrap4d_background = true;
 
   auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
@@ -114,6 +117,9 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
 
+  auto lut_manager =
+      TdiLutManager::CreateInstance(mode, sde_wrapper, device_id);
+
   auto fixed_function_manager =
       TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);
 
@@ -132,7 +138,8 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto tdi_node = TdiNode::CreateInstance(
       table_manager.get(), fixed_function_manager.get(),
       action_profile_manager.get(), packetio_manager.get(),
-      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id);
+      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id,
+      initialized, node_id, lut_manager.get());
 
   std::map<int, TdiNode*> device_id_to_tdi_node = {
       {device_id, tdi_node.get()},
