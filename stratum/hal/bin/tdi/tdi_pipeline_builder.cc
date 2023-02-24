@@ -91,12 +91,14 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
       << "p4c_conf_file must be specified.";
 
   nlohmann::json conf;
-  {
+  try {
     std::string conf_content;
     RETURN_IF_ERROR(ReadFileToString(FLAGS_p4c_conf_file, &conf_content));
     conf = nlohmann::json::parse(conf_content, nullptr, false);
     CHECK_RETURN_IF_FALSE(!conf.is_discarded()) << "Failed to parse .conf";
     VLOG(1) << ".conf content: " << conf.dump();
+  } catch (std::exception& e) {
+    return MAKE_ERROR(ERR_INTERNAL) << e.what();
   }
 
   // Translate compiler output JSON conf to protobuf.
