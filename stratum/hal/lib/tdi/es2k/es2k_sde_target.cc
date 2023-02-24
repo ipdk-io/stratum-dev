@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Es2k-specific SDE wrapper methods.
@@ -114,8 +114,8 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 }
 
 ::util::StatusOr<PortState> Es2kPortManager::GetPortState(int device, int port) {
-  bool state = false;
-  return state ? PORT_STATE_UP : PORT_STATE_DOWN;
+  // Unsupportied. Returning PORT_STATE_DOWN if called
+  return PORT_STATE_DOWN;
 }
 
 ::util::Status Es2kPortManager::GetPortCounters(
