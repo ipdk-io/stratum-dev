@@ -19,7 +19,6 @@
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_lut_manager.h"
-#include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
@@ -68,7 +67,6 @@ class TdiNode {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TdiNode> CreateInstance(
       TdiTableManager* tdi_table_manager,
-      TdiFixedFunctionManager* tdi_fixed_function_manager,
       TdiActionProfileManager* tdi_action_profile_manager,
       TdiPacketioManager* tdi_packetio_manager,
       TdiPreManager* tdi_pre_manager,
@@ -92,7 +90,6 @@ class TdiNode {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   TdiNode(TdiTableManager* tdi_table_manager,
-          TdiFixedFunctionManager* tdi_fixed_function_manager,
           TdiActionProfileManager* tdi_action_profile_manager,
           TdiPacketioManager* tdi_packetio_manager,
           TdiPreManager* tdi_pre_manager,
@@ -138,7 +135,6 @@ class TdiNode {
   // Managers. Not owned by this class.
   TdiTableManager* tdi_table_manager_;
   TdiLutManager* tdi_lut_manager_;
-  TdiFixedFunctionManager* tdi_fixed_function_manager_;
   TdiActionProfileManager* tdi_action_profile_manager_;
   TdiPacketioManager* tdi_packetio_manager_;
   TdiPreManager* tdi_pre_manager_;

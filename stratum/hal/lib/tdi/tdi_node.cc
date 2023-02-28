@@ -26,7 +26,6 @@ namespace hal {
 namespace tdi {
 
 TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
-                 TdiFixedFunctionManager* tdi_fixed_function_manager,
                  TdiActionProfileManager* tdi_action_profile_manager,
                  TdiPacketioManager* tdi_packetio_manager,
                  TdiPreManager* tdi_pre_manager,
@@ -40,7 +39,6 @@ TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_table_manager_(ABSL_DIE_IF_NULL(tdi_table_manager)),
       tdi_lut_manager_(tdi_lut_manager),
-      tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
       tdi_action_profile_manager_(
           ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
       tdi_packetio_manager_(tdi_packetio_manager),
@@ -55,7 +53,6 @@ TdiNode::TdiNode()
       tdi_config_(),
       tdi_sde_interface_(nullptr),
       tdi_table_manager_(nullptr),
-      tdi_fixed_function_manager_(nullptr),
       tdi_action_profile_manager_(nullptr),
       tdi_packetio_manager_(nullptr),
       tdi_pre_manager_(nullptr),
@@ -69,7 +66,6 @@ TdiNode::~TdiNode() = default;
 // Factory function for creating the instance of the class.
 std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     TdiTableManager* tdi_table_manager,
-    TdiFixedFunctionManager* tdi_fixed_function_manager,
     TdiActionProfileManager* tdi_action_profile_manager,
     TdiPacketioManager* tdi_packetio_manager,
     TdiPreManager* tdi_pre_manager,
@@ -78,9 +74,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     bool initialized, uint64 node_id,
     TdiLutManager* tdi_lut_manager) {
   return absl::WrapUnique(new TdiNode(
-      tdi_table_manager, tdi_fixed_function_manager, tdi_action_profile_manager,
-      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
-      tdi_sde_interface, device_id,
+      tdi_table_manager, tdi_action_profile_manager, tdi_packetio_manager,
+      tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
       initialized, node_id, tdi_lut_manager));
 }
 
@@ -454,18 +449,18 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kMvlutExactMatch:
     case kMvlutTernaryMatch:
-      if (tdi_lut_manager_)
-        return tdi_lut_manager_->WriteTableEntry(session, type, entry);
-      else
-        return MAKE_ERROR() << "TdiLutManager instance not initialized";
+      if (!tdi_lut_manager_)
+        break;
+      return tdi_lut_manager_->WriteTableEntry(session, type, entry);
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
       return tdi_action_profile_manager_->WriteActionProfileEntry(session,
-                                                                   type, entry);
+                                                                  type, entry);
     default:
-      RETURN_ERROR() << "Unsupported extern entry: " << entry.ShortDebugString()
-                     << ".";
+      break;
   }
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 ::util::Status TdiNode::ReadExternEntry(
@@ -475,18 +470,18 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kMvlutExactMatch:
     case kMvlutTernaryMatch:
-      if (tdi_lut_manager_)
-        return tdi_lut_manager_->ReadTableEntry(session, entry, writer);
-      else
-        return MAKE_ERROR() << "TdiLutManager instance not initialized";
+      if (!tdi_lut_manager_)
+        break;
+      return tdi_lut_manager_->ReadTableEntry(session, entry, writer);
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
       return tdi_action_profile_manager_->ReadActionProfileEntry(
           session, entry, writer);
     default:
-      RETURN_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+      break;
   }
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 }  // namespace tdi
