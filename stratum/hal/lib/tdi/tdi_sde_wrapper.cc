@@ -28,6 +28,11 @@
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/lib/channel/channel.h"
 
+#ifdef ES2K_TARGET
+// FIXME: Target-specific code in a target-agnostic file.
+#include "tdi_rt/tdi_rt_defs.h"
+#endif
+
 DEFINE_string(tdi_sde_config_dir, "/var/run/stratum/tdi_config",
               "The dir used by the SDE to load the device configuration.");
 DEFINE_bool(incompatible_enable_tdi_legacy_bytestring_responses, true,
@@ -126,13 +131,16 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
               << "Error retreiving information from TDI";
 }
 
+#ifdef ES2K_TARGET
+// FIXME: Target-specific code in a target-agnostic class.
 ::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    std::string &table_name,
+    const std::string &table_name,
+    // FIXME: These parameters need names.
     void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
     void *cookie) const {
 
-  if (nullptr == tdi_info_) {
+  if (!tdi_info_) {
     RETURN_ERROR(ERR_INTERNAL)
                 << "Unable to initialize notification table due to TDI internal error";
   }
@@ -177,6 +185,7 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
 
   return ::util::OkStatus();
 }
+#endif // ES2K_TARGET
 
 }  // namespace tdi
 }  // namespace hal
