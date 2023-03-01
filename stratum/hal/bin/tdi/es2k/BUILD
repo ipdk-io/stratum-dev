@@ -1,4 +1,4 @@
-# stratum/hal/bin/tdi/dpdk/BUILD
+# stratum/hal/bin/tdi/es2k/BUILD
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
@@ -34,7 +34,7 @@ stratum_cc_binary(
     arches = HOST_ARCHES,
     defines = ["ES2K_TARGET"],
     data = [
-        # NOTE: Replace with dpdk conf files
+        # NOTE: Replace with es2k conf files
         "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",
         "//stratum/hal/bin/barefoot:tofino_skip_p4_no_bsp.conf",
     ],
