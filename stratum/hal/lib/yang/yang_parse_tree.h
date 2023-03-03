@@ -111,8 +111,7 @@ class TreeNode {
     return this;
   }
 
-  // Overrides the default-not-supported handler procedure called when
-  // a set-delete request is processed with a user-specified one.
+  // Special use-case of delete handler with value instead of key specified
   TreeNode* SetOnDeleteWithValHandler(const TreeNodeDeleteWithValHandler& handler) {
     on_delete_with_val_handler_ = handler;
     supports_on_delete_ = true;

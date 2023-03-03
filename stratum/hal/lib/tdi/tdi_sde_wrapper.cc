@@ -122,7 +122,7 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
 
 ::util::StatusOr<uint32> TdiSdeWrapper::GetTableId(std::string &table_name) const {
   const ::tdi::Table* table;
-  if (nullptr != tdi_info_) {
+  if (tdi_info_ != nullptr) {
     RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &table));
     return(table->tableInfoGet()->idGet());
   }
