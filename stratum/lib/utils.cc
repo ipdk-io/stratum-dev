@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>  // IWYU pragma: keep
+#include <regex>
 #include <string>
 
 #include "absl/strings/str_split.h"
@@ -268,6 +269,16 @@ std::string Demangle(const char* mangled) {
   *write_fd = pipe_fds[1];
 
   return ::util::OkStatus();
+}
+
+::util::Status ValidateIETFYangHexString(std::string input) {
+  const std::regex pattern("^([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})*)$");
+  if (regex_match(input, pattern)) {
+    return ::util::OkStatus();
+  } else {
+    return MAKE_ERROR(ERR_INTERNAL)
+           << "Format error. Does not conform to IETF YANG hex string type";
+  }
 }
 
 }  // namespace stratum

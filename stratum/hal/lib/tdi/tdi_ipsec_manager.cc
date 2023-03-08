@@ -117,6 +117,16 @@ IPsecManager::~IPsecManager() = default;
       }
   }
 
+  if (op_type == IPSEC_SADB_CONFIG_OP_ADD_ENTRY) {
+    // Convert encryption key from hex to ASCII
+    std::string hex_encoded = msg.esp_payload().encryption().key();
+    RETURN_IF_ERROR(ValidateIETFYangHexString(hex_encoded));
+
+    std::string ascii_encoded = ConvertEncryptionKeyEncoding(hex_encoded);
+    printf("ascii_ended string = %s (length=%d)\n", ascii_encoded.data(), ascii_encoded.length());
+    msg.mutable_esp_payload()->mutable_encryption()->set_key(ascii_encoded);
+  }
+
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   auto status = tdi_fixed_function_manager_->WriteSadbEntry(session,
                                           IPSEC_CONFIG_SADB_TABLE_NAME,
@@ -153,6 +163,19 @@ void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
     // Remove WriterInterface if it is no longer operational.
     gnmi_event_writer_.reset();
   }
+}
+
+std::string IPsecManager::ConvertEncryptionKeyEncoding(std::string hex)
+{
+    std::string ascii = "";
+    for (size_t i = 0; i < hex.length(); i += 3)
+    {
+        std::string part = hex.substr(i, 2);
+        // change it into base 16 and typecast to byte char
+        char ch = (char) (int)strtol(part.data(), nullptr, 16);
+        ascii.push_back(ch);
+    }
+    return ascii;
 }
 
 std::unique_ptr<IPsecManager> IPsecManager::CreateInstance(

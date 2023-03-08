@@ -260,6 +260,11 @@ std::string Demangle(const char* mangled);
 // handler and into, e.g., a waiter thread where it can be properly processed.
 ::util::Status CreatePipeForSignalHandling(int* read_fd, int* write_fd);
 
+// From YANG definition: A hexadecimal string with octets represented as
+// hex digits separated by colons. The canonical representation uses lowercase
+// characters.   pattern '([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})*)?';
+::util::Status ValidateIETFYangHexString(std::string input);
+
 }  // namespace stratum
 
 #endif  // STRATUM_LIB_UTILS_H_

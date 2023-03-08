@@ -115,6 +115,10 @@ class IPsecManager {
 
   bool notif_initialized_;
 
+  // Convert encryption key encoding - client sends IETF yang type hex string
+  // while the TDI layer expects an ASCII string
+  std::string ConvertEncryptionKeyEncoding(std::string input);
+
   friend class IPsecManagerTest;
 };
 
