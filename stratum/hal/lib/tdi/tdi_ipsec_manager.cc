@@ -172,7 +172,6 @@ std::string IPsecManager::ConvertEncryptionKeyEncoding(std::string hex)
     {
         std::string part = hex.substr(i, 2);
         // change it into base 16 and typecast to byte char
-        //char ch = stoul(part, nullptr, 16);
         char ch = (char) (int)strtol(part.data(), nullptr, 16);
         ascii.push_back(ch);
     }
