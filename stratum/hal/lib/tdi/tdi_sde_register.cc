@@ -62,8 +62,6 @@ namespace {
   }
 
   RETURN_ERROR(ERR_INTERNAL) << "Could not find register data field id.";
-
-   return ::util::OkStatus();
 }
 
 }  // namespace
