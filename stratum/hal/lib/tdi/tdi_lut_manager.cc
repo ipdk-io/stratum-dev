@@ -80,8 +80,6 @@ std::unique_ptr<TdiLutManager> TdiLutManager::CreateInstance(
       RETURN_ERROR(ERR_INVALID_PARAM)
           << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
-
-  return ::util::OkStatus();
 }
 
 ::util::Status TdiLutManager::BuildTableKey(
@@ -190,8 +188,6 @@ std::unique_ptr<TdiLutManager> TdiLutManager::CreateInstance(
       RETURN_ERROR(ERR_INVALID_PARAM)
           << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
-
-  return ::util::OkStatus();
 }
 
 ::util::Status TdiLutManager::DoReadVlutEntry(
