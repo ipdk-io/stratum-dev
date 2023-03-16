@@ -129,13 +129,13 @@ std::unique_ptr<TdiFixedFunctionManager> TdiFixedFunctionManager::CreateInstance
           kIpsecSadbEspKeylen,
           ((uint8)sadb_config.esp_payload().encryption().key_len())));
     }
-    if(sadb_config.has_sa_lifetime_hard()) {
+    if(sadb_config.has_sa_hard_lifetime()) {
         RETURN_IF_ERROR(table_data->SetParam(
-            kIpsecSaLtHard, sadb_config.sa_lifetime_hard().bytes()));
+            kIpsecSaLtHard, sadb_config.sa_hard_lifetime().bytes()));
     }
-    if(sadb_config.has_sa_lifetime_soft()) {
+    if(sadb_config.has_sa_soft_lifetime()) {
         RETURN_IF_ERROR(table_data->SetParam(
-            kIpsecSaLtSoft, sadb_config.sa_lifetime_soft().bytes()));
+            kIpsecSaLtSoft, sadb_config.sa_soft_lifetime().bytes()));
     }
     return ::util::OkStatus();
 }
