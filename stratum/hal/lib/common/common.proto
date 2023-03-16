@@ -1407,7 +1407,7 @@ message IPsecEncryption {
   uint32 key_len = 3;
 }
 
-message IPsecSaLifetimeHard {
+message IPsecSaHardLifetime {
   oneof value { 
     uint32 time = 1;
     uint64 bytes = 2;
@@ -1416,7 +1416,7 @@ message IPsecSaLifetimeHard {
   }
 }
 
-message IPsecSaLifetimeSoft {
+message IPsecSaSoftLifetime {
   oneof value {
     uint32 time = 1;
     uint64 bytes = 2;
@@ -1436,8 +1436,8 @@ message IPsecSADBConfig {
   IpsecProtocolParams protocol_parameters = 7;
   IpsecMode mode = 8;
   IPsecEspSa esp_payload = 9;
-  IPsecSaLifetimeHard sa_lifetime_hard = 10;
-  IPsecSaLifetimeSoft sa_lifetime_soft = 11;
+  IPsecSaHardLifetime sa_hard_lifetime = 10;
+  IPsecSaSoftLifetime sa_soft_lifetime = 11;
 }
 
 // IPsecNotification message is sent from Stratum to gNMI-client based on a
