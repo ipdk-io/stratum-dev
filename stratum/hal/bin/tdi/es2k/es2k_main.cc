@@ -136,8 +136,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto tdi_node = TdiNode::CreateInstance(
-      table_manager.get(), fixed_function_manager.get(),
-      action_profile_manager.get(), packetio_manager.get(),
+      table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
       pre_manager.get(), counter_manager.get(), sde_wrapper, device_id,
       initialized, node_id, lut_manager.get());
 

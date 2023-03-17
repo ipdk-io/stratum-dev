@@ -582,11 +582,15 @@ class TdiSdeInterface {
   // Gets the Tdi table id from the Table name.
   virtual ::util::StatusOr<uint32> GetTableId(std::string &table_name) const = 0;
 
+#ifdef ES2K_TARGET
+  // FIXME: Target-specific code in a target-agnostic class.
   virtual ::util::Status InitNotificationTableWithCallback(int dev_id,
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    std::string &table_name,
+    const std::string &table_name,
+    // FIXME: These parameters need names.
     void (*callback)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
     void *cookie) const = 0;
+#endif
 
  protected:
   // Default constructor. To be called by the Mock class instance only.
