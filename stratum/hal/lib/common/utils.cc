@@ -486,15 +486,5 @@ bool IsRegularFile(const std::string& filename) {
   return (rc==0 && S_ISREG(buf.st_mode));
 }
 
-std::string ConvertIPsecNotificationToString(const IPsecNotification& notif) {
-  std::stringstream ss;
-  ss << "ipsec-sa-spi: " << notif.ipsec_sa_spi();
-  ss << ", soft-lifetime-expire: " << notif.soft_lifetime_expire();
-  ss << ", ipsec-sa-protocol: " << notif.ipsec_sa_protocol();
-  ss << ", ipsec-sa-dest-address: " << notif.ipsec_sa_dest_address();
-  ss << ", address-family: " << notif.address_family();
-  return ss.str();
-}
-
 }  // namespace hal
 }  // namespace stratum

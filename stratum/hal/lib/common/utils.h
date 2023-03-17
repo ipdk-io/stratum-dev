@@ -252,9 +252,6 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config);
 // Checks whether filename is a regular file and not a symlink
 bool IsRegularFile(const std::string& filename);
 
-// A helper method that constructs the IPsecNotification message
-std::string ConvertIPsecNotificationToString(const IPsecNotification& notif);
-
 }  // namespace hal
 }  // namespace stratum
 

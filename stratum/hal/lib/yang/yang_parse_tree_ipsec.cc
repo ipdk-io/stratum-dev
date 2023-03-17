@@ -22,6 +22,17 @@ using namespace stratum::hal::yang::helpers;
 
 namespace {
 
+// Notification message that is sent to gnmi-client
+std::string ConvertIPsecNotificationToString(const IPsecNotification& notif) {
+  std::stringstream ss;
+  ss << "ipsec-sa-spi: " << notif.ipsec_sa_spi();
+  ss << ", soft-lifetime-expire: " << notif.soft_lifetime_expire();
+  ss << ", ipsec-sa-protocol: " << notif.ipsec_sa_protocol();
+  ss << ", ipsec-sa-dest-address: " << notif.ipsec_sa_dest_address();
+  ss << ", address-family: " << notif.address_family();
+  return ss.str();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // /ipsec-offload/ipsec-spi/rx-spi
 void SetUpIPsecFetchSPI(TreeNode* node,
