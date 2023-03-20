@@ -1371,19 +1371,20 @@ message TargetDatapathId {
   uint32 tdi_portout_id = 2; // Port ID for Pipeline in Output Direction
 }
 
-//-----------------------------------------------------------------------------
-// IPsec related enums and messages
-//-----------------------------------------------------------------------------
-enum IpsecMode {
+// IPsecSADBConfig message is the external interface for pushing IPsec
+// Security Association (SA) database configuration data. A gNMI message with
+// all contents populated is expected by Stratum. All other nested messages
+// and enums are defined here.
+enum IPsecMode {
   IPSEC_MODE_TRANSPORT = 0;
   IPSEC_MODE_TUNNEL = 1;
 }
 
-enum IpsecProtocolParams {
+enum IPsecProtocolParams {
   IPSEC_PROTOCOL_PARAMS_ESP = 0;
 }
 
-enum IpsecLifetimeAction {
+enum IPsecLifetimeAction {
   IPSEC_LIFETIME_ACTION_UNSET = 0;
   IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
   IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
@@ -1406,7 +1407,7 @@ message IPsecEncryption {
   uint32 key_len = 3;
 }
 
-message IPsecSaLifetimeHard {
+message IPsecSaHardLifetime {
   oneof value { 
     uint32 time = 1;
     uint64 bytes = 2;
@@ -1415,14 +1416,14 @@ message IPsecSaLifetimeHard {
   }
 }
 
-message IPsecSaLifetimeSoft {
+message IPsecSaSoftLifetime {
   oneof value {
     uint32 time = 1;
     uint64 bytes = 2;
     uint32 packets = 3;
     uint32 idle = 4;
   }
-  IpsecLifetimeAction action = 5;
+  IPsecLifetimeAction action = 5;
 }
 
 message IPsecSADBConfig {
@@ -1432,22 +1433,27 @@ message IPsecSADBConfig {
   uint32 spi = 4;
   bool ext_seq_num = 5;
   uint32 anti_replay_window_size = 6;
-  IpsecProtocolParams protocol_parameters = 7;
-  IpsecMode mode = 8;
+  IPsecProtocolParams protocol_parameters = 7;
+  IPsecMode mode = 8;
   IPsecEspSa esp_payload = 9;
-  IPsecSaLifetimeHard sa_lifetime_hard = 10;
-  IPsecSaLifetimeSoft sa_lifetime_soft = 11;
+  IPsecSaHardLifetime sa_hard_lifetime = 10;
+  IPsecSaSoftLifetime sa_soft_lifetime = 11;
 }
 
+// IPsecNotification message is sent from Stratum to gNMI-client based on a
+// target-originated event.
 message IPsecNotification {
   uint32 device_id = 1;
   uint32 ipsec_sa_spi = 2;
-  bool soft_liftime_expire = 3;
+  bool soft_lifetime_expire = 3;
   uint32 ipsec_sa_protocol = 4;
   string ipsec_sa_dest_address = 5;
   bool address_family = 6;
 }
 
+// IPsecOffloadInfo is used in DataRequest and DataResponse to retrieve the
+// values from target. Currently, only security parameter index (SPI) retrieval
+// is supported, but can be extended to retrieve other values.
 message IPsecOffloadInfo {
   int32 spi = 1;
 }
@@ -1625,6 +1631,8 @@ message SetRequest {
         OpticalTransceiverInfo optical_transceiver_info = 3;
       }
     }
+    // IPsec related SetRequest message (internal to Stratum) reuses the prior
+    // defined IPsec enum and message
     message IPsecOffloadConfig {
       IPsecSadbConfigOp ipsec_sadb_config_op = 1;
       IPsecSADBConfig ipsec_sadb_config_info = 2;
