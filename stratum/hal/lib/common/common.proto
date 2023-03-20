@@ -1375,16 +1375,16 @@ message TargetDatapathId {
 // Security Association (SA) database configuration data. A gNMI message with
 // all contents populated is expected by Stratum. All other nested messages
 // and enums are defined here.
-enum IpsecMode {
+enum IPsecMode {
   IPSEC_MODE_TRANSPORT = 0;
   IPSEC_MODE_TUNNEL = 1;
 }
 
-enum IpsecProtocolParams {
+enum IPsecProtocolParams {
   IPSEC_PROTOCOL_PARAMS_ESP = 0;
 }
 
-enum IpsecLifetimeAction {
+enum IPsecLifetimeAction {
   IPSEC_LIFETIME_ACTION_UNSET = 0;
   IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
   IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
@@ -1423,7 +1423,7 @@ message IPsecSaSoftLifetime {
     uint32 packets = 3;
     uint32 idle = 4;
   }
-  IpsecLifetimeAction action = 5;
+  IPsecLifetimeAction action = 5;
 }
 
 message IPsecSADBConfig {
@@ -1433,8 +1433,8 @@ message IPsecSADBConfig {
   uint32 spi = 4;
   bool ext_seq_num = 5;
   uint32 anti_replay_window_size = 6;
-  IpsecProtocolParams protocol_parameters = 7;
-  IpsecMode mode = 8;
+  IPsecProtocolParams protocol_parameters = 7;
+  IPsecMode mode = 8;
   IPsecEspSa esp_payload = 9;
   IPsecSaHardLifetime sa_hard_lifetime = 10;
   IPsecSaSoftLifetime sa_soft_lifetime = 11;
