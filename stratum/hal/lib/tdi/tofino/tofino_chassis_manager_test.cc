@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from bf_chassis_manager_test.cc
@@ -137,7 +137,7 @@ class TofinoChassisManagerTest : public ::testing::Test {
   void SetUp() override {
     phal_mock_ = absl::make_unique<PhalMock>();
     tdi_sde_mock_ = absl::make_unique<TdiSdeMock>();
-    // TODO(max): create parametrized test suite over mode.
+    // TODO(max): create parameterized test suite over mode.
     tdi_chassis_manager_ = TofinoChassisManager::CreateInstance(
         OPERATION_MODE_STANDALONE, phal_mock_.get(), tdi_sde_mock_.get());
     ON_CALL(*tdi_sde_mock_, IsValidPort(_, _))

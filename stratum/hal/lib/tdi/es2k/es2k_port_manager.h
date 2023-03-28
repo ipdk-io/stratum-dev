@@ -25,12 +25,13 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
  public:
   Es2kPortManager();
 
-  // Required methods from public interface
+  // TdiPortManager public methods
   ::util::Status RegisterPortStatusEventWriter(
       std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer)
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status UnregisterPortStatusEventWriter()
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
+
   ::util::Status GetPortInfo(int device, int port,
                              TargetDatapathId *target_dp_id);
   ::util::StatusOr<PortState> GetPortState(int device, int port);
@@ -44,23 +45,20 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status EnablePort(int device, int port);
   ::util::Status DisablePort(int device, int port);
 
-  // ES2K specific methods
+  // ES2K-specific methods
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode);
   ::util::Status SetPortShapingRate(
       int device, int port, bool is_in_pps, uint32 burst_size,
       uint64 rate_per_second);
-  ::util::Status EnablePortShaping(int device, int port,
-                                           TriState enable);
-  ::util::Status SetPortAutonegPolicy(int device, int port,
-                                              TriState autoneg);
+  ::util::Status EnablePortShaping(int device, int port, TriState enable);
+  ::util::Status SetPortAutonegPolicy(int device, int port, TriState autoneg);
   ::util::Status SetPortMtu(int device, int port, int32 mtu);
   ::util::Status SetPortLoopbackMode(int uint, int port,
-                                             LoopbackState loopback_mode);
+                                     LoopbackState loopback_mode);
   ::util::StatusOr<int> GetPcieCpuPort(int device);
   ::util::Status SetTmCpuPort(int device, int port);
-  ::util::Status SetDeflectOnDropDestination(int device, int port,
-                                                     int queue);
+  ::util::Status SetDeflectOnDropDestination(int device, int port, int queue);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.

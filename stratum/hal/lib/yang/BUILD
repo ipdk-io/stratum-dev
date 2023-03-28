@@ -77,6 +77,7 @@ stratum_cc_library(
         "yang_parse_tree_component.cc",
         "yang_parse_tree_helpers.cc",
         "yang_parse_tree_interface.cc",
+        "yang_parse_tree_ipsec.cc",
         "yang_parse_tree_node.cc",
         "yang_parse_tree_optical.cc",
         "yang_parse_tree_paths.cc",

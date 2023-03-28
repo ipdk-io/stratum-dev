@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"

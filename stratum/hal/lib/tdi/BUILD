@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -29,6 +29,13 @@ config_setting(
 )
 
 config_setting(
+    name = "es2k_target",
+    define_values = {
+        "target": "es2k",
+    },
+)
+
+config_setting(
     name = "tofino_target",
     define_values = {
         "target": "tofino",
@@ -37,17 +44,20 @@ config_setting(
 
 target_defines = select({
     ":dpdk_target":   ["DPDK_TARGET"],
+    ":es2k_target":   ["ES2K_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
 })
 
 target_sdk = select({
     ":dpdk_target":   ["@local_dpdk_bin//:dpdk_sde"],
+    ":es2k_target":   ["@local_es2k_bin//:es2k_sde"],
     ":tofino_target": ["@local_tofino_bin//:tofino_sde"],
 })
 
 stratum_cc_library(
     name = "tdi_sde_interface",
     hdrs = ["tdi_sde_interface.h"],
+    defines = target_defines,
     deps = [
         ":tdi_cc_proto",
         "//stratum/glue:integral_types",
@@ -193,8 +203,10 @@ stratum_cc_library(
         ":tdi_pipeline_utils",
         ":tdi_action_profile_manager",
         ":tdi_counter_manager",
+        ":tdi_lut_manager",
         ":tdi_packetio_manager",
         ":tdi_pre_manager",
+        ":tdi_sde_interface",
         ":tdi_table_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -346,6 +358,65 @@ stratum_cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_googleapis//google/rpc:status_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_fixed_function_manager",
+    srcs = ["tdi_fixed_function_manager.cc"],
+    hdrs = ["tdi_fixed_function_manager.h"],
+    deps = [
+        ":tdi_constants",
+        ":tdi_sde_interface",
+        ":utils",
+        "//stratum/hal/lib/common:gnmi_events",
+        "//stratum/lib:utils",
+        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_ipsec_manager",
+    srcs = ["tdi_ipsec_manager.cc"],
+    hdrs = ["tdi_ipsec_manager.h"],
+    deps = [
+        ":tdi_constants",
+        ":tdi_fixed_function_manager",
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/hal/lib/common:constants",
+        "//stratum/hal/lib/common:utils",
+        "//stratum/hal/lib/common:writer_interface",
+        "//stratum/lib/channel:channel",
+        "//stratum/lib:constants",
+        "//stratum/lib:macros",
+        "//stratum/lib:timer_daemon",
+        "//stratum/lib:utils",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_lut_manager",
+    srcs = ["tdi_lut_manager.cc"],
+    hdrs = ["tdi_lut_manager.h"],
+    deps = [
+        ":tdi_constants",
+        ":tdi_sde_interface",
+        ":utils",
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "//stratum/hal/lib/p4:utils",
+        "//stratum/lib:timer_daemon",
+        "//stratum/lib:utils",
+        "@com_github_gflags_gflags//:gflags",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

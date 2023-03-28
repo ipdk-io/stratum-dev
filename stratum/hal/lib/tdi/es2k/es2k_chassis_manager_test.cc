@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from bf_chassis_manager_test.cc
@@ -81,8 +81,8 @@ class ChassisConfigBuilder {
   explicit ChassisConfigBuilder(uint64 node_id = kNodeId) : node_id(node_id) {
     config_.set_description("Test config for Es2kChassisManager");
     auto* chassis = config_.mutable_chassis();
-    chassis->set_platform(PLT_GENERIC_BAREFOOT_TOFINO);
-    chassis->set_name("Es2k");
+    chassis->set_platform(PLT_P4_IPU_ES2000);
+    chassis->set_name("ES2K");
 
     auto* node = config_.add_nodes();
     node->set_id(node_id);
@@ -137,7 +137,7 @@ class Es2kChassisManagerTest : public ::testing::Test {
   void SetUp() override {
     phal_mock_ = absl::make_unique<PhalMock>();
     tdi_sde_mock_ = absl::make_unique<TdiSdeMock>();
-    // TODO(max): create parametrized test suite over mode.
+    // TODO(max): create parameterized test suite over mode.
     tdi_chassis_manager_ = Es2kChassisManager::CreateInstance(
         OPERATION_MODE_STANDALONE, phal_mock_.get(), tdi_sde_mock_.get());
     ON_CALL(*tdi_sde_mock_, IsValidPort(_, _))
@@ -796,7 +796,7 @@ TEST_F(Es2kChassisManagerTest, VerifyChassisConfigSuccess) {
   const std::string kConfigText1 = R"(
       description: "Sample Generic Es2k config 2x25G ports."
       chassis {
-        platform: PLT_GENERIC_BAREFOOT_TOFINO
+        platform: PLT_P4_IPU_ES2000
         name: "standalone"
       }
       nodes {

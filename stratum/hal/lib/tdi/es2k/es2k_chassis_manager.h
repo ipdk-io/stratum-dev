@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_CHASSIS_MANAGER_H_
@@ -15,7 +15,6 @@
 #include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
@@ -25,6 +24,8 @@
 namespace stratum {
 namespace hal {
 namespace tdi {
+
+class Es2kPortManager;
 
 // Lock which protects chassis state across the entire switch.
 extern absl::Mutex chassis_lock;
@@ -67,6 +68,7 @@ class Es2kChassisManager {
 
   virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
+
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kChassisManager> CreateInstance(
       OperationMode mode,

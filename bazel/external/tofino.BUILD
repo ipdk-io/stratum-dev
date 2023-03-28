@@ -17,6 +17,8 @@ cc_library(
         "tofino-bin/lib/libdriver.so",
         "tofino-bin/lib/libpython3.10m.so*",
         "tofino-bin/lib/libtarget_sys.so",
+        "tofino-bin/lib/libtdi.so",
+        "tofino-bin/lib/libtdi_json_parser.so",
     ]),
     hdrs = glob([
         "tofino-bin/include/bf_switchd/*.h",

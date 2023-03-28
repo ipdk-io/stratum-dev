@@ -18,6 +18,11 @@
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/channel/channel.h"
 
+#ifdef ES2K_TARGET
+typedef void (*notification_table_callback_t)(uint32_t, uint32_t, bool,
+                                              uint8_t, char*, bool, void*);
+#endif
+
 namespace stratum {
 namespace hal {
 namespace tdi {
@@ -586,9 +591,7 @@ class TdiSdeInterface {
   // FIXME: Target-specific code in a target-agnostic class.
   virtual ::util::Status InitNotificationTableWithCallback(int dev_id,
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string &table_name,
-    // FIXME: These parameters need names.
-    void (*callback)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
+    const std::string &table_name, notification_table_callback_t callback,
     void *cookie) const = 0;
 #endif
 

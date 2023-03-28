@@ -176,7 +176,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 }
 
 ::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device, int port) {
-  bool state = false;
+  int state = 0;
   RETURN_IF_TDI_ERROR(
       bf_pal_port_oper_state_get(static_cast<bf_dev_id_t>(device),
                                  static_cast<bf_dev_port_t>(port), &state));

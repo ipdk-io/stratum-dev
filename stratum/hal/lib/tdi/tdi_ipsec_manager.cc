@@ -14,6 +14,7 @@
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
+#include "stratum/glue/logging.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
@@ -21,7 +22,6 @@
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
-#include "stratum/glue/logging.h"
 
 #define IPSEC_CONFIG_SADB_TABLE_NAME \
   "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config"
@@ -62,15 +62,15 @@ void ipsec_notification_callback(uint32_t dev_id,
 
 IPsecManager::IPsecManager(TdiSdeInterface* tdi_sde_interface,
                            TdiFixedFunctionManager* tdi_fixed_function_manager)
-    : tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
+    : gnmi_event_writer_(nullptr),
+      tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
-      gnmi_event_writer_(nullptr),
       notif_initialized_(false) {}
 
 IPsecManager::IPsecManager()
-    : tdi_sde_interface_(nullptr),
+    : gnmi_event_writer_(nullptr),
+      tdi_sde_interface_(nullptr),
       tdi_fixed_function_manager_(nullptr),
-      gnmi_event_writer_(nullptr),
       notif_initialized_(false) {}
 
 IPsecManager::~IPsecManager() = default;
@@ -86,7 +86,7 @@ IPsecManager::~IPsecManager() = default;
 }
 
 ::util::Status IPsecManager::GetSpiData(uint32 &fetched_spi) {
-  // TODO (5abeel): Initilizing the notification callback on FetchSPI because
+  // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
       auto status = InitializeNotificationCallback();
@@ -108,7 +108,7 @@ IPsecManager::~IPsecManager() = default;
 
 ::util::Status IPsecManager::WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
                                                   IPsecSADBConfig &msg) {
-  // TODO (5abeel): Initilizing the notification callback on FetchSPI because
+  // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
       auto status = InitializeNotificationCallback();
@@ -152,7 +152,7 @@ void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
                                                   bool ipv4) {
   absl::ReaderMutexLock l(&gnmi_event_lock_);
   if (!gnmi_event_writer_) return;
-  // Allocate and initialize a IPsecNotificationEvent event and pass it to
+  // Allocate and initialize an IPsecNotificationEvent event and pass it to
   // the gNMI publisher using the gNMI event notification channel.
   // The GnmiEventPtr is a smart pointer (shared_ptr<>) and it takes care of
   // the memory allocated to this event object once the event is handled by

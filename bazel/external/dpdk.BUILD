@@ -16,6 +16,7 @@ cc_library(
     name = "dpdk_sde",
     srcs = glob([
         "dpdk-bin/lib/libbf_switchd_lib.so*",
+        "dpdk-bin/lib/libclish.so",
         "dpdk-bin/lib/libdriver.so",
         "dpdk-bin/lib/libtarget_sys.so",
         "dpdk-bin/lib/libtdi.so*",

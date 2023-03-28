@@ -30,6 +30,7 @@ class SessionMock : public TdiSdeInterface::SessionInterface {
 class TableKeyMock : public TdiSdeInterface::TableKeyInterface {
  public:
   MOCK_METHOD2(SetExact, ::util::Status(int id, const std::string& value));
+  MOCK_METHOD(::util::Status, SetExact, (std::string field_name, uint64 value));
   MOCK_CONST_METHOD2(GetExact, ::util::Status(int id, std::string* value));
   MOCK_METHOD3(SetTernary, ::util::Status(int id, const std::string& value,
                                           const std::string& mask));
@@ -50,24 +51,57 @@ class TableKeyMock : public TdiSdeInterface::TableKeyInterface {
 class TableDataMock : public TdiSdeInterface::TableDataInterface {
  public:
   MOCK_METHOD2(SetParam, ::util::Status(int id, const std::string& value));
+  MOCK_METHOD(::util::Status, SetParam, (std::string field_name, uint64 value));
+  MOCK_METHOD(::util::Status, SetParam, (std::string field_name,
+                                         const std::string& value));
+
   MOCK_CONST_METHOD2(GetParam, ::util::Status(int id, std::string* value));
+  MOCK_CONST_METHOD2(GetParam, ::util::Status(std::string name, uint64* value));
+
   MOCK_METHOD1(SetActionMemberId, ::util::Status(uint64 action_member_id));
   MOCK_CONST_METHOD1(GetActionMemberId,
                      ::util::Status(uint64* action_member_id));
+
   MOCK_METHOD1(SetSelectorGroupId, ::util::Status(uint64 selector_group_id));
   MOCK_CONST_METHOD1(GetSelectorGroupId,
                      ::util::Status(uint64* selector_group_id));
+
   MOCK_METHOD2(SetCounterData, ::util::Status(uint64 bytes, uint64 packets));
   MOCK_CONST_METHOD2(GetCounterData,
                      ::util::Status(uint64* bytes, uint64* packets));
+
   MOCK_METHOD5(SetMeterConfig,
                ::util::Status(bool in_pps, uint64 cir, uint64 cburst,
                               uint64 pir, uint64 pburst));
   MOCK_CONST_METHOD5(GetMeterConfig,
                      ::util::Status(bool in_pps, uint64* cir, uint64* cburst,
                                     uint64* pir, uint64* pburst));
+
   MOCK_CONST_METHOD1(GetActionId, ::util::Status(int* action_id));
+
   MOCK_METHOD1(Reset, ::util::Status(int action_id));
+};
+
+class TdiPortMock : public TdiSdeInterface::TdiPortManager {
+ public:
+  MOCK_METHOD(
+      ::util::Status, RegisterPortStatusEventWriter,
+      (std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer));
+  MOCK_METHOD0(UnregisterPortStatusEventWriter, ::util::Status());
+
+  MOCK_METHOD(::util::Status, GetPortInfo,
+              (int device, int port, TargetDatapathId *target_dp_id));
+  MOCK_METHOD2(GetPortState, ::util::StatusOr<PortState>(int device, int port));
+  MOCK_METHOD3(GetPortCounters,
+               ::util::Status(int device, int port, PortCounters* counters));
+  MOCK_METHOD2(GetPortIdFromPortKey,
+               ::util::StatusOr<uint32>(int device, const PortKey& port_key));
+
+  MOCK_METHOD2(IsValidPort, bool(int device, int port));
+  MOCK_METHOD(::util::Status, AddPort, (int device, int port));
+  MOCK_METHOD2(DeletePort, ::util::Status(int device, int port));
+  MOCK_METHOD2(EnablePort, ::util::Status(int device, int port));
+  MOCK_METHOD2(DisablePort, ::util::Status(int device, int port));
 };
 
 class TdiSdeMock : public TdiSdeInterface {
@@ -81,9 +115,7 @@ class TdiSdeMock : public TdiSdeInterface {
                               const TdiDeviceConfig& device_config));
   MOCK_METHOD0(CreateSession,
                ::util::StatusOr<std::shared_ptr<SessionInterface>>());
-  MOCK_METHOD2(GetPortState, ::util::StatusOr<PortState>(int device, int port));
-  MOCK_METHOD3(GetPortCounters,
-               ::util::Status(int device, int port, PortCounters* counters));
+
   MOCK_METHOD1(
       RegisterPortStatusEventWriter,
       ::util::Status(std::unique_ptr<ChannelWriter<PortStatusEvent>> writer));
@@ -99,6 +131,13 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD2(DeletePort, ::util::Status(int device, int port));
   MOCK_METHOD2(EnablePort, ::util::Status(int device, int port));
   MOCK_METHOD2(DisablePort, ::util::Status(int device, int port));
+  MOCK_METHOD2(GetPortState, ::util::StatusOr<PortState>(int device, int port));
+  MOCK_METHOD3(GetPortCounters,
+               ::util::Status(int device, int port, PortCounters* counters));
+  MOCK_METHOD2(IsValidPort, bool(int device, int port));
+  MOCK_METHOD2(GetPortIdFromPortKey,
+               ::util::StatusOr<uint32>(int device, const PortKey& port_key));
+
   MOCK_METHOD5(SetPortShapingRate,
                ::util::Status(int device, int port, bool is_in_pps,
                               uint32 burst_size, uint64 rate_per_second));
@@ -107,16 +146,14 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD3(SetPortAutonegPolicy,
                ::util::Status(int device, int port, TriState autoneg));
   MOCK_METHOD3(SetPortMtu, ::util::Status(int device, int port, int32 mtu));
-  MOCK_METHOD2(IsValidPort, bool(int device, int port));
   MOCK_METHOD3(SetPortLoopbackMode,
                ::util::Status(int device, int port,
                               LoopbackState loopback_mode));
-  MOCK_METHOD2(GetPortIdFromPortKey,
-               ::util::StatusOr<uint32>(int device, const PortKey& port_key));
   MOCK_METHOD1(GetPcieCpuPort, ::util::StatusOr<int>(int device));
   MOCK_METHOD2(SetTmCpuPort, ::util::Status(int device, int port));
   MOCK_METHOD3(SetDeflectOnDropDestination,
                ::util::Status(int device, int port, int queue));
+
   MOCK_METHOD1(IsSoftwareModel, ::util::StatusOr<bool>(int device));
   MOCK_CONST_METHOD1(GetChipType, std::string(int device));
   MOCK_CONST_METHOD0(GetSdeVersion, std::string());
@@ -182,6 +219,7 @@ class TdiSdeMock : public TdiSdeInterface {
                    int device,
                    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
                    uint32 group_id));
+
   MOCK_METHOD3(
       DeleteCloneSession,
       ::util::Status(int device,
@@ -194,6 +232,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      uint32 session_id, std::vector<uint32>* session_ids,
                      std::vector<int>* egress_ports, std::vector<int>* coss,
                      std::vector<int>* max_pkt_lens));
+
   MOCK_METHOD6(
       WriteIndirectCounter,
       ::util::Status(int device,
@@ -210,6 +249,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::vector<absl::optional<uint64>>* byte_counts,
                      std::vector<absl::optional<uint64>>* packet_counts,
                      absl::Duration timeout));
+
   MOCK_METHOD5(
       WriteRegister,
       ::util::Status(int device,
@@ -224,6 +264,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::vector<uint32>* register_indices,
                      std::vector<uint64>* register_values,
                      absl::Duration timeout));
+
   MOCK_METHOD9(
       WriteIndirectMeter,
       ::util::Status(int device,
@@ -240,6 +281,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::vector<uint64>* cirs, std::vector<uint64>* cbursts,
                      std::vector<uint64>* pirs, std::vector<uint64>* pbursts,
                      std::vector<bool>* in_pps));
+
   MOCK_METHOD5(
       InsertActionProfileMember,
       ::util::Status(int device,
@@ -263,6 +305,7 @@ class TdiSdeMock : public TdiSdeInterface {
           int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
           uint32 table_id, int member_id, std::vector<int>* member_ids,
           std::vector<std::unique_ptr<TableDataInterface>>* table_values));
+
   MOCK_METHOD7(
       InsertActionProfileGroup,
       ::util::Status(int device,
@@ -277,6 +320,7 @@ class TdiSdeMock : public TdiSdeInterface {
                      uint32 table_id, int group_id, int max_group_size,
                      const std::vector<uint32>& member_ids,
                      const std::vector<bool>& member_status));
+
   MOCK_METHOD4(
       DeleteActionProfileGroup,
       ::util::Status(int device,
@@ -290,12 +334,14 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::vector<int>* max_group_sizes,
                      std::vector<std::vector<uint32>>* member_ids,
                      std::vector<std::vector<bool>>* member_status));
+
   MOCK_METHOD1(
       CreateTableKey,
-      ::util::StatusOr<std::unique_ptr<TableKeyInterface>>(int table_id));
+      ::util::StatusOr<std::unique_ptr<TableKeyInterface>>(uint32 table_id));
   MOCK_METHOD2(CreateTableData,
                ::util::StatusOr<std::unique_ptr<TableDataInterface>>(
-                   int table_id, int action_id));
+                   uint32 table_id, uint32 action_id));
+
   MOCK_METHOD5(
       InsertTableEntry,
       ::util::Status(int device,
@@ -353,6 +399,16 @@ class TdiSdeMock : public TdiSdeInterface {
                      ::util::StatusOr<uint32>(uint32 action_profile_id));
   MOCK_CONST_METHOD1(GetActionProfileTdiRtId,
                      ::util::StatusOr<uint32>(uint32 action_selector_id));
+  MOCK_METHOD(::util::StatusOr<uint32>, GetTableId, (std::string& table_name),
+              (const));
+
+#ifdef ES2K_TARGET
+  MOCK_METHOD(::util::Status, InitNotificationTableWithCallback,
+              (int dev_id, std::shared_ptr<SessionInterface> session,
+               const std::string& table_name,
+               notification_table_callback_t callback, void* cookie),
+              (const));
+#endif
 };
 
 }  // namespace tdi

@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -33,6 +33,7 @@ stratum_cc_library(
         "//stratum/hal/lib/common:p4_service",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/lib/security:auth_policy_checker",
+        "//stratum/lib/security:credentials_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
@@ -59,25 +60,39 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_sde_target",
-    srcs = [
-        "es2k_sde_target.cc",
-    ],
+    srcs = ["es2k_sde_target.cc"],
     defines = ["ES2K_TARGET"],
     deps = [
+	":es2k_port_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
         "//stratum/lib:constants",
         "//stratum/lib:utils",
-        "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@local_es2k_bin//:es2k_sde",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_port_manager",
+    srcs = ["es2k_port_manager.cc"],
+    hdrs = ["es2k_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -91,6 +106,7 @@ stratum_cc_library(
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/hal/lib/common:switch_interface",
+        "//stratum/hal/lib/tdi:tdi_ipsec_manager",
         "//stratum/hal/lib/tdi:tdi_node",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
         "//stratum/lib:constants",
@@ -105,6 +121,7 @@ stratum_cc_library(
     srcs = ["es2k_chassis_manager.cc"],
     hdrs = ["es2k_chassis_manager.h"],
     deps = [
+	":es2k_port_manager",
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -121,6 +138,7 @@ stratum_cc_library(
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/lib:error",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
@@ -167,12 +185,9 @@ stratum_cc_library(
         "@com_google_googletest//:gtest",
     ],
 )
-
 stratum_cc_test(
     name = "es2k_hal_test",
-    srcs = [
-        "es2k_hal_test.cc",
-    ],
+    srcs = ["es2k_hal_test.cc"],
     deps = [
         ":es2k_hal",
         ":test_main",
@@ -191,9 +206,7 @@ stratum_cc_test(
 
 stratum_cc_test(
     name = "es2k_switch_test",
-    srcs = [
-        "es2k_switch_test.cc",
-    ],
+    srcs = ["es2k_switch_test.cc"],
     deps = [
         ":es2k_switch",
         ":test_main",

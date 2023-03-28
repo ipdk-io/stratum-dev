@@ -38,19 +38,17 @@ def stratum_deps():
     if "com_github_grpc_grpc" not in native.existing_rules():
         http_archive(
             name = "com_github_grpc_grpc",
-            urls = [
-                "https://github.com/grpc/grpc/archive/v1.33.2.tar.gz",
-            ],
-            strip_prefix = "grpc-1.33.2",
-            sha256 = "2060769f2d4b0d3535ba594b2ab614d7f68a492f786ab94b4318788d45e3278a",
+            urls = ["https://github.com/grpc/grpc/archive/v1.40.0.tar.gz"],
+            strip_prefix = "grpc-1.40.0",
+            sha256 = "13e7c6460cd979726e5b3b129bb01c34532f115883ac696a75eb7f1d6a9765ed",
         )
 
     if "com_google_googleapis" not in native.existing_rules():
         http_archive(
             name = "com_google_googleapis",
-            urls = ["https://github.com/googleapis/googleapis/archive/a8cd11e2c420a194348839c6490a8a1bef2835d3.zip"],
-            strip_prefix = "googleapis-a8cd11e2c420a194348839c6490a8a1bef2835d3",
-            sha256 = "bb2b4aa6558e5125a357d829530f2bad932c6f091f0d2faaacfeec185d031ec2",
+            urls = ["https://github.com/googleapis/googleapis/archive/9b1c49de24301ba6bf1ee6462a634fffc2b97677.zip"],
+            strip_prefix = "googleapis-9b1c49de24301ba6bf1ee6462a634fffc2b97677",
+            sha256 = "2b10a2fe30a0ab4279d803ed7b3bfefb61c48fb3aa651e5f2d4899b4167b7f3b",
         )
 
     if "com_github_p4lang_p4c" not in native.existing_rules():
@@ -58,8 +56,9 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_p4c",
             remote = "https://github.com/p4lang/p4c",
-            commit = "43568b75796d68a6424ad22eebeee62f46ccd3fe",
+            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a",
             build_file = "@//bazel:external/p4c.BUILD",
+            sha256 = "541ab66df80465dac9702779b6446b80234210410e6f5948d995a978475b64c2",
         )
 
     if "judy" not in native.existing_rules():
@@ -93,6 +92,7 @@ def stratum_deps():
             name = "com_github_p4lang_PI",
             remote = "https://github.com/p4lang/PI.git",
             commit = "b2760a818e0b8ade5864604d29b3008a684c6d5f",
+            sha256 = "09b50a974e5a24f943fe492ebc4c8ce64337b02b90f87071c9cf6566afd747f3",
         )
 
     for sde_ver in BF_SDE_PI_VER:
@@ -112,6 +112,7 @@ def stratum_deps():
             name = "com_github_p4lang_PI_np4",
             remote = "https://github.com/craigsdell/PI.git",
             commit = "12be7a96f3d903afdd6cc3095f7d4003242af60b",
+            sha256 = "696bd1f01133e85cc83125ac747f53f67a519208cab3c7ddaa1d131ee0cea65c",
         )
 
     if "com_github_openconfig_gnmi_proto" not in native.existing_rules():
@@ -154,12 +155,14 @@ def stratum_deps():
                 "https://github.com/cython/cython/archive/c2b80d87658a8525ce091cbe146cb7eaa29fed5c.tar.gz",
             ],
         )
+
     if "com_github_openconfig_public" not in native.existing_rules():
         remote_workspace(
             name = "com_github_openconfig_public",
             remote = "https://github.com/openconfig/public",
             commit = "624655d053ad1fdda62901c7e2055c22cd5d6a05",
             build_file = "@//bazel:external/ocpublic.BUILD",
+            sha256 = "d9529e43065491b61ce5fdeaf38c0db10a8407cb9f1c4cd23563e5bbe28871f5",
         )
 
     if "com_github_openconfig_hercules" not in native.existing_rules():
@@ -168,6 +171,7 @@ def stratum_deps():
             remote = "https://github.com/openconfig/hercules",
             commit = "ca3575e85500fa089dfe0b8cd3ea71943267102e",
             build_file = "@//bazel:external/hercules.BUILD",
+            sha256 = "48cc536bc95f363f54aa32ececc24d03e0ab7d97972ab33cf67e63e430883bf8",
         )
 
     if "com_github_yang_models_yang" not in native.existing_rules():
@@ -176,13 +180,14 @@ def stratum_deps():
             remote = "https://github.com/YangModels/yang",
             commit = "ed2ce1028ff57d667764dbdbe3c37328820f0e50",
             build_file = "@//bazel:external/yang.BUILD",
+            sha256 = "53ba8dd265bff6d3cff108ea44493b3e7cf52c62bc089839e96d4329d2874d95",
         )
 
     if "com_github_nlohmann_json" not in native.existing_rules():
         http_archive(
             name = "com_github_nlohmann_json",
-            url = "https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip",
-            sha256 = "6bea5877b1541d353bd77bdfbdb2696333ae5ed8f9e8cc22df657192218cad91",
+            url = "https://github.com/nlohmann/json/releases/download/v3.10.4/include.zip",
+            sha256 = "62c585468054e2d8e7c2759c0d990fd339d13be988577699366fe195162d16cb",
             build_file = "@//bazel:external/json.BUILD",
         )
 
@@ -204,9 +209,9 @@ def stratum_deps():
     if "com_google_absl" not in native.existing_rules():
         http_archive(
             name = "com_google_absl",
-            urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz"],
-            strip_prefix = "abseil-cpp-20210324.2",
-            sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f",
+            urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.tar.gz"],
+            strip_prefix = "abseil-cpp-20220623.0",
+            sha256 = "4208129b49006089ba1d6710845a45e31c59b0ab6bff9e5788a87f55c5abd602",
         )
 
     if "com_github_google_glog" not in native.existing_rules():
@@ -238,6 +243,7 @@ def stratum_deps():
             name = "com_googlesource_code_re2",
             remote = "https://github.com/google/re2",
             commit = "be0e1305d264b2cbe1d35db66b8c5107fc2a727e",
+            sha256 = "4f94f422c14aea5419970f4399ac15b2148bc2e90c8566b9de45c6cf3ff6ce53",
         )
 
     if "com_github_systemd_systemd" not in native.existing_rules():
@@ -246,6 +252,7 @@ def stratum_deps():
             remote = "https://github.com/systemd/systemd",
             commit = "06e93130b4045db1c75f8de506d2447642de74cf",
             build_file = "@//bazel:external/systemd.BUILD",
+            sha256 = "1a02064429ca3995558abd118d3dda06571169b7a6d5e2f3289935967c929a45",
         )
 
     if "com_github_nelhage_rules_boost" not in native.existing_rules():

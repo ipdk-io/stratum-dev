@@ -25,7 +25,7 @@ class TofinoPortManager : public TdiSdeInterface::TdiPortManager {
  public:
   TofinoPortManager();
 
-  // Required methods from public interface
+  // TdiPortManager public methods
   ::util::Status RegisterPortStatusEventWriter(
       std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer)
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
@@ -44,7 +44,7 @@ class TofinoPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status EnablePort(int device, int port);
   ::util::Status DisablePort(int device, int port);
 
-  // Tofino specific methods
+  // Tofino-specific methods
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode);
   ::util::Status SetPortShapingRate(

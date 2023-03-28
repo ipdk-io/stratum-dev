@@ -53,13 +53,13 @@ TdiNode::TdiNode()
       tdi_config_(),
       tdi_sde_interface_(nullptr),
       tdi_table_manager_(nullptr),
+      tdi_lut_manager_(nullptr),
       tdi_action_profile_manager_(nullptr),
       tdi_packetio_manager_(nullptr),
       tdi_pre_manager_(nullptr),
       tdi_counter_manager_(nullptr),
       node_id_(0),
-      device_id_(-1),
-      tdi_lut_manager_(nullptr) {}
+      device_id_(-1) {}
 
 TdiNode::~TdiNode() = default;
 

@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -58,13 +58,16 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tofino_sde_target",
-    srcs = [
-        "tofino_sde_target.cc",
-    ],
+    name = "tofino_port_manager",
     hdrs = ["tofino_port_manager.h"],
+)
+
+stratum_cc_library(
+    name = "tofino_sde_target",
+    srcs = ["tofino_sde_target.cc"],
     defines = ["TOFINO_TARGET"],
     deps = [
+        ":tofino_port_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:cleanup",
@@ -104,11 +107,9 @@ stratum_cc_library(
 stratum_cc_library(
     name = "tofino_chassis_manager",
     srcs = ["tofino_chassis_manager.cc"],
-    hdrs = [
-        "tofino_chassis_manager.h",
-        "tofino_port_manager.h"
-    ],
+    hdrs = ["tofino_chassis_manager.h"],
     deps = [
+        ":tofino_port_manager",
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -175,9 +176,7 @@ stratum_cc_library(
 
 stratum_cc_test(
     name = "tofino_hal_test",
-    srcs = [
-        "tofino_hal_test.cc",
-    ],
+    srcs = ["tofino_hal_test.cc"],
     deps = [
         ":tofino_hal",
         ":test_main",
@@ -196,9 +195,7 @@ stratum_cc_test(
 
 stratum_cc_test(
     name = "tofino_switch_test",
-    srcs = [
-        "tofino_switch_test.cc",
-    ],
+    srcs = ["tofino_switch_test.cc"],
     deps = [
         ":tofino_switch",
         ":test_main",

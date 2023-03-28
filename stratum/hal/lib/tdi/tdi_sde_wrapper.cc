@@ -170,7 +170,7 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
 
   RETURN_IF_TDI_ERROR(attributes_object->setValue(
                 (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_COOKIE,
-                (const uint64_t)cookie));
+                (uint64_t)cookie));
 
   // target & flag create
   const ::tdi::Device *device = nullptr;
