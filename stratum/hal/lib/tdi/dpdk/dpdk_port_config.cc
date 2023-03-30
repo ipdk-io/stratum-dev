@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Intel Corporation
+// Copyright 2021-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_config.h"
@@ -8,8 +8,10 @@
 
 #include "glog/logging.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_constants.h"
+#include "stratum/public/proto/error.pb.h"
 
 namespace stratum {
 namespace hal {

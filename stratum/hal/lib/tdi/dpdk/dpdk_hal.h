@@ -10,7 +10,6 @@
 
 #include <pthread.h>
 #include <signal.h>
-
 #include <memory>
 #include <string>
 #include <vector>

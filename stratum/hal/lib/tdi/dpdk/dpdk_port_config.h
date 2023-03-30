@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Intel Corporation
+// Copyright 2021-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_DPDK_PORT_CONFIG_H_
@@ -7,12 +7,10 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/types/optional.h"
-
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
 
 namespace stratum {
 namespace hal {
@@ -27,8 +25,8 @@ public:
   AdminState admin_state;
 
   // The configuration objects we pass to the SDK.
-  TdiSdeInterface::PortConfigParams cfg;
-  TdiSdeInterface::HotplugConfigParams hotplug;
+  DpdkPortManager::PortConfigParams cfg;
+  DpdkPortManager::HotplugConfigParams hotplug;
 
   // TAP control port.
   std::string control_port;

@@ -157,31 +157,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
       uint32 table_id) override;
   ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
       uint32 table_id, uint32 action_id) override;
-  // TODO(delete after DPDK implements TdiPortManager)
-#ifdef DPDK_TARGET
-  ::util::StatusOr<PortState> GetPortState(int device, int port) override;
-  ::util::Status GetPortCounters(int device, int port,
-                                 PortCounters* counters) override;
-  ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-  ::util::Status UnregisterPortStatusEventWriter() override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-  ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId *target_dp_id) override;
-  ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         FecMode fec_mode) override;
-  ::util::Status AddPort(
-      int device, int port, const PortConfigParams& config) override;
-  ::util::Status HotplugPort(int device, int port,
-                            HotplugConfigParams& hotplug_config) override;
-  ::util::Status DeletePort(int device, int port) override;
-  ::util::Status EnablePort(int device, int port) override;
-  ::util::Status DisablePort(int device, int port) override;
-  bool IsValidPort(int device, int port) override;
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key) override;
-#endif
   ::util::StatusOr<bool> IsSoftwareModel(int device) override;
   std::string GetChipType(int device) const override;
   std::string GetSdeVersion() const override;

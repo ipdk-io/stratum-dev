@@ -43,31 +43,6 @@ class TdiSdeInterface {
     absl::Time time_last_changed;
   };
 
-  struct HotplugConfigParams {
-    uint32 qemu_socket_port;
-    uint64 qemu_vm_mac_address;
-    std::string qemu_socket_ip;
-    std::string qemu_vm_netdev_id;
-    std::string qemu_vm_chardev_id;
-    std::string qemu_vm_device_id;
-    std::string native_socket_path;
-    QemuHotplugMode qemu_hotplug_mode;
-  };
-
-  struct PortConfigParams {
-    DpdkPortType port_type;
-    DpdkDeviceType device_type;
-    PacketDirection packet_dir;
-    int queues;
-    int mtu;
-    std::string socket_path;
-    std::string host_name;
-    std::string port_name;
-    std::string pipeline_name;
-    std::string mempool_name;
-    std::string pci_bdf;
-  };
-
   // SessionInterface is a proxy class for TDI sessions. Most API calls require
   // an active session. It also allows batching requests for performance.
   class SessionInterface {
@@ -255,57 +230,6 @@ class TdiSdeInterface {
   // not applicable.
   virtual ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
       uint32 table_id, uint32 action_id) = 0;
-
-  // TODO(delete after DPDK implements TdiPortManager)
-#ifdef DPDK_TARGET
-  // Registers a writer through which to send any port status events. The
-  // message contains a tuple (device, port, state), where port refers to the
-  // Barefoot SDE device port. There can only be one writer.
-  virtual ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) = 0;
-
-  // Unregisters the port status writer.
-  virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
-
-  // Get Port Info
-  virtual ::util::Status GetPortInfo(int device, int port,
-                                     TargetDatapathId *target_dp_id) = 0;
-
-  // Add a new port with the given parameters.
-  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                                 FecMode fec_mode = FEC_MODE_UNKNOWN) = 0;
-
-  // Add a new port with the given parameters.
-  virtual ::util::Status AddPort(
-      int device, int port, const PortConfigParams& config) = 0 ;
-
-  // Hotplug add/delete the port
-  virtual ::util::Status HotplugPort(int device, int port,
-                            HotplugConfigParams& hotplug_config) = 0;
-
-  // Delete a port.
-  virtual ::util::Status DeletePort(int device, int port) = 0;
-
-  // Enable a port.
-  virtual ::util::Status EnablePort(int device, int port) = 0;
-
-  // Disable a port.
-  virtual ::util::Status DisablePort(int device, int port) = 0;
-
-  // Get the operational state of a port.
-  virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
-
-  // Get the port counters of a port.
-  virtual ::util::Status GetPortCounters(int device, int port,
-                                         PortCounters* counters) = 0;
-
-  // Checks if a port is valid.
-  virtual bool IsValidPort(int device, int port) = 0;
-
-  // Returns the SDE device port ID for the given PortKey.
-  virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key) = 0;
-#endif
 
   // Check whether we are running on the software model.
   virtual ::util::StatusOr<bool> IsSoftwareModel(int device) = 0;

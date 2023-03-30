@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
@@ -29,7 +30,6 @@
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
-#include "stratum/lib/security/credentials_manager.h"
 
 #define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
 #define DEFAULT_CONFIG_DIR "/usr/share/stratum/dpdk/"
@@ -133,8 +133,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       {device_id, tdi_node.get()},
   };
 
+  auto port_manager = DpdkPortManager::CreateSingleton();
+
   auto chassis_manager =
-      DpdkChassisManager::CreateInstance(mode, sde_wrapper);
+      DpdkChassisManager::CreateInstance(mode, port_manager);
 
   auto dpdk_switch = DpdkSwitch::CreateInstance(
       chassis_manager.get(), sde_wrapper, device_id_to_tdi_node);
