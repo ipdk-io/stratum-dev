@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_MOCK_H_
@@ -82,28 +82,6 @@ class TableDataMock : public TdiSdeInterface::TableDataInterface {
   MOCK_METHOD1(Reset, ::util::Status(int action_id));
 };
 
-class TdiPortMock : public TdiSdeInterface::TdiPortManager {
- public:
-  MOCK_METHOD(
-      ::util::Status, RegisterPortStatusEventWriter,
-      (std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer));
-  MOCK_METHOD0(UnregisterPortStatusEventWriter, ::util::Status());
-
-  MOCK_METHOD(::util::Status, GetPortInfo,
-              (int device, int port, TargetDatapathId *target_dp_id));
-  MOCK_METHOD2(GetPortState, ::util::StatusOr<PortState>(int device, int port));
-  MOCK_METHOD3(GetPortCounters,
-               ::util::Status(int device, int port, PortCounters* counters));
-  MOCK_METHOD2(GetPortIdFromPortKey,
-               ::util::StatusOr<uint32>(int device, const PortKey& port_key));
-
-  MOCK_METHOD2(IsValidPort, bool(int device, int port));
-  MOCK_METHOD(::util::Status, AddPort, (int device, int port));
-  MOCK_METHOD2(DeletePort, ::util::Status(int device, int port));
-  MOCK_METHOD2(EnablePort, ::util::Status(int device, int port));
-  MOCK_METHOD2(DisablePort, ::util::Status(int device, int port));
-};
-
 class TdiSdeMock : public TdiSdeInterface {
  public:
   MOCK_METHOD3(InitializeSde,
@@ -115,45 +93,6 @@ class TdiSdeMock : public TdiSdeInterface {
                               const TdiDeviceConfig& device_config));
   MOCK_METHOD0(CreateSession,
                ::util::StatusOr<std::shared_ptr<SessionInterface>>());
-
-  MOCK_METHOD1(
-      RegisterPortStatusEventWriter,
-      ::util::Status(std::unique_ptr<ChannelWriter<PortStatusEvent>> writer));
-  MOCK_METHOD0(UnregisterPortStatusEventWriter, ::util::Status());
-  MOCK_METHOD(::util::Status, GetPortInfo,
-              (int device, int port, TargetDatapathId *target_dp_id));
-  MOCK_METHOD4(AddPort, ::util::Status(int device, int port, uint64 speed_bps,
-                                       FecMode fec_mode));
-  MOCK_METHOD(::util::Status, AddPort,
-              (int device, int port, const PortConfigParams& config));
-  MOCK_METHOD(::util::Status, HotplugPort,
-              (int device, int port, HotplugConfigParams& hotplug_config));
-  MOCK_METHOD2(DeletePort, ::util::Status(int device, int port));
-  MOCK_METHOD2(EnablePort, ::util::Status(int device, int port));
-  MOCK_METHOD2(DisablePort, ::util::Status(int device, int port));
-  MOCK_METHOD2(GetPortState, ::util::StatusOr<PortState>(int device, int port));
-  MOCK_METHOD3(GetPortCounters,
-               ::util::Status(int device, int port, PortCounters* counters));
-  MOCK_METHOD2(IsValidPort, bool(int device, int port));
-  MOCK_METHOD2(GetPortIdFromPortKey,
-               ::util::StatusOr<uint32>(int device, const PortKey& port_key));
-
-  MOCK_METHOD5(SetPortShapingRate,
-               ::util::Status(int device, int port, bool is_in_pps,
-                              uint32 burst_size, uint64 rate_per_second));
-  MOCK_METHOD3(EnablePortShaping,
-               ::util::Status(int device, int port, TriState enable));
-  MOCK_METHOD3(SetPortAutonegPolicy,
-               ::util::Status(int device, int port, TriState autoneg));
-  MOCK_METHOD3(SetPortMtu, ::util::Status(int device, int port, int32 mtu));
-  MOCK_METHOD3(SetPortLoopbackMode,
-               ::util::Status(int device, int port,
-                              LoopbackState loopback_mode));
-  MOCK_METHOD1(GetPcieCpuPort, ::util::StatusOr<int>(int device));
-  MOCK_METHOD2(SetTmCpuPort, ::util::Status(int device, int port));
-  MOCK_METHOD3(SetDeflectOnDropDestination,
-               ::util::Status(int device, int port, int queue));
-
   MOCK_METHOD1(IsSoftwareModel, ::util::StatusOr<bool>(int device));
   MOCK_CONST_METHOD1(GetChipType, std::string(int device));
   MOCK_CONST_METHOD0(GetSdeVersion, std::string());

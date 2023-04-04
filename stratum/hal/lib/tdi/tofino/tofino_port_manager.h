@@ -1,17 +1,14 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TOFINO_TOFINO_PORT_MANAGER_H_
 #define STRATUM_HAL_LIB_TDI_TOFINO_TOFINO_PORT_MANAGER_H_
 
-#include <map>
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "absl/synchronization/mutex.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 
 // Suppress clang errors
 #undef LOCKS_EXCLUDED
@@ -24,6 +21,7 @@ namespace tdi {
 class TofinoPortManager : public TdiSdeInterface::TdiPortManager {
  public:
   TofinoPortManager();
+  virtual ~TofinoPortManager() {}
 
   // TdiPortManager public methods
   ::util::Status RegisterPortStatusEventWriter(
@@ -45,21 +43,21 @@ class TofinoPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status DisablePort(int device, int port);
 
   // Tofino-specific methods
-  ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         FecMode fec_mode);
-  ::util::Status SetPortShapingRate(
+  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
+                                 FecMode fec_mode);
+  virtual ::util::Status SetPortShapingRate(
       int device, int port, bool is_in_pps, uint32 burst_size,
       uint64 rate_per_second);
-  ::util::Status EnablePortShaping(int device, int port,
+  virtual ::util::Status EnablePortShaping(int device, int port,
                                            TriState enable);
-  ::util::Status SetPortAutonegPolicy(int device, int port,
+  virtual ::util::Status SetPortAutonegPolicy(int device, int port,
                                               TriState autoneg);
-  ::util::Status SetPortMtu(int device, int port, int32 mtu);
-  ::util::Status SetPortLoopbackMode(int uint, int port,
+  virtual ::util::Status SetPortMtu(int device, int port, int32 mtu);
+  virtual ::util::Status SetPortLoopbackMode(int uint, int port,
                                              LoopbackState loopback_mode);
-  ::util::StatusOr<int> GetPcieCpuPort(int device);
-  ::util::Status SetTmCpuPort(int device, int port);
-  ::util::Status SetDeflectOnDropDestination(int device, int port,
+  virtual ::util::StatusOr<int> GetPcieCpuPort(int device);
+  virtual ::util::Status SetTmCpuPort(int device, int port);
+  virtual ::util::Status SetDeflectOnDropDestination(int device, int port,
                                                      int queue);
 
   // Creates the singleton instance. Expected to be called once to initialize
@@ -100,8 +98,8 @@ class TofinoPortManager : public TdiSdeInterface::TdiPortManager {
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
+  std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>>
+    port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

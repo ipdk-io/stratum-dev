@@ -21,6 +21,45 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
+target_defines = [
+    "TOFINO_TARGET",
+]
+
+stratum_cc_library(
+    name = "tofino_port_manager_interface",
+    hdrs = ["tofino_port_manager.h"],
+)
+
+stratum_cc_library(
+    name = "tofino_port_manager",
+    srcs = ["tofino_port_manager.cc"],
+    hdrs = ["tofino_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/gtl:cleanup",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib/channel",
+        "//stratum/lib:utils",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+stratum_cc_library(
+    name = "tofino_port_manager_mock",
+    testonly = 1,
+    hdrs = ["tofino_port_manager_mock.h"],
+    deps = [
+        ":tofino_port_manager",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 stratum_cc_library(
     name = "tofino_hal",
     srcs = ["tofino_hal.cc"],
@@ -58,11 +97,6 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tofino_port_manager",
-    hdrs = ["tofino_port_manager.h"],
-)
-
-stratum_cc_library(
     name = "tofino_sde_target",
     srcs = ["tofino_sde_target.cc"],
     defines = ["TOFINO_TARGET"],
@@ -90,13 +124,13 @@ stratum_cc_library(
     srcs = ["tofino_switch.cc"],
     hdrs = ["tofino_switch.h"],
     deps = [
+        ":tofino_chassis_manager",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status:status_macros",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/tdi:tdi_node",
-        "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -109,7 +143,7 @@ stratum_cc_library(
     srcs = ["tofino_chassis_manager.cc"],
     hdrs = ["tofino_chassis_manager.h"],
     deps = [
-        ":tofino_port_manager",
+        ":tofino_port_manager_interface",
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -142,6 +176,7 @@ stratum_cc_test(
     deps = [
         ":tofino_chassis_manager",
         ":test_main",
+        ":tofino_port_manager_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
         "//stratum/glue:integral_types",
         "//stratum/glue/gtl:map_util",

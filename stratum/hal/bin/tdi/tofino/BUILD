@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
@@ -40,6 +40,7 @@ stratum_cc_binary(
     deps = [
         "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager",
         "//stratum/hal/lib/tdi/tofino:tofino_hal",
+        "//stratum/hal/lib/tdi/tofino:tofino_port_manager",
         "//stratum/hal/lib/tdi/tofino:tofino_sde_target",
         "//stratum/hal/lib/tdi/tofino:tofino_sde_utils",
         "//stratum/hal/lib/tdi/tofino:tofino_switch",
