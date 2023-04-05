@@ -105,15 +105,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       FLAGS_es2k_sde_install, FLAGS_es2k_infrap4d_cfg,
       es2k_infrap4d_background));
 
-  /* ========== */
-  // NOTE: Rework for ES2K
-  ASSIGN_OR_RETURN(bool is_sw_model,
-                   sde_wrapper->IsSoftwareModel(device_id));
-  const OperationMode mode =
-      is_sw_model ? OPERATION_MODE_SIM : OPERATION_MODE_STANDALONE;
+  const OperationMode mode = OPERATION_MODE_STANDALONE;
 
-  VLOG(1) << "Detected is_sw_model: " << is_sw_model;
-  /* ========== */
+  VLOG(1) << "SDE version: " << sde_wrapper->GetSdeVersion();
+  VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
 
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
@@ -145,8 +140,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       {device_id, tdi_node.get()},
   };
 
+  auto port_manager = Es2kPortManager::CreateSingleton();
+
   auto chassis_manager =
-      Es2kChassisManager::CreateInstance(mode, sde_wrapper, es2k_port_manager);
+      Es2kChassisManager::CreateInstance(mode, es2k_port_manager);
 
   auto ipsec_manager = 
       IPsecManager::CreateInstance(sde_wrapper, fixed_function_manager.get());
@@ -158,9 +155,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   // Create the 'Hal' class instance.
   auto* hal = Es2kHal::CreateSingleton(
-      // NOTE: Shouldn't first parameter be 'mode'?
-      stratum::hal::OPERATION_MODE_STANDALONE, es2k_switch.get(),
-      auth_policy_checker.get(), ready_sync, done_sync);
+      mode, es2k_switch.get(), auth_policy_checker.get(), ready_sync, done_sync);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.

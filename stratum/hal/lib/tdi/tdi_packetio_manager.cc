@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
@@ -16,10 +16,9 @@
 #include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/constants.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/lib/utils.h"
-
-DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 namespace stratum {
 namespace hal {

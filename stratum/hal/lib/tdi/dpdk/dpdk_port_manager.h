@@ -82,9 +82,6 @@ class DpdkPortManager : public TdiSdeInterface::TdiPortManager {
 
   ::util::Status AddPort(int device, int port);
 
-  ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         FecMode fec_mode);
-
   ::util::Status DeletePort(int device, int port);
 
   ::util::Status EnablePort(int device, int port);
@@ -92,6 +89,10 @@ class DpdkPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status DisablePort(int device, int port);
 
   // ---------- DPDK-specific public methods ----------
+
+  // Legacy method (returns NOT_SUPPORTED).
+  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
+                                 FecMode fec_mode);
 
   // Adds a new port with the given parameters.
   virtual ::util::Status AddPort(

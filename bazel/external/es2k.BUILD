@@ -31,6 +31,8 @@ cc_library(
         "es2k-bin/lib/x86_64-linux-gnu/*.so*",
     ]),
     linkopts = [
+        "-L/usr/lib/x86_64-linux-gnu",
+        "-lglib-2.0",
         "-lpthread",
         "-lm",
         "-ldl",

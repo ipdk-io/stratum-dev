@@ -17,7 +17,6 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
@@ -31,7 +30,6 @@ namespace hal {
 namespace tdi {
 
 using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
-using TransceiverEvent = PhalInterface::TransceiverEvent;
 
 ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 
@@ -41,9 +39,7 @@ constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;
 constexpr int Es2kChassisManager::kMaxXcvrEventDepth;
 
 Es2kChassisManager::Es2kChassisManager(
-    OperationMode mode,
-    TdiSdeInterface* tdi_sde_interface,
-    Es2kPortManager* es2k_port_manager)
+    OperationMode mode, Es2kPortManager* es2k_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -57,7 +53,6 @@ Es2kChassisManager::Es2kChassisManager(
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       es2k_port_manager_(ABSL_DIE_IF_NULL(es2k_port_manager)) {}
 
 Es2kChassisManager::Es2kChassisManager()
@@ -74,7 +69,6 @@ Es2kChassisManager::Es2kChassisManager()
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      tdi_sde_interface_(nullptr),
       es2k_port_manager_(nullptr) {}
 
 Es2kChassisManager::~Es2kChassisManager() = default;
@@ -868,9 +862,8 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 }
 
 std::unique_ptr<Es2kChassisManager> Es2kChassisManager::CreateInstance(
-    OperationMode mode, TdiSdeInterface* tdi_sde_interface, Es2kPortManager* es2k_port_manager) {
-  return absl::WrapUnique(new Es2kChassisManager(
-        mode, tdi_sde_interface, es2k_port_manager));
+    OperationMode mode, Es2kPortManager* es2k_port_manager) {
+  return absl::WrapUnique(new Es2kChassisManager(mode, es2k_port_manager));
 }
 
 void Es2kChassisManager::SendPortOperStateGnmiEvent(

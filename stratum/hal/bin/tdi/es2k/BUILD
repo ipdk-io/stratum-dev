@@ -33,10 +33,6 @@ stratum_cc_binary(
     ],
     arches = HOST_ARCHES,
     defines = ["ES2K_TARGET"],
-    linkopts = [
-        "-L/usr/lib/x86_64-linux-gnu",
-        "-lglib-2.0",
-    ],
     data = [
         # NOTE: Replace with es2k conf files
         "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",

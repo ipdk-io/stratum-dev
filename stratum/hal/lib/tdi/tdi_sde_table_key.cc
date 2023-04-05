@@ -20,11 +20,10 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/utils.h"
-
-DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 namespace stratum {
 namespace hal {
@@ -37,7 +36,8 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(table_key_->tableGet(&table));
   size_t field_size_bits;
   auto tableInfo = table->tableInfoGet();
-  const ::tdi::KeyFieldInfo *keyFieldInfo = tableInfo->keyFieldGet(static_cast<tdi_id_t>(id));
+  const ::tdi::KeyFieldInfo *keyFieldInfo =
+    tableInfo->keyFieldGet(static_cast<tdi_id_t>(id));
   RETURN_IF_NULL(keyFieldInfo);
 
   field_size_bits = keyFieldInfo->sizeGet();

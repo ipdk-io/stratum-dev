@@ -31,7 +31,7 @@ cc_library(
 
 cc_library(
     name = "dpdk_hdrs",
-     hdrs = glob([
+    hdrs = glob([
         "dpdk-bin/include/bf_pal/*.h",
         "dpdk-bin/include/bf_rt/**/*.h",
         "dpdk-bin/include/bf_switchd/**/*.h",
@@ -58,6 +58,11 @@ cc_library(
         ":dpdk_libs",
         ":dpdk_hdrs",
     ],
+)
+
+cc_library(
+    name = "dpdk_rte",
+    srcs = glob(["dpdk-bin/lib/x86_64-linux-gnu/*.so*"])
 )
 
 # Runtime libraries

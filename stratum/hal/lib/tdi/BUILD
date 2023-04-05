@@ -102,6 +102,15 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_sde_flags",
+    hdrs = ["tdi_sde_flags.h"],
+    srcs = ["tdi_sde_flags.cc"],
+    deps = [
+        "@com_github_gflags_gflags//:gflags",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_sde_mock",
     testonly = 1,
     hdrs = ["tdi_sde_mock.h"],
@@ -138,24 +147,25 @@ stratum_cc_library(
     ],
     defines = target_defines,
     deps = [
-        ":tdi_sde_wrapper_interface",
-        ":tdi_sde_headers",
+        ":macros",
         ":tdi_constants",
         ":tdi_id_mapper",
-        ":macros",
+        ":tdi_sde_flags",
+        ":tdi_sde_headers",
+        ":tdi_sde_wrapper_interface",
         ":utils",
-        "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
         "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/gtl:stl_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/p4:utils",
+        "//stratum/lib/channel",
         "//stratum/lib:constants",
         "//stratum/lib:utils",
-        "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
@@ -431,6 +441,16 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_ipsec_manager_mock",
+    testonly = True,
+    hdrs = ["tdi_ipsec_manager_mock.h"],
+    deps = [
+        ":tdi_ipsec_manager",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_lut_manager",
     srcs = ["tdi_lut_manager.cc"],
     hdrs = ["tdi_lut_manager.h"],
@@ -455,6 +475,7 @@ stratum_cc_library(
     hdrs = ["tdi_packetio_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_sde_flags",
         ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",

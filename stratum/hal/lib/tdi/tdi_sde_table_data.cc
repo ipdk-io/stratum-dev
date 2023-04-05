@@ -21,11 +21,10 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/macros.h"
-
-DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 namespace stratum {
 namespace hal {

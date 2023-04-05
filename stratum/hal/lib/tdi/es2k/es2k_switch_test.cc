@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from ipdk_switch_test, which was
@@ -19,8 +19,8 @@
 #include "stratum/hal/lib/common/phal_mock.h"
 #include "stratum/hal/lib/common/writer_mock.h"
 #include "stratum/hal/lib/p4/p4_table_mapper_mock.h"
+#include "stratum/hal/lib/tdi/tdi_ipsec_manager_mock.h"
 #include "stratum/hal/lib/tdi/tdi_node_mock.h"
-#include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager_mock.h"
 #include "stratum/lib/channel/channel_mock.h"
 #include "stratum/lib/utils.h"
@@ -77,12 +77,12 @@ class Es2kSwitchTest : public ::testing::Test {
   void SetUp() override {
     // Use NiceMock to suppress "uninteresting mock function call" warnings
     phal_mock_ = absl::make_unique<NiceMock<PhalMock>>();
-    sde_mock_ = absl::make_unique<NiceMock<TdiSdeMock>>();
     chassis_manager_mock_ = absl::make_unique<NiceMock<Es2kChassisManagerMock>>();
+    ipsec_manager_mock_ = absl::make_unique<NiceMock<IPsecManagerMock>>();
     node_mock_ = absl::make_unique<NiceMock<TdiNodeMock>>();
     unit_to_ipdk_node_mock_[kUnit] = node_mock_.get();
     switch_ = Es2kSwitch::CreateInstance(
-        chassis_manager_mock_.get(),
+        chassis_manager_mock_.get(), ipsec_manager_mock_.get(),
         unit_to_ipdk_node_mock_);
 
     ON_CALL(*chassis_manager_mock_, GetNodeIdToUnitMap())
@@ -107,8 +107,8 @@ class Es2kSwitchTest : public ::testing::Test {
   }
 
   std::unique_ptr<PhalMock> phal_mock_;
-  std::unique_ptr<TdiSdeMock> sde_mock_;
   std::unique_ptr<Es2kChassisManagerMock> chassis_manager_mock_;
+  std::unique_ptr<IPsecManagerMock> ipsec_manager_mock_;
   std::unique_ptr<TdiNodeMock> node_mock_;
   std::map<int, TdiNode*> unit_to_ipdk_node_mock_;
   std::unique_ptr<Es2kSwitch> switch_;
@@ -353,7 +353,6 @@ TEST_F(Es2kSwitchTest, SetNoContentsPass) {
   ASSERT_EQ(details.size(), 1);
   EXPECT_THAT(details.at(0).ToString(), HasSubstr("Not supported yet"));
 }
-#endif
 
 // TODO(unknown): Complete unit test coverage.
 

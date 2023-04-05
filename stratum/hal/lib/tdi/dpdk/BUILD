@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -25,6 +25,8 @@ target_defines = [
     "DPDK_TARGET",  # shouldn't be necessary
 ]
 
+# dpdk_port_manager
+
 stratum_cc_library(
     name = "dpdk_port_manager",
     srcs = ["dpdk_port_manager.cc"],
@@ -41,6 +43,23 @@ stratum_cc_library(
         "@com_google_absl//absl/time",
     ],
 )
+
+stratum_cc_library(
+    name = "dpdk_port_manager_interface",
+    hdrs = ["dpdk_port_manager.h"],
+)
+
+stratum_cc_library(
+    name = "dpdk_port_manager_mock",
+    testonly = 1,
+    hdrs = ["dpdk_port_manager_mock.h"],
+    deps = [
+        ":dpdk_port_manager",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+# dpdk_chassis_manager
 
 stratum_cc_library(
     name = "dpdk_chassis_manager",
@@ -76,12 +95,10 @@ stratum_cc_library(
 stratum_cc_library(
     name = "dpdk_port_config",
     srcs = ["dpdk_port_config.cc"],
-    hdrs = [
-        "dpdk_port_config.h",
-        "dpdk_port_manager.h",
-    ],
+    hdrs = ["dpdk_port_config.h"],
     deps = [
         ":dpdk_port_constants",
+        ":dpdk_port_manager_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/hal/lib/common:common_cc_proto",
@@ -121,7 +138,9 @@ stratum_cc_library(
     name = "dpdk_sde_utils",
     srcs = ["dpdk_sde_utils.cc"],
     hdrs = ["//stratum/hal/lib/tdi:tdi_sde_utils.h"],
-    deps = ["@local_dpdk_bin//:dpdk_sde"],
+    deps = [
+        "@local_dpdk_bin//:dpdk_sde",
+    ],
 )
 
 stratum_cc_library(
@@ -155,6 +174,7 @@ stratum_cc_test(
     defines = target_defines,
     deps = [
         ":dpdk_chassis_manager",
+        ":dpdk_port_manager_mock",
         ":test_main",
         "//stratum/glue:integral_types",
         "//stratum/glue/gtl:map_util",
@@ -173,6 +193,8 @@ stratum_cc_test(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest",
+        "@local_dpdk_bin//:dpdk_rte",
+        "@local_dpdk_bin//:dpdk_sde",
     ],
 )
 

@@ -25,10 +25,7 @@ target_defines = [
     "TOFINO_TARGET",
 ]
 
-stratum_cc_library(
-    name = "tofino_port_manager_interface",
-    hdrs = ["tofino_port_manager.h"],
-)
+# tofino_port_manager
 
 stratum_cc_library(
     name = "tofino_port_manager",
@@ -47,7 +44,13 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+        "@local_tofino_bin//:tofino_sde",
     ],
+)
+
+stratum_cc_library(
+    name = "tofino_port_manager_interface",
+    hdrs = ["tofino_port_manager.h"],
 )
 
 stratum_cc_library(

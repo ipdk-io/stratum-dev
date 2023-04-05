@@ -25,7 +25,8 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
  public:
   Es2kPortManager();
 
-  // TdiPortManager public methods
+  // ---------- Common public methods ----------
+
   ::util::Status RegisterPortStatusEventWriter(
       std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer)
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
@@ -45,20 +46,21 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   ::util::Status EnablePort(int device, int port);
   ::util::Status DisablePort(int device, int port);
 
-  // ES2K-specific methods
-  ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         FecMode fec_mode);
-  ::util::Status SetPortShapingRate(
-      int device, int port, bool is_in_pps, uint32 burst_size,
-      uint64 rate_per_second);
-  ::util::Status EnablePortShaping(int device, int port, TriState enable);
-  ::util::Status SetPortAutonegPolicy(int device, int port, TriState autoneg);
-  ::util::Status SetPortMtu(int device, int port, int32 mtu);
-  ::util::Status SetPortLoopbackMode(int uint, int port,
-                                     LoopbackState loopback_mode);
-  ::util::StatusOr<int> GetPcieCpuPort(int device);
-  ::util::Status SetTmCpuPort(int device, int port);
-  ::util::Status SetDeflectOnDropDestination(int device, int port, int queue);
+  // ---------- ES2K-specific public methods ----------
+
+  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
+                                 FecMode fec_mode);
+  virtual ::util::Status EnablePortShaping(int device, int port,
+                                           TriState enable);
+  virtual ::util::Status SetPortAutonegPolicy(int device, int port,
+                                              TriState autoneg);
+  virtual ::util::Status SetPortMtu(int device, int port, int32 mtu);
+  virtual ::util::Status SetPortLoopbackMode(int uint, int port,
+                                             LoopbackState loopback_mode);
+  virtual ::util::StatusOr<int> GetPcieCpuPort(int device);
+  virtual ::util::Status SetTmCpuPort(int device, int port);
+  virtual ::util::Status SetDeflectOnDropDestination(int device, int port,
+                                                     int queue);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.

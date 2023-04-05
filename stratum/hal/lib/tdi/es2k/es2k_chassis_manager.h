@@ -14,11 +14,10 @@
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
@@ -71,9 +70,7 @@ class Es2kChassisManager {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kChassisManager> CreateInstance(
-      OperationMode mode,
-      TdiSdeInterface* tdi_sde_interface,
-      Es2kPortManager* es2k_port_manager);
+      OperationMode mode, Es2kPortManager* es2k_port_manager);
 
   // Es2kChassisManager is neither copyable nor movable.
   Es2kChassisManager(const Es2kChassisManager&) = delete;
@@ -113,8 +110,7 @@ class Es2kChassisManager {
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  Es2kChassisManager(OperationMode mode,
-      TdiSdeInterface* tdi_sde_interface, Es2kPortManager* es2k_port_manager);
+  Es2kChassisManager(OperationMode mode, Es2kPortManager* es2k_port_manager);
 
   ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
                                                     uint32 port_id) const
@@ -253,13 +249,7 @@ class Es2kChassisManager {
   std::map<PortKey, HwState> xcvr_port_key_to_xcvr_state_
       GUARDED_BY(chassis_lock);
 
-  // Pointer to a PhalInterface implementation.
- // PhalInterface* phal_interface_;  // not owned by this class.
-
-  // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.
-  TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.
-
-  // Pointer to a Es2kPortManager implementation that wraps the SDE calls.
+  // Pointer to an Es2kPortManager implementation that wraps the SDE calls.
   Es2kPortManager* es2k_port_manager_;  // not owned by this class.
 
   friend class Es2kChassisManagerTest;
