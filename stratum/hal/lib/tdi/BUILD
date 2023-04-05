@@ -46,12 +46,26 @@ target_defines = select({
     ":dpdk_target":   ["DPDK_TARGET"],
     ":es2k_target":   ["ES2K_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
+    "//conditions:default": [],
+})
+
+tofino_defines = select({
+    ":tofino_target": ["TOFINO_TARGET"],
+    "//conditions:default": [],
+})
+
+target_sdk_headers = select({
+    ":dpdk_target":   ["@local_dpdk_bin//:dpdk_hdrs"],
+    ":es2k_target":   ["@local_es2k_bin//:es2k_hdrs"],
+    ":tofino_target": ["@local_tofino_bin//:tofino_hdrs"],
+    "//conditions:default": [],
 })
 
 target_sdk = select({
     ":dpdk_target":   ["@local_dpdk_bin//:dpdk_sde"],
     ":es2k_target":   ["@local_es2k_bin//:es2k_sde"],
     ":tofino_target": ["@local_tofino_bin//:tofino_sde"],
+    "//conditions:default": [],
 })
 
 stratum_cc_library(
@@ -67,7 +81,24 @@ stratum_cc_library(
         "//stratum/hal/lib/common:utils",
         "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
-    ],
+    ] + target_sdk_headers,
+)
+
+stratum_cc_library(
+    name = "tdi_sde_wrapper_interface",
+    hdrs = ["tdi_sde_wrapper.h"],
+    defines = tofino_defines,
+    deps = [
+        ":macros",
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/synchronization",
+    ] + target_sdk_headers,
 )
 
 stratum_cc_library(
@@ -77,7 +108,17 @@ stratum_cc_library(
     deps = [
         ":tdi_sde_interface",
         "@com_google_googletest//:gtest",
-    ],
+    ] + target_sdk_headers,
+)
+
+stratum_cc_library(
+    name = "macros",
+    hdrs = ["macros.h"],
+    # macros.h depends on bf_types
+    defines = target_defines,
+    deps = [
+        "//stratum/lib:macros",
+    ] + target_sdk_headers,
 )
 
 stratum_cc_library(
@@ -97,7 +138,7 @@ stratum_cc_library(
     ],
     defines = target_defines,
     deps = [
-        ":tdi_sde_interface",
+        ":tdi_sde_wrapper_interface",
         ":tdi_sde_headers",
         ":tdi_constants",
         ":tdi_id_mapper",
@@ -117,7 +158,7 @@ stratum_cc_library(
         "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
-    ] + target_sdk,
+    ],
 )
 
 stratum_cc_library(
@@ -126,11 +167,9 @@ stratum_cc_library(
         "tdi_id_mapper.h",
         "tdi_sde_common.h",
         "tdi_sde_helpers.h",
-        "tdi_sde_wrapper.h",
     ],
     deps = [
-        ":tdi_sde_interface",
-        ":macros",
+        ":tdi_sde_wrapper_interface",
     ],
 )
 
@@ -313,16 +352,6 @@ stratum_cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
-)
-
-stratum_cc_library(
-    name = "macros",
-    hdrs = ["macros.h"],
-    # macros.h depends on bf_types
-    defines = target_defines,
-    deps = [
-        "//stratum/lib:macros",
-    ] + target_sdk,
 )
 
 stratum_cc_library(

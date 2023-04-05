@@ -10,7 +10,7 @@ package(
 )
 
 cc_library(
-    name = "es2k_sde",
+    name = "es2k_libs",
     srcs = glob([
         # "es2k-bin/lib/libacccp.so",
         "es2k-bin/lib/libbf_switchd_lib.so*",
@@ -30,6 +30,15 @@ cc_library(
         "es2k-bin/lib/libxeoncp.so",
         "es2k-bin/lib/x86_64-linux-gnu/*.so*",
     ]),
+    linkopts = [
+        "-lpthread",
+        "-lm",
+        "-ldl",
+    ],
+)
+
+cc_library(
+    name = "es2k_hdrs",
     hdrs = glob([
         "es2k-bin/include/bf_pal/*.h",
         "es2k-bin/include/bf_switchd/**/*.h",
@@ -44,11 +53,14 @@ cc_library(
         "es2k-bin/include/tdi/**/*.hpp",
         "es2k-bin/include/tdi_rt/*.h",
     ]),
-    linkopts = [
-        "-lpthread",
-        "-lm",
-        "-ldl",
-    ],
     strip_include_prefix = "es2k-bin/include",
+)
+
+cc_library(
+    name = "es2k_sde",
+    deps = [
+        ":es2k_libs",
+        ":es2k_hdrs",
+    ],
 )
 
