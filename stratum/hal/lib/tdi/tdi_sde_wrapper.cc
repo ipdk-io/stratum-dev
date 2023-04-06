@@ -28,11 +28,6 @@
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/lib/channel/channel.h"
 
-#ifdef ES2K_TARGET
-// FIXME: Target-specific code in a target-agnostic file.
-#include "tdi_rt/tdi_rt_defs.h"
-#endif
-
 DEFINE_string(tdi_sde_config_dir, "/var/run/stratum/tdi_config",
               "The dir used by the SDE to load the device configuration.");
 
@@ -126,62 +121,6 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
   RETURN_ERROR(ERR_INTERNAL)
               << "Error retreiving information from TDI";
 }
-
-#ifdef ES2K_TARGET
-// FIXME: Target-specific code in a target-agnostic class.
-::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
-    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string &table_name,
-    // FIXME: These parameters need names.
-    void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
-    void *cookie) const {
-
-  if (!tdi_info_) {
-    RETURN_ERROR(ERR_INTERNAL)
-                << "Unable to initialize notification table due to TDI internal error";
-  }
-
-  auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
-
-  const ::tdi::Table* notifTable;
-  RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &notifTable));
-  
-  // tdi_attributes_allocate
-  std::unique_ptr<::tdi::TableAttributes> attributes_field;
-  ::tdi::TableAttributes *attributes_object;
-  RETURN_IF_TDI_ERROR(notifTable->attributeAllocate((tdi_attributes_type_e) TDI_RT_ATTRIBUTES_TYPE_IPSEC_SADB_EXPIRE_NOTIF,
-                                                  &attributes_field));
-  attributes_object = attributes_field.get();
-
-  // tdi_attributes_set_values
-  const uint64_t enable = 1;
-  RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_ENABLE,
-                enable));
-
-  RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_CALLBACK_C,
-                (uint64_t)ipsec_notif_cb));
-
-  RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_COOKIE,
-                (uint64_t)cookie));
-
-  // target & flag create
-  const ::tdi::Device *device = nullptr;
-  ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
-  std::unique_ptr<::tdi::Target> target;
-  device->createTarget(&target);
-
-  const auto flags = ::tdi::Flags(0);
-  RETURN_IF_TDI_ERROR(notifTable->tableAttributesSet(*real_session->tdi_session_,
-                                                    *target, flags,
-                                                    *attributes_object));
-
-  return ::util::OkStatus();
-}
-#endif // ES2K_TARGET
 
 }  // namespace tdi
 }  // namespace hal
