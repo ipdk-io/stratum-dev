@@ -123,8 +123,6 @@ IPsecManager::~IPsecManager() = default;
     RETURN_IF_ERROR(ValidateIETFYangHexString(hex_encoded));
 
     std::string ascii_encoded = ConvertEncryptionKeyEncoding(hex_encoded);
-    printf("ascii_encoded string = %s (length=%lu)\n", ascii_encoded.data(),
-           ascii_encoded.length());
     msg.mutable_esp_payload()->mutable_encryption()->set_key(ascii_encoded);
   }
 
