@@ -93,7 +93,25 @@ stratum_cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
-        "@local_es2k_bin//:es2k_sde",
+        "@local_es2k_bin//:es2k_hdrs",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_port_manager_dummy",
+    testonly = True,
+    srcs = ["es2k_port_manager_dummy.cc"],
+    hdrs = ["es2k_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -107,7 +125,7 @@ stratum_cc_library(
     testonly = True,
     hdrs = ["es2k_port_manager_mock.h"],
     deps = [
-        ":es2k_port_manager",
+        ":es2k_port_manager_dummy",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -137,7 +155,7 @@ stratum_cc_library(
     srcs = ["es2k_chassis_manager.cc"],
     hdrs = ["es2k_chassis_manager.h"],
     deps = [
-        ":es2k_port_manager",
+        ":es2k_port_manager_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -160,6 +178,7 @@ stratum_cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/types:optional",
         "@com_google_protobuf//:protobuf",
+        "@local_es2k_bin//:target_sys",
     ],
 )
 

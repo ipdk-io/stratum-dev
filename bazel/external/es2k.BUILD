@@ -66,3 +66,10 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "target_sys",
+    srcs = glob([
+        "es2k-bin/lib/libtarget_sys.so",
+    ]),
+)
+

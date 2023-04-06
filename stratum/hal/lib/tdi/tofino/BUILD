@@ -49,6 +49,24 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tofino_port_manager_dummy",
+    testonly = True,
+    srcs = ["tofino_port_manager_dummy.cc"],
+    hdrs = ["tofino_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib/channel",
+        "//stratum/lib:utils",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "tofino_port_manager_interface",
     hdrs = ["tofino_port_manager.h"],
 )
@@ -58,7 +76,7 @@ stratum_cc_library(
     testonly = 1,
     hdrs = ["tofino_port_manager_mock.h"],
     deps = [
-        ":tofino_port_manager",
+        ":tofino_port_manager_dummy",
         "@com_google_googletest//:gtest",
     ],
 )

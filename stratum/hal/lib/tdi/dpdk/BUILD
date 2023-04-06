@@ -45,6 +45,23 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "dpdk_port_manager_dummy",
+    testonly = True,
+    srcs = ["dpdk_port_manager_dummy.cc"],
+    hdrs = ["dpdk_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "dpdk_port_manager_interface",
     hdrs = ["dpdk_port_manager.h"],
 )
@@ -54,7 +71,7 @@ stratum_cc_library(
     testonly = 1,
     hdrs = ["dpdk_port_manager_mock.h"],
     deps = [
-        ":dpdk_port_manager",
+        ":dpdk_port_manager_dummy",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -186,15 +203,12 @@ stratum_cc_test(
         "//stratum/hal/lib/common:utils",
         "//stratum/hal/lib/common:writer_interface",
         "//stratum/hal/lib/common:writer_mock",
-        "//stratum/hal/lib/tdi:tdi_sde_mock",
         "//stratum/lib:utils",
         "//stratum/lib/test_utils:matchers",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest",
-        "@local_dpdk_bin//:dpdk_rte",
-        "@local_dpdk_bin//:dpdk_sde",
     ],
 )
 
