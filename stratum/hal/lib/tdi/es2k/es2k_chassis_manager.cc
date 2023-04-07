@@ -29,7 +29,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
+using PortStatusEvent = TdiPortManager::PortStatusEvent;
 
 ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 

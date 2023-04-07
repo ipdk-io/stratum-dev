@@ -195,7 +195,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
     int device, int port, bool up, absl::Time timestamp) {
   // Create PortStatusEvent message.
   PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
-  TdiSdeInterface::PortStatusEvent event = {device, port, state, timestamp};
+  PortStatusEvent event = {device, port, state, timestamp};
 
   {
     absl::ReaderMutexLock l(&port_status_event_writer_lock_);
@@ -207,7 +207,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 }
 
 ::util::Status TofinoPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   RETURN_IF_TDI_ERROR(

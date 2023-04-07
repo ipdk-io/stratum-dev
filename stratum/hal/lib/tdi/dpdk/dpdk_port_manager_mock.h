@@ -18,7 +18,7 @@ class DpdkPortManagerMock : public DpdkPortManager {
 
   MOCK_METHOD(
       ::util::Status, RegisterPortStatusEventWriter,
-      (std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer),
+      (std::unique_ptr<ChannelWriter<PortStatusEvent>> writer),
       (override));
 
   MOCK_METHOD(::util::Status, UnregisterPortStatusEventWriter, (), (override));

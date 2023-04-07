@@ -34,12 +34,12 @@ stratum_cc_library(
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
-        "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:macros",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
         "//stratum/lib/channel",
         "//stratum/lib:utils",
         "@com_google_absl//absl/synchronization",
@@ -69,6 +69,9 @@ stratum_cc_library(
 stratum_cc_library(
     name = "tofino_port_manager_interface",
     hdrs = ["tofino_port_manager.h"],
+    deps = [
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+    ],
 )
 
 stratum_cc_library(
@@ -165,29 +168,40 @@ stratum_cc_library(
     hdrs = ["tofino_chassis_manager.h"],
     deps = [
         ":tofino_port_manager_interface",
-        "//stratum/hal/lib/tdi:tdi_sde_interface",
-        "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/common:constants",
         "//stratum/hal/lib/common:phal_interface",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/common:utils",
         "//stratum/hal/lib/common:writer_interface",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/lib:error",
-        "//stratum/hal/lib/tdi:tdi_sde_headers",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/types:optional",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_library(
+    name = "tofino_chassis_manager_mock",
+    testonly = 1,
+    hdrs = ["tofino_chassis_manager_mock.h"],
+    arches = HOST_ARCHES,
+    deps = [
+        ":tofino_chassis_manager",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -219,17 +233,6 @@ stratum_cc_test(
     ],
 )
 
-stratum_cc_library(
-    name = "tofino_chassis_manager_mock",
-    testonly = 1,
-    hdrs = ["tofino_chassis_manager_mock.h"],
-    arches = HOST_ARCHES,
-    deps = [
-        ":tofino_chassis_manager",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
 stratum_cc_test(
     name = "tofino_hal_test",
     srcs = ["tofino_hal_test.cc"],
@@ -253,6 +256,7 @@ stratum_cc_test(
     name = "tofino_switch_test",
     srcs = ["tofino_switch_test.cc"],
     deps = [
+        ":tofino_chassis_manager_mock",
         ":tofino_switch",
         ":test_main",
         "//stratum/glue/status:status_test_util",
@@ -262,7 +266,6 @@ stratum_cc_test(
         "//stratum/hal/lib/p4:p4_table_mapper_mock",
         "//stratum/hal/lib/tdi:tdi_node_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
-        "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager_mock",
         "//stratum/lib/channel:channel_mock",
         "//stratum/lib/test_utils:matchers",
         "//stratum/lib:utils",

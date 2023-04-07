@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
@@ -29,7 +30,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
+using PortStatusEvent = TdiPortManager::PortStatusEvent;
 using TransceiverEvent = PhalInterface::TransceiverEvent;
 
 ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);

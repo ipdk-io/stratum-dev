@@ -23,7 +23,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 
 extern "C" {
@@ -85,7 +85,7 @@ DpdkPortManager* DpdkPortManager::GetSingleton() {
 }
 
 ::util::Status DpdkPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   return ::util::OkStatus();

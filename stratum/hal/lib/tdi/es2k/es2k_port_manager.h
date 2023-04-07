@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "absl/synchronization/mutex.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 
 // Suppress clang errors
 #undef LOCKS_EXCLUDED
@@ -21,14 +21,14 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
+class Es2kPortManager : public TdiPortManager {
  public:
   Es2kPortManager();
 
   // ---------- Common public methods ----------
 
   ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer)
+      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer)
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status UnregisterPortStatusEventWriter()
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
@@ -99,8 +99,8 @@ class Es2kPortManager : public TdiSdeInterface::TdiPortManager {
   mutable absl::Mutex port_status_event_writer_lock_;
 
   // Writer to forward the port status change message to. It is registered
-  // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> port_status_event_writer_
+  // by chassis manager to receive port status change events.
+  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
       GUARDED_BY(port_status_event_writer_lock_);
 };
 

@@ -16,7 +16,6 @@
 #include "stratum/glue/status/canonical_errors.h"
 #include "stratum/glue/status/status_test_util.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
-#include "stratum/hal/lib/common/phal_mock.h"
 #include "stratum/hal/lib/common/writer_mock.h"
 #include "stratum/hal/lib/p4/p4_table_mapper_mock.h"
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager_mock.h"
@@ -76,7 +75,6 @@ class Es2kSwitchTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // Use NiceMock to suppress "uninteresting mock function call" warnings
-    phal_mock_ = absl::make_unique<NiceMock<PhalMock>>();
     chassis_manager_mock_ = absl::make_unique<NiceMock<Es2kChassisManagerMock>>();
     ipsec_manager_mock_ = absl::make_unique<NiceMock<IPsecManagerMock>>();
     node_mock_ = absl::make_unique<NiceMock<TdiNodeMock>>();
@@ -106,7 +104,6 @@ class Es2kSwitchTest : public ::testing::Test {
     return ::util::Status(StratumErrorSpace(), ERR_UNKNOWN, kErrorMsg);
   }
 
-  std::unique_ptr<PhalMock> phal_mock_;
   std::unique_ptr<Es2kChassisManagerMock> chassis_manager_mock_;
   std::unique_ptr<IPsecManagerMock> ipsec_manager_mock_;
   std::unique_ptr<TdiNodeMock> node_mock_;

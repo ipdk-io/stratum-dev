@@ -30,7 +30,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
+using PortStatusEvent = TdiPortManager::PortStatusEvent;
 
 using test_utils::EqualsProto;
 using ::testing::_;

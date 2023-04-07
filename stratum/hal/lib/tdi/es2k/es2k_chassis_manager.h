@@ -17,7 +17,7 @@
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
@@ -167,15 +167,15 @@ class Es2kChassisManager {
   // Reads and processes port state events using the given ChannelReader. Called
   // by PortStatusEventHandlerThreadFunc.
   void ReadPortStatusEvents(
-      const std::unique_ptr<ChannelReader<TdiSdeInterface::PortStatusEvent>>&
+      const std::unique_ptr<ChannelReader<TdiPortManager::PortStatusEvent>>&
           reader) LOCKS_EXCLUDED(chassis_lock);
 
-  // helper to add / configure / enable a port with TdiSdeInterface
+  // helper to add / configure / enable a port with Es2kPortManager
   ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
                                const SingletonPort& singleton_port,
                                PortConfig* config);
 
-  // helper to update port configuration with TdiSdeInterface
+  // helper to update port configuration with Es2kPortManager
   ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
                                   const SingletonPort& singleton_port,
                                   const PortConfig& config_old,
@@ -193,9 +193,9 @@ class Es2kChassisManager {
 
   bool initialized_ GUARDED_BY(chassis_lock);
 
-  // Channel for receiving port status events from the TdiSdeInterface.
-  std::shared_ptr<Channel<TdiSdeInterface::PortStatusEvent>>
-      port_status_event_channel_ GUARDED_BY(chassis_lock);
+  // Channel for receiving port status events from the Es2kPortManager.
+  std::shared_ptr<Channel<TdiPortManager::PortStatusEvent>>
+    port_status_event_channel_ GUARDED_BY(chassis_lock);
 
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;

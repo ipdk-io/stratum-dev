@@ -17,6 +17,7 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tdi_id_mapper.h"
 #include "stratum/hal/lib/tdi/macros.h"
@@ -459,8 +460,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
+  std::unique_ptr<ChannelWriter<TdiPortManager::PortStatusEvent>>
+    port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>

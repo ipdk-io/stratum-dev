@@ -108,7 +108,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
     int device, int port, bool up, absl::Time timestamp) {
   // Create PortStatusEvent message.
   PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
-  TdiSdeInterface::PortStatusEvent event = {device, port, state, timestamp};
+  PortStatusEvent event = {device, port, state, timestamp};
 
   {
     absl::ReaderMutexLock l(&port_status_event_writer_lock_);
@@ -120,7 +120,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 }
 
 ::util::Status Es2kPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   return ::util::OkStatus();
@@ -137,7 +137,8 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-//TODO: Check with Sandeep which Add port is applicable or do we really need it since we don't add port for MEV
+// TODO: Check with Sandeep which Add port is applicable or do we really
+// need it since we don't add port for MEV
 ::util::Status Es2kPortManager::AddPort(int device, int port) {
   return ::util::OkStatus();
 }

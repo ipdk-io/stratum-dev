@@ -8,12 +8,9 @@
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
-#include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/tdi/macros.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"  // for TdiSdeInterface
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
@@ -66,7 +63,7 @@ DpdkPortManager* DpdkPortManager::GetSingleton() {
 }
 
 ::util::Status DpdkPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   return ::util::OkStatus();

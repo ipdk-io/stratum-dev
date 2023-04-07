@@ -14,7 +14,6 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
-#include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 
@@ -73,7 +72,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 }
 
 ::util::Status TofinoPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   return ::util::OkStatus();

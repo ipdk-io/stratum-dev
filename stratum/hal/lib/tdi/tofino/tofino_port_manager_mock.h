@@ -16,8 +16,7 @@ class TofinoPortManagerMock : public TofinoPortManager {
  public:
   MOCK_METHOD(
       ::util::Status, RegisterPortStatusEventWriter,
-      (std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer),
-      (override));
+      (std::unique_ptr<ChannelWriter<PortStatusEvent>> writer), (override));
 
   MOCK_METHOD(::util::Status, UnregisterPortStatusEventWriter, (), (override));
 

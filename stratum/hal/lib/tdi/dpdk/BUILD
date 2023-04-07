@@ -37,7 +37,9 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/hal/lib/tdi:macros",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+        "//stratum/hal/lib/tdi:tdi_sde_common",
         "//stratum/lib/channel",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
@@ -51,11 +53,10 @@ stratum_cc_library(
     hdrs = ["dpdk_port_manager.h"],
     deps = [
         "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
         "//stratum/lib/channel",
         "@com_google_absl//absl/synchronization",
     ],
@@ -64,6 +65,9 @@ stratum_cc_library(
 stratum_cc_library(
     name = "dpdk_port_manager_interface",
     hdrs = ["dpdk_port_manager.h"],
+    deps = [
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+    ],
 )
 
 stratum_cc_library(
@@ -85,6 +89,7 @@ stratum_cc_library(
     deps = [
         ":dpdk_port_config",
         ":dpdk_port_constants",
+        ":dpdk_port_manager_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -95,7 +100,6 @@ stratum_cc_library(
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/common:utils",
         "//stratum/hal/lib/common:writer_interface",
-        "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
@@ -120,7 +124,6 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/tdi:macros",
-        "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/types:optional",
@@ -209,6 +212,7 @@ stratum_cc_test(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest",
+        "@local_dpdk_bin//:target_sys",
     ],
 )
 

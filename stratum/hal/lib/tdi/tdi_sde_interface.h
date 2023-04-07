@@ -34,15 +34,6 @@ namespace tdi {
 // 2- TdiSdeMock: Mock class used for unit testing.
 class TdiSdeInterface {
  public:
-  // PortStatusEvent encapsulates the information received on a port status
-  // event. Port refers to the SDE internal device port ID.
-  struct PortStatusEvent {
-    int device;
-    int port;
-    PortState state;
-    absl::Time time_last_changed;
-  };
-
   // SessionInterface is a proxy class for TDI sessions. Most API calls require
   // an active session. It also allows batching requests for performance.
   class SessionInterface {
@@ -159,51 +150,6 @@ class TdiSdeInterface {
 
     // Resets all data fields.
     virtual ::util::Status Reset(int action_id) = 0;
-  };
-
-  // TdiPortManager is a proxy class for per target port management
-  class TdiPortManager {
-   public:
-    virtual ~TdiPortManager() {}
-
-    // Registers a writer through which to send any port status events. The
-    // message contains a tuple (device, port, state), where port refers to the
-    // Barefoot SDE device port. There can only be one writer.
-    virtual ::util::Status RegisterPortStatusEventWriter(
-        std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) = 0;
-
-    // Unregisters the port status writer.
-    virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
-
-    // Get Port Info
-    virtual ::util::Status GetPortInfo(int device, int port,
-                                       TargetDatapathId *target_dp_id) = 0;
-
-    // Get the operational state of a port.
-    virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
-
-    // Get the port counters of a port.
-    virtual ::util::Status GetPortCounters(int device, int port,
-                                           PortCounters* counters) = 0;
-
-    // Returns the SDE device port ID for the given PortKey.
-    virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
-        int device, const PortKey& port_key) = 0;
-
-    // Checks if a port is valid.
-    virtual bool IsValidPort(int device, int port) = 0;
-
-    // Add a new port.
-    virtual ::util::Status AddPort(int device, int port) = 0;
-
-    // Delete a port.
-    virtual ::util::Status DeletePort(int device, int port) = 0;
-
-    // Enable a port.
-    virtual ::util::Status EnablePort(int device, int port) = 0;
-
-    // Disable a port.
-    virtual ::util::Status DisablePort(int device, int port) = 0;
   };
 
   virtual ~TdiSdeInterface() {}

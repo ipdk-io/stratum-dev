@@ -83,6 +83,7 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
         "//stratum/lib/channel",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/synchronization",
@@ -156,6 +157,15 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_sde_common",
+    hdrs = ["tdi_sde_common.h"],
+    deps = [
+        "//stratum/glue/status:status_macros",
+        "@com_github_gflags_gflags//:gflags",
     ],
 )
 
@@ -268,6 +278,19 @@ stratum_cc_library(
     deps = [
         ":tdi_node",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_port_manager",
+    hdrs = ["tdi_port_manager.h"],
+    deps = [
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/common:utils",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/time",
     ],
 )
 

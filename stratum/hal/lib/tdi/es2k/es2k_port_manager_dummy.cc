@@ -57,7 +57,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 }
 
 ::util::Status Es2kPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer) {
+    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
   absl::WriterMutexLock l(&port_status_event_writer_lock_);
   port_status_event_writer_ = std::move(writer);
   return ::util::OkStatus();

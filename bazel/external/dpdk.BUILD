@@ -91,3 +91,10 @@ pkg_tar_with_symlinks(
     package_dir = "/usr",
     strip_prefix = "dpdk-bin",
 )
+
+cc_library(
+    name = "target_sys",
+    srcs = glob([
+        "dpdk-bin/lib/libtarget_sys.so",
+    ]),
+)

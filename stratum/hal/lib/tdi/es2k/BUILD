@@ -88,7 +88,9 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:tdi_sde_headers",
+        "//stratum/hal/lib/tdi:macros",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+        "//stratum/hal/lib/tdi:tdi_sde_common",
         "//stratum/lib/channel",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
@@ -118,6 +120,9 @@ stratum_cc_library(
 stratum_cc_library(
     name = "es2k_port_manager_interface",
     hdrs = ["es2k_port_manager.h"],
+    deps = [
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+    ],
 )
 
 stratum_cc_library(
@@ -178,7 +183,6 @@ stratum_cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/types:optional",
         "@com_google_protobuf//:protobuf",
-        "@local_es2k_bin//:target_sys",
     ],
 )
 
@@ -218,6 +222,7 @@ stratum_cc_test(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest",
+        "@local_es2k_bin//:target_sys",
     ],
 )
 
@@ -244,17 +249,16 @@ stratum_cc_test(
     name = "es2k_switch_test",
     srcs = ["es2k_switch_test.cc"],
     deps = [
+        ":es2k_chassis_manager_mock",
         ":es2k_switch",
         ":test_main",
         "//stratum/glue/status:status_test_util",
-        "//stratum/hal/lib/common:phal_mock",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/common:writer_mock",
         "//stratum/hal/lib/p4:p4_table_mapper_mock",
         "//stratum/hal/lib/tdi:tdi_ipsec_manager_mock",
         "//stratum/hal/lib/tdi:tdi_node_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
-        "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager_mock",
         "//stratum/lib/channel:channel_mock",
         "//stratum/lib/test_utils:matchers",
         "//stratum/lib:utils",

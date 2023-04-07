@@ -11,6 +11,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_constants.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
 #include "stratum/public/proto/error.pb.h"
 
 namespace stratum {

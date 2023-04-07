@@ -17,7 +17,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 
 // Suppress clang errors
@@ -28,7 +28,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-class DpdkPortManager : public TdiSdeInterface::TdiPortManager {
+class DpdkPortManager : public TdiPortManager {
  public:
 
   struct PortConfigParams {
@@ -61,7 +61,7 @@ class DpdkPortManager : public TdiSdeInterface::TdiPortManager {
   // ---------- Common public methods ----------
 
   ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer)
+      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer)
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   ::util::Status UnregisterPortStatusEventWriter()
@@ -144,8 +144,8 @@ class DpdkPortManager : public TdiSdeInterface::TdiPortManager {
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>>
-    port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
+  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
+    GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

@@ -18,7 +18,7 @@ class Es2kPortManagerMock : public Es2kPortManager {
 
   MOCK_METHOD(
       ::util::Status, RegisterPortStatusEventWriter,
-      (std::unique_ptr<ChannelWriter<TdiSdeInterface::PortStatusEvent>> writer),
+      (std::unique_ptr<ChannelWriter<PortStatusEvent>> writer),
       (override));
 
   MOCK_METHOD(::util::Status, UnregisterPortStatusEventWriter, (), (override));
