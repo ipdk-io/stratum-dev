@@ -1,8 +1,8 @@
-// Copyright 2020-present Open Networking Foundation
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_lut_manager.h"
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 
 #include <string>
 #include <vector>
@@ -41,8 +41,6 @@ MATCHER_P(DerivedFromStatus, status, "") {
 
 constexpr char kUnspExternMsg[] = "Unsupported extern type 0";
 constexpr char kUnspReadOpMsg[] = "READ VLUT ENTRY IS YET TO BE SUPPORTED";
-constexpr uint32 kMvlutExactMatch = 129;
-constexpr uint32 kMvlutTernaryMatch = 130;
 constexpr int kP4TableId = 1;
 constexpr int kTdiRtTableId = 1;
 
@@ -55,11 +53,11 @@ protected:
     }
 
     ::util::Status InvalidParamError() {
-        return ::util::Status(StratumErrorSpace(), ERR_INVALID_PARAM, kUnspExternMsg);
+        return MAKE_ERROR(ERR_INVALID_PARAM) << kUnspExternMsg;
     }
 
     ::util::Status InternalError() {
-        return ::util::Status(StratumErrorSpace(), ERR_INTERNAL, kUnspReadOpMsg);
+        return MAKE_ERROR(ERR_INTERNAL) << kUnspReadOpMsg;
     }
 
     static constexpr int kDevice1 = 0;

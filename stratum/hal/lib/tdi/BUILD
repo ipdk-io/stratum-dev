@@ -420,7 +420,6 @@ stratum_cc_library(
     ],
 )
 
-
 stratum_cc_test(
     name = "tdi_lut_manager_test",
     srcs = ["tdi_lut_manager_test.cc"],
@@ -437,8 +436,6 @@ stratum_cc_test(
         "@com_google_googletest//:gtest",
     ],
 )
-
-
 
 stratum_cc_library(
     name = "tdi_packetio_manager",
