@@ -91,7 +91,7 @@ void SetUpIPsecSAConfig(TreeNode* node,
     IPsecSADBConfig msg;
     RETURN_IF_ERROR(ParseProtoFromString(typed_val->proto_bytes(), &msg));
 
-    // Send the message through SwitchInterface to IPsecManager
+    // Send the message through SwitchInterface to TdiIpsecManager
     RETURN_IF_ERROR(SetValue(tree,
                              IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
                              msg));
@@ -134,7 +134,7 @@ void SetUpIPsecSAConfig(TreeNode* node,
 
     if (val.size() == 1) {
       msg.set_direction(true);
-      // Send the message through SwitchInterface to IPsecManager
+      // Send the message through SwitchInterface to TdiIpsecManager
       RETURN_IF_ERROR(SetValue(tree,
                                IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
                                msg));

@@ -81,7 +81,7 @@ class Es2kSwitch : public SwitchInterface {
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kSwitch> CreateInstance(
       Es2kChassisManager* chassis_manager,
-      IPsecManager* ipsec_manager,
+      TdiIpsecManager* ipsec_manager,
       const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // Es2kSwitch is neither copyable nor movable.
@@ -90,7 +90,7 @@ class Es2kSwitch : public SwitchInterface {
   Es2kSwitch(Es2kSwitch&&) = delete;
   Es2kSwitch& operator=(Es2kSwitch&&) = delete;
 
-  IPsecManager* GetIPsecManager()
+  TdiIpsecManager* GetIPsecManager()
     LOCKS_EXCLUDED(chassis_lock) {
     return ipsec_manager_;
   }
@@ -99,7 +99,7 @@ class Es2kSwitch : public SwitchInterface {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   Es2kSwitch(Es2kChassisManager* chassis_manager,
-      IPsecManager* ipsec_manager,
+      TdiIpsecManager* ipsec_manager,
       const std::map<int, TdiNode*>& device_id_to_tdi_node);
 
   // Helper to get TdiNode pointer from device_id number or return error
@@ -114,9 +114,9 @@ class Es2kSwitch : public SwitchInterface {
   // of this class.
   Es2kChassisManager* chassis_manager_;  // not owned by the class.
 
-  // Pointer to IPsecManager object. Note that there is only one instance
+  // Pointer to TdiIpsecManager object. Note that there is only one instance
   // of this class.
-  IPsecManager* ipsec_manager_;  // not owned by the class.
+  TdiIpsecManager* ipsec_manager_;  // not owned by the class.
 
   // Map from zero-based device_id number corresponding to a node/ASIC to a
   // pointer to TdiNode which contain all the per-node managers for that

@@ -11,7 +11,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-class IPsecManagerMock : public IPsecManager {
+class IPsecManagerMock : public TdiIpsecManager {
  public:
   MOCK_METHOD(::util::Status, InitializeNotificationCallback, ());
 

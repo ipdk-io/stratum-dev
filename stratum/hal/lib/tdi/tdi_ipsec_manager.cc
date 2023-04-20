@@ -51,7 +51,7 @@ void ipsec_notification_callback(uint32_t dev_id,
   //       ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
   //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
   //       ipsec_sa_dest_address, ipv4, cookie);
-  auto ipsec_mgr_hdl = reinterpret_cast<IPsecManager *>(cookie);
+  auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager *>(cookie);
   ipsec_mgr_hdl->SendSADExpireNotificationEvent(dev_id,
                                                 ipsec_sa_spi,
                                                 soft_lifetime_expire,
@@ -60,22 +60,22 @@ void ipsec_notification_callback(uint32_t dev_id,
                                                 ipv4);
 }
 
-IPsecManager::IPsecManager(TdiSdeInterface* tdi_sde_interface,
+TdiIpsecManager::TdiIpsecManager(TdiSdeInterface* tdi_sde_interface,
                            TdiFixedFunctionManager* tdi_fixed_function_manager)
     : gnmi_event_writer_(nullptr),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
       notif_initialized_(false) {}
 
-IPsecManager::IPsecManager()
+TdiIpsecManager::TdiIpsecManager()
     : gnmi_event_writer_(nullptr),
       tdi_sde_interface_(nullptr),
       tdi_fixed_function_manager_(nullptr),
       notif_initialized_(false) {}
 
-IPsecManager::~IPsecManager() = default;
+TdiIpsecManager::~TdiIpsecManager() = default;
 
-::util::Status IPsecManager::InitializeNotificationCallback() {
+::util::Status TdiIpsecManager::InitializeNotificationCallback() {
   auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
       IPSEC_NOTIFICATION_TABLE_NAME, &ipsec_notification_callback, this);
 
@@ -85,7 +85,7 @@ IPsecManager::~IPsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::GetSpiData(uint32 &fetched_spi) {
+::util::Status TdiIpsecManager::GetSpiData(uint32 &fetched_spi) {
   // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
@@ -106,8 +106,8 @@ IPsecManager::~IPsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status IPsecManager::WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
-                                                  IPsecSADBConfig &msg) {
+::util::Status TdiIpsecManager::WriteConfigSADBEntry(
+    const IPsecSadbConfigOp op_type, IPsecSADBConfig &msg) {
   // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
@@ -142,7 +142,7 @@ IPsecManager::~IPsecManager() = default;
   return ::util::OkStatus();
 }
 
-void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
+void TdiIpsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
                                                   uint32_t ipsec_sa_spi,
                                                   bool soft_lifetime_expire,
                                                   uint8_t ipsec_sa_protocol,
@@ -164,7 +164,7 @@ void IPsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
   }
 }
 
-std::string IPsecManager::ConvertEncryptionKeyEncoding(std::string hex)
+std::string TdiIpsecManager::ConvertEncryptionKeyEncoding(std::string hex)
 {
     std::string ascii = "";
     for (size_t i = 0; i < hex.length(); i += 3)
@@ -177,11 +177,11 @@ std::string IPsecManager::ConvertEncryptionKeyEncoding(std::string hex)
     return ascii;
 }
 
-std::unique_ptr<IPsecManager> IPsecManager::CreateInstance(
+std::unique_ptr<TdiIpsecManager> TdiIpsecManager::CreateInstance(
     TdiSdeInterface* tdi_sde_interface,
     TdiFixedFunctionManager* tdi_fixed_function_manager) {
   return absl::WrapUnique(
-      new IPsecManager(tdi_sde_interface, tdi_fixed_function_manager));
+      new TdiIpsecManager(tdi_sde_interface, tdi_fixed_function_manager));
 }
 
 }  // namespace tdi

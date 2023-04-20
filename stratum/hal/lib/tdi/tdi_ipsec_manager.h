@@ -43,12 +43,12 @@ namespace tdi {
 // Lock which protects IPsecMgr state across the entire switch.
 extern absl::Mutex _ipsec_mgr_lock;
 
-class IPsecManager {
+class TdiIpsecManager {
  public:
-  virtual ~IPsecManager();
+  virtual ~TdiIpsecManager();
 
   // Factory function for creating the instance of the class.
-  static std::unique_ptr<IPsecManager> CreateInstance(
+  static std::unique_ptr<TdiIpsecManager> CreateInstance(
       TdiSdeInterface* tdi_sde_interface,
       TdiFixedFunctionManager* tdi_fixed_function_manager);
 
@@ -61,11 +61,11 @@ class IPsecManager {
                                               IPsecSADBConfig &msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
-  // IPsecManager is neither copyable nor movable.
-  IPsecManager(const IPsecManager&) = delete;
-  IPsecManager& operator=(const IPsecManager&) = delete;
-  IPsecManager(IPsecManager&&) = delete;
-  IPsecManager& operator=(IPsecManager&&) = delete;
+  // TdiIpsecManager is neither copyable nor movable.
+  TdiIpsecManager(const TdiIpsecManager&) = delete;
+  TdiIpsecManager& operator=(const TdiIpsecManager&) = delete;
+  TdiIpsecManager(TdiIpsecManager&&) = delete;
+  TdiIpsecManager& operator=(TdiIpsecManager&&) = delete;
 
   virtual ::util::Status RegisterEventNotifyWriter(
       const std::shared_ptr<WriterInterface<GnmiEventPtr>>& writer) {
@@ -89,37 +89,40 @@ class IPsecManager {
 
  protected:
   // Default constructor. To be called by the Mock class instance only.
-  IPsecManager();
+  TdiIpsecManager();
 
  private:
   // ReaderArgs encapsulates the arguments for a Channel reader thread.
   template <typename T>
   struct ReaderArgs {
-    IPsecManager* manager;
+    TdiIpsecManager* manager;
     std::unique_ptr<ChannelReader<T>> reader;
   };
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  IPsecManager(TdiSdeInterface* tdi_sde_interface,
-               TdiFixedFunctionManager* tdi_fixed_function_manager);
+  TdiIpsecManager(TdiSdeInterface* tdi_sde_interface,
+                  TdiFixedFunctionManager* tdi_fixed_function_manager);
 
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
       GUARDED_BY(gnmi_event_lock_);
 
-  // Pointer to TdiSdeInterface implementation and FixedFunctionManager
+  // Pointer to TdiSdeInterface implementation.
   TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.
-  TdiFixedFunctionManager* tdi_fixed_function_manager_;  // not owned by this class.
 
+  // Pointer to FixedFunctionManager. (not owned by this class)
+  TdiFixedFunctionManager* tdi_fixed_function_manager_;
+
+  // Whether the notification callback has been initialized.
   bool notif_initialized_;
 
   // Convert encryption key encoding - client sends IETF yang type hex string
-  // while the TDI layer expects an ASCII string
+  // while the TDI layer expects an ASCII string.
   std::string ConvertEncryptionKeyEncoding(std::string input);
 
-  friend class IPsecManagerTest;
+  friend class TdiIpsecManagerTest;
 };
 
 }  // namespace tdi

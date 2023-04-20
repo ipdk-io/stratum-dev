@@ -26,7 +26,7 @@ namespace tdi {
 
 Es2kSwitch::Es2kSwitch(
     Es2kChassisManager* chassis_manager,
-    IPsecManager* ipsec_manager,
+    TdiIpsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
@@ -281,7 +281,7 @@ Es2kSwitch::~Es2kSwitch() {}
 
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
     Es2kChassisManager* chassis_manager,
-    IPsecManager* ipsec_manager,
+    TdiIpsecManager* ipsec_manager,
     const std::map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
       new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_tdi_node));
