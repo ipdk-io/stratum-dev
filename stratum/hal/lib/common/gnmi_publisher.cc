@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/gnmi_publisher.h"
@@ -37,8 +38,8 @@ GnmiPublisher::~GnmiPublisher() {}
   // Check for IPsec use-case
   std::vector<std::string> keys;
   if (IsPathSupportedIPsec(path, keys)) {
-      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
-      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+    ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
+    path_ptr->mutable_elem(2)->clear_key();  // Strip key from ::gnmi::Path
   }
 
   // Map the input path to the supported one - walk the tree of known elements
@@ -63,8 +64,8 @@ GnmiPublisher::~GnmiPublisher() {}
   // Check for IPsec use-case
   std::vector<std::string> keys;
   if (IsPathSupportedIPsec(path, keys)) {
-      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
-      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+    ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
+    path_ptr->mutable_elem(2)->clear_key();  // Strip key from ::gnmi::Path
   }
 
   // Map the input path to the supported one - walk the tree of known elements
@@ -89,9 +90,9 @@ GnmiPublisher::~GnmiPublisher() {}
   bool ipsec_path = false;
   std::vector<std::string> keys;
   if (IsPathSupportedIPsec(path, keys)) {
-      ipsec_path = true;
-      ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
-      path_ptr->mutable_elem(2)->clear_key(); // Strip key from ::gnmi::Path
+    ipsec_path = true;
+    ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
+    path_ptr->mutable_elem(2)->clear_key();  // Strip key from ::gnmi::Path
   }
 
   // Map the input path to the supported one - walk the tree of known elements
@@ -342,7 +343,8 @@ void* GnmiPublisher::ThreadReadGnmiEvents(void* arg) {
   return status;
 }
 
-bool GnmiPublisher::IsPathSupportedIPsec(const ::gnmi::Path& path, std::vector<std::string>& keys) const {
+bool GnmiPublisher::IsPathSupportedIPsec(const ::gnmi::Path& path,
+                                         std::vector<std::string>& keys) const {
   std::vector<std::string> supported_path;
   supported_path.push_back("ipsec-offload");
   supported_path.push_back("sad");
@@ -351,18 +353,18 @@ bool GnmiPublisher::IsPathSupportedIPsec(const ::gnmi::Path& path, std::vector<s
 
   int element = 0;
   std::vector<std::string>::iterator iter;
-  for (iter=supported_path.begin(); iter!=supported_path.end(); ++iter) {
+  for (iter = supported_path.begin(); iter != supported_path.end(); ++iter) {
     if (path.elem(element).name() != *iter) {
       return false;
     }
 
     // This block extracts the key from the path
-    if (element == 2) { // sad-entry
+    if (element == 2) {  // sad-entry
       // get the keys
-      auto* search1 =gtl::FindOrNull(path.elem(element).key(), "offload-id");
-      auto* search2 =gtl::FindOrNull(path.elem(element).key(), "direction"); 
+      auto* search1 = gtl::FindOrNull(path.elem(element).key(), "offload-id");
+      auto* search2 = gtl::FindOrNull(path.elem(element).key(), "direction");
       auto* search3 = gtl::FindOrNull(path.elem(element).key(), "name");
-      if(search1 != nullptr && search2 != nullptr) {
+      if (search1 != nullptr && search2 != nullptr) {
         keys.push_back(*search1);
         keys.push_back(*search2);
       } else if (search3 != nullptr) {

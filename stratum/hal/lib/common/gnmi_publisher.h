@@ -1,7 +1,7 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-
 
 #ifndef STRATUM_HAL_LIB_COMMON_GNMI_PUBLISHER_H_
 #define STRATUM_HAL_LIB_COMMON_GNMI_PUBLISHER_H_
@@ -9,13 +9,15 @@
 #include <pthread.h>
 #include <time.h>
 
-#include <memory>
-#include <string>
 #include <algorithm>
 #include <map>
+#include <memory>
+#include <string>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/synchronization/mutex.h"
 #include "gnmi/gnmi.grpc.pb.h"
-// FIXME(boc) is this required?
+#include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
@@ -23,9 +25,6 @@
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/lib/timer_daemon.h"
 #include "stratum/public/lib/error.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/container/flat_hash_map.h"
-#include "stratum/glue/gtl/map_util.h"
 
 namespace stratum {
 namespace hal {
@@ -141,13 +140,15 @@ class GnmiPublisher {
   virtual ::util::Status UnregisterEventWriter() LOCKS_EXCLUDED(access_lock_);
 
   // IPsec is a special use-case, since yang tree nodes are not initialized and
-  // maintained for each key of yang list (the SADConfig messages need to be stateless
-  // and scale is too high to maintain tree nodes in memory -- tens of millions of entries).
-  // Instead, a single tree node is maintained without any keys which services all
-  // gnmi SET/DELETE requests. The tree node is initialized to to be at /ipsec-offload/sad/sad-entr/config
-  // The contents of the message will contain the key, which subsequently get handled
-  // at lower layers.
-  virtual bool IsPathSupportedIPsec(const ::gnmi::Path& path, std::vector<std::string>& keys) const
+  // maintained for each key of yang list (the SADConfig messages need to be
+  // stateless and scale is too high to maintain tree nodes in memory -- tens of
+  // millions of entries). Instead, a single tree node is maintained without any
+  // keys that services all gnmi SET/DELETE requests. The tree node is
+  // initialized to to be at /ipsec-offload/sad/sad-entr/config. The contents of
+  // the message will contain the key, which is subsequently handled at lower
+  // layers.
+  virtual bool IsPathSupportedIPsec(const ::gnmi::Path& path,
+                                    std::vector<std::string>& keys) const
       LOCKS_EXCLUDED(access_lock_);
 
  private:
