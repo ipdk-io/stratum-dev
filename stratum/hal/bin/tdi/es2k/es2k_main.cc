@@ -3,7 +3,7 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/es2k/es2k_main.h"
+#include "stratum/hal/bin/tdi/main.h"
 
 #include <map>
 #include <memory>
@@ -81,13 +81,13 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   gflags::ParseCommandLineFlags(&argc, &argv, remove_flags);
 }
 
-::util::Status Es2kMain(int argc, char* argv[]) {
+::util::Status Main(int argc, char* argv[]) {
   ParseCommandLine(argc, argv, true);
-  return Es2kMain(nullptr, nullptr);
+  return Main(nullptr, nullptr);
 }
 
-::util::Status Es2kMain(absl::Notification* ready_sync,
-                        absl::Notification* done_sync) {
+::util::Status Main(absl::Notification* ready_sync,
+                    absl::Notification* done_sync) {
   InitStratumLogging();
 
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate
