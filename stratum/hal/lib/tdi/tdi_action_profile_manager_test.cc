@@ -99,8 +99,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -158,8 +158,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -217,8 +217,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -276,8 +276,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -328,8 +328,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -380,8 +380,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -418,8 +418,8 @@ TEST_F(TdiActionProfileManagerTest,
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by WriteActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -462,8 +462,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by ReadActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -533,8 +533,8 @@ TEST_F(TdiActionProfileManagerTest,
   std::vector<std::vector<uint32>> member_ids = {{1}};
   std::vector<std::vector<bool>> member_status = {{true}};
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by ReadActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -601,8 +601,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestUnsupportedType) {
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
 
-  // Specify the behavior of the certain APIs by creating mocks
-  // that are invoked by ReadActionProfileEntry().
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
