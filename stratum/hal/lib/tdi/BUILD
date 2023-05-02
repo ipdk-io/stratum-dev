@@ -411,6 +411,25 @@ stratum_cc_library(
     ],
 )
 
+stratum_cc_test(
+    name = "tdi_action_profile_manager_test",
+    srcs = ["tdi_action_profile_manager_test.cc"],
+    deps = [
+        ":tdi_sde_mock",
+        ":tdi_action_profile_manager",
+        ":test_main",
+        "//stratum/glue/status:status_test_util",
+        "//stratum/hal/lib/common:writer_mock",
+        "//stratum/lib:utils",
+        "//stratum/lib/test_utils:matchers",
+        "//stratum/public/lib:error",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 stratum_cc_library(
     name = "tdi_fixed_function_manager",
     srcs = ["tdi_fixed_function_manager.cc"],
