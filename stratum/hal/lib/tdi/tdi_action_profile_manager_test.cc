@@ -99,7 +99,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -157,7 +158,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -215,7 +217,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -273,7 +276,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -324,7 +328,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -375,7 +380,8 @@ TEST_F(TdiActionProfileManagerTest,
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -412,7 +418,8 @@ TEST_F(TdiActionProfileManagerTest,
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by WriteActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -455,7 +462,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
   auto session_mock = std::make_shared<SessionMock>();
   auto table_data_mock = absl::make_unique<TableDataMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -482,11 +490,9 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
   ::p4::v1::ReadResponse resp;
   ASSERT_OK(ParseProtoFromString(kActionProfMemberResponseText, &resp));
 
-  // set expectation
   // TODO: needs rework, instead of mocking Write to return true, it needs
   // to return the response which can be validated against local response.
   EXPECT_CALL(writer_mock, Write(_)).WillOnce(Return(true));
-  ;
 
   // perform test and check results (act + assert)
   EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(
@@ -527,7 +533,8 @@ TEST_F(TdiActionProfileManagerTest,
   std::vector<std::vector<uint32>> member_ids = {{1}};
   std::vector<std::vector<bool>> member_status = {{true}};
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
@@ -554,8 +561,8 @@ TEST_F(TdiActionProfileManagerTest,
       GetP4InfoId(1))
       .WillOnce(Return(1));
 
-  // JSON representation of an entity of type action_profile_group
-  // populated with expected values.
+  // JSON representation of the protobuf we expect ReadProfileActionEntry()
+  // to specify when it calls the writer mock.
   const std::string kActionProfGroupResponseText = R"PROTO(
       entities {
         action_profile_group {
@@ -572,6 +579,7 @@ TEST_F(TdiActionProfileManagerTest,
   ::p4::v1::ReadResponse resp;
   ASSERT_OK(ParseProtoFromString(kActionProfGroupResponseText, &resp));
   EXPECT_CALL(writer_mock, Write(EqualsProto(resp))).WillOnce(Return(true));
+
   // perform test and check results (act + assert)
   EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(
       session_mock, entry, &writer_mock));
@@ -593,7 +601,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestUnsupportedType) {
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
 
-  // set expectation
+  // Specify the behavior of the certain APIs by creating mocks
+  // that are invoked by ReadActionProfileEntry().
   EXPECT_CALL(
       // mock object to monitor
       *sde_wrapper_mock_,
