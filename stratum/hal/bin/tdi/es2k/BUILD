@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
@@ -28,17 +28,16 @@ stratum_cc_binary(
     name = "stratum_es2k",
     srcs = [
         "es2k_main.cc",
-        "es2k_main.h",
         "main.cc",
     ],
     arches = HOST_ARCHES,
-    defines = ["ES2K_TARGET"],
     data = [
-        # NOTE: Replace with es2k conf files
-        "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",
-        "//stratum/hal/bin/barefoot:tofino_skip_p4_no_bsp.conf",
+        "es2k_port_config.pb.txt",
+        "es2k_skip_p4.conf",
     ],
+    defines = ["ES2K_TARGET"],
     deps = [
+        "//stratum/hal/bin/tdi:main",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
         "//stratum/hal/lib/tdi/es2k:es2k_hal",
         "//stratum/hal/lib/tdi/es2k:es2k_port_manager",
