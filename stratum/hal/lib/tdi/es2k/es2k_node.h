@@ -36,36 +36,6 @@ class Es2kNode : public TdiNode {
  public:
   virtual ~Es2kNode();
 
-  virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
-                                           uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config,
-                                             uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status PushForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config);
-  virtual ::util::Status SaveForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status CommitForwardingPipelineConfig() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status VerifyForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config) const;
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status Freeze() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status Unfreeze() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status WriteForwardingEntries(
-      const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status ReadForwardingEntries(
-      const ::p4::v1::ReadRequest& req,
-      WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status RegisterStreamMessageResponseWriter(
-      const std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>>&
-          writer) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status UnregisterStreamMessageResponseWriter()
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status HandleStreamMessageRequest(
-      const ::p4::v1::StreamMessageRequest& req) LOCKS_EXCLUDED(lock_);
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kNode> CreateInstance(
       TdiTableManager* tdi_table_manager,
@@ -77,6 +47,14 @@ class Es2kNode : public TdiNode {
       // Note: bfrt_node defaults are (true, 1)
       bool initialized = false, uint64 node_id = 0,
       TdiLutManager* tdi_lut_manager = nullptr);
+
+  virtual ::util::Status WriteForwardingEntries(
+      const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
+      LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status ReadForwardingEntries(
+      const ::p4::v1::ReadRequest& req,
+      WriterInterface<::p4::v1::ReadResponse>* writer,
+      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
 
   // Es2kNode is neither copyable nor movable.
   Es2kNode(const Es2kNode&) = delete;
@@ -111,9 +89,6 @@ class Es2kNode : public TdiNode {
       const ::p4::v1::ExternEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer);
 
-  // Callback registered with DeviceMgr to receive stream messages.
-  friend void StreamMessageCb(uint64 node_id,
-                              p4::v1::StreamMessageResponse* msg, void* cookie);
 
   // Reader-writer lock used to protect access to node-specific state.
   mutable absl::Mutex lock_;

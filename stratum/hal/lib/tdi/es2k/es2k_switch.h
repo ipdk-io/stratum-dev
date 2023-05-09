@@ -82,7 +82,7 @@ class Es2kSwitch : public SwitchInterface {
   static std::unique_ptr<Es2kSwitch> CreateInstance(
       Es2kChassisManager* chassis_manager,
       TdiIpsecManager* ipsec_manager,
-      const std::map<int, Es2kNode*>& device_id_to_tdi_node);
+      const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
   // Es2kSwitch is neither copyable nor movable.
   Es2kSwitch(const Es2kSwitch&) = delete;
@@ -100,7 +100,7 @@ class Es2kSwitch : public SwitchInterface {
   // class.
   Es2kSwitch(Es2kChassisManager* chassis_manager,
       TdiIpsecManager* ipsec_manager,
-      const std::map<int, Es2kNode*>& device_id_to_tdi_node);
+      const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
   // Helper to get Es2kNode pointer from device_id number or return error
   // indicating invalid device_id.
@@ -123,7 +123,7 @@ class Es2kSwitch : public SwitchInterface {
   // node/ASIC. This map is initialized in the constructor and will not change
   // during the lifetime of the class.
   // TODO(max): Does this need to be protected by chassis_lock?
-  const std::map<int, Es2kNode*> device_id_to_tdi_node_;  // pointers not owned
+  const std::map<int, Es2kNode*> device_id_to_es2k_node_;  // pointers not owned
 
   // Map from the node ids to to a pointer to Es2kNode which contain all the
   // per-node managers for that node/ASIC. Created everytime a config is pushed.

@@ -84,9 +84,8 @@ class TdiNode {
   // Default constructor. To be called by the Mock class instance only.
   TdiNode();
 
- private:
-  // Private constructor. Use CreateInstance() to create an instance of this
-  // class.
+  // Es2k node is inherited from TdiNode. TdiNode constructor should
+  // be accessible for all derived classes.
   TdiNode(TdiTableManager* tdi_table_manager,
           TdiActionProfileManager* tdi_action_profile_manager,
           TdiPacketioManager* tdi_packetio_manager,
@@ -95,6 +94,12 @@ class TdiNode {
           TdiSdeInterface* tdi_sde_interface, int device_id,
           bool initialized, uint64 node_id);
 
+  bool getInitialized() { return initialized_; }
+  bool getPipelineInitialized() { return pipeline_initialized_; }
+  const int getDeviceId() { return device_id_; }
+  uint64 getNodeId() { return node_id_; }
+
+ private:
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata
   ::util::Status WriteExternEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
