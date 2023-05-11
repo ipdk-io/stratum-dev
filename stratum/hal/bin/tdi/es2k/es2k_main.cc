@@ -19,13 +19,13 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_node.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
-#include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
@@ -131,13 +131,13 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
-  auto tdi_node = TdiNode::CreateInstance(
+  auto es2k_node = Es2kNode::CreateInstance(
       table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
       pre_manager.get(), counter_manager.get(), sde_wrapper, device_id,
       initialized, node_id, lut_manager.get());
 
-  std::map<int, TdiNode*> device_id_to_tdi_node = {
-      {device_id, tdi_node.get()},
+  std::map<int, Es2kNode*> device_id_to_es2k_node = {
+      {device_id, es2k_node.get()},
   };
 
   auto port_manager = Es2kPortManager::CreateSingleton();
@@ -149,7 +149,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       TdiIpsecManager::CreateInstance(sde_wrapper, fixed_function_manager.get());
 
   auto es2k_switch = Es2kSwitch::CreateInstance(
-      chassis_manager.get(), ipsec_manager.get(), device_id_to_tdi_node);
+      chassis_manager.get(), ipsec_manager.get(), device_id_to_es2k_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 

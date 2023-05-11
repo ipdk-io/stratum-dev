@@ -15,7 +15,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
-#include "stratum/hal/lib/tdi/tdi_node.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_node.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
@@ -27,16 +27,16 @@ namespace tdi {
 Es2kSwitch::Es2kSwitch(
     Es2kChassisManager* chassis_manager,
     TdiIpsecManager* ipsec_manager,
-    const std::map<int, TdiNode*>& device_id_to_tdi_node)
+    const std::map<int, Es2kNode*>& device_id_to_es2k_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
-      device_id_to_tdi_node_(device_id_to_tdi_node),
+      device_id_to_es2k_node_(device_id_to_es2k_node),
       node_id_to_tdi_node_() {
-  for (const auto& entry : device_id_to_tdi_node_) {
+  for (const auto& entry : device_id_to_es2k_node_) {
     CHECK_GE(entry.first, 0)
         << "Invalid device_id number " << entry.first << ".";
     CHECK_NE(entry.second, nullptr)
-        << "Detected null TdiNode for device_id " << entry.first << ".";
+        << "Detected null Es2kNode for device_id " << entry.first << ".";
   }
 }
 
@@ -51,9 +51,9 @@ Es2kSwitch::~Es2kSwitch() {}
   for (const auto& entry : node_id_to_device_id) {
     uint64 node_id = entry.first;
     int device_id = entry.second;
-    ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromDeviceId(device_id));
-    RETURN_IF_ERROR(tdi_node->PushChassisConfig(config, node_id));
-    node_id_to_tdi_node_[node_id] = tdi_node;
+    ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromDeviceId(device_id));
+    RETURN_IF_ERROR(es2k_node->PushChassisConfig(config, node_id));
+    node_id_to_tdi_node_[node_id] = es2k_node;
   }
 
   LOG(INFO) << "Chassis config pushed successfully.";
@@ -69,8 +69,8 @@ Es2kSwitch::~Es2kSwitch() {}
 ::util::Status Es2kSwitch::PushForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  RETURN_IF_ERROR(tdi_node->PushForwardingPipelineConfig(config));
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  RETURN_IF_ERROR(es2k_node->PushForwardingPipelineConfig(config));
   RETURN_IF_ERROR(chassis_manager_->ReplayPortsConfig(node_id));
 
   LOG(INFO) << "P4-based forwarding pipeline config pushed successfully to "
@@ -82,8 +82,8 @@ Es2kSwitch::~Es2kSwitch() {}
 ::util::Status Es2kSwitch::SaveForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  RETURN_IF_ERROR(tdi_node->SaveForwardingPipelineConfig(config));
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  RETURN_IF_ERROR(es2k_node->SaveForwardingPipelineConfig(config));
   RETURN_IF_ERROR(chassis_manager_->ReplayPortsConfig(node_id));
 
   LOG(INFO) << "P4-based forwarding pipeline config saved successfully to "
@@ -94,8 +94,8 @@ Es2kSwitch::~Es2kSwitch() {}
 
 ::util::Status Es2kSwitch::CommitForwardingPipelineConfig(uint64 node_id) {
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  RETURN_IF_ERROR(tdi_node->CommitForwardingPipelineConfig());
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  RETURN_IF_ERROR(es2k_node->CommitForwardingPipelineConfig());
 
   LOG(INFO) << "P4-based forwarding pipeline config committed successfully to "
             << "node with ID " << node_id << ".";
@@ -106,14 +106,14 @@ Es2kSwitch::~Es2kSwitch() {}
 ::util::Status Es2kSwitch::VerifyForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::WriterMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  return tdi_node->VerifyForwardingPipelineConfig(config);
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  return es2k_node->VerifyForwardingPipelineConfig(config);
 }
 
 ::util::Status Es2kSwitch::Shutdown() {
   ::util::Status status = ::util::OkStatus();
-  for (const auto& entry : device_id_to_tdi_node_) {
-    TdiNode* node = entry.second;
+  for (const auto& entry : device_id_to_es2k_node_) {
+    Es2kNode* node = entry.second;
     APPEND_STATUS_IF_ERROR(status, node->Shutdown());
   }
   APPEND_STATUS_IF_ERROR(status, chassis_manager_->Shutdown());
@@ -133,8 +133,8 @@ Es2kSwitch::~Es2kSwitch() {}
       << "Need to provide non-null results pointer for non-empty updates.";
 
   absl::ReaderMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(req.device_id()));
-  return tdi_node->WriteForwardingEntries(req, results);
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(req.device_id()));
+  return es2k_node->WriteForwardingEntries(req, results);
 }
 
 ::util::Status Es2kSwitch::ReadForwardingEntries(
@@ -146,27 +146,27 @@ Es2kSwitch::~Es2kSwitch() {}
   CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&chassis_lock);
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(req.device_id()));
-  return tdi_node->ReadForwardingEntries(req, writer, details);
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(req.device_id()));
+  return es2k_node->ReadForwardingEntries(req, writer, details);
 }
 
 ::util::Status Es2kSwitch::RegisterStreamMessageResponseWriter(
     uint64 node_id,
     std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer) {
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  return tdi_node->RegisterStreamMessageResponseWriter(writer);
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  return es2k_node->RegisterStreamMessageResponseWriter(writer);
 }
 
 ::util::Status Es2kSwitch::UnregisterStreamMessageResponseWriter(
     uint64 node_id) {
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  return tdi_node->UnregisterStreamMessageResponseWriter();
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  return es2k_node->UnregisterStreamMessageResponseWriter();
 }
 
 ::util::Status Es2kSwitch::HandleStreamMessageRequest(
     uint64 node_id, const ::p4::v1::StreamMessageRequest& request) {
-  ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(node_id));
-  return tdi_node->HandleStreamMessageRequest(request);
+  ASSIGN_OR_RETURN(auto* es2k_node, GetEs2kNodeFromNodeId(node_id));
+  return es2k_node->HandleStreamMessageRequest(request);
 }
 
 ::util::Status Es2kSwitch::RegisterEventNotifyWriter(
@@ -282,30 +282,30 @@ Es2kSwitch::~Es2kSwitch() {}
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
     Es2kChassisManager* chassis_manager,
     TdiIpsecManager* ipsec_manager,
-    const std::map<int, TdiNode*>& device_id_to_tdi_node) {
+    const std::map<int, Es2kNode*>& device_id_to_es2k_node) {
   return absl::WrapUnique(
-      new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_tdi_node));
+      new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_es2k_node));
 }
 
-::util::StatusOr<TdiNode*> Es2kSwitch::GetTdiNodeFromDeviceId(
+::util::StatusOr<Es2kNode*> Es2kSwitch::GetEs2kNodeFromDeviceId(
     int device_id) const {
-  TdiNode* tdi_node = gtl::FindPtrOrNull(device_id_to_tdi_node_, device_id);
-  if (tdi_node == nullptr) {
+  Es2kNode* es2k_node = gtl::FindPtrOrNull(device_id_to_es2k_node_, device_id);
+  if (es2k_node == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "Unit " << device_id << " is unknown.";
   }
-  return tdi_node;
+  return es2k_node;
 }
 
-::util::StatusOr<TdiNode*> Es2kSwitch::GetTdiNodeFromNodeId(
+::util::StatusOr<Es2kNode*> Es2kSwitch::GetEs2kNodeFromNodeId(
     uint64 node_id) const {
-  TdiNode* tdi_node = gtl::FindPtrOrNull(node_id_to_tdi_node_, node_id);
-  if (tdi_node == nullptr) {
+  Es2kNode* es2k_node = gtl::FindPtrOrNull(node_id_to_tdi_node_, node_id);
+  if (es2k_node == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "Node with ID " << node_id
            << " is unknown or no config has been pushed to it yet.";
   }
-  return tdi_node;
+  return es2k_node;
 }
 
 }  // namespace tdi

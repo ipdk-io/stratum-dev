@@ -12,7 +12,7 @@
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
-#include "stratum/hal/lib/tdi/tdi_node.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_node.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/common/switch_interface.h"
 
@@ -82,7 +82,7 @@ class Es2kSwitch : public SwitchInterface {
   static std::unique_ptr<Es2kSwitch> CreateInstance(
       Es2kChassisManager* chassis_manager,
       TdiIpsecManager* ipsec_manager,
-      const std::map<int, TdiNode*>& device_id_to_tdi_node);
+      const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
   // Es2kSwitch is neither copyable nor movable.
   Es2kSwitch(const Es2kSwitch&) = delete;
@@ -100,15 +100,15 @@ class Es2kSwitch : public SwitchInterface {
   // class.
   Es2kSwitch(Es2kChassisManager* chassis_manager,
       TdiIpsecManager* ipsec_manager,
-      const std::map<int, TdiNode*>& device_id_to_tdi_node);
+      const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
-  // Helper to get TdiNode pointer from device_id number or return error
+  // Helper to get Es2kNode pointer from device_id number or return error
   // indicating invalid device_id.
-  ::util::StatusOr<TdiNode*> GetTdiNodeFromDeviceId(int device_id) const;
+  ::util::StatusOr<Es2kNode*> GetEs2kNodeFromDeviceId(int device_id) const;
 
-  // Helper to get TdiNode pointer from node id or return error indicating
+  // Helper to get Es2kNode pointer from node id or return error indicating
   // invalid/unknown/uninitialized node.
-  ::util::StatusOr<TdiNode*> GetTdiNodeFromNodeId(uint64 node_id) const;
+  ::util::StatusOr<Es2kNode*> GetEs2kNodeFromNodeId(uint64 node_id) const;
 
   // Pointer to ChassisManager object. Note that there is only one instance
   // of this class.
@@ -119,18 +119,18 @@ class Es2kSwitch : public SwitchInterface {
   TdiIpsecManager* ipsec_manager_;  // not owned by the class.
 
   // Map from zero-based device_id number corresponding to a node/ASIC to a
-  // pointer to TdiNode which contain all the per-node managers for that
+  // pointer to Es2kNode which contain all the per-node managers for that
   // node/ASIC. This map is initialized in the constructor and will not change
   // during the lifetime of the class.
   // TODO(max): Does this need to be protected by chassis_lock?
-  const std::map<int, TdiNode*> device_id_to_tdi_node_;  // pointers not owned
+  const std::map<int, Es2kNode*> device_id_to_es2k_node_;  // pointers not owned
 
-  // Map from the node ids to to a pointer to TdiNode which contain all the
+  // Map from the node ids to to a pointer to Es2kNode which contain all the
   // per-node managers for that node/ASIC. Created everytime a config is pushed.
   // At any point of time this map will contain a keys the ids of the nodes
   // which had a successful config push.
   // TODO(max): Does this need to be protected by chassis_lock?
-  std::map<uint64, TdiNode*> node_id_to_tdi_node_;  //  pointers not owned
+  std::map<uint64, Es2kNode*> node_id_to_tdi_node_;  //  pointers not owned
 };
 
 }  // namespace tdi

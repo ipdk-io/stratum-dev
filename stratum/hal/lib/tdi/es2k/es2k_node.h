@@ -2,8 +2,8 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_TDI_TDI_NODE_H_
-#define STRATUM_HAL_LIB_TDI_TDI_NODE_H_
+#ifndef STRATUM_HAL_LIB_TDI_ES2K_ES2K_NODE_H_
+#define STRATUM_HAL_LIB_TDI_ES2K_ES2K_NODE_H_
 
 #include <memory>
 #include <vector>
@@ -16,8 +16,10 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
+#include "stratum/hal/lib/tdi/tdi_lut_manager.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
@@ -29,42 +31,13 @@ namespace tdi {
 // The TdiNode class encapsulates all per P4-native node/chip/ASIC
 // functionalities, primarily the flow managers. Calls made to this class are
 // processed and passed through to the TDI API.
-class TdiNode {
+// Create a subclass Es2kNode which is specific to ES2K functionalities.
+class Es2kNode : public TdiNode {
  public:
-  virtual ~TdiNode();
+  virtual ~Es2kNode();
 
-  virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
-                                           uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config,
-                                             uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status PushForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config);
-  virtual ::util::Status SaveForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status CommitForwardingPipelineConfig() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status VerifyForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config) const;
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status Freeze() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status Unfreeze() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status WriteForwardingEntries(
-      const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status ReadForwardingEntries(
-      const ::p4::v1::ReadRequest& req,
-      WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status RegisterStreamMessageResponseWriter(
-      const std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>>&
-          writer) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status UnregisterStreamMessageResponseWriter()
-      LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status HandleStreamMessageRequest(
-      const ::p4::v1::StreamMessageRequest& req) LOCKS_EXCLUDED(lock_);
   // Factory function for creating the instance of the class.
-  static std::unique_ptr<TdiNode> CreateInstance(
+  static std::unique_ptr<Es2kNode> CreateInstance(
       TdiTableManager* tdi_table_manager,
       TdiActionProfileManager* tdi_action_profile_manager,
       TdiPacketioManager* tdi_packetio_manager,
@@ -72,34 +45,39 @@ class TdiNode {
       TdiCounterManager* tdi_counter_manager,
       TdiSdeInterface* tdi_sde_interface, int device_id,
       // Note: bfrt_node defaults are (true, 1)
-      bool initialized = false, uint64 node_id = 0);
+      bool initialized = false, uint64 node_id = 0,
+      TdiLutManager* tdi_lut_manager = nullptr);
 
-  // TdiNode is neither copyable nor movable.
-  TdiNode(const TdiNode&) = delete;
-  TdiNode& operator=(const TdiNode&) = delete;
-  TdiNode(TdiNode&&) = delete;
-  TdiNode& operator=(TdiNode&&) = delete;
+  virtual ::util::Status WriteForwardingEntries(
+      const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
+      LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status ReadForwardingEntries(
+      const ::p4::v1::ReadRequest& req,
+      WriterInterface<::p4::v1::ReadResponse>* writer,
+      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
+
+  // Es2kNode is neither copyable nor movable.
+  Es2kNode(const Es2kNode&) = delete;
+  Es2kNode& operator=(const Es2kNode&) = delete;
+  Es2kNode(Es2kNode&&) = delete;
+  Es2kNode& operator=(Es2kNode&&) = delete;
 
  protected:
   // Default constructor. To be called by the Mock class instance only.
-  TdiNode();
-
-  // Es2k node is inherited from TdiNode. TdiNode constructor should
-  // be accessible for all derived classes.
-  TdiNode(TdiTableManager* tdi_table_manager,
-          TdiActionProfileManager* tdi_action_profile_manager,
-          TdiPacketioManager* tdi_packetio_manager,
-          TdiPreManager* tdi_pre_manager,
-          TdiCounterManager* tdi_counter_manager,
-          TdiSdeInterface* tdi_sde_interface, int device_id,
-          bool initialized, uint64 node_id);
-
-  bool getInitialized() { return initialized_; }
-  bool getPipelineInitialized() { return pipeline_initialized_; }
-  const int getDeviceId() { return device_id_; }
-  uint64 getNodeId() { return node_id_; }
+  Es2kNode();
 
  private:
+  // Private constructor. Use CreateInstance() to create an instance of this
+  // class.
+  Es2kNode(TdiTableManager* tdi_table_manager,
+           TdiActionProfileManager* tdi_action_profile_manager,
+           TdiPacketioManager* tdi_packetio_manager,
+           TdiPreManager* tdi_pre_manager,
+           TdiCounterManager* tdi_counter_manager,
+           TdiSdeInterface* tdi_sde_interface, int device_id,
+           bool initialized, uint64 node_id,
+           TdiLutManager* tdi_lut_manager);
+
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata
   ::util::Status WriteExternEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
@@ -111,9 +89,6 @@ class TdiNode {
       const ::p4::v1::ExternEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer);
 
-  // Callback registered with DeviceMgr to receive stream messages.
-  friend void StreamMessageCb(uint64 node_id,
-                              p4::v1::StreamMessageResponse* msg, void* cookie);
 
   // Reader-writer lock used to protect access to node-specific state.
   mutable absl::Mutex lock_;
@@ -136,6 +111,7 @@ class TdiNode {
 
   // Managers. Not owned by this class.
   TdiTableManager* tdi_table_manager_;
+  TdiLutManager* tdi_lut_manager_;
   TdiActionProfileManager* tdi_action_profile_manager_;
   TdiPacketioManager* tdi_packetio_manager_;
   TdiPreManager* tdi_pre_manager_;
@@ -155,4 +131,4 @@ class TdiNode {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_TDI_NODE_H_
+#endif  // STRATUM_HAL_LIB_TDI_ES2K_ES2K_NODE_H_
