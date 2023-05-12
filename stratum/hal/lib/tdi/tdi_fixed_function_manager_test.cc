@@ -11,11 +11,9 @@
 #include "gtest/gtest-message.h"
 #include "gtest/gtest.h"
 #include "stratum/glue/status/status_test_util.h"
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/lib/test_utils/matchers.h"
-
-#define IPSEC_CONFIG_SADB_TABLE_NAME \
-  "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config"
 
 namespace stratum {
 namespace hal {
@@ -23,7 +21,9 @@ namespace tdi {
 
 using ::testing::_;
 using ::testing::ByMove;
+using ::testing::DoAll;
 using ::testing::Return;
+using ::testing::SetArgPointee;
 using TableKeyInterface = TdiSdeInterface::TableKeyInterface;
 using TableDataInterface = TdiSdeInterface::TableDataInterface;
 
@@ -39,9 +39,13 @@ MATCHER_P(DerivedFromStatus, status, "") {
   return true;
 }
 
-constexpr char kUnspOpTypeMsg[] =
+constexpr char kUnsupOpTypeMsg[] =
     "Unsupported update type: 2147483647 for IPSEC SADB table.";
 constexpr int kTdiRtTableId = 1;
+constexpr char ipsecConfigSadbTableName[] =
+    "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config";
+constexpr char ipsecFetchSpiTableName[] =
+    "ipsec-offload.ipsec-offload.ipsec-spi";
 
 class TdiFixedFunctionManagerTest : public ::testing::Test {
  protected:
@@ -52,7 +56,18 @@ class TdiFixedFunctionManagerTest : public ::testing::Test {
   }
 
   ::util::Status OpTypeNotSuppError() {
-    return MAKE_ERROR(ERR_INTERNAL) << kUnspOpTypeMsg;
+    return MAKE_ERROR(ERR_INTERNAL) << kUnsupOpTypeMsg;
+  }
+
+  void InitSadbConfig(IPsecSADBConfig& sadb_config) {
+    sadb_config.set_offload_id(1);
+    sadb_config.set_direction(true);
+    sadb_config.set_req_id(1);
+    sadb_config.set_spi(1);
+    sadb_config.set_ext_seq_num(true);
+    sadb_config.set_anti_replay_window_size(1);
+    sadb_config.set_protocol_parameters(IPSEC_PROTOCOL_PARAMS_ESP);
+    sadb_config.set_mode(IPSEC_MODE_TRANSPORT);
   }
 
   static constexpr int kDevice1 = 0;
@@ -66,19 +81,12 @@ class TdiFixedFunctionManagerTest : public ::testing::Test {
  * values and we check if WriteSadbEntry is invoked properly
  */
 TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestAddEntry) {
-  std::string table_name = IPSEC_CONFIG_SADB_TABLE_NAME;
+  std::string table_name = ipsecConfigSadbTableName;
   const IPsecSadbConfigOp op_type = IPSEC_SADB_CONFIG_OP_ADD_ENTRY;
 
-  // create IPsecSADBConfig
+  // initialize IPsecSADBConfig
   IPsecSADBConfig sadb_config;
-  sadb_config.set_offload_id(1);
-  sadb_config.set_direction(true);
-  sadb_config.set_req_id(1);
-  sadb_config.set_spi(1);
-  sadb_config.set_ext_seq_num(true);
-  sadb_config.set_anti_replay_window_size(1);
-  sadb_config.set_protocol_parameters(IPSEC_PROTOCOL_PARAMS_ESP);
-  sadb_config.set_mode(IPSEC_MODE_TRANSPORT);
+  InitSadbConfig(sadb_config);
 
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
@@ -94,6 +102,35 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestAddEntry) {
       GetTableId(table_name))
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*table_key_mock,
+              SetExact(kIpsecSadbOffloadId, sadb_config.offload_id()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_key_mock, SetExact(kIpsecSadbDir, sadb_config.direction()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_data_mock, SetParam(kIpsecSadbReqId, sadb_config.req_id()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_data_mock, SetParam(kIpsecSadbSpi, sadb_config.spi()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_data_mock,
+              SetParam(kIpsecSadbSeqNum, sadb_config.ext_seq_num()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_data_mock, SetParam(kIpsecSadbReplayWindow,
+                                         sadb_config.anti_replay_window_size()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(
+      *table_data_mock,
+      SetParam(kIpsecSadbProtoParams, (uint8)sadb_config.protocol_parameters()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_data_mock, SetParam(kIpsecSadbMode, sadb_config.mode()))
+      .WillOnce(Return(::util::OkStatus()));
 
   EXPECT_CALL(*sde_wrapper_mock_,
               InsertTableEntry(kDevice1, _, kTdiRtTableId, table_key_mock.get(),
@@ -121,19 +158,12 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestAddEntry) {
  * values and we check if WriteSadbEntry is invoked properly
  */
 TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestDelEntry) {
-  std::string table_name = IPSEC_CONFIG_SADB_TABLE_NAME;
+  std::string table_name = ipsecConfigSadbTableName;
   const IPsecSadbConfigOp op_type = IPSEC_SADB_CONFIG_OP_DEL_ENTRY;
 
-  // create IPsecSADBConfig
+  // initialize IPsecSADBConfig
   IPsecSADBConfig sadb_config;
-  sadb_config.set_offload_id(1);
-  sadb_config.set_direction(true);
-  sadb_config.set_req_id(1);
-  sadb_config.set_spi(1);
-  sadb_config.set_ext_seq_num(true);
-  sadb_config.set_anti_replay_window_size(1);
-  sadb_config.set_protocol_parameters(IPSEC_PROTOCOL_PARAMS_ESP);
-  sadb_config.set_mode(IPSEC_MODE_TRANSPORT);
+  InitSadbConfig(sadb_config);
 
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
@@ -149,6 +179,13 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestDelEntry) {
       GetTableId(table_name))
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*table_key_mock,
+              SetExact(kIpsecSadbOffloadId, sadb_config.offload_id()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_key_mock, SetExact(kIpsecSadbDir, sadb_config.direction()))
+      .WillOnce(Return(::util::OkStatus()));
 
   EXPECT_CALL(*sde_wrapper_mock_, DeleteTableEntry(kDevice1, _, kTdiRtTableId,
                                                    table_key_mock.get()))
@@ -175,20 +212,13 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestDelEntry) {
  * Unsupported op_type.
  */
 TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestUnsupportedType) {
-  std::string table_name = IPSEC_CONFIG_SADB_TABLE_NAME;
+  std::string table_name = ipsecConfigSadbTableName;
   const IPsecSadbConfigOp op_type =
       IPsecSadbConfigOp_INT_MAX_SENTINEL_DO_NOT_USE_;
 
-  // create IPsecSADBConfig
+  // initialize IPsecSADBConfig
   IPsecSADBConfig sadb_config;
-  sadb_config.set_offload_id(1);
-  sadb_config.set_direction(true);
-  sadb_config.set_req_id(1);
-  sadb_config.set_spi(1);
-  sadb_config.set_ext_seq_num(true);
-  sadb_config.set_anti_replay_window_size(1);
-  sadb_config.set_protocol_parameters(IPSEC_PROTOCOL_PARAMS_ESP);
-  sadb_config.set_mode(IPSEC_MODE_TRANSPORT);
+  InitSadbConfig(sadb_config);
 
   // mocked session object
   auto session_mock = std::make_shared<SessionMock>();
@@ -204,6 +234,13 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestUnsupportedType) {
       GetTableId(table_name))
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*table_key_mock,
+              SetExact(kIpsecSadbOffloadId, sadb_config.offload_id()))
+      .WillOnce(Return(::util::OkStatus()));
+
+  EXPECT_CALL(*table_key_mock, SetExact(kIpsecSadbDir, sadb_config.direction()))
+      .WillOnce(Return(::util::OkStatus()));
 
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
       .WillOnce(
@@ -225,7 +262,7 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestUnsupportedType) {
  * Validates FetchSpi method.
  */
 TEST_F(TdiFixedFunctionManagerTest, FetchSpiTest) {
-  std::string table_name = IPSEC_CONFIG_SADB_TABLE_NAME;
+  std::string table_name = ipsecFetchSpiTableName;
   uint32 fetched_spi;
 
   // mocked session object
@@ -242,6 +279,9 @@ TEST_F(TdiFixedFunctionManagerTest, FetchSpiTest) {
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
+  EXPECT_CALL(*table_data_mock, GetParam(kIpsecFetchSpi, _))
+      .WillOnce(DoAll(SetArgPointee<1>(8), Return(::util::OkStatus())));
+
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
       .WillOnce(
           Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
@@ -249,6 +289,7 @@ TEST_F(TdiFixedFunctionManagerTest, FetchSpiTest) {
 
   EXPECT_OK(fixed_function_manager_->FetchSpi(session_mock, table_name,
                                               &fetched_spi));
+  EXPECT_EQ(fetched_spi, 8);
 }
 }  // namespace tdi
 }  // namespace hal
