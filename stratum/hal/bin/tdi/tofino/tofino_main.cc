@@ -1,9 +1,9 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/tofino/tofino_main.h"
+#include "stratum/hal/bin/tdi/main.h"
 
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
@@ -25,7 +25,6 @@ DEFINE_string(tdi_sde_install, "/usr",
               "Absolute path to the directory where the SDE is installed");
 DEFINE_bool(tdi_switchd_background, false,
             "Run switch daemon in the background with no interactive features");
-// TODO: Target-specific default.
 DEFINE_string(tdi_switchd_cfg, "/usr/share/stratum/tofino_skip_p4.conf",
               "Path to the switch daemon json config file");
 
@@ -33,7 +32,10 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-::util::Status TofinoMain(int argc, char* argv[]) {
+// Note: Tofino only supports the legacy interface. If you wish to implement
+// the infrap4d interface, see dpdk_main and dpdk_hal for example code.
+
+::util::Status Main(int argc, char* argv[]) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 
