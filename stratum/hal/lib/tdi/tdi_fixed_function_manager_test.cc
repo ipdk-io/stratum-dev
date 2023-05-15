@@ -59,6 +59,10 @@ class TdiFixedFunctionManagerTest : public ::testing::Test {
     return MAKE_ERROR(ERR_INTERNAL) << kUnsupOpTypeMsg;
   }
 
+  ::util::Status DefaultError() {
+    return MAKE_ERROR(ERR_UNKNOWN) << "Some error";
+  }
+
   void InitSadbConfig(IPsecSADBConfig& sadb_config) {
     sadb_config.set_offload_id(1);
     sadb_config.set_direction(true);
@@ -290,6 +294,83 @@ TEST_F(TdiFixedFunctionManagerTest, FetchSpiTest) {
   EXPECT_OK(fixed_function_manager_->FetchSpi(session_mock, table_name,
                                               &fetched_spi));
   EXPECT_EQ(fetched_spi, 8);
+}
+
+/*
+ * Validates FetchSpi method in failure scenario where the
+ * GetParam method returns error with 0 value of spi_val
+ */
+TEST_F(TdiFixedFunctionManagerTest, FetchSpiTestFailure) {
+  std::string table_name = ipsecFetchSpiTableName;
+  uint32 fetched_spi;
+
+  // mocked session object
+  auto session_mock = std::make_shared<SessionMock>();
+  auto table_data_mock = absl::make_unique<TableDataMock>();
+
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteSadbEntry().
+  EXPECT_CALL(
+      // mock object to monitor
+      *sde_wrapper_mock_,
+      // method signature to match
+      GetTableId(table_name))
+      // action to take on first and only call
+      .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*table_data_mock, GetParam(kIpsecFetchSpi, _))
+      .WillOnce(DoAll(SetArgPointee<1>(0), Return(DefaultError())));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
+              std::move(table_data_mock)))));
+
+  EXPECT_THAT(
+      fixed_function_manager_->FetchSpi(session_mock, table_name, &fetched_spi),
+      DerivedFromStatus(DefaultError()));
+  EXPECT_EQ(fetched_spi, 0);
+}
+
+/*
+ * Checks WriteSadbEntry in failure scenario when
+ * there is failure in setting the key of the table
+ */
+TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestFailure) {
+  std::string table_name = ipsecConfigSadbTableName;
+  const IPsecSadbConfigOp op_type = IPSEC_SADB_CONFIG_OP_ADD_ENTRY;
+
+  // initialize IPsecSADBConfig
+  IPsecSADBConfig sadb_config;
+  InitSadbConfig(sadb_config);
+
+  // mocked session object
+  auto session_mock = std::make_shared<SessionMock>();
+  auto table_key_mock = absl::make_unique<TableKeyMock>();
+
+  // Specify the behavior of certain methods of the SDE Wrapper mock
+  // when they are invoked by WriteSadbEntry().
+  EXPECT_CALL(
+      // mock object to monitor
+      *sde_wrapper_mock_,
+      // method signature to match
+      GetTableId(table_name))
+      // action to take on first and only call
+      .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*table_key_mock,
+              SetExact(kIpsecSadbOffloadId, sadb_config.offload_id()))
+      .WillOnce(Return(DefaultError()));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
+              std::move(table_key_mock)))));
+
+  // perform test and check results (act + assert)
+  EXPECT_THAT(fixed_function_manager_->WriteSadbEntry(session_mock, table_name,
+                                                      op_type, sadb_config),
+              DerivedFromStatus(DefaultError()));
 }
 }  // namespace tdi
 }  // namespace hal
