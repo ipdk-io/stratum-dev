@@ -297,8 +297,8 @@ TEST_F(TdiFixedFunctionManagerTest, FetchSpiTest) {
 }
 
 /*
- * Validates FetchSpi method in failure scenario where the
- * GetParam method returns error with 0 value of spi_val
+ * Verifies FetchSpi() error handling if the underlying call to GetParam()
+ * fails. It should propagate the status code and return an spi_value of zero
  */
 TEST_F(TdiFixedFunctionManagerTest, FetchSpiTestFailure) {
   std::string table_name = ipsecFetchSpiTableName;
@@ -333,8 +333,8 @@ TEST_F(TdiFixedFunctionManagerTest, FetchSpiTestFailure) {
 }
 
 /*
- * Checks WriteSadbEntry in failure scenario when
- * there is failure in setting the key of the table
+ * Verifies WriteSadbEntry() error handling if the underlying call to
+ * SetExact() fails. It should propagate the status code.
  */
 TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestFailure) {
   std::string table_name = ipsecConfigSadbTableName;
