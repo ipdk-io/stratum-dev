@@ -48,6 +48,26 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "es2k_node",
+    srcs = ["es2k_node.cc"],
+    hdrs = ["es2k_node.h"],
+    deps = [
+        "//stratum/hal/lib/tdi:tdi_node",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_node_mock",
+    testonly = 1,
+    hdrs = ["es2k_node_mock.h"],
+    arches = HOST_ARCHES,
+    deps = [
+        ":es2k_node",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
     name = "es2k_sde_utils",
     srcs = ["es2k_sde_utils.cc"],
     hdrs = [
@@ -140,13 +160,13 @@ stratum_cc_library(
     srcs = ["es2k_switch.cc"],
     hdrs = ["es2k_switch.h"],
     deps = [
+        ":es2k_node",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status:status_macros",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/tdi:tdi_ipsec_manager",
-        "//stratum/hal/lib/tdi:tdi_node",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
@@ -250,6 +270,7 @@ stratum_cc_test(
     srcs = ["es2k_switch_test.cc"],
     deps = [
         ":es2k_chassis_manager_mock",
+	":es2k_node_mock",
         ":es2k_switch",
         ":test_main",
         "//stratum/glue/status:status_test_util",
@@ -257,7 +278,6 @@ stratum_cc_test(
         "//stratum/hal/lib/common:writer_mock",
         "//stratum/hal/lib/p4:p4_table_mapper_mock",
         "//stratum/hal/lib/tdi:tdi_ipsec_manager_mock",
-        "//stratum/hal/lib/tdi:tdi_node_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
         "//stratum/lib/channel:channel_mock",
         "//stratum/lib/test_utils:matchers",

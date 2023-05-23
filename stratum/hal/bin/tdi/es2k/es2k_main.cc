@@ -132,9 +132,9 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto es2k_node = Es2kNode::CreateInstance(
-      table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
-      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id,
-      initialized, node_id, lut_manager.get());
+      table_manager.get(), lut_manager.get(), action_profile_manager.get(),
+      packetio_manager.get(), pre_manager.get(), counter_manager.get(),
+      sde_wrapper, device_id, initialized, node_id);
 
   std::map<int, Es2kNode*> device_id_to_es2k_node = {
       {device_id, es2k_node.get()},
