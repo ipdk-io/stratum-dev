@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_node.h"
@@ -14,9 +14,9 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/proto_oneof_writer_wrapper.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_pipeline_utils.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 #include "stratum/public/proto/error.pb.h"
@@ -446,11 +446,12 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
       return tdi_action_profile_manager_->WriteActionProfileEntry(session,
-                                                                   type, entry);
+                                                                  type, entry);
     default:
-      RETURN_ERROR() << "Unsupported extern entry: " << entry.ShortDebugString()
-                     << ".";
+      break;
   }
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 ::util::Status TdiNode::ReadExternEntry(
@@ -463,9 +464,10 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
       return tdi_action_profile_manager_->ReadActionProfileEntry(
           session, entry, writer);
     default:
-      RETURN_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+      break;
   }
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 }  // namespace tdi

@@ -11,7 +11,7 @@ rm -rf "$THIS_DIR/certs/*"
 SERVER_CONF_FILE="$(mktemp)"
 
 echo "[ req ]
-default_bits           = 2048
+default_bits           = 4096
 distinguished_name     = stratum
 prompt                 = no
 req_extensions         = req_ext

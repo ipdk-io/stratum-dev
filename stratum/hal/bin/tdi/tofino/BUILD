@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
@@ -27,19 +27,20 @@ stratum_common_deps = [
 stratum_cc_binary(
     name = "stratum_tofino",
     srcs = [
-        "tofino_main.cc",
-        "tofino_main.h",
         "main.cc",
+        "tofino_main.cc",
     ],
     arches = HOST_ARCHES,
-    defines = ["TOFINO_TARGET"],
     data = [
         "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",
         "//stratum/hal/bin/barefoot:tofino_skip_p4_no_bsp.conf",
     ],
+    defines = ["TOFINO_TARGET"],
     deps = [
+        "//stratum/hal/bin/tdi:main",
         "//stratum/hal/lib/tdi/tofino:tofino_chassis_manager",
         "//stratum/hal/lib/tdi/tofino:tofino_hal",
+        "//stratum/hal/lib/tdi/tofino:tofino_port_manager",
         "//stratum/hal/lib/tdi/tofino:tofino_sde_target",
         "//stratum/hal/lib/tdi/tofino:tofino_sde_utils",
         "//stratum/hal/lib/tdi/tofino:tofino_switch",
@@ -58,8 +59,8 @@ pkg_tar(
     srcs = [
         "deb/attach-bf-shell.sh",
         "deb/start-stratum.sh",
-        "//stratum/hal/bin/tdi:tdi_pipeline_builder",
         ":stratum_tofino",
+        "//stratum/hal/bin/tdi:tdi_pipeline_builder",
     ],
     mode = "0755",
     package_dir = "/usr/bin",
@@ -104,9 +105,9 @@ pkg_tar(
         ":stratum_configs",
         ":stratum_shareable_files",
         ":systemd_service",
+        "@local_tofino_bin//:tofino_kernel_module",
         "@local_tofino_bin//:tofino_library_files",
         "@local_tofino_bin//:tofino_shareable_files",
-        "@local_tofino_bin//:tofino_kernel_module",
     ],
 )
 
@@ -114,8 +115,8 @@ pkg_tar(
     name = "stratum_tofino_data",
     extension = "tar.bz2",
     deps = [
-        ":stratum_tofino_binaries",
         ":stratum_common_data",
+        ":stratum_tofino_binaries",
     ],
 )
 

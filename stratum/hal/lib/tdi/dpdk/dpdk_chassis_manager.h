@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2021-2022 Intel Corporation
+// Copyright 2021-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_DPDK_CHASSIS_MANAGER_H_
@@ -9,15 +9,15 @@
 #include <memory>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
-#include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
+#include "stratum/glue/status/status.h"
+#include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
@@ -25,6 +25,7 @@ namespace hal {
 namespace tdi {
 
 class DpdkPortConfig;
+class DpdkPortManager;
 
 // Lock which protects chassis state across the entire switch.
 extern absl::Mutex chassis_lock;
@@ -70,7 +71,7 @@ class DpdkChassisManager {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<DpdkChassisManager> CreateInstance(
-      OperationMode mode, TdiSdeInterface* sde_interface);
+      OperationMode mode, DpdkPortManager* port_manager);
 
   // Determines whether the specified port configuration parameter has
   // already been set. Once set, it may not be set again.
@@ -112,7 +113,7 @@ class DpdkChassisManager {
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  DpdkChassisManager(OperationMode mode, TdiSdeInterface* sde_interface);
+  DpdkChassisManager(OperationMode mode, DpdkPortManager* port_manager);
 
   ::util::StatusOr<const DpdkPortConfig*> GetPortConfig(
       uint64 node_id, uint32 port_id) const
@@ -136,17 +137,17 @@ class DpdkChassisManager {
   // deletes the pointers.
   void CleanupInternalState() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
-  // helper to add / configure / enable a port with TdiSdeInterface
+  // helper to add / configure / enable a port with DpdkPortManager
   ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
                                const SingletonPort& singleton_port,
                                DpdkPortConfig* config);
 
-  // helper to hotplug add / delete a port with TdiSdeInterface
+  // helper to hotplug add / delete a port with DpdkPortManager
   ::util::Status HotplugPortHelper(uint64 node_id, int unit, uint32 port_id,
                                    const SingletonPort& singleton_port,
                                    DpdkPortConfig* config);
 
-  // helper to update port configuration with TdiSdeInterface
+  // helper to update port configuration with DpdkPortManager
   ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
                                   const SingletonPort& singleton_port,
                                   const DpdkPortConfig& config_old,
@@ -211,8 +212,8 @@ class DpdkChassisManager {
   std::map<uint64, std::map<uint32, uint32>> node_id_to_sdk_port_id_to_port_id_
       GUARDED_BY(chassis_lock);
 
-  // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.
-  TdiSdeInterface* sde_interface_;  // not owned by this class.
+  // Pointer to the DpdkPortManager implementation.
+  DpdkPortManager* port_manager_;  // not owned by this class.
 
   friend class DpdkChassisManagerTest;
 };

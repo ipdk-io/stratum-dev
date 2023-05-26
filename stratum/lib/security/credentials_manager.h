@@ -13,7 +13,6 @@
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/security/server_credentials.h"
 #include "grpcpp/security/tls_credentials_options.h"
-#include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 
@@ -55,11 +54,12 @@ class CredentialsManager {
                                                   const std::string& cert,
                                                   const std::string& key);
 
-  // Factory functions for creating the instance of the class.
-  // CreateInstance updated to have a flag parameter with a default to false
-  // which maintains backward compatibility. If caller uses secure_only=true
-  // the CredentialsManager will only attempt to initiate using TLS certificates
-  static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance(bool secure_only=false);
+  // Factory method for creating an instance of this class.
+  // Updated to take a 'secure_only' parameter. If the parameter is true,
+  // CredentialsManager will only attempt to initiate using TLS certificates.
+  // The default value is false, for backward compatibility.
+  static ::util::StatusOr<std::unique_ptr<CredentialsManager>>
+    CreateInstance(bool secure_only=false);
 
   // CredentialsManager is neither copyable nor movable.
   CredentialsManager(const CredentialsManager&) = delete;
@@ -91,4 +91,5 @@ class CredentialsManager {
 };
 
 }  // namespace stratum
+
 #endif  // STRATUM_LIB_SECURITY_CREDENTIALS_MANAGER_H_

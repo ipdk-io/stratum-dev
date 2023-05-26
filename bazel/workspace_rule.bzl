@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 _strict = False
 
@@ -16,7 +16,7 @@ def _build_http_archive(
     patches = [],
     patch_args = [],
     patch_cmds = [],
-    ):
+    sha256 = None):
   if not remote.startswith("https://github.com"):
     # This is only currently support for github repos
     return False
@@ -38,7 +38,6 @@ def _build_http_archive(
     prefix = repo_name + "-" + ref
 
   # Generate http_archive rule
-  if build_file:
     http_archive(
       name = name,
       urls = urls,
@@ -46,14 +45,7 @@ def _build_http_archive(
       build_file = build_file,
       patches = patches,
       patch_args = patch_args,
-    )
-  else:
-    http_archive(
-      name = name,
-      urls = urls,
-      strip_prefix = prefix,
-      patches = patches,
-      patch_args = patch_args,
+      sha256 = sha256,
     )
   return True
 
@@ -66,9 +58,7 @@ def _build_git_repository(
     build_file = None,
     patches = [],
     patch_args = [],
-    patch_cmds = [],
-    ):
-
+    patch_cmds = []):
   # Strip trailing / from remote
   if remote.endswith("/"):
     remote = remote[:-1]
@@ -110,7 +100,7 @@ def remote_workspace(
     patches = [],
     patch_args = [],
     patch_cmds = [],
-    ):
+    sha256 = None):
   ref_count = 0
   if branch:
     ref_count += 1
@@ -135,12 +125,31 @@ def remote_workspace(
 
   # Prefer http_archive
   if not use_git and _build_http_archive(
-      name, remote, branch, commit, tag, build_file, patches, patch_args, patch_cmds):
+        name,
+        remote,
+        branch,
+        commit,
+        tag,
+        build_file,
+        patches,
+        patch_args,
+        patch_cmds,
+        sha256,
+    ):
     return
 
   # Fall back to git_repository
   if _build_git_repository(
-      name, remote, branch, commit, tag, build_file, patches, patch_args, patch_cmds):
+        name,
+        remote,
+        branch,
+        commit,
+        tag,
+        build_file,
+        patches,
+        patch_args,
+        patch_cmds,
+    ):
     return
 
   fail("could not generate remote workspace for " + name)

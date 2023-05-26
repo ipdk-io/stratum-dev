@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Target-agnostic SDE wrapper methods.
@@ -30,10 +30,6 @@
 
 DEFINE_string(tdi_sde_config_dir, "/var/run/stratum/tdi_config",
               "The dir used by the SDE to load the device configuration.");
-DEFINE_bool(incompatible_enable_tdi_legacy_bytestring_responses, true,
-            "Enables the legacy padded byte string format in P4Runtime "
-            "responses for Stratum-tdi. The strings are left unchanged from "
-            "the underlying SDE.");
 
 namespace stratum {
 namespace hal {
@@ -55,13 +51,13 @@ TdiSdeWrapper::CreateSession() {
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-TdiSdeWrapper::CreateTableKey(int table_id) {
+TdiSdeWrapper::CreateTableKey(uint32 table_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return TableKey::CreateTableKey(tdi_info_, table_id);
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-TdiSdeWrapper::CreateTableData(int table_id, int action_id) {
+TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return TableData::CreateTableData(tdi_info_, table_id, action_id);
 }
@@ -113,6 +109,17 @@ TdiSdeWrapper* TdiSdeWrapper::CreateSingleton() {
 TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
   absl::ReaderMutexLock l(&init_lock_);
   return singleton_;
+}
+
+::util::StatusOr<uint32> TdiSdeWrapper::GetTableId(std::string &table_name) const {
+  const ::tdi::Table* table;
+  if (nullptr != tdi_info_) {
+    RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &table));
+    return(table->tableInfoGet()->idGet());
+  }
+
+  RETURN_ERROR(ERR_INTERNAL)
+              << "Error retreiving information from TDI";
 }
 
 }  // namespace tdi

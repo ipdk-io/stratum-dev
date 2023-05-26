@@ -249,8 +249,6 @@ namespace {
   std::vector<uint32> mc_node_list;
   RETURN_IF_ERROR(GetField(*table_data, kMcNodeId, &mc_node_list));
   return mc_node_list;
-
-  return ::util::OkStatus();
 }
 
 ::util::Status TdiSdeWrapper::DeleteMulticastNodes(
@@ -385,16 +383,12 @@ namespace {
     uint32 group_id, const std::vector<uint32>& mc_node_ids) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return WriteMulticastGroup(dev_id, session, group_id, mc_node_ids, true);
-
-  return ::util::OkStatus();
 }
 ::util::Status TdiSdeWrapper::ModifyMulticastGroup(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 group_id, const std::vector<uint32>& mc_node_ids) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return WriteMulticastGroup(dev_id, session, group_id, mc_node_ids, false);
-
-  return ::util::OkStatus();
 }
 
 ::util::Status TdiSdeWrapper::DeleteMulticastGroup(

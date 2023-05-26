@@ -22,6 +22,21 @@ workspace(name = "com_github_stratum_stratum")
 #       Please do not push changes to this section upstream.
 # ---------------------------------------------------------------------------
 
+### NOTE: REMOVE BEFORE UPSTREAMING ###
+### NOTE: ENSURE THAT STRATUM CAN STILL BUILD AGAINST UNMODIFIED P4RUNTIME ###
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    # fetch modified p4runtime from ipdk repository
+    # note that this cannot be upstreamed
+    name = "com_github_p4lang_p4runtime",
+    remote = "https://github.com/ipdk-io/p4runtime-dev.git",
+    # strip_prefix = "proto",  # https://github.com/bazelbuild/bazel/issues/10062
+    patch_cmds = ["mv proto/* ."],  # Workaround since strip_prefix is broken.
+    commit = "ebd7abaeaae492425994d51c052c1786f92d69a2",
+)
+
 # ---------------------------------------------------------------------------
 #       Load tools to build Stratum
 # ---------------------------------------------------------------------------
@@ -62,6 +77,9 @@ tofino_configure(name = "local_tofino_bin")
 load("//stratum/hal/lib/tdi/dpdk:dpdk.bzl", "dpdk_configure")
 dpdk_configure(name = "local_dpdk_bin")
 
+load("//stratum/hal/lib/tdi/es2k:es2k.bzl", "es2k_configure")
+es2k_configure(name = "local_es2k_bin")
+
 load("//stratum/hal/bin/np4intel:np4intel.bzl", "np4intel_configure")
 np4intel_configure(name = "local_np4intel_bin")
 
@@ -71,12 +89,6 @@ np4_configure(name = "local_np4_bin")
 
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 boost_deps()
-
-load("@rules_python//python:repositories.bzl", "py_repositories")
-py_repositories()
-
-load("@rules_python//python:pip.bzl", "pip_repositories")
-pip_repositories()
 
 load("//stratum/hal/lib/phal/onlp:onlp.bzl", "onlp_configure")
 onlp_configure(name = "local_onlp_bin")
@@ -117,16 +129,3 @@ cdlang_rules_dependencies()
 load("@bazel_latex//:repositories.bzl", "latex_repositories")
 
 latex_repositories()
-
-# ---------------------------------------------------------------------------
-#       Load dependencies for pipeline PTF rules
-# ---------------------------------------------------------------------------
-load("@rules_python//python:pip.bzl", "pip_import")
-pip_import(
-    name = "ptf_deps",
-    requirements = "//stratum/pipelines/ptf:requirements.txt",
-)
-
-load("@ptf_deps//:requirements.bzl", ptf_pip_install = "pip_install")
-
-ptf_pip_install()

@@ -15,6 +15,7 @@
 #include "absl/time/time.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"

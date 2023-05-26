@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This file include all the common internal messages used by Stratum stack.
@@ -43,6 +44,7 @@ enum Platform {
   PLT_NP4_INTEL_N3000 = 13;
   PLT_GENERIC_BAREFOOT_TOFINO = 14;
   PLT_GENERIC_BAREFOOT_TOFINO2 = 15;
+  PLT_P4_IPU_ES2000 = 16;
   // TODO(unknown): Add all the BCM and MLNX based platforms.
 }
 
@@ -1369,6 +1371,93 @@ message TargetDatapathId {
   uint32 tdi_portout_id = 2; // Port ID for Pipeline in Output Direction
 }
 
+// IPsecSADBConfig message is the external interface for pushing IPsec
+// Security Association (SA) database configuration data. A gNMI message with
+// all contents populated is expected by Stratum. All other nested messages
+// and enums are defined here.
+enum IPsecMode {
+  IPSEC_MODE_TRANSPORT = 0;
+  IPSEC_MODE_TUNNEL = 1;
+}
+
+enum IPsecProtocolParams {
+  IPSEC_PROTOCOL_PARAMS_ESP = 0;
+}
+
+enum IPsecLifetimeAction {
+  IPSEC_LIFETIME_ACTION_UNSET = 0;
+  IPSEC_LIFETIME_ACTION_TERMINATE_CLEAR = 1;
+  IPSEC_LIFETIME_ACTION_TERMINATE_HOLD = 2;
+  IPSEC_LIFETIME_ACTION_REPLACE = 3;
+}
+
+enum IPsecSadbConfigOp {
+  IPSEC_SADB_CONFIG_OP_ADD_ENTRY = 0;
+  IPSEC_SADB_CONFIG_OP_MOD_ENTRY = 1;
+  IPSEC_SADB_CONFIG_OP_DEL_ENTRY = 2;
+}
+
+message IPsecEspSa {
+  IPsecEncryption encryption = 1;
+}
+
+message IPsecEncryption {
+  uint32 encryption_algorithm = 1;
+  string key = 2;
+  uint32 key_len = 3;
+}
+
+message IPsecSaHardLifetime {
+  oneof value { 
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+}
+
+message IPsecSaSoftLifetime {
+  oneof value {
+    uint32 time = 1;
+    uint64 bytes = 2;
+    uint32 packets = 3;
+    uint32 idle = 4;
+  }
+  IPsecLifetimeAction action = 5;
+}
+
+message IPsecSADBConfig {
+  uint32 offload_id = 1;
+  bool direction = 2; // true = egress, false = ingress
+  uint64 req_id = 3;
+  uint32 spi = 4;
+  bool ext_seq_num = 5;
+  uint32 anti_replay_window_size = 6;
+  IPsecProtocolParams protocol_parameters = 7;
+  IPsecMode mode = 8;
+  IPsecEspSa esp_payload = 9;
+  IPsecSaHardLifetime sa_hard_lifetime = 10;
+  IPsecSaSoftLifetime sa_soft_lifetime = 11;
+}
+
+// IPsecNotification message is sent from Stratum to gNMI-client based on a
+// target-originated event.
+message IPsecNotification {
+  uint32 device_id = 1;
+  uint32 ipsec_sa_spi = 2;
+  bool soft_lifetime_expire = 3;
+  uint32 ipsec_sa_protocol = 4;
+  string ipsec_sa_dest_address = 5;
+  bool address_family = 6;
+}
+
+// IPsecOffloadInfo is used in DataRequest and DataResponse to retrieve the
+// values from target. Currently, only security parameter index (SPI) retrieval
+// is supported, but can be extended to retrieve other values.
+message IPsecOffloadInfo {
+  int32 spi = 1;
+}
+
 // DataRequest is a message used internally to request data about a component
 // or a set of components through SwitchInterface. It is specifically used in
 // ConfigMonitoringService, as part of gNMI Get/Subscribe RPC implementation.
@@ -1397,6 +1486,9 @@ message DataRequest {
       int32 module = 1;
       int32 network_interface = 2;
     }
+    message IPsecOffloadInfo {
+      int32 spi = 1;
+    }
     oneof request {
       Port oper_status = 1;
       Port admin_status = 2;
@@ -1420,6 +1512,7 @@ message DataRequest {
       Node node_info = 21;
       Port sdn_port_id = 22;
       Port target_dp_id = 23;
+      IPsecOffloadInfo ipsec_offload_info = 24;
     }
   }
   repeated Request requests = 1;
@@ -1465,6 +1558,7 @@ message DataResponse {
     HotplugConfig hotplug_config = 33;
     TargetDatapathId target_dp_id = 34;
     PacketDirValue packet_dir = 35;
+    IPsecOffloadInfo ipsec_offload_info = 36;
   }
 }
 
@@ -1537,12 +1631,20 @@ message SetRequest {
         OpticalTransceiverInfo optical_transceiver_info = 3;
       }
     }
+    // IPsec related SetRequest message (internal to Stratum) reuses the prior
+    // defined IPsec enum and message
+    message IPsecOffloadConfig {
+      IPsecSadbConfigOp ipsec_sadb_config_op = 1;
+      IPsecSADBConfig ipsec_sadb_config_info = 2;
+    }
     oneof request {
       Port port = 1;
       Node node = 2;
       Chassis chassis = 3;
       OpticalNetworkInterface optical_network_interface = 4;
+      IPsecOffloadConfig ipsec_offload_config = 5;
     }
   }
   repeated Request requests = 1;
 }
+

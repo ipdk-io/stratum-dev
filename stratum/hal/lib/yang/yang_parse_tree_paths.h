@@ -52,6 +52,10 @@ class YangParseTreePaths {
   static void AddSubtreeSystem(YangParseTree* tree)
       EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);
 
+  // Adds all supported paths for the specified system.
+  static void AddSubtreeIPsec(YangParseTree* tree)
+      EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);
+
   // Adds all supported wildcard interface-related paths.
   static void AddSubtreeAllInterfaces(YangParseTree* tree)
       EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);

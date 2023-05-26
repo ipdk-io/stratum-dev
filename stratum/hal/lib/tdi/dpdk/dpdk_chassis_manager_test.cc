@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation.
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from bf_chassis_manager_test.cc
@@ -21,7 +21,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/writer_mock.h"
-#include "stratum/hal/lib/tdi/tdi_sde_mock.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager_mock.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/test_utils/matchers.h"
 #include "stratum/lib/utils.h"
@@ -33,17 +33,18 @@
   #define EXPECT_ENABLE_PORT_CALL(unit, port)
 #else
   #define EXPECT_ADD_PORT_CALL(unit, port, config) \
-    EXPECT_CALL(*sde_mock_, AddPort((unit), (port), _))
+    EXPECT_CALL(*port_manager_, AddPort((unit), (port), _))
   #define EXPECT_ENABLE_PORT_CALL(unit, port) \
-    EXPECT_CALL(*sde_mock_, EnablePort(unit, port))
+    EXPECT_CALL(*port_manager_, EnablePort(unit, port))
 #endif
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
-using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
+using PortStatusEvent = TdiPortManager::PortStatusEvent;
 using ValueCase = SetRequest::Request::Port::ValueCase;
+
 using test_utils::EqualsProto;
 using ::testing::_;
 using ::testing::AtLeast;
@@ -141,13 +142,13 @@ class DpdkChassisManagerTest : public ::testing::Test {
 
   void SetUp() override {
     // Use NiceMock to suppress default action/value warnings.
-    sde_mock_ = absl::make_unique<NiceMock<TdiSdeMock>>();
-    // TODO(max): create parametrized test suite over mode.
-    m_chassis_manager_ = DpdkChassisManager::CreateInstance(
-        OPERATION_MODE_STANDALONE, sde_mock_.get());
+    port_manager_ = absl::make_unique<NiceMock<DpdkPortManagerMock>>();
+    // TODO(max): create parameterized test suite over mode.
+    chassis_manager_ = DpdkChassisManager::CreateInstance(
+        OPERATION_MODE_STANDALONE, port_manager_.get());
 
     // Expectations
-    ON_CALL(*sde_mock_, IsValidPort(_, _))
+    ON_CALL(*port_manager_, IsValidPort(_, _))
         .WillByDefault(
             WithArg<1>(Invoke([](uint32 id) { return id > kSdkPortOffset; })));
   }
@@ -155,7 +156,7 @@ class DpdkChassisManagerTest : public ::testing::Test {
   void RegisterSdkPortId(uint32 port_id, int slot, int port, int channel,
                          int device) {
     PortKey port_key(slot, port, channel);
-    EXPECT_CALL(*sde_mock_, GetPortIdFromPortKey(device, port_key))
+    EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(device, port_key))
         .WillRepeatedly(Return(port_id + kSdkPortOffset));
   }
 
@@ -166,36 +167,36 @@ class DpdkChassisManagerTest : public ::testing::Test {
   }
 
   ::util::Status CheckCleanInternalState() {
-    CHECK_RETURN_IF_FALSE(m_chassis_manager_->unit_to_node_id_.empty());
-    CHECK_RETURN_IF_FALSE(m_chassis_manager_->node_id_to_unit_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->unit_to_node_id_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->node_id_to_unit_.empty());
     CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_to_port_id_to_port_state_.empty());
+        chassis_manager_->node_id_to_port_id_to_port_state_.empty());
     CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_to_port_id_to_port_config_.empty());
+        chassis_manager_->node_id_to_port_id_to_port_config_.empty());
     CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_to_port_id_to_singleton_port_key_.empty());
+        chassis_manager_->node_id_to_port_id_to_singleton_port_key_.empty());
     CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_to_port_id_to_sdk_port_id_.empty());
+        chassis_manager_->node_id_to_port_id_to_sdk_port_id_.empty());
     CHECK_RETURN_IF_FALSE(
-        m_chassis_manager_->node_id_to_sdk_port_id_to_port_id_.empty());
+        chassis_manager_->node_id_to_sdk_port_id_to_port_id_.empty());
     return ::util::OkStatus();
   }
 
-  bool Initialized() { return m_chassis_manager_->initialized_; }
+  bool Initialized() { return chassis_manager_->initialized_; }
 
   ::util::Status VerifyChassisConfig(const ChassisConfig& config) {
     absl::ReaderMutexLock l(&chassis_lock);
-    return m_chassis_manager_->VerifyChassisConfig(config);
+    return chassis_manager_->VerifyChassisConfig(config);
   }
 
   ::util::Status PushChassisConfig(const ChassisConfig& config) {
     absl::WriterMutexLock l(&chassis_lock);
-    return m_chassis_manager_->PushChassisConfig(config);
+    return chassis_manager_->PushChassisConfig(config);
   }
 
   ::util::Status PushChassisConfig(const ChassisConfigBuilder& builder) {
     absl::WriterMutexLock l(&chassis_lock);
-    return m_chassis_manager_->PushChassisConfig(builder.Get());
+    return chassis_manager_->PushChassisConfig(builder.Get());
   }
 
   ::util::Status PushBaseChassisConfig(ChassisConfigBuilder* builder) {
@@ -218,7 +219,7 @@ class DpdkChassisManagerTest : public ::testing::Test {
 
   ::util::Status ReplayPortsConfig(uint64 node_id) {
     absl::WriterMutexLock l(&chassis_lock);
-    return m_chassis_manager_->ReplayPortsConfig(node_id);
+    return chassis_manager_->ReplayPortsConfig(node_id);
   }
 
   ::util::Status PushBaseChassisConfig() {
@@ -228,10 +229,10 @@ class DpdkChassisManagerTest : public ::testing::Test {
 
   ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const {
     absl::ReaderMutexLock l(&chassis_lock);
-    return m_chassis_manager_->GetUnitFromNodeId(node_id);
+    return chassis_manager_->GetUnitFromNodeId(node_id);
   }
 
-  ::util::Status Shutdown() { return m_chassis_manager_->Shutdown(); }
+  ::util::Status Shutdown() { return chassis_manager_->Shutdown(); }
 
   ::util::Status ShutdownAndTestCleanState() {
     RETURN_IF_ERROR(Shutdown());
@@ -241,26 +242,15 @@ class DpdkChassisManagerTest : public ::testing::Test {
 
   ::util::Status RegisterEventNotifyWriter(
       const std::shared_ptr<WriterInterface<GnmiEventPtr>>& writer) {
-    return m_chassis_manager_->RegisterEventNotifyWriter(writer);
+    return chassis_manager_->RegisterEventNotifyWriter(writer);
   }
 
   ::util::Status UnregisterEventNotifyWriter() {
-    return m_chassis_manager_->UnregisterEventNotifyWriter();
+    return chassis_manager_->UnregisterEventNotifyWriter();
   }
 
-  void TriggerPortStatusEvent(int device, int port, PortState state,
-                              absl::Time time_last_changed) {
-    PortStatusEvent event;
-    event.device = device;
-    event.port = port;
-    event.state = state;
-    event.time_last_changed = time_last_changed;
-    ASSERT_OK(sde_event_writer_->Write(event, absl::Seconds(1)));
-  }
-
-  std::unique_ptr<TdiSdeMock> sde_mock_;
-  std::unique_ptr<ChannelWriter<PortStatusEvent>> sde_event_writer_;
-  std::unique_ptr<DpdkChassisManager> m_chassis_manager_;
+  std::unique_ptr<DpdkPortManagerMock> port_manager_;
+  std::unique_ptr<DpdkChassisManager> chassis_manager_;
 
   static constexpr int kTestTransceiverWriterId = 20;
 };
@@ -282,7 +272,7 @@ TEST_F(DpdkChassisManagerTest, RemovePort) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   builder.RemoveLastPort();
-  EXPECT_CALL(*sde_mock_, DeletePort(kUnit, kDefaultPortId));
+  EXPECT_CALL(*port_manager_, DeletePort(kUnit, kDefaultPortId));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -291,11 +281,11 @@ TEST_F(DpdkChassisManagerTest, RemovePort) {
 TEST_F(DpdkChassisManagerTest, IsPortParamSet) {
   SingletonPort sport;
   sport.mutable_config_params()->set_port_type(PORT_TYPE_VHOST);
-  ASSERT_FALSE(m_chassis_manager_->IsPortParamSet(
+  ASSERT_FALSE(chassis_manager_->IsPortParamSet(
       kUnit, kPort, ValueCase::kPortType));
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
       kUnit, kPort, sport, ValueCase::kPortType).ok());
-  ASSERT_TRUE(m_chassis_manager_->IsPortParamSet(
+  ASSERT_TRUE(chassis_manager_->IsPortParamSet(
       kUnit, kPort, ValueCase::kPortType));
 }
 
@@ -309,7 +299,7 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
 
   auto sport = builder.AddPort(portId, port, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(sport);
-  EXPECT_CALL(*sde_mock_, AddPort(_, _, _));
+  EXPECT_CALL(*port_manager_, AddPort(_, _, _));
 
   PortConfigParams* config_params = sport->mutable_config_params();
   config_params->set_admin_state(ADMIN_STATE_ENABLED);
@@ -319,15 +309,15 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
   config_params->set_socket_path("/socket/to/me");
   config_params->set_host_name("Fawlty");
 
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
                   kUnit, kPort, *sport, ValueCase::kPortType).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
                   kUnit, kPort, *sport, ValueCase::kDeviceType).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
                   kUnit, kPort, *sport, ValueCase::kQueueCount).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
                   kUnit, kPort, *sport, ValueCase::kSockPath).ok());
-  ASSERT_TRUE(m_chassis_manager_->SetPortParam(
+  ASSERT_TRUE(chassis_manager_->SetPortParam(
                   kUnit, kPort, *sport, ValueCase::kHostConfig).ok());
 }
 
@@ -336,25 +326,8 @@ TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
   PortConfigParams* config_params = sport.mutable_config_params();
   HotplugConfig* hotplug_config = config_params->mutable_hotplug_config();
   hotplug_config->set_qemu_socket_ip("/qemu/socket_ip");
-  ASSERT_TRUE(m_chassis_manager_->SetHotplugParam(
+  ASSERT_TRUE(chassis_manager_->SetHotplugParam(
                   kUnit, kPort, sport, PARAM_SOCK_IP).ok());
-}
-
-// Not defined for DPDK
-TEST_F(DpdkChassisManagerTest, DISABLED_SetPortLoopback) {
-  ChassisConfigBuilder builder;
-  ASSERT_OK(PushBaseChassisConfig(&builder));
-
-  SingletonPort* sport = builder.GetPort(kPortId);
-  sport->mutable_config_params()->set_loopback_mode(LOOPBACK_STATE_MAC);
-
-  EXPECT_CALL(
-      *sde_mock_,
-      SetPortLoopbackMode(kUnit, kDefaultPortId, LOOPBACK_STATE_MAC));
-  EXPECT_CALL(*sde_mock_, EnablePort(kUnit, kDefaultPortId));
-
-  ASSERT_OK(PushChassisConfig(builder));
-  ASSERT_OK(ShutdownAndTestCleanState());
 }
 
 TEST_F(DpdkChassisManagerTest, ReplayPorts) {
@@ -414,13 +387,13 @@ TEST_F(DpdkChassisManagerTest, DISABLED_UpdateInvalidPort) {
   SingletonPort* new_port =
       builder.AddPort(portId, kPort + 1, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(new_port);
-  EXPECT_CALL(*sde_mock_, AddPort(kUnit, sdkPortId, _))
+  EXPECT_CALL(*port_manager_, AddPort(kUnit, sdkPortId, _))
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(*sde_mock_, EnablePort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, EnablePort(kUnit, sdkPortId))
       .WillOnce(Return(::util::OkStatus()));
   ASSERT_OK(PushChassisConfig(builder));
 
-  EXPECT_CALL(*sde_mock_, IsValidPort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, IsValidPort(kUnit, sdkPortId))
       .WillOnce(Return(false));
 
   // Update port, but port is invalid.
@@ -474,9 +447,9 @@ TEST_F(DpdkChassisManagerTest, VerifyChassisConfigSuccess) {
   ChassisConfig config1;
   ASSERT_OK(ParseProtoFromString(kConfigText1, &config1));
 
-  EXPECT_CALL(*sde_mock_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 1)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 1)))
       .WillRepeatedly(Return(1 + kSdkPortOffset));
-  EXPECT_CALL(*sde_mock_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 2)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 2)))
       .WillRepeatedly(Return(2 + kSdkPortOffset));
 
   ASSERT_OK(VerifyChassisConfig(config1));

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/utils.h"
@@ -484,7 +485,6 @@ bool IsRegularFile(const std::string& filename) {
   int rc = lstat(filename.c_str(), &buf);
   return (rc==0 && S_ISREG(buf.st_mode));
 }
-
 
 }  // namespace hal
 }  // namespace stratum

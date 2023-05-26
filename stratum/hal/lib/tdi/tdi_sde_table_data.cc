@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Target-agnostic SDE wrapper Table Data methods.
@@ -21,11 +21,10 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/macros.h"
-
-DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 namespace stratum {
 namespace hal {
@@ -72,6 +71,36 @@ using namespace stratum::hal::tdi::helpers;
   if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
     *value = ByteStringToP4RuntimeByteString(*value);
   }
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::SetParam(std::string field_name, uint64 value) {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->setValue(field_id, value));
+
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::SetParam(std::string field_name, const std::string& value) {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->setValue(field_id, value));
+
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::GetParam(std::string field_name, uint64* value) const {
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
+
+  tdi_id_t field_id = table->tableInfoGet()->dataFieldIdGet(field_name);
+  RETURN_IF_TDI_ERROR(table_data_->getValue(field_id, value));
+
   return ::util::OkStatus();
 }
 
@@ -215,8 +244,8 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-TableData::CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
-                           int action_id) {
+TableData::CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,
+                           uint32 action_id) {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info->tableFromIdGet(table_id, &table));
   std::unique_ptr<::tdi::TableData> table_data;

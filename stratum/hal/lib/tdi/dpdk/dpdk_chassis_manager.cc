@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2021-2022 Intel Corporation
+// Copyright 2021-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
@@ -8,6 +8,7 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <string>
 #include <utility>
 
 #include "absl/base/attributes.h"
@@ -27,7 +28,8 @@
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_config.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_constants.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/public/proto/error.pb.h"
 
@@ -35,7 +37,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-using PortStatusEvent = TdiSdeInterface::PortStatusEvent;
+using PortStatusEvent = TdiPortManager::PortStatusEvent;
 
 ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 
@@ -47,7 +49,7 @@ constexpr int DpdkChassisManager::kMaxXcvrEventDepth;
 constexpr uint64 SPEED_BPS_UNKNOWN = 0;
 
 DpdkChassisManager::DpdkChassisManager(
-    OperationMode mode, TdiSdeInterface* sde_interface)
+    OperationMode mode, DpdkPortManager* port_manager)
     : mode_(mode),
       initialized_(false),
       gnmi_event_writer_(nullptr),
@@ -59,7 +61,7 @@ DpdkChassisManager::DpdkChassisManager(
       node_id_to_port_id_to_singleton_port_key_(),
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
-      sde_interface_(ABSL_DIE_IF_NULL(sde_interface)) {}
+      port_manager_(ABSL_DIE_IF_NULL(port_manager)) {}
 
 DpdkChassisManager::DpdkChassisManager()
     : mode_(OPERATION_MODE_STANDALONE),
@@ -73,7 +75,7 @@ DpdkChassisManager::DpdkChassisManager()
       node_id_to_port_id_to_singleton_port_key_(),
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
-      sde_interface_(nullptr) {}
+      port_manager_(nullptr) {}
 
 DpdkChassisManager::~DpdkChassisManager() = default;
 
@@ -182,8 +184,8 @@ bool DpdkChassisManager::IsPortParamSet(
   auto& config = node_id_to_port_id_to_port_config_[node_id][port_id];
   RETURN_IF_ERROR(config.SetHotplugParam(param_type, singleton_port));
 
-  auto hotplug_params = static_cast<TdiSdeInterface::HotplugConfigParams*>(
-      &config.hotplug);
+  auto hotplug_params =
+    static_cast<DpdkPortManager::HotplugConfigParams*>(&config.hotplug);
   auto unit = node_id_to_unit_[node_id];
   auto sdk_port_id = node_id_to_port_id_to_sdk_port_id_[node_id][port_id];
 
@@ -250,27 +252,27 @@ bool DpdkChassisManager::IsPortParamSet(
 
   config->admin_state = ADMIN_STATE_DISABLED;
 
-  TdiSdeInterface::PortConfigParams sde_params = config->cfg;
-  sde_params.port_name = singleton_port.name();
+  DpdkPortManager::PortConfigParams port_params = config->cfg;
+  port_params.port_name = singleton_port.name();
 
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
             << " (SDK Port " << sdk_port_id << ").";
 
-  RETURN_IF_ERROR(sde_interface_->AddPort(unit, sdk_port_id, sde_params));
+  RETURN_IF_ERROR(port_manager_->AddPort(unit, sdk_port_id, port_params));
 
   // Check if Control Port Creation is opted.
   if (config->control_port.length()) {
     LOG(INFO) << "Autocreating Control TAP port";
     // Packet direction for control port will always be host type
-    sde_params.port_type = PORT_TYPE_TAP;
-    sde_params.packet_dir = DEFAULT_PACKET_DIR;
-    sde_params.port_name = config->control_port;
+    port_params.port_type = PORT_TYPE_TAP;
+    port_params.packet_dir = DEFAULT_PACKET_DIR;
+    port_params.port_name = config->control_port;
 
     /* sdk_ctl_port_id is uniquely derived from the SDK_PORT_CONTROL_BASE range
      * and maps 1:1 to parent port's sdk_port_id.
      */
     uint32 ctl_port_id = SDK_PORT_CONTROL_BASE + sdk_port_id;
-    RETURN_IF_ERROR(sde_interface_->AddPort(unit, ctl_port_id, sde_params));
+    RETURN_IF_ERROR(port_manager_->AddPort(unit, ctl_port_id, port_params));
   }
 
   return ::util::OkStatus();
@@ -286,7 +288,7 @@ bool DpdkChassisManager::IsPortParamSet(
   LOG(INFO) << "Hotplugging port " << port_id << " in node " << node_id
       << " (SDK Port " << sdk_port_id << ").";
 
-  RETURN_IF_ERROR(sde_interface_->HotplugPort(unit, sdk_port_id,
+  RETURN_IF_ERROR(port_manager_->HotplugPort(unit, sdk_port_id,
                                               config->hotplug));
 
   return ::util::OkStatus();
@@ -305,7 +307,7 @@ bool DpdkChassisManager::IsPortParamSet(
   // SingletonPort ID is the SDN/Stratum port ID
   uint32 port_id = singleton_port.id();
 
-  if (!sde_interface_->IsValidPort(unit, sdk_port_id)) {
+  if (!port_manager_->IsValidPort(unit, sdk_port_id)) {
     config->admin_state = ADMIN_STATE_UNKNOWN;
     return MAKE_ERROR(ERR_INTERNAL)
         << "Port " << port_id << " in node " << node_id << " is not valid"
@@ -402,7 +404,7 @@ bool DpdkChassisManager::IsPortParamSet(
         singleton_port_key;
 
     // Translate the logical SDN port to SDK port (BF device port ID)
-    ASSIGN_OR_RETURN(uint32 sdk_port, sde_interface_->GetPortIdFromPortKey(
+    ASSIGN_OR_RETURN(uint32 sdk_port, port_manager_->GetPortIdFromPortKey(
                                           *unit, singleton_port_key));
     node_id_to_port_id_to_sdk_port_id[node_id][port_id] = sdk_port;
     LOG(INFO) << "SDK_PORT = " << sdk_port << " for port_id = " << port_id;
@@ -443,8 +445,8 @@ bool DpdkChassisManager::IsPortParamSet(
         // something is wrong with the port. We make sure the port is deleted
         // first (and ignore the error status if there is one), then add the
         // port again.
-        if (sde_interface_->IsValidPort(unit, sdk_port_id)) {
-          sde_interface_->DeletePort(unit, sdk_port_id);
+        if (port_manager_->IsValidPort(unit, sdk_port_id)) {
+          port_manager_->DeletePort(unit, sdk_port_id);
         }
         RETURN_IF_ERROR(
             AddPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
@@ -473,7 +475,7 @@ bool DpdkChassisManager::IsPortParamSet(
       // TODO(bocon): Collect these errors and keep trying to remove old ports
       LOG(INFO) << "Deleting port " << port_id << " in node " << node_id
                 << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(sde_interface_->DeletePort(unit, sdk_port_id));
+      RETURN_IF_ERROR(port_manager_->DeletePort(unit, sdk_port_id));
     }
   }
 
@@ -597,7 +599,7 @@ bool DpdkChassisManager::IsPortParamSet(
     CHECK_RETURN_IF_FALSE(unit != nullptr)
         << "Node " << node_id << " not found for port " << port_id << ".";
     RETURN_IF_ERROR(
-        sde_interface_->GetPortIdFromPortKey(*unit, singleton_port_key)
+        port_manager_->GetPortIdFromPortKey(*unit, singleton_port_key)
             .status());
   }
 
@@ -676,7 +678,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId( node_id, port_id));
   ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
-  return sde_interface_->GetPortInfo(unit, sdk_port_id, target_dp_id);
+  return port_manager_->GetPortInfo(unit, sdk_port_id, target_dp_id);
 }
 
 ::util::StatusOr<DataResponse> DpdkChassisManager::GetPortData(
@@ -797,7 +799,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
             << ".";
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
   ASSIGN_OR_RETURN(auto port_state,
-                   sde_interface_->GetPortState(unit, sdk_port_id));
+                   port_manager_->GetPortState(unit, sdk_port_id));
   LOG(INFO) << "State of port " << port_id << " in node " << node_id
             << " (SDK port " << sdk_port_id
             << "): " << PrintPortState(port_state);
@@ -824,7 +826,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   }
   ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
-  return sde_interface_->GetPortCounters(unit, sdk_port_id, counters);
+  return port_manager_->GetPortCounters(unit, sdk_port_id, counters);
 }
 
 ::util::StatusOr<std::map<uint64, int>> DpdkChassisManager::GetNodeIdToUnitMap()
@@ -863,7 +865,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
     // NOTE: This is the legacy AddPort method. DPDK does not support it.
-    RETURN_IF_ERROR(sde_interface_->AddPort(
+    RETURN_IF_ERROR(port_manager_->AddPort(
         unit, sdk_port_id, SPEED_BPS_UNKNOWN, FEC_MODE_UNKNOWN));
     config_new->admin_state = ADMIN_STATE_DISABLED;
 
@@ -890,9 +892,9 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 }
 
 std::unique_ptr<DpdkChassisManager> DpdkChassisManager::CreateInstance(
-    OperationMode mode, TdiSdeInterface* sde_interface) {
+    OperationMode mode, DpdkPortManager* port_manager) {
   return absl::WrapUnique(
-      new DpdkChassisManager(mode, sde_interface));
+      new DpdkChassisManager(mode, port_manager));
 }
 
 ::util::StatusOr<int> DpdkChassisManager::GetUnitFromNodeId(

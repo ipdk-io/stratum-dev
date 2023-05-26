@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
@@ -28,19 +28,19 @@ stratum_cc_binary(
     name = "stratum_dpdk",
     srcs = [
         "dpdk_main.cc",
-        "dpdk_main.h",
         "main.cc",
     ],
     arches = HOST_ARCHES,
-    defines = ["DPDK_TARGET"],
     data = [
-        # NOTE: Replace with dpdk conf files
-        "//stratum/hal/bin/barefoot:tofino_skip_p4.conf",
-        "//stratum/hal/bin/barefoot:tofino_skip_p4_no_bsp.conf",
+        "dpdk_port_config.pb.txt",
+        "dpdk_skip_p4.conf",
     ],
+    defines = ["DPDK_TARGET"],
     deps = [
+        "//stratum/hal/bin/tdi:main",
         "//stratum/hal/lib/tdi/dpdk:dpdk_chassis_manager",
         "//stratum/hal/lib/tdi/dpdk:dpdk_hal",
+        "//stratum/hal/lib/tdi/dpdk:dpdk_port_manager",
         "//stratum/hal/lib/tdi/dpdk:dpdk_sde_target",
         "//stratum/hal/lib/tdi/dpdk:dpdk_sde_utils",
         "//stratum/hal/lib/tdi/dpdk:dpdk_switch",

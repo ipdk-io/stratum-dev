@@ -1,5 +1,5 @@
 # Copyright 2020-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
@@ -12,12 +12,23 @@ package(
 )
 
 cc_library(
-    name = "tofino_sde",
+    name = "tofino_libs",
     srcs = glob([
         "tofino-bin/lib/libdriver.so",
         "tofino-bin/lib/libpython3.10m.so*",
         "tofino-bin/lib/libtarget_sys.so",
+        "tofino-bin/lib/libtdi.so",
+        "tofino-bin/lib/libtdi_json_parser.so",
     ]),
+    linkopts = [
+        "-lpthread",
+        "-lm",
+        "-ldl",
+    ],
+)
+
+cc_library(
+    name = "tofino_hdrs",
     hdrs = glob([
         "tofino-bin/include/bf_switchd/*.h",
         "tofino-bin/include/bf_types/*.h",
@@ -38,12 +49,15 @@ cc_library(
         "tofino-bin/include/tofino/bf_pal/*.h",
         "tofino-bin/include/tofino/pdfixed/*.h",
     ]),
-    linkopts = [
-        "-lpthread",
-        "-lm",
-        "-ldl",
-    ],
     strip_include_prefix = "tofino-bin/include",
+)
+
+cc_library(
+    name = "tofino_sde",
+    deps = [
+        ":tofino_libs",
+        ":tofino_hdrs",
+    ],
 )
 
 pkg_tar_with_symlinks(

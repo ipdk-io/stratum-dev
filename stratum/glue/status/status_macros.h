@@ -493,7 +493,6 @@ class UtilStatusConvertibleToBool {
 // unacceptable. The containing function must return a ::util::Status.
 #define RET_CHECK(condition)                                             \
   while (ABSL_PREDICT_FALSE(!(condition)))                               \
-    while (::util::status_macros::helper_log_always_return_true())       \
   return ::util::status_macros::MakeErrorStream(__FILE__, __LINE__,      \
                                                 ::util::error::INTERNAL) \
       .with_log_stack_trace()                                            \

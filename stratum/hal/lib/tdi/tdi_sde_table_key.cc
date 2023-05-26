@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Target-agnostic SDE wrapper Table Key methods.
@@ -20,11 +20,10 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/utils.h"
-
-DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 namespace stratum {
 namespace hal {
@@ -37,7 +36,8 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(table_key_->tableGet(&table));
   size_t field_size_bits;
   auto tableInfo = table->tableInfoGet();
-  const ::tdi::KeyFieldInfo *keyFieldInfo = tableInfo->keyFieldGet(static_cast<tdi_id_t>(id));
+  const ::tdi::KeyFieldInfo *keyFieldInfo =
+    tableInfo->keyFieldGet(static_cast<tdi_id_t>(id));
   RETURN_IF_NULL(keyFieldInfo);
 
   field_size_bits = keyFieldInfo->sizeGet();
@@ -53,6 +53,10 @@ using namespace stratum::hal::tdi::helpers;
                       exactKey));
 
   return ::util::OkStatus();
+}
+
+::util::Status TableKey::SetExact(std::string field_name, uint64 value) {
+  return SetFieldExact(table_key_.get(), field_name, value);
 }
 
 ::util::Status TableKey::SetTernary(int id, const std::string& value,
@@ -258,7 +262,7 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id) {
+TableKey::CreateTableKey(const ::tdi::TdiInfo* tdi_info, uint32 table_id) {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info->tableFromIdGet(table_id, &table));
   std::unique_ptr<::tdi::TableKey> table_key;

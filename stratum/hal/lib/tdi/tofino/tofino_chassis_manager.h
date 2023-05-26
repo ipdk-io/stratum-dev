@@ -189,15 +189,15 @@ class TofinoChassisManager {
   // Reads and processes port state events using the given ChannelReader. Called
   // by PortStatusEventHandlerThreadFunc.
   void ReadPortStatusEvents(
-      const std::unique_ptr<ChannelReader<TdiSdeInterface::PortStatusEvent>>&
+      const std::unique_ptr<ChannelReader<TdiPortManager::PortStatusEvent>>&
           reader) LOCKS_EXCLUDED(chassis_lock);
 
-  // helper to add / configure / enable a port with TdiSdeInterface
+  // helper to add / configure / enable a port with TofinoPortManager
   ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
                                const SingletonPort& singleton_port,
                                PortConfig* config);
 
-  // helper to update port configuration with TdiSdeInterface
+  // helper to update port configuration with TofinoPortManager
   ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
                                   const SingletonPort& singleton_port,
                                   const PortConfig& config_old,
@@ -221,8 +221,8 @@ class TofinoChassisManager {
 
   bool initialized_ GUARDED_BY(chassis_lock);
 
-  // Channel for receiving port status events from the TdiSdeInterface.
-  std::shared_ptr<Channel<TdiSdeInterface::PortStatusEvent>>
+  // Channel for receiving port status events from the TofinoPortManager
+  std::shared_ptr<Channel<TdiPortManager::PortStatusEvent>>
       port_status_event_channel_ GUARDED_BY(chassis_lock);
 
   // The id of the transceiver module insert/removal event ChannelWriter, as

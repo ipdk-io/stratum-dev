@@ -1,10 +1,15 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
-load("//bazel:rules.bzl", "HOST_ARCHES", "stratum_cc_binary")
+load(
+    "//bazel:rules.bzl",
+    "HOST_ARCHES",
+    "stratum_cc_binary",
+    "stratum_cc_library",
+)
 
 licenses(["notice"])  # Apache v2
 
@@ -12,11 +17,14 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
+stratum_cc_library(
+    name = "main",
+    hdrs = ["main.h"],
+)
+
 stratum_cc_binary(
     name = "tdi_pipeline_builder",
-    srcs = [
-        "tdi_pipeline_builder.cc",
-    ],
+    srcs = ["tdi_pipeline_builder.cc"],
     arches = HOST_ARCHES,
     deps = [
         "//stratum/glue:init_google",

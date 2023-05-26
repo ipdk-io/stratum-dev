@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_WRAPPER_H_
@@ -17,6 +17,7 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tdi_id_mapper.h"
 #include "stratum/hal/lib/tdi/macros.h"
@@ -24,6 +25,7 @@
 #include "stratum/lib/channel/channel.h"
 
 #ifdef TOFINO_TARGET
+// FIXME: Target-specific code in a target-agnostic file.
 #include "pkt_mgr/pkt_mgr_intf.h"
 #endif
 
@@ -38,6 +40,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // TableKeyInterface public methods.
   ::util::Status SetExact(int id, const std::string& value) override;
+  ::util::Status SetExact(std::string field_name, uint64 value) override;
   ::util::Status GetExact(int id, std::string* value) const override;
   ::util::Status SetTernary(int id, const std::string& value,
                             const std::string& mask) override;
@@ -56,7 +59,7 @@ class TableKey : public TdiSdeInterface::TableKeyInterface {
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableKeyInterface>>
-  CreateTableKey(const ::tdi::TdiInfo* tdi_info, int table_id);
+  CreateTableKey(const ::tdi::TdiInfo* tdi_info, uint32 table_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableKey> table_key_;
@@ -73,6 +76,9 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   // TableDataInterface public methods.
   ::util::Status SetParam(int id, const std::string& value) override;
   ::util::Status GetParam(int id, std::string* value) const override;
+  ::util::Status SetParam(std::string field_name, uint64 value) override;
+  ::util::Status SetParam(std::string field_name,  const std::string& value) override;
+  ::util::Status GetParam(std::string field_name, uint64* value) const override;
   ::util::Status SetActionMemberId(uint64 action_member_id) override;
   ::util::Status GetActionMemberId(uint64* action_member_id) const override;
   ::util::Status SetSelectorGroupId(uint64 selector_group_id) override;
@@ -88,8 +94,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
 
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
-  CreateTableData(const ::tdi::TdiInfo* tdi_info, int table_id,
-                  int action_id);
+  CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,
+                  uint32 action_id);
 
   // Stores the underlying SDE object.
   std::unique_ptr<::tdi::TableData> table_data_;
@@ -149,34 +155,9 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
   CreateSession() override;
   ::util::StatusOr<std::unique_ptr<TableKeyInterface>> CreateTableKey(
-      int table_id) override;
+      uint32 table_id) override;
   ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
-      int table_id, int action_id) override;
-  // TODO(delete after DPDK implements TdiPortManager)
-#ifdef DPDK_TARGET
-  ::util::StatusOr<PortState> GetPortState(int device, int port) override;
-  ::util::Status GetPortCounters(int device, int port,
-                                 PortCounters* counters) override;
-  ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-  ::util::Status UnregisterPortStatusEventWriter() override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-  ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId *target_dp_id) override;
-  ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                         FecMode fec_mode) override;
-  ::util::Status AddPort(
-      int device, int port, const PortConfigParams& config) override;
-  ::util::Status HotplugPort(int device, int port,
-                            HotplugConfigParams& hotplug_config) override;
-  ::util::Status DeletePort(int device, int port) override;
-  ::util::Status EnablePort(int device, int port) override;
-  ::util::Status DisablePort(int device, int port) override;
-  bool IsValidPort(int device, int port) override;
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key) override;
-#endif
+      uint32 table_id, uint32 action_id) override;
   ::util::StatusOr<bool> IsSoftwareModel(int device) override;
   std::string GetChipType(int device) const override;
   std::string GetSdeVersion() const override;
@@ -351,6 +332,21 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::StatusOr<uint32> GetActionProfileTdiRtId(
       uint32 action_selector_id) const override LOCKS_EXCLUDED(data_lock_);
 
+  // Gets the Tdi table id from the Table name.
+  ::util::StatusOr<uint32> GetTableId(std::string &table_name) const override
+      LOCKS_EXCLUDED(data_lock_);
+
+#ifdef ES2K_TARGET
+  // FIXME: Target-specific code in a target-agnostic class. To be exorcised.
+  ::util::Status InitNotificationTableWithCallback(int dev_id,
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const std::string &table_name,
+    // FIXME: These parameters need names.
+    void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
+    void *cookie) const
+        LOCKS_EXCLUDED(data_lock_);
+#endif
+
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
   static TdiSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
@@ -362,6 +358,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   static TdiSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
 
 #ifdef TOFINO_TARGET
+  // FIXME: Target-specific code in a target-agnostic class.
   // Writes a received packet to the registered Rx writer. Called from the SDE
   // callback function.
   ::util::Status HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
@@ -463,8 +460,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
+  std::unique_ptr<ChannelWriter<TdiPortManager::PortStatusEvent>>
+    port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>

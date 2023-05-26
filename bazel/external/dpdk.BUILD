@@ -1,7 +1,7 @@
 # bazel/external/dpdk.BUILD
 
 # Copyright 2020-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
@@ -13,14 +13,24 @@ package(
 )
 
 cc_library(
-    name = "dpdk_sde",
+    name = "dpdk_libs",
     srcs = glob([
         "dpdk-bin/lib/libbf_switchd_lib.so*",
+        "dpdk-bin/lib/libclish.so",
         "dpdk-bin/lib/libdriver.so",
         "dpdk-bin/lib/libtarget_sys.so",
         "dpdk-bin/lib/libtdi.so*",
         "dpdk-bin/lib/libtdi_json_parser.so*",
     ]),
+    linkopts = [
+        "-lpthread",
+        "-lm",
+        "-ldl",
+    ],
+)
+
+cc_library(
+    name = "dpdk_hdrs",
     hdrs = glob([
         "dpdk-bin/include/bf_pal/*.h",
         "dpdk-bin/include/bf_rt/**/*.h",
@@ -39,12 +49,20 @@ cc_library(
         "dpdk-bin/include/tdi_rt/**/*.h",
         "dpdk-bin/include/tdi_rt/**/*.hpp",
     ]),
-    linkopts = [
-        "-lpthread",
-        "-lm",
-        "-ldl",
-    ],
     strip_include_prefix = "dpdk-bin/include",
+)
+
+cc_library(
+    name = "dpdk_sde",
+    deps = [
+        ":dpdk_libs",
+        ":dpdk_hdrs",
+    ],
+)
+
+cc_library(
+    name = "dpdk_rte",
+    srcs = glob(["dpdk-bin/lib/x86_64-linux-gnu/*.so*"])
 )
 
 # Runtime libraries
@@ -72,4 +90,11 @@ pkg_tar_with_symlinks(
     mode = "0644",
     package_dir = "/usr",
     strip_prefix = "dpdk-bin",
+)
+
+cc_library(
+    name = "target_sys",
+    srcs = glob([
+        "dpdk-bin/lib/libtarget_sys.so",
+    ]),
 )

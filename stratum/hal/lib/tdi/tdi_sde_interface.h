@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_SDE_INTERFACE_H_
@@ -18,6 +18,11 @@
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/channel/channel.h"
 
+#ifdef ES2K_TARGET
+typedef void (*notification_table_callback_t)(uint32_t, uint32_t, bool,
+                                              uint8_t, char*, bool, void*);
+#endif
+
 namespace stratum {
 namespace hal {
 namespace tdi {
@@ -29,40 +34,6 @@ namespace tdi {
 // 2- TdiSdeMock: Mock class used for unit testing.
 class TdiSdeInterface {
  public:
-  // PortStatusEvent encapsulates the information received on a port status
-  // event. Port refers to the SDE internal device port ID.
-  struct PortStatusEvent {
-    int device;
-    int port;
-    PortState state;
-    absl::Time time_last_changed;
-  };
-
-  struct HotplugConfigParams {
-    uint32 qemu_socket_port;
-    uint64 qemu_vm_mac_address;
-    std::string qemu_socket_ip;
-    std::string qemu_vm_netdev_id;
-    std::string qemu_vm_chardev_id;
-    std::string qemu_vm_device_id;
-    std::string native_socket_path;
-    QemuHotplugMode qemu_hotplug_mode;
-  };
-
-  struct PortConfigParams {
-    DpdkPortType port_type;
-    DpdkDeviceType device_type;
-    PacketDirection packet_dir;
-    int queues;
-    int mtu;
-    std::string socket_path;
-    std::string host_name;
-    std::string port_name;
-    std::string pipeline_name;
-    std::string mempool_name;
-    std::string pci_bdf;
-  };
-
   // SessionInterface is a proxy class for TDI sessions. Most API calls require
   // an active session. It also allows batching requests for performance.
   class SessionInterface {
@@ -83,6 +54,9 @@ class TdiSdeInterface {
 
     // Sets an exact match key field.
     virtual ::util::Status SetExact(int id, const std::string& value) = 0;
+
+    // Sets an exact match key field.
+    virtual ::util::Status SetExact(std::string field_name, uint64 value) = 0;
 
     // Gets an exact match key field.
     virtual ::util::Status GetExact(int id, std::string* value) const = 0;
@@ -126,8 +100,17 @@ class TdiSdeInterface {
     // Sets a table data action parameter.
     virtual ::util::Status SetParam(int id, const std::string& value) = 0;
 
+    // Sets a table data action parameter.
+    virtual ::util::Status SetParam(std::string field_name, uint64 value) = 0;
+
+    // Sets a table data action parameter.
+    virtual ::util::Status SetParam(std::string field_name, const std::string& value) = 0;
+
     // Get a table data action parameter.
     virtual ::util::Status GetParam(int id, std::string* value) const = 0;
+
+    // Get a table data action parameter.
+    virtual ::util::Status GetParam(std::string name, uint64* value) const = 0;
 
     // Sets the $ACTION_MEMBER_ID field.
     virtual ::util::Status SetActionMemberId(uint64 action_member_id) = 0;
@@ -169,51 +152,6 @@ class TdiSdeInterface {
     virtual ::util::Status Reset(int action_id) = 0;
   };
 
-  // TdiPortManager is a proxy class for per target port management
-  class TdiPortManager {
-   public:
-    virtual ~TdiPortManager() {}
-
-    // Registers a writer through which to send any port status events. The
-    // message contains a tuple (device, port, state), where port refers to the
-    // Barefoot SDE device port. There can only be one writer.
-    virtual ::util::Status RegisterPortStatusEventWriter(
-        std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) = 0;
-
-    // Unregisters the port status writer.
-    virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
-
-    // Get Port Info
-    virtual ::util::Status GetPortInfo(int device, int port,
-                                       TargetDatapathId *target_dp_id) = 0;
-
-    // Get the operational state of a port.
-    virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
-
-    // Get the port counters of a port.
-    virtual ::util::Status GetPortCounters(int device, int port,
-                                           PortCounters* counters) = 0;
-
-    // Returns the SDE device port ID for the given PortKey.
-    virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
-        int device, const PortKey& port_key) = 0;
-
-    // Checks if a port is valid.
-    virtual bool IsValidPort(int device, int port) = 0;
-
-    // Add a new port.
-    virtual ::util::Status AddPort(int device, int port) = 0;
-
-    // Delete a port.
-    virtual ::util::Status DeletePort(int device, int port) = 0;
-
-    // Enable a port.
-    virtual ::util::Status EnablePort(int device, int port) = 0;
-
-    // Disable a port.
-    virtual ::util::Status DisablePort(int device, int port) = 0;
-  };
-
   virtual ~TdiSdeInterface() {}
 
   // Initializes the SDE. Must be called before any other methods.
@@ -232,63 +170,12 @@ class TdiSdeInterface {
 
   // Allocates a new table key object.
   virtual ::util::StatusOr<std::unique_ptr<TableKeyInterface>> CreateTableKey(
-      int table_id) = 0;
+      uint32 table_id) = 0;
 
   // Allocates a new table data object. Action id can be zero when not known or
   // not applicable.
   virtual ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
-      int table_id, int action_id) = 0;
-
-  // TODO(delete after DPDK implements TdiPortManager)
-#ifdef DPDK_TARGET
-  // Registers a writer through which to send any port status events. The
-  // message contains a tuple (device, port, state), where port refers to the
-  // Barefoot SDE device port. There can only be one writer.
-  virtual ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) = 0;
-
-  // Unregisters the port status writer.
-  virtual ::util::Status UnregisterPortStatusEventWriter() = 0;
-
-  // Get Port Info
-  virtual ::util::Status GetPortInfo(int device, int port,
-                                     TargetDatapathId *target_dp_id) = 0;
-
-  // Add a new port with the given parameters.
-  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                                 FecMode fec_mode = FEC_MODE_UNKNOWN) = 0;
-
-  // Add a new port with the given parameters.
-  virtual ::util::Status AddPort(
-      int device, int port, const PortConfigParams& config) = 0 ;
-
-  // Hotplug add/delete the port
-  virtual ::util::Status HotplugPort(int device, int port,
-                            HotplugConfigParams& hotplug_config) = 0;
-
-  // Delete a port.
-  virtual ::util::Status DeletePort(int device, int port) = 0;
-
-  // Enable a port.
-  virtual ::util::Status EnablePort(int device, int port) = 0;
-
-  // Disable a port.
-  virtual ::util::Status DisablePort(int device, int port) = 0;
-
-  // Get the operational state of a port.
-  virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
-
-  // Get the port counters of a port.
-  virtual ::util::Status GetPortCounters(int device, int port,
-                                         PortCounters* counters) = 0;
-
-  // Checks if a port is valid.
-  virtual bool IsValidPort(int device, int port) = 0;
-
-  // Returns the SDE device port ID for the given PortKey.
-  virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key) = 0;
-#endif
+      uint32 table_id, uint32 action_id) = 0;
 
   // Check whether we are running on the software model.
   virtual ::util::StatusOr<bool> IsSoftwareModel(int device) = 0;
@@ -566,6 +453,17 @@ class TdiSdeInterface {
   // Gets the action profile ID of an action selector.
   virtual ::util::StatusOr<uint32> GetActionProfileTdiRtId(
       uint32 action_selector_id) const = 0;
+
+  // Gets the Tdi table id from the Table name.
+  virtual ::util::StatusOr<uint32> GetTableId(std::string &table_name) const = 0;
+
+#ifdef ES2K_TARGET
+  // FIXME: Target-specific code in a target-agnostic class.
+  virtual ::util::Status InitNotificationTableWithCallback(int dev_id,
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const std::string &table_name, notification_table_callback_t callback,
+    void *cookie) const = 0;
+#endif
 
  protected:
   // Default constructor. To be called by the Mock class instance only.

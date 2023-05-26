@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_CONSTANTS_H_
@@ -12,10 +12,14 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+// PNA Extern types
+constexpr uint32 kMvlutExactMatch = 129;
+constexpr uint32 kMvlutTernaryMatch = 130;
+
 // TNA Extern types
-constexpr uint32 kTnaExternActionProfileId = 129;
-constexpr uint32 kTnaExternActionSelectorId = 130;
-constexpr uint32 kTnaExternDirectCounter = 132;
+constexpr uint32 kTnaExternActionProfileId = 131;
+constexpr uint32 kTnaExternActionSelectorId = 132;
+constexpr uint32 kTnaExternDirectCounter = 133;
 
 // Built-in table and field names.
 constexpr char kMcNodeDevPort[] = "$DEV_PORT";
@@ -45,6 +49,22 @@ constexpr char kMatchPriority[] = "$MATCH_PRIORITY";
 constexpr char kActionMemberId[] = "$ACTION_MEMBER_ID";
 constexpr char kSelectorGroupId[] = "$SELECTOR_GROUP_ID";
 constexpr char kActionMemberStatus[] = "$ACTION_MEMBER_STATUS";
+
+//IPsec related consts used in fixed functions
+constexpr char kIpsecSadbOffloadId[] = "offload-id";
+constexpr char kIpsecSadbDir[] = "direction";
+constexpr char kIpsecSadbReqId[] = "req-id";
+constexpr char kIpsecSadbSpi[] = "spi";
+constexpr char kIpsecSadbSeqNum[] = "ext-seq-num";
+constexpr char kIpsecSadbReplayWindow[] = "anti-replay-window-size";
+constexpr char kIpsecSadbProtoParams[] = "protocol-parameters";
+constexpr char kIpsecSadbMode[] = "mode";
+constexpr char kIpsecSadbEspAlgo[] = "encryption-algorithm";
+constexpr char kIpsecSadbEspKey[] = "key";
+constexpr char kIpsecSadbEspKeylen[] = "key-len";
+constexpr char kIpsecSaLtHard[] = "sa-lifetime-hard";
+constexpr char kIpsecSaLtSoft[] = "sa-lifetime-soft";
+constexpr char kIpsecFetchSpi[] = "rx-spi";
 
 // TNA specific limits
 constexpr uint16 kMaxCloneSessionId = 1015;

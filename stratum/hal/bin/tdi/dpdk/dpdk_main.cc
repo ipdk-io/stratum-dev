@@ -3,7 +3,7 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/dpdk/dpdk_main.h"
+#include "stratum/hal/bin/tdi/main.h"
 
 #include <map>
 #include <memory>
@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
@@ -29,7 +30,6 @@
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
-#include "stratum/lib/security/credentials_manager.h"
 
 #define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
 #define DEFAULT_CONFIG_DIR "/usr/share/stratum/dpdk/"
@@ -77,13 +77,13 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   gflags::ParseCommandLineFlags(&argc, &argv, remove_flags);
 }
 
-::util::Status DpdkMain(int argc, char* argv[]) {
+::util::Status Main(int argc, char* argv[]) {
   ParseCommandLine(argc, argv, true);
-  return DpdkMain(nullptr, nullptr);
+  return Main(nullptr, nullptr);
 }
 
-::util::Status DpdkMain(absl::Notification* ready_sync,
-                        absl::Notification* done_sync) {
+::util::Status Main(absl::Notification* ready_sync,
+                    absl::Notification* done_sync) {
   InitStratumLogging();
 
   // TODO(antonin): The SDE expects 0-based device ids, so we instantiate
@@ -124,20 +124,22 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
-  auto dpdk_node = TdiNode::CreateInstance(
+  auto tdi_node = TdiNode::CreateInstance(
       table_manager.get(), action_profile_manager.get(),
       packetio_manager.get(), pre_manager.get(),
       counter_manager.get(), sde_wrapper, device_id);
 
-  std::map<int, TdiNode*> device_id_to_dpdk_node = {
-      {device_id, dpdk_node.get()},
+  std::map<int, TdiNode*> device_id_to_tdi_node = {
+      {device_id, tdi_node.get()},
   };
 
+  auto port_manager = DpdkPortManager::CreateSingleton();
+
   auto chassis_manager =
-      DpdkChassisManager::CreateInstance(mode, sde_wrapper);
+      DpdkChassisManager::CreateInstance(mode, port_manager);
 
   auto dpdk_switch = DpdkSwitch::CreateInstance(
-      chassis_manager.get(), sde_wrapper, device_id_to_dpdk_node);
+      chassis_manager.get(), sde_wrapper, device_id_to_tdi_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 

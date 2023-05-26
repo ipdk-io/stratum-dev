@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -125,7 +126,9 @@ stratum_cc_library(
     hdrs = ["credentials_manager.h"],
     deps = [
         "//stratum/glue:logging",
+        "//stratum/glue/gtl:map_util",
         "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:utils",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "@com_github_google_glog//:glog",

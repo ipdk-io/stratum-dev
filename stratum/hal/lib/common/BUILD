@@ -23,6 +23,18 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
+config_setting(
+    name = "dpdk_target",
+    define_values = {
+        "target": "dpdk",
+    },
+)
+
+target_defines = select({
+    ":dpdk_target": ["DPDK_TARGET"],
+    "//conditions:default": [],
+})
+
 stratum_cc_library(
     name = "admin_service",
     srcs = [
@@ -34,25 +46,25 @@ stratum_cc_library(
     deps = [
         ":admin_utils",
         ":admin_utils_interface",
-        "@com_google_googletest//:gtest",
         ":common_cc_proto",
         ":error_buffer",
         ":switch_interface",
-        "@com_github_google_glog//:glog",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_github_grpc_grpc//:grpc++",
         "//stratum/glue:logging",
-        "@com_github_openconfig_gnoi//:system_cc_grpc",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/status",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/lib/security:auth_policy_checker",
         "//stratum/public/lib:error",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/glue/status:status",
+        "@com_github_google_glog//:glog",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_github_openconfig_gnoi//:system_cc_grpc",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -109,11 +121,11 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
-        "@com_github_openconfig_gnoi//:types_cc_proto",
+        "@com_github_grpc_grpc//:grpc++",
         "@com_github_openconfig_gnoi//:common_cc_proto",
         "@com_github_openconfig_gnoi//:system_cc_grpc",
+        "@com_github_openconfig_gnoi//:types_cc_proto",
         "@com_google_absl//absl/memory",
-        "@com_github_grpc_grpc//:grpc++",
     ],
 )
 
@@ -129,21 +141,21 @@ stratum_cc_library(
         ":common_cc_proto",
         ":error_buffer",
         ":switch_interface",
-        "@com_github_google_glog//:glog",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_github_grpc_grpc//:grpc++",
         "//stratum/glue:logging",
-        "@com_github_openconfig_gnoi//:cert_cc_grpc",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/status",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/lib/security:auth_policy_checker",
         "//stratum/public/lib:error",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/glue/status:status",
+        "@com_github_google_glog//:glog",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_github_openconfig_gnoi//:cert_cc_grpc",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -178,10 +190,10 @@ stratum_cc_library(
     name = "client_sync_reader_writer",
     hdrs = ["client_sync_reader_writer.h"],
     deps = [
+        "//stratum/glue:logging",
+        "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
-        "@com_github_grpc_grpc//:grpc++",
-        "//stratum/glue:logging",
     ],
 )
 
@@ -212,6 +224,7 @@ stratum_cc_library(
         "config_monitoring_service.h",
         "gnmi_publisher.h",
     ],
+    defines = target_defines,
     deps = [
 	"//stratum/hal/lib/yang:yang_parse_tree",
 	"//stratum/hal/lib/yang:yang_parse_tree_paths",
@@ -264,7 +277,7 @@ stratum_cc_test(
         "gnmi_publisher_test.cc",
     ],
     deps = [
-	"//stratum/hal/lib/yang:parse_tree_mock",
+	"//stratum/hal/lib/yang:yang_parse_tree_mock",
 	"//stratum/hal/lib/yang:yang_parse_tree_test",
         ":config_monitoring_service",
         ":error_buffer",
@@ -599,7 +612,7 @@ stratum_cc_library(
     ],
     defines = [
         "P4RUNTIME_VER=" + P4RUNTIME_VER,
-    ]
+    ] + target_defines,
 )
 
 stratum_cc_test(
