@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2021-2022 Intel Corporation.
+// Copyright 2021-2023 Intel Corporation.
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/p4_service.h"
@@ -23,6 +23,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/server_writer_wrapper.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
@@ -57,13 +58,21 @@ namespace hal {
 P4Service::P4Service(OperationMode mode, SwitchInterface* switch_interface,
                      AuthPolicyChecker* auth_policy_checker,
                      ErrorBuffer* error_buffer)
+    : P4Service(mode, switch_interface, auth_policy_checker, error_buffer,
+                TargetOptions::default_target_options) {}
+
+P4Service::P4Service(OperationMode mode, SwitchInterface* switch_interface,
+                     AuthPolicyChecker* auth_policy_checker,
+                     ErrorBuffer* error_buffer,
+                     const TargetOptions& target_options)
     : node_id_to_controllers_(),
       connection_ids_(),
       forwarding_pipeline_configs_(nullptr),
       mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
-      error_buffer_(ABSL_DIE_IF_NULL(error_buffer)) {}
+      error_buffer_(ABSL_DIE_IF_NULL(error_buffer)),
+      target_options_(target_options) {}
 
 P4Service::~P4Service() {}
 
@@ -385,17 +394,14 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
                      node_id, "."));
   }
 
-#ifdef DPDK_TARGET
-  // FIXME: DPDK does not support overwrite of an already configured pipeline
-  // for a single device. Remove this check when support for overwriting an
-  // already configured forwarding pipeline is available.
-  if (forwarding_pipeline_configs_ != nullptr &&
-      forwarding_pipeline_configs_->node_id_to_config_size() != 0) {
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION,
-                          "Only a single forwarding pipeline can be pushed "
-                          "for any node so far.");
+  if (!target_options_.allowPipelineOverwrite) {
+    if (forwarding_pipeline_configs_ != nullptr &&
+        forwarding_pipeline_configs_->node_id_to_config_size() != 0) {
+      return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION,
+                            "Only a single forwarding pipeline can be pushed "
+                            "for any node so far.");
+    }
   }
-#endif
 
   ::util::Status status = ::util::OkStatus();
   switch (req->action()) {
@@ -422,7 +428,8 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
           ::p4::v1::SetForwardingPipelineConfigRequest::VERIFY_AND_COMMIT) {
         error = switch_interface_->PushForwardingPipelineConfig(node_id,
                                                                 req->config());
-      } else {  // VERIFY_AND_SAVE
+      } else {
+        // VERIFY_AND_SAVE
         error = switch_interface_->SaveForwardingPipelineConfig(node_id,
                                                                 req->config());
       }

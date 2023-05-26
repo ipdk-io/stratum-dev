@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2021-2022 Intel Corporation.
+// Copyright 2021-2023 Intel Corporation.
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/config_monitoring_service.h"
@@ -21,6 +21,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/openconfig_converter.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
@@ -41,12 +42,21 @@ namespace hal {
 ConfigMonitoringService::ConfigMonitoringService(
     OperationMode mode, SwitchInterface* switch_interface,
     AuthPolicyChecker* auth_policy_checker, ErrorBuffer* error_buffer)
+    : ConfigMonitoringService(mode, switch_interface, auth_policy_checker,
+                              error_buffer,
+                              TargetOptions::default_target_options) {}
+
+ConfigMonitoringService::ConfigMonitoringService(
+    OperationMode mode, SwitchInterface* switch_interface,
+    AuthPolicyChecker* auth_policy_checker, ErrorBuffer* error_buffer,
+    const TargetOptions& target_options)
     : running_chassis_config_(nullptr),
       mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
       error_buffer_(ABSL_DIE_IF_NULL(error_buffer)),
-      gnmi_publisher_(switch_interface) {
+      gnmi_publisher_(switch_interface),
+      target_options_(target_options) {
   if (TimerDaemon::Start() != ::util::OkStatus()) {
     LOG(ERROR) << "Could not start the timer subsystem.";
   }
@@ -95,13 +105,12 @@ ConfigMonitoringService::~ConfigMonitoringService() {
   // config push will initialize the switch if it is done for the first time.
   LOG(INFO) << "Pushing the saved chassis config read from "
             << FLAGS_chassis_config_file << "...";
-#if 0
-  // NOTE: disabled to support unit testing, which uses symlinks.
-  if (!IsRegularFile(FLAGS_chassis_config_file)) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
-          << "'"<< FLAGS_chassis_config_file << "' is not a regular file";
+  if (target_options_.secureChassisConfig) {
+    if (!IsRegularFile(FLAGS_chassis_config_file)) {
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "'" << FLAGS_chassis_config_file << "' is not a regular file";
+    }
   }
-#endif
   auto config = absl::make_unique<ChassisConfig>();
   ::util::Status status =
       ReadProtoFromTextFile(FLAGS_chassis_config_file, config.get());
@@ -262,36 +271,37 @@ bool ContainsUniqueNames(const T& values) {
                             status.error_message());
     }
 
-#ifndef DPDK_TARGET
-    status = switch_interface_->PushChassisConfig(*config);
-    // If the config push was successful or reported reboot required, save the
-    // config on the switch. Any other config push error is considered
-    // blocking.
-    if (status.ok() || status.error_code() == ERR_REBOOT_REQUIRED) {
+    if (target_options_.pushUpdatedChassisConfig) {
+      status = switch_interface_->PushChassisConfig(*config);
+      // If the config push was successful or reported that reboot is required,
+      // save the config to a file. Any other config push error is considered
+      // blocking.
+      if (status.ok() || status.error_code() == ERR_REBOOT_REQUIRED) {
+        APPEND_STATUS_IF_ERROR(
+            status, WriteProtoToTextFile(*config, FLAGS_chassis_config_file));
+      }
+      if (!status.ok()) {
+        error_buffer_->AddError(status,
+                                "Pushing chassis config failed: ", GTL_LOC);
+        return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
+                              status.error_message());
+      }
+
+      // Save running_chassis_config_ after everything went OK.
+      running_chassis_config_.reset(config.PassOwnership());
+
+      // Notify GnmiPublisher that the config has changed.
       APPEND_STATUS_IF_ERROR(
-          status, WriteProtoToTextFile(*config, FLAGS_chassis_config_file));
+          status, gnmi_publisher_.HandleChange(
+                      ConfigHasBeenPushedEvent(*running_chassis_config_)));
+      if (!status.ok()) {
+        error_buffer_->AddError(
+            status,
+            "Failed to handle config change at GnmiPublisher: ", GTL_LOC);
+        return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
+                              status.error_message());
+      }
     }
-    if (!status.ok()) {
-      error_buffer_->AddError(status,
-                              "Pushing chassis config failed: ", GTL_LOC);
-      return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
-                            status.error_message());
-    }
-
-    // Save running_chassis_config_ after everything went OK.
-    running_chassis_config_.reset(config.PassOwnership());
-
-    // Notify GnmiPublisher that the config has changed.
-    APPEND_STATUS_IF_ERROR(
-        status, gnmi_publisher_.HandleChange(
-                    ConfigHasBeenPushedEvent(*running_chassis_config_)));
-    if (!status.ok()) {
-      error_buffer_->AddError(
-          status, "Failed to handle config change at GnmiPublisher: ", GTL_LOC);
-      return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
-                            status.error_message());
-    }
-#endif
   }
 
   // Add data to SetResponse Object

@@ -81,7 +81,8 @@ class DpdkHal final {
                                   SwitchInterface* switch_interface,
                                   AuthPolicyChecker* auth_policy_checker,
                                   absl::Notification* ready_sync = nullptr,
-                                  absl::Notification* done_sync = nullptr)
+                                  absl::Notification* done_sync = nullptr,
+                                  const TargetOptions* target_options = nullptr);
       LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
@@ -100,7 +101,8 @@ class DpdkHal final {
   // class.
   DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
           AuthPolicyChecker* auth_policy_checker,
-          absl::Notification* ready_sync, absl::Notification* done_sync);
+          absl::Notification* ready_sync, absl::Notification* done_sync,
+          const TargetOptions* target_options);
 
   // Initializes the HAL server and all the services it provides. Called in
   // CreateSingleton() as soon as the class instance is created.
@@ -156,6 +158,9 @@ class DpdkHal final {
 
   // Object to signal when Hal is done. Not owned by this class;
   absl::Notification* done_sync_;
+
+  // Options to specify when creating services.
+  TargetOptions target_options_;
 
   // The lock used for initialization of the singleton.
   static absl::Mutex init_lock_;

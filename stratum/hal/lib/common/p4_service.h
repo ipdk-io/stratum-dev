@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_P4_SERVICE_H_
@@ -26,6 +27,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/error_buffer.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/hal/lib/p4/forwarding_pipeline_configs.pb.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
@@ -88,6 +90,11 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
 
   P4Service(OperationMode mode, SwitchInterface* switch_interface,
             AuthPolicyChecker* auth_policy_checker, ErrorBuffer* error_buffer);
+
+  P4Service(OperationMode mode, SwitchInterface* switch_interface,
+            AuthPolicyChecker* auth_policy_checker, ErrorBuffer* error_buffer,
+            const TargetOptions& target_options);
+
   ~P4Service() override;
 
   // Sets up the service in coldboot and warmboot mode. In the coldboot mode,
@@ -279,6 +286,9 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
   // Pointer to ErrorBuffer to save any critical errors we encounter. Not owned
   // by this class.
   ErrorBuffer* error_buffer_;
+
+  // Target-specific options.
+  TargetOptions target_options_;
 
   friend class P4ServiceTest;
 };
