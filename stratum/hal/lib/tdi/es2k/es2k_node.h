@@ -16,10 +16,10 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
-#include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_lut_manager.h"
+#include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
@@ -31,23 +31,11 @@ namespace tdi {
 // The TdiNode class encapsulates all per P4-native node/chip/ASIC
 // functionalities, primarily the flow managers. Calls made to this class are
 // processed and passed through to the TDI API.
-// Create a subclass Es2kNode which is specific to ES2K functionalities.
 class Es2kNode : public TdiNode {
  public:
   virtual ~Es2kNode();
 
-  // Factory function for creating the instance of the class.
-  static std::unique_ptr<Es2kNode> CreateInstance(
-      TdiTableManager* tdi_table_manager,
-      TdiActionProfileManager* tdi_action_profile_manager,
-      TdiPacketioManager* tdi_packetio_manager,
-      TdiPreManager* tdi_pre_manager,
-      TdiCounterManager* tdi_counter_manager,
-      TdiSdeInterface* tdi_sde_interface, int device_id,
-      // Note: bfrt_node defaults are (true, 1)
-      bool initialized = false, uint64 node_id = 0,
-      TdiLutManager* tdi_lut_manager = nullptr);
-
+  // Forwarding entries
   virtual ::util::Status WriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
       LOCKS_EXCLUDED(lock_);
@@ -55,6 +43,15 @@ class Es2kNode : public TdiNode {
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
       std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
+
+  // Factory function for creating the instance of the class.
+  static std::unique_ptr<Es2kNode> CreateInstance(
+      TdiTableManager* tdi_table_manager, TdiLutManager* tdi_lut_manager,
+      TdiActionProfileManager* tdi_action_profile_manager,
+      TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
+      TdiCounterManager* tdi_counter_manager,
+      TdiSdeInterface* tdi_sde_interface, int device_id,
+      bool initialized = false, uint64 node_id = 0);
 
   // Es2kNode is neither copyable nor movable.
   Es2kNode(const Es2kNode&) = delete;
@@ -69,14 +66,13 @@ class Es2kNode : public TdiNode {
  private:
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  Es2kNode(TdiTableManager* tdi_table_manager,
+  Es2kNode(TdiTableManager* tdi_table_manager, TdiLutManager* tdi_lut_manager,
            TdiActionProfileManager* tdi_action_profile_manager,
            TdiPacketioManager* tdi_packetio_manager,
            TdiPreManager* tdi_pre_manager,
            TdiCounterManager* tdi_counter_manager,
-           TdiSdeInterface* tdi_sde_interface, int device_id,
-           bool initialized, uint64 node_id,
-           TdiLutManager* tdi_lut_manager);
+           TdiSdeInterface* tdi_sde_interface, int device_id, bool initialized,
+           uint64 node_id);
 
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata
   ::util::Status WriteExternEntry(
@@ -88,7 +84,6 @@ class Es2kNode : public TdiNode {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::ExternEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer);
-
 
   // Reader-writer lock used to protect access to node-specific state.
   mutable absl::Mutex lock_;

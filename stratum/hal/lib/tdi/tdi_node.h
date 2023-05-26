@@ -33,12 +33,15 @@ class TdiNode {
  public:
   virtual ~TdiNode();
 
+  // Chassis configuration
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
                                            uint64 node_id)
       LOCKS_EXCLUDED(lock_);
   virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config,
                                              uint64 node_id)
       LOCKS_EXCLUDED(lock_);
+
+  // Forwarding pipeline
   virtual ::util::Status PushForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config);
   virtual ::util::Status SaveForwardingPipelineConfig(
@@ -46,9 +49,13 @@ class TdiNode {
   virtual ::util::Status CommitForwardingPipelineConfig() LOCKS_EXCLUDED(lock_);
   virtual ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config) const;
+
+  // State management
   virtual ::util::Status Shutdown() LOCKS_EXCLUDED(lock_);
   virtual ::util::Status Freeze() LOCKS_EXCLUDED(lock_);
   virtual ::util::Status Unfreeze() LOCKS_EXCLUDED(lock_);
+
+  // Forwarding entries
   virtual ::util::Status WriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
       LOCKS_EXCLUDED(lock_);
@@ -56,6 +63,8 @@ class TdiNode {
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
       std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
+
+  // Message streams
   virtual ::util::Status RegisterStreamMessageResponseWriter(
       const std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>>&
           writer) LOCKS_EXCLUDED(lock_);
@@ -63,12 +72,12 @@ class TdiNode {
       LOCKS_EXCLUDED(lock_);
   virtual ::util::Status HandleStreamMessageRequest(
       const ::p4::v1::StreamMessageRequest& req) LOCKS_EXCLUDED(lock_);
+
   // Factory function for creating the instance of the class.
   static std::unique_ptr<TdiNode> CreateInstance(
       TdiTableManager* tdi_table_manager,
       TdiActionProfileManager* tdi_action_profile_manager,
-      TdiPacketioManager* tdi_packetio_manager,
-      TdiPreManager* tdi_pre_manager,
+      TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
       TdiCounterManager* tdi_counter_manager,
       TdiSdeInterface* tdi_sde_interface, int device_id,
       // Note: bfrt_node defaults are (true, 1)
@@ -91,13 +100,13 @@ class TdiNode {
           TdiPacketioManager* tdi_packetio_manager,
           TdiPreManager* tdi_pre_manager,
           TdiCounterManager* tdi_counter_manager,
-          TdiSdeInterface* tdi_sde_interface, int device_id,
-          bool initialized, uint64 node_id);
+          TdiSdeInterface* tdi_sde_interface, int device_id, bool initialized,
+          uint64 node_id);
 
-  bool getInitialized() { return initialized_; }
-  bool getPipelineInitialized() { return pipeline_initialized_; }
-  const int getDeviceId() { return device_id_; }
-  uint64 getNodeId() { return node_id_; }
+  bool getInitialized() const { return initialized_; }
+  bool getPipelineInitialized() const { return pipeline_initialized_; }
+  int getDeviceId() const { return device_id_; }
+  uint64 getNodeId() const { return node_id_; }
 
  private:
   // Write extern entries like ActionProfile, DirectCounter, PortMetadata

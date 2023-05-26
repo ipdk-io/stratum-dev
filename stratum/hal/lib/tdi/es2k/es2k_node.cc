@@ -28,24 +28,23 @@ namespace tdi {
 
 // Initialize base class TdiNode members as well
 Es2kNode::Es2kNode(TdiTableManager* tdi_table_manager,
-                 TdiActionProfileManager* tdi_action_profile_manager,
-                 TdiPacketioManager* tdi_packetio_manager,
-                 TdiPreManager* tdi_pre_manager,
-                 TdiCounterManager* tdi_counter_manager,
-                 TdiSdeInterface* tdi_sde_interface, int device_id,
-                 bool initialized, uint64 node_id,
-                 TdiLutManager* tdi_lut_manager)
+                   TdiLutManager* tdi_lut_manager,
+                   TdiActionProfileManager* tdi_action_profile_manager,
+                   TdiPacketioManager* tdi_packetio_manager,
+                   TdiPreManager* tdi_pre_manager,
+                   TdiCounterManager* tdi_counter_manager,
+                   TdiSdeInterface* tdi_sde_interface, int device_id,
+                   bool initialized, uint64 node_id)
     : TdiNode(tdi_table_manager, tdi_action_profile_manager,
               tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
-             tdi_sde_interface, device_id, initialized, node_id),
+              tdi_sde_interface, device_id, initialized, node_id),
       pipeline_initialized_(false),
       initialized_(initialized),
       tdi_config_(),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_table_manager_(ABSL_DIE_IF_NULL(tdi_table_manager)),
-      tdi_lut_manager_(tdi_lut_manager),
-      tdi_action_profile_manager_(
-          ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
+      tdi_lut_manager_(ABSL_DIE_IF_NULL(tdi_lut_manager)),
+      tdi_action_profile_manager_(ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
       tdi_packetio_manager_(tdi_packetio_manager),
       tdi_pre_manager_(ABSL_DIE_IF_NULL(tdi_pre_manager)),
       tdi_counter_manager_(ABSL_DIE_IF_NULL(tdi_counter_manager)),
@@ -58,31 +57,27 @@ Es2kNode::Es2kNode()
       tdi_config_(),
       tdi_sde_interface_(nullptr),
       tdi_table_manager_(nullptr),
+      tdi_lut_manager_(nullptr),
       tdi_action_profile_manager_(nullptr),
       tdi_packetio_manager_(nullptr),
       tdi_pre_manager_(nullptr),
       tdi_counter_manager_(nullptr),
       node_id_(0),
-      device_id_(-1),
-      tdi_lut_manager_(nullptr) {}
+      device_id_(-1) {}
 
 Es2kNode::~Es2kNode() = default;
 
 // Factory function for creating the instance of the class.
 std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
-    TdiTableManager* tdi_table_manager,
+    TdiTableManager* tdi_table_manager, TdiLutManager* tdi_lut_manager,
     TdiActionProfileManager* tdi_action_profile_manager,
-    TdiPacketioManager* tdi_packetio_manager,
-    TdiPreManager* tdi_pre_manager,
-    TdiCounterManager* tdi_counter_manager,
-    TdiSdeInterface* tdi_sde_interface, int device_id,
-    bool initialized, uint64 node_id,
-    TdiLutManager* tdi_lut_manager) {
-
+    TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
+    TdiCounterManager* tdi_counter_manager, TdiSdeInterface* tdi_sde_interface,
+    int device_id, bool initialized, uint64 node_id) {
   return absl::WrapUnique(new Es2kNode(
-      tdi_table_manager, tdi_action_profile_manager, tdi_packetio_manager,
-      tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
-      initialized, node_id, tdi_lut_manager));
+      tdi_table_manager, tdi_lut_manager, tdi_action_profile_manager,
+      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
+      tdi_sde_interface, device_id, initialized, node_id));
 }
 
 ::util::Status Es2kNode::WriteForwardingEntries(
@@ -297,14 +292,12 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kMvlutExactMatch:
     case kMvlutTernaryMatch:
-      if (!tdi_lut_manager_)
-        break;
       return tdi_lut_manager_->WriteTableEntry(session, type, entry);
     default:
       break;
   }
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+         << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 ::util::Status Es2kNode::ReadExternEntry(
@@ -314,14 +307,12 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kMvlutExactMatch:
     case kMvlutTernaryMatch:
-      if (!tdi_lut_manager_)
-        break;
       return tdi_lut_manager_->ReadTableEntry(session, entry, writer);
     default:
       break;
   }
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+         << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 }  // namespace tdi
