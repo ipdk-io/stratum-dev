@@ -31,7 +31,7 @@ DEFINE_string(uint_val, "", "Unsigned integer value to be set (64-bit)");
 DEFINE_string(string_val, "", "String value to be set");
 DEFINE_string(float_val, "", "Floating point value to be set");
 DEFINE_string(bytes_val_file, "", "A file to be sent as bytes value");
-DEFINE_string(proto_bytes, "", "Floating point value to be set");
+DEFINE_string(proto_bytes, "", "Protobuf binary encoded bytes");
 
 DEFINE_uint64(interval, 5000, "Subscribe poll interval in ms");
 DEFINE_bool(replace, false, "Use replace instead of update");
