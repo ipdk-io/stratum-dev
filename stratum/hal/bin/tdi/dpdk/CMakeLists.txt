@@ -15,4 +15,3 @@ install(
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/stratum/dpdk
 )
-
