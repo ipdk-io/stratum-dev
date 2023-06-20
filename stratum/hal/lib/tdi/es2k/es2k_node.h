@@ -18,7 +18,6 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
-#include "stratum/hal/lib/tdi/tdi_lut_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
@@ -46,7 +45,7 @@ class Es2kNode : public TdiNode {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kNode> CreateInstance(
-      TdiTableManager* tdi_table_manager, TdiLutManager* tdi_lut_manager,
+      TdiTableManager* tdi_table_manager,
       TdiActionProfileManager* tdi_action_profile_manager,
       TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
       TdiCounterManager* tdi_counter_manager,
@@ -66,7 +65,7 @@ class Es2kNode : public TdiNode {
  private:
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  Es2kNode(TdiTableManager* tdi_table_manager, TdiLutManager* tdi_lut_manager,
+  Es2kNode(TdiTableManager* tdi_table_manager,
            TdiActionProfileManager* tdi_action_profile_manager,
            TdiPacketioManager* tdi_packetio_manager,
            TdiPreManager* tdi_pre_manager,
@@ -106,7 +105,6 @@ class Es2kNode : public TdiNode {
 
   // Managers. Not owned by this class.
   TdiTableManager* tdi_table_manager_;
-  TdiLutManager* tdi_lut_manager_;
   TdiActionProfileManager* tdi_action_profile_manager_;
   TdiPacketioManager* tdi_packetio_manager_;
   TdiPreManager* tdi_pre_manager_;

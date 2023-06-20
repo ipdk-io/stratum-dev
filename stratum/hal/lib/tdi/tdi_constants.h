@@ -12,10 +12,6 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-// PNA Extern types
-constexpr uint32 kMvlutExactMatch = 129;
-constexpr uint32 kMvlutTernaryMatch = 130;
-
 // TNA Extern types
 constexpr uint32 kTnaExternActionProfileId = 131;
 constexpr uint32 kTnaExternActionSelectorId = 132;
