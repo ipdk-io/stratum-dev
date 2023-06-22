@@ -250,7 +250,6 @@ stratum_cc_library(
         ":tdi_pipeline_utils",
         ":tdi_action_profile_manager",
         ":tdi_counter_manager",
-        ":tdi_lut_manager",
         ":tdi_packetio_manager",
         ":tdi_pre_manager",
         ":tdi_sde_interface",
@@ -495,42 +494,6 @@ stratum_cc_library(
     hdrs = ["tdi_ipsec_manager_mock.h"],
     deps = [
         ":tdi_ipsec_manager",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
-stratum_cc_library(
-    name = "tdi_lut_manager",
-    srcs = ["tdi_lut_manager.cc"],
-    hdrs = ["tdi_lut_manager.h"],
-    deps = [
-        ":tdi_constants",
-        ":tdi_sde_interface",
-        ":utils",
-        "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/p4:p4_info_manager",
-        "//stratum/hal/lib/p4:utils",
-        "//stratum/lib:timer_daemon",
-        "//stratum/lib:utils",
-        "@com_github_gflags_gflags//:gflags",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
-stratum_cc_test(
-    name = "tdi_lut_manager_test",
-    srcs = ["tdi_lut_manager_test.cc"],
-    deps = [
-        ":tdi_sde_mock",
-        ":tdi_lut_manager",
-        ":test_main",
-        "//stratum/glue/status:status_test_util",
-        "//stratum/lib:utils",
-        "//stratum/public/lib:error",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
     ],
 )
