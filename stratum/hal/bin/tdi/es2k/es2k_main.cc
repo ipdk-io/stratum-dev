@@ -30,7 +30,6 @@
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
-#include "stratum/hal/lib/tdi/tdi_lut_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 #include "stratum/lib/security/credentials_manager.h"
@@ -113,9 +112,6 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto table_manager =
       TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
 
-  auto lut_manager =
-      TdiLutManager::CreateInstance(mode, sde_wrapper, device_id);
-
   auto fixed_function_manager =
       TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);
 
@@ -132,7 +128,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto es2k_node = Es2kNode::CreateInstance(
-      table_manager.get(), lut_manager.get(), action_profile_manager.get(),
+      table_manager.get(), action_profile_manager.get(),
       packetio_manager.get(), pre_manager.get(), counter_manager.get(),
       sde_wrapper, device_id, initialized, node_id);
 
