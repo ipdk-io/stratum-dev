@@ -46,6 +46,7 @@ DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
 DEFINE_bool(grpc_open_insecure_mode, false,
             "open grpc server ports in insecure mode for gNMI, gNOI, and P4RT");
+DECLARE_string(forwarding_pipeline_configs_file);
 
 namespace stratum {
 namespace hal {
@@ -141,6 +142,16 @@ Es2kHal::~Es2kHal() {
             << (warmboot ? "WARMBOOT" : "COLDBOOT") << " mode...";
 
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
+
+  // Create a new, empty pipeline configuration file. On startup, the P4 service checks
+  // for an existing pipeline configuration and reapplies it. For ES2K, we want to come
+  // up with no configuration and wait for the client to supply one.
+  FILE* pipeline_cfg_file =
+    fopen(FLAGS_forwarding_pipeline_configs_file.c_str(), "wb");
+  if (pipeline_cfg_file != NULL) {
+    LOG(INFO) << "Truncating saved pipeline configuration file.";
+    fclose(pipeline_cfg_file);
+  }
 
   // Set up all the services. For a cold boot, we push the saved configs
   // to the switch as part of setup. For a warm boot, we only recover the
