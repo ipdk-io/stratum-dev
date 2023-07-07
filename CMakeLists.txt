@@ -17,8 +17,8 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(SDE_INSTALL_DIR "$ENV{SDE_INSTALL}" CACHE PATH "SDE install directory")
 endif()
 
-find_package(gflags)
-find_package(glog)
+find_package(gflags REQUIRED)
+find_package(glog REQUIRED)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 

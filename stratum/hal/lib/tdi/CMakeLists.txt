@@ -15,8 +15,6 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_counter_manager.h
     tdi_id_mapper.cc
     tdi_id_mapper.h
-    tdi_lut_manager.cc
-    tdi_lut_manager.h
     tdi_node.cc
     tdi_node.h
     tdi_packetio_manager.cc
