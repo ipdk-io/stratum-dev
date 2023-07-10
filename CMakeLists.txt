@@ -1,22 +1,33 @@
-# Build file for stratum project
+# CMake build file for stratum project
 #
 # Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 
 cmake_minimum_required(VERSION 3.15)
-project(stratum)
+
+project(stratum LANGUAGES CXX)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    # SDE_INSTALL_DIR
+    set(SDE_INSTALL_DIR "$ENV{SDE_INSTALL}" CACHE PATH
+        "SDE install directory")
+
+    if(NOT EXISTS "${SDE_INSTALL_DIR}")
+        message(FATAL_ERROR "SDE_INSTALL_DIR (SDE_INSTALL) not defined!")
+    endif()
+
+    # DEPEND_INSTALL_DIR
     set(DEPEND_INSTALL_DIR "$ENV{DEPEND_INSTALL}" CACHE PATH
         "Dependencies install directory")
 
-    if(NOT DEPEND_INSTALL_DIR STREQUAL "")
-        list(APPEND CMAKE_PREFIX_PATH ${DEPEND_INSTALL_DIR})
+    if(NOT EXISTS "${DEPEND_INSTALL_DIR}")
+        message(FATAL_ERROR "DEPEND_INSTALL_DIR (DEPEND_INSTALL) not defined!")
     endif()
 
-    set(SDE_INSTALL_DIR "$ENV{SDE_INSTALL}" CACHE PATH "SDE install directory")
+    list(APPEND CMAKE_PREFIX_PATH ${DEPEND_INSTALL_DIR})
 endif()
 
+find_package(absl REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
 
@@ -24,12 +35,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
-
-#set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE CACHE BOOL
-#    "Use relative paths for the build RUNPATH")
-#
-#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL
-#    "Use link path in the install RUNPATH")
 
 add_subdirectory(stratum)
 
