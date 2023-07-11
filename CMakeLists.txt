@@ -36,6 +36,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
+# Suppress "warning: <symbol> is deprecated"
+add_compile_options(-Wno-deprecated-declarations)
+
 add_subdirectory(stratum)
 
 #######################
@@ -99,6 +102,7 @@ function(add_stratum_google_libs _TGT)
     target_link_libraries(${_TGT} PUBLIC
         glog
         gflags
+        gpr
         grpc
         protobuf
         grpc++
