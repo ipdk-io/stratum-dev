@@ -1,0 +1,17 @@
+# Build file for //stratum/hal/bin/tdi/es2k
+#
+# Copyright 2022-2023 Intel Corporation
+# SPDX-License-Identifier: Apache 2.0
+#
+
+target_sources(stratum_main_o PRIVATE
+    es2k_main.cc
+)
+
+install(
+    FILES
+        es2k_port_config.pb.txt
+        es2k_skip_p4.conf
+    DESTINATION
+        ${CMAKE_INSTALL_DATAROOTDIR}/stratum/es2k
+)
