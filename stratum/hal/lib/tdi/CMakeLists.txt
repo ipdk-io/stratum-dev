@@ -57,6 +57,11 @@ if(ES2K_TARGET)
     )
 endif()
 
+set_source_files_properties(
+    tdi_pre_manager.cc
+    PROPERTIES COMPILE_OPTIONS "-Wno-deprecated-declarations"
+)
+
 target_include_directories(stratum_tdi_common_o PRIVATE
     ${STRATUM_INCLUDES}
     ${SDE_INSTALL_DIR}/include
