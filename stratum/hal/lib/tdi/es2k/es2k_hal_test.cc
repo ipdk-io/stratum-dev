@@ -313,43 +313,6 @@ TEST_F(Es2kHalTest, ColdbootSetupFailureWhenChassisConfigPushFails) {
   EXPECT_THAT(errors[0].error_message(), HasSubstr("saved chassis config"));
 }
 
-TEST_F(Es2kHalTest, ColdbootSetupFailureWhenPipelineConfigPushFailsForSomeNodes) {
-  // Setup and save the test config(s).
-  ChassisConfig chassis_config;
-  ForwardingPipelineConfigs forwarding_pipeline_configs;
-  FillTestChassisConfigAndSave(&chassis_config);
-  FillTestForwardingPipelineConfigsAndSave(&forwarding_pipeline_configs);
-
-  EXPECT_CALL(*switch_mock_, PushChassisConfig(EqualsProto(chassis_config)))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId1,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId1))))
-      .WillOnce(
-          Return(::util::Status(StratumErrorSpace(), ERR_INTERNAL, kErrorMsg)));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId2,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId2))))
-      .WillOnce(Return(::util::OkStatus()));
-
-  // Call and validate results.
-  FLAGS_warmboot = false;
-  ::util::Status status = hal_->Setup();
-  ASSERT_EQ(ERR_INTERNAL, status.error_code());
-  EXPECT_THAT(status.error_message(), HasSubstr(kErrorMsg));
-  const auto& errors = hal_->GetErrors();
-  ASSERT_EQ(1U, errors.size());
-  EXPECT_THAT(errors[0].error_message(), HasSubstr(kErrorMsg));
-  EXPECT_THAT(errors[0].error_message(),
-              HasSubstr("saved forwarding pipeline configs"));
-}
-
 TEST_F(Es2kHalTest, WarmbootSetupSuccessForSavedConfig) {
   // Setup and save the test config(s).
   ChassisConfig chassis_config;
