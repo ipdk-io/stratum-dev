@@ -11,6 +11,10 @@
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
 
+extern "C" {
+#include "openssl/crypto.h"
+}
+
 namespace stratum {
 namespace hal {
 namespace tdi {
@@ -22,10 +26,7 @@ class SadbConfigWrapper {
   ~SadbConfigWrapper() {
     std::string* key = get_key_ptr();
     if (key) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-      memset(&key[0], 0, key->capacity());
-#pragma GCC diagnostic pop
+      OPENSSL_cleanse(&key[0], key->size());
     }
   }
 
