@@ -31,6 +31,10 @@ find_package(absl REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
 
+if(ES2K_TARGET)
+    find_package(OpenSSL REQUIRED)
+endif()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
@@ -106,6 +110,13 @@ function(add_stratum_google_libs _TGT)
     )
 endfunction()
 
+# OpenSSL libraries
+function(add_stratum_openssl_libs _TGT)
+    if(ES2K_TARGET)
+        target_link_libraries(${_TGT} PUBLIC OpenSSL::Crypto)
+    endif()
+endfunction()
+
 # Protobuf libraries
 function(add_stratum_proto_libs _TGT)
     target_link_libraries(${_TGT} PUBLIC
@@ -120,6 +131,7 @@ endfunction()
 function(add_stratum_libraries _TGT)
     add_stratum_abseil_libs(${_TGT})
     add_stratum_google_libs(${_TGT})
+    add_stratum_openssl_libs(${_TGT})
     add_stratum_proto_libs(${_TGT})
     target_link_libraries(${_TGT} PUBLIC pthread)
 endfunction()
