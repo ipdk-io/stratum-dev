@@ -22,7 +22,10 @@ class SadbConfigWrapper {
   ~SadbConfigWrapper() {
     std::string* key = get_key_ptr();
     if (key) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
       memset(&key[0], 0, key->capacity());
+#pragma GCC diagnostic pop
     }
   }
 
@@ -129,8 +132,7 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
 ::util::Status TdiFixedFunctionManager::BuildSadbTableData(
     TdiSdeInterface::TableDataInterface* table_data,
     IPsecSADBConfig& sadb_config) {
-  // Wrapper object ensures that sadb_config is scrubbed on exit.
-  SadbConfigWrapper w(sadb_config);
+  SadbConfigWrapper sanitize_on_exit(sadb_config);
 
   CHECK_RETURN_IF_FALSE(table_data);
 
