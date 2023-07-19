@@ -12,6 +12,15 @@ install(
     FILES
         es2k_port_config.pb.txt
         es2k_skip_p4.conf
+        ${STRATUM_SOURCE_DIR}/tools/tls/ca.conf
+        ${STRATUM_SOURCE_DIR}/tools/tls/grpc-client.conf
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/stratum/es2k
+)
+
+install(
+    PROGRAMS
+        ${STRATUM_SOURCE_DIR}/tools/tls/generate-certs.sh
+    TYPE
+        SBIN
 )
