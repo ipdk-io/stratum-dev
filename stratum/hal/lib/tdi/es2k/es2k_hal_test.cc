@@ -201,20 +201,6 @@ TEST_F(Es2kHalTest, ColdbootSetupSuccessForSavedConfigs) {
 
   EXPECT_CALL(*switch_mock_, PushChassisConfig(EqualsProto(chassis_config)))
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId1,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId1))))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId2,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId2))))
-      .WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*switch_mock_, RegisterEventNotifyWriter(_))
       .WillOnce(Return(::util::OkStatus()));
 
@@ -268,21 +254,6 @@ TEST_F(Es2kHalTest, ColdbootSetupSuccessForNoChassisConfig) {
   if (PathExists(FLAGS_chassis_config_file)) {
     ASSERT_OK(RemoveFile(FLAGS_chassis_config_file));
   }
-
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId1,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId1))))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId2,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId2))))
-      .WillOnce(Return(::util::OkStatus()));
 
   // Call and validate results.
   FLAGS_warmboot = false;
