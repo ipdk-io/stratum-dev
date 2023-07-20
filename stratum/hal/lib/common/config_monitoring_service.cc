@@ -213,7 +213,6 @@ bool ContainsUniqueNames(const T& values) {
   for (const auto& path : req->delete_()) {
     VLOG(1) << "SET(DELETE): " << path.ShortDebugString();
     ::util::Status status;
-    ::gnmi::TypedValue val;
     if (!(status = gnmi_publisher_.HandleDelete(path, &config)).ok()) {
       // Something went wrong. Abort the whole gNMI SET operation.
       return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
