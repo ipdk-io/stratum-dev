@@ -461,7 +461,6 @@ class TdiSdeInterface {
   virtual ::util::StatusOr<uint32> GetTableId(
       std::string& table_name) const = 0;
 
-  // FIXME: Target-specific code in a target-agnostic class.
   virtual ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
