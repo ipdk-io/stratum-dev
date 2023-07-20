@@ -192,27 +192,13 @@ TEST_F(DpdkHalTest, SanityCheckFailureWhenPersistentConfigDirFlagNotGiven) {
 }
 
 TEST_F(DpdkHalTest, ColdbootSetupSuccessForSavedConfigs) {
-  // Setup and save the test config(s).
+  // Set up and save the test config(s).
   ChassisConfig chassis_config;
   ForwardingPipelineConfigs forwarding_pipeline_configs;
   FillTestChassisConfigAndSave(&chassis_config);
   FillTestForwardingPipelineConfigsAndSave(&forwarding_pipeline_configs);
 
   EXPECT_CALL(*switch_mock_, PushChassisConfig(EqualsProto(chassis_config)))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId1,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId1))))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId2,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId2))))
       .WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*switch_mock_, RegisterEventNotifyWriter(_))
       .WillOnce(Return(::util::OkStatus()));
@@ -268,21 +254,6 @@ TEST_F(DpdkHalTest, ColdbootSetupSuccessForNoChassisConfig) {
     ASSERT_OK(RemoveFile(FLAGS_chassis_config_file));
   }
 
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId1,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId1))))
-      .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(
-      *switch_mock_,
-      PushForwardingPipelineConfig(
-          kNodeId2,
-          EqualsProto(
-              forwarding_pipeline_configs.node_id_to_config().at(kNodeId2))))
-      .WillOnce(Return(::util::OkStatus()));
-
   // Call and validate results.
   FLAGS_warmboot = false;
   ASSERT_OK(hal_->Setup());
@@ -291,7 +262,7 @@ TEST_F(DpdkHalTest, ColdbootSetupSuccessForNoChassisConfig) {
 }
 
 TEST_F(DpdkHalTest, ColdbootSetupFailureWhenChassisConfigPushFails) {
-  // Setup and save the test config(s).
+  // Set up and save the test config(s).
   ChassisConfig chassis_config;
   ForwardingPipelineConfigs forwarding_pipeline_configs;
   FillTestChassisConfigAndSave(&chassis_config);
@@ -313,7 +284,7 @@ TEST_F(DpdkHalTest, ColdbootSetupFailureWhenChassisConfigPushFails) {
 }
 
 TEST_F(DpdkHalTest, WarmbootSetupSuccessForSavedConfig) {
-  // Setup and save the test config(s).
+  // Set up and save the test config(s).
   ChassisConfig chassis_config;
   ForwardingPipelineConfigs forwarding_pipeline_configs;
   FillTestChassisConfigAndSave(&chassis_config);
@@ -345,7 +316,7 @@ TEST_F(DpdkHalTest, WarmbootbootSetupFailureForNoSavedConfig) {
 }
 
 TEST_F(DpdkHalTest, WarmbootSetupFailureWhenUnfreezeFails) {
-  // Setup and save the test config(s).
+  // Set up and save the test config(s).
   ChassisConfig chassis_config;
   ForwardingPipelineConfigs forwarding_pipeline_configs;
   FillTestChassisConfigAndSave(&chassis_config);
