@@ -13,15 +13,17 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/lib/channel/channel.h"
 
-#ifdef ES2K_TARGET
-typedef void (*notification_table_callback_t)(uint32_t, uint32_t, bool,
-                                              uint8_t, char*, bool, void*);
-#endif
+typedef void (*notification_table_callback_t)(uint32_t dev_id,
+                                              uint32_t ipsec_sa_api,
+                                              bool soft_lifetime_expire,
+                                              uint8_t ipsec_sa_protocol,
+                                              char* ipsec_sa_dest_address,
+                                              bool ipv4, void* cke);
 
 namespace stratum {
 namespace hal {
@@ -104,7 +106,8 @@ class TdiSdeInterface {
     virtual ::util::Status SetParam(std::string field_name, uint64 value) = 0;
 
     // Sets a table data action parameter.
-    virtual ::util::Status SetParam(std::string field_name, const std::string& value) = 0;
+    virtual ::util::Status SetParam(std::string field_name,
+                                    const std::string& value) = 0;
 
     // Get a table data action parameter.
     virtual ::util::Status GetParam(int id, std::string* value) const = 0;
@@ -455,15 +458,13 @@ class TdiSdeInterface {
       uint32 action_selector_id) const = 0;
 
   // Gets the Tdi table id from the Table name.
-  virtual ::util::StatusOr<uint32> GetTableId(std::string &table_name) const = 0;
+  virtual ::util::StatusOr<uint32> GetTableId(
+      std::string& table_name) const = 0;
 
-#ifdef ES2K_TARGET
-  // FIXME: Target-specific code in a target-agnostic class.
-  virtual ::util::Status InitNotificationTableWithCallback(int dev_id,
-    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string &table_name, notification_table_callback_t callback,
-    void *cookie) const = 0;
-#endif
+  virtual ::util::Status InitNotificationTableWithCallback(
+      int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const std::string& table_name, notification_table_callback_t callback,
+      void* cookie) const = 0;
 
  protected:
   // Default constructor. To be called by the Mock class instance only.

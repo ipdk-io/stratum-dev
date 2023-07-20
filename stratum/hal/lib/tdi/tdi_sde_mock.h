@@ -336,13 +336,11 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD(::util::StatusOr<uint32>, GetTableId, (std::string& table_name),
               (const));
 
-#ifdef ES2K_TARGET
   MOCK_METHOD(::util::Status, InitNotificationTableWithCallback,
               (int dev_id, std::shared_ptr<SessionInterface> session,
                const std::string& table_name,
                notification_table_callback_t callback, void* cookie),
               (const));
-#endif
 };
 
 }  // namespace tdi

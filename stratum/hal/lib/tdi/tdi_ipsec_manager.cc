@@ -39,16 +39,15 @@ namespace tdi {
 ABSL_CONST_INIT absl::Mutex _ipsec_mgr_lock(absl::kConstInit);
 
 /* #### C function callback #### */
-void ipsec_notification_callback(uint32_t dev_id,
-                                 uint32_t ipsec_sa_spi,
-                                 bool soft_lifetime_expire,
-                                 uint8_t ipsec_sa_protocol,
-                                 char *ipsec_sa_dest_address,
-                                 bool ipv4,
-                                 void *cookie) {
-  //printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, \
-  //       ipsec_sa_protocol=%d, \
-  //       ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
+static void ipsec_notification_callback(uint32_t dev_id,
+                                        uint32_t ipsec_sa_spi,
+                                        bool soft_lifetime_expire,
+                                        uint8_t ipsec_sa_protocol,
+                                        char *ipsec_sa_dest_address,
+                                        bool ipv4, void *cookie) {
+  //printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, "
+  //       "ipsec_sa_protocol=%d, "
+  //       "ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
   //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
   //       ipsec_sa_dest_address, ipv4, cookie);
   auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager *>(cookie);

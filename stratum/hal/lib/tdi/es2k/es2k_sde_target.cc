@@ -209,6 +209,8 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
   return ::util::OkStatus();
 }
 
+// IPsec notification
+
 ::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const std::string &table_name,
