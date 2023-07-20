@@ -996,8 +996,7 @@ TdiTableManager::ReadDirectMeterEntry(
   if (register_entry.has_index()) {
     register_index = register_entry.index().index();
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Register entry does not have "
-          << "valid index";
+    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid register entry index";
   }
 
   RETURN_IF_ERROR(tdi_sde_interface_->WriteRegister(
@@ -1105,7 +1104,7 @@ TdiTableManager::ReadDirectMeterEntry(
   if (meter_entry.has_index()) {
     meter_index = meter_entry.index().index();
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Meter entry does not have valid index";
+    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
   }
 
   RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
