@@ -13,15 +13,14 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
-
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/common/common.pb.h"
+#include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/tdi_id_mapper.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/tdi/tdi_id_mapper.h"
-#include "stratum/hal/lib/tdi/macros.h"
-#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/lib/channel/channel.h"
 
 #ifdef TOFINO_TARGET
@@ -77,7 +76,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   ::util::Status SetParam(int id, const std::string& value) override;
   ::util::Status GetParam(int id, std::string* value) const override;
   ::util::Status SetParam(std::string field_name, uint64 value) override;
-  ::util::Status SetParam(std::string field_name,  const std::string& value) override;
+  ::util::Status SetParam(std::string field_name,
+                          const std::string& value) override;
   ::util::Status GetParam(std::string field_name, uint64* value) const override;
   ::util::Status SetActionMemberId(uint64 action_member_id) override;
   ::util::Status GetActionMemberId(uint64* action_member_id) const override;
@@ -125,7 +125,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
     static ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
     CreateSession() {
       std::shared_ptr<::tdi::Session> tdi_session;
-      const ::tdi::Device *device = nullptr;
+      const ::tdi::Device* device = nullptr;
       uint32 dev_id = 0;
       ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
       device->createSession(&tdi_session);
@@ -333,19 +333,13 @@ class TdiSdeWrapper : public TdiSdeInterface {
       uint32 action_selector_id) const override LOCKS_EXCLUDED(data_lock_);
 
   // Gets the Tdi table id from the Table name.
-  ::util::StatusOr<uint32> GetTableId(std::string &table_name) const override
+  ::util::StatusOr<uint32> GetTableId(std::string& table_name) const override
       LOCKS_EXCLUDED(data_lock_);
 
-#ifdef ES2K_TARGET
-  // FIXME: Target-specific code in a target-agnostic class. To be exorcised.
-  ::util::Status InitNotificationTableWithCallback(int dev_id,
-    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string &table_name,
-    // FIXME: These parameters need names.
-    void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
-    void *cookie) const
-        LOCKS_EXCLUDED(data_lock_);
-#endif
+  ::util::Status InitNotificationTableWithCallback(
+      int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const std::string& table_name, notification_table_callback_t callback,
+      void* cookie) const override LOCKS_EXCLUDED(data_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
@@ -461,7 +455,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<TdiPortManager::PortStatusEvent>>
-    port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
+      port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
@@ -473,7 +467,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
 
   // Pointer to the current BfR info object. Not owned by this class.
   const ::tdi::TdiInfo* tdi_info_ GUARDED_BY(data_lock_);
-
 };
 
 }  // namespace tdi
