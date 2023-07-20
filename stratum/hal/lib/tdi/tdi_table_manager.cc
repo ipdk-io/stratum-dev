@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
@@ -518,15 +518,11 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter" && request.has_meter_config()) {
-      bool meter_units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
       switch (meter.spec().unit()) {
         case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
         case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
           break;
         default:
           RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
@@ -1011,17 +1007,13 @@ TdiTableManager::ReadDirectMeterEntry(
       << "Wildcard MeterEntry reads are not supported.";
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
-  bool meter_units_in_bits;  // or packets
   {
     absl::ReaderMutexLock l(&lock_);
     ASSIGN_OR_RETURN(auto meter,
                      p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
     switch (meter.spec().unit()) {
       case ::p4::config::v1::MeterSpec::BYTES:
-        meter_units_in_bits = true;
-        break;
       case ::p4::config::v1::MeterSpec::PACKETS:
-        meter_units_in_bits = false;
         break;
       default:
         RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
