@@ -37,6 +37,10 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+if(absl_VERSION VERSION_GREATER_EQUAL "20230125")
+  add_compile_definitions(ABSL_LEGACY_THREAD_ANNOTATIONS)
+endif()
+
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
