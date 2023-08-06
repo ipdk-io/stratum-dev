@@ -35,6 +35,10 @@ if(ES2K_TARGET)
     find_package(OpenSSL REQUIRED)
 endif()
 
+if(absl_VERSION VERSION_GREATER_EQUAL "20230125")
+  add_compile_definitions(ABSL_LEGACY_THREAD_ANNOTATIONS)
+endif()
+
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
