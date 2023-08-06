@@ -35,6 +35,10 @@ if(ES2K_TARGET)
     find_package(OpenSSL REQUIRED)
 endif()
 
+if(absl_VERSION VERSION_GREATER_EQUAL "20230125")
+  add_compile_definitions(ABSL_LEGACY_THREAD_ANNOTATIONS)
+endif()
+
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
@@ -94,6 +98,9 @@ function(add_stratum_abseil_libs _TGT)
         absl::bad_optional_access
         absl::bad_variant_access
     )
+    if(absl_VERSION VERSION_GREATER_EQUAL 20230125)
+        target_link_libraries(${_TGT} PUBLIC absl::log_internal_check_op)
+    endif()
 endfunction()
 
 # Google libraries
