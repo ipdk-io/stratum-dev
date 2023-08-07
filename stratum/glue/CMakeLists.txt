@@ -35,8 +35,8 @@ add_library(stratum_utils SHARED
 target_link_libraries(stratum_utils PUBLIC
     absl::strings
     absl::synchronization
-    gflags
-    glog
+    gflags::gflags_shared
+    glog::glog
 )
 
 target_link_directories(stratum_utils PRIVATE

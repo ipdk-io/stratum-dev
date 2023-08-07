@@ -23,4 +23,7 @@ target_sources(stratum_glue_o PRIVATE
 
 target_include_directories(stratum_glue_o PUBLIC ${DEPEND_INSTALL_DIR}/include)
 
-target_link_libraries(stratum_glue_o PUBLIC gflags glog)
+target_link_libraries(stratum_glue_o PUBLIC
+    gflags::gflags_shared
+    glog::glog
+)

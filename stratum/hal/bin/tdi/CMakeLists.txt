@@ -53,11 +53,11 @@ target_link_libraries(tdi_pipeline_builder PUBLIC
 )
 
 target_link_libraries(tdi_pipeline_builder PUBLIC
-    protobuf
-    gflags
-    glog
-    grpc
-    grpc++
+    gflags::gflags_shared
+    glog::glog
+    gRPC::grpc
+    gRPC::grpc++
+    protobuf::libprotobuf
 )
 
 #add_dependencies(tdi_pipeline_builder p4runtime_proto stratum_proto)
