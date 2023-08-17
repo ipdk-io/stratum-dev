@@ -10,9 +10,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-static inline constexpr uint32_t CONFIG_BIT(int n) {
-    return 1U << n;
-}
+static inline constexpr uint32_t CONFIG_BIT(int n) { return 1U << n; }
 
 constexpr uint32_t GNMI_CONFIG_PORT_TYPE = CONFIG_BIT(0);
 constexpr uint32_t GNMI_CONFIG_DEVICE_TYPE = CONFIG_BIT(1);
@@ -37,13 +35,11 @@ constexpr uint32_t GNMI_CONFIG_PACKET_DIR = CONFIG_BIT(17);
 
 // Parameters that must be set for a VHOST port.
 constexpr uint32_t GNMI_CONFIG_VHOST_REQUIRED =
-    GNMI_CONFIG_PORT_TYPE | GNMI_CONFIG_DEVICE_TYPE |
-    GNMI_CONFIG_QUEUE_COUNT | GNMI_CONFIG_SOCKET_PATH |
-    GNMI_CONFIG_HOST_NAME;
+    GNMI_CONFIG_PORT_TYPE | GNMI_CONFIG_DEVICE_TYPE | GNMI_CONFIG_QUEUE_COUNT |
+    GNMI_CONFIG_SOCKET_PATH | GNMI_CONFIG_HOST_NAME;
 
 // Parameters that must not be set for a VHOST port.
-constexpr uint32_t GNMI_CONFIG_VHOST_UNSUPPORTED =
-    GNMI_CONFIG_PCI_BDF_VALUE;
+constexpr uint32_t GNMI_CONFIG_VHOST_UNSUPPORTED = GNMI_CONFIG_PCI_BDF_VALUE;
 
 // Parameters that must be set for a LINK port.
 constexpr uint32_t GNMI_CONFIG_LINK_REQUIRED =
@@ -60,8 +56,7 @@ constexpr uint32_t GNMI_CONFIG_TAP_REQUIRED = GNMI_CONFIG_PORT_TYPE;
 // Parameters that must not be set for a TAP port.
 constexpr uint32_t GNMI_CONFIG_TAP_UNSUPPORTED =
     GNMI_CONFIG_DEVICE_TYPE | GNMI_CONFIG_QUEUE_COUNT |
-    GNMI_CONFIG_SOCKET_PATH | GNMI_CONFIG_HOST_NAME |
-    GNMI_CONFIG_PCI_BDF_VALUE;
+    GNMI_CONFIG_SOCKET_PATH | GNMI_CONFIG_HOST_NAME | GNMI_CONFIG_PCI_BDF_VALUE;
 
 // Parameters that must be set for a HOTPLUG port.
 constexpr uint32_t GNMI_CONFIG_HOTPLUG_REQUIRED =
@@ -81,12 +76,12 @@ constexpr int32 MAX_MTU = 65535;
 constexpr uint32_t SDK_PORT_CONTROL_BASE = 256;
 
 enum qemu_cmd_type {
-   CHARDEV_ADD,
-   NETDEV_ADD,
-   DEVICE_ADD,
-   CHARDEV_DEL,
-   NETDEV_DEL,
-   DEVICE_DEL
+  CHARDEV_ADD,
+  NETDEV_ADD,
+  DEVICE_ADD,
+  CHARDEV_DEL,
+  NETDEV_DEL,
+  DEVICE_DEL
 };
 
 }  // namespace tdi

@@ -85,9 +85,9 @@ class DpdkChassisManager {
                               SetRequest::Request::Port::ValueCase value_case);
 
   // Sets the value of a hotplug configuration parameter.
-  ::util::Status SetHotplugParam(
-      uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-      DpdkHotplugParam param_type);
+  ::util::Status SetHotplugParam(uint64 node_id, uint32 port_id,
+                                 const SingletonPort& singleton_port,
+                                 DpdkHotplugParam param_type);
 
   // DpdkChassisManager is neither copyable nor movable.
   DpdkChassisManager(const DpdkChassisManager&) = delete;
@@ -115,8 +115,8 @@ class DpdkChassisManager {
   // class.
   DpdkChassisManager(OperationMode mode, DpdkPortManager* port_manager);
 
-  ::util::StatusOr<const DpdkPortConfig*> GetPortConfig(
-      uint64 node_id, uint32 port_id) const
+  ::util::StatusOr<const DpdkPortConfig*> GetPortConfig(uint64 node_id,
+                                                        uint32 port_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Returns the state of a port given its ID and the ID of its node.

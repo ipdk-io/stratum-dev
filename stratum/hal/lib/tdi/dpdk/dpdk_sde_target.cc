@@ -4,10 +4,9 @@
 
 // DPDK-specific SDE wrapper methods.
 
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
-
 #include <stdio.h>
 #include <string.h>
+
 #include <algorithm>
 #include <memory>
 #include <ostream>
@@ -22,11 +21,12 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/lib/utils.h"
 
 extern "C" {
-#include "bf_switchd/lib/bf_switchd_lib_init.h"
 #include "bf_pal/dev_intf.h"
+#include "bf_switchd/lib/bf_switchd_lib_init.h"
 }
 
 namespace stratum {
@@ -39,18 +39,16 @@ using namespace stratum::hal::tdi::helpers;
   return true;
 }
 
-std::string TdiSdeWrapper::GetChipType(int device) const {
-  return "DPDK";
-}
+std::string TdiSdeWrapper::GetChipType(int device) const { return "DPDK"; }
 
 std::string TdiSdeWrapper::GetSdeVersion() const {
   // TODO tdi version
   return "1.0.0";
 }
 
-::util::Status TdiSdeWrapper::InitializeSde(
-    const std::string& sde_install_path, const std::string& sde_config_file,
-    bool run_in_background) {
+::util::Status TdiSdeWrapper::InitializeSde(const std::string& sde_install_path,
+                                            const std::string& sde_config_file,
+                                            bool run_in_background) {
   CHECK_RETURN_IF_FALSE(sde_install_path != "")
       << "sde_install_path is required";
   CHECK_RETURN_IF_FALSE(sde_config_file != "") << "sde_config_file is required";
@@ -102,18 +100,18 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddDevice(
-    int dev_id, const TdiDeviceConfig& device_config) {
-  const ::tdi::Device *device = nullptr;
+::util::Status TdiSdeWrapper::AddDevice(int dev_id,
+                                        const TdiDeviceConfig& device_config) {
+  const ::tdi::Device* device = nullptr;
   absl::WriterMutexLock l(&data_lock_);
 
   CHECK_RETURN_IF_FALSE(device_config.programs_size() > 0);
 
   tdi_id_mapper_.reset();
 
-  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_begin(
-      dev_id, BF_DEV_WARM_INIT_FAST_RECFG,
-      /* upgrade_agents */ true));
+  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_begin(dev_id,
+                                                    BF_DEV_WARM_INIT_FAST_RECFG,
+                                                    /* upgrade_agents */ true));
   bf_device_profile_t device_profile = {};
 
   // Commit new files to disk and build device profile for SDE to load.
@@ -171,8 +169,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_end(dev_id));
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
-  RETURN_IF_TDI_ERROR(device->tdiInfoGet(
-       device_config.programs(0).name(), &tdi_info_));
+  RETURN_IF_TDI_ERROR(
+      device->tdiInfoGet(device_config.programs(0).name(), &tdi_info_));
 
   // FIXME: if all we ever do is create and push, this could be one call.
   tdi_id_mapper_ = TdiIdMapper::CreateInstance();

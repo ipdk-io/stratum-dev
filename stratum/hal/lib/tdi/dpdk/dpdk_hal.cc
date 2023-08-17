@@ -6,8 +6,9 @@
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 
 #include <limits.h>
-#include <utility>
 #include <stdio.h>
+
+#include <utility>
 
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
@@ -90,8 +91,7 @@ int DpdkHal::pipe_write_fd_ = -1;
 
 DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
                  AuthPolicyChecker* auth_policy_checker,
-                 absl::Notification* ready_sync,
-                 absl::Notification* done_sync)
+                 absl::Notification* ready_sync, absl::Notification* done_sync)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -117,13 +117,10 @@ DpdkHal::~DpdkHal() {
 
   auto it = std::find_if(
       external_stratum_urls.begin(), external_stratum_urls.end(),
-      [](const std::string& url) {
-          return (url == FLAGS_local_stratum_url);
-      });
+      [](const std::string& url) { return (url == FLAGS_local_stratum_url); });
   CHECK_RETURN_IF_FALSE(it == external_stratum_urls.end())
       << "You used one of these reserved local URLs as an external URL: "
-      << FLAGS_local_stratum_url
-      << ".";
+      << FLAGS_local_stratum_url << ".";
 
   CHECK_RETURN_IF_FALSE(!FLAGS_persistent_config_dir.empty())
       << "persistent_config_dir flag needs to be explicitly given.";
@@ -133,13 +130,11 @@ DpdkHal::~DpdkHal() {
   return ::util::OkStatus();
 }
 
-::util::Status DpdkHal::Setup() {
-    return Setup(FLAGS_warmboot);
-}
+::util::Status DpdkHal::Setup() { return Setup(FLAGS_warmboot); }
 
 ::util::Status DpdkHal::Setup(bool warmboot) {
-  LOG(INFO) << "Setting up HAL in "
-            << (warmboot ? "WARMBOOT" : "COLDBOOT") << " mode...";
+  LOG(INFO) << "Setting up HAL in " << (warmboot ? "WARMBOOT" : "COLDBOOT")
+            << " mode...";
 
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
 
@@ -147,7 +142,7 @@ DpdkHal::~DpdkHal() {
   // created, so we ensure that the saved configuration file is empty
   // on startup.
   FILE* pipeline_cfg_file =
-    fopen(FLAGS_forwarding_pipeline_configs_file.c_str(), "wb");
+      fopen(FLAGS_forwarding_pipeline_configs_file.c_str(), "wb");
   if (pipeline_cfg_file != NULL) {
     LOG(INFO) << "Truncating saved pipeline configuration file.";
     fclose(pipeline_cfg_file);
@@ -214,27 +209,34 @@ DpdkHal::~DpdkHal() {
       LOG(WARNING) << "Warning: Flag set to open gRPC insecure ports";
       log_output_str = "[insecure mode] ";
       builder.AddListeningPort(FLAGS_local_stratum_url,
-                              ::grpc::InsecureServerCredentials());
+                               ::grpc::InsecureServerCredentials());
 
       for (const auto& url : external_stratum_urls) {
         builder.AddListeningPort(url, ::grpc::InsecureServerCredentials());
       }
     } else {
       log_output_str = "[secure mode] ";
-      auto credentials_manager = stratum::CredentialsManager::CreateInstance(true);
+      auto credentials_manager =
+          stratum::CredentialsManager::CreateInstance(true);
       if (!credentials_manager.ok()) {
-        LOG(ERROR) << "Credentials Manager initialization failed. Unable to open ports for gRPC";
-        // assert(credentials_manager.ok()); // Without gRPC, InfraP4D cannot do much. Exit process
+        LOG(ERROR) << "Credentials Manager initialization failed. Unable to "
+                      "open ports for gRPC";
+        // assert(credentials_manager.ok()); // Without gRPC, InfraP4D cannot do
+        // much. Exit process
         // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
-        exit(1);        
+        exit(1);
       } else {
         auto resp = credentials_manager.ConsumeValueOrDie();
-        auto server_credentials = resp.get()->GenerateExternalFacingServerCredentials();
+        auto server_credentials =
+            resp.get()->GenerateExternalFacingServerCredentials();
         if (server_credentials == nullptr) {
-          LOG(ERROR) << "Unable to initiate server credentials. This is an internal error.";
-          // assert(server_credentials); // Without gRPC, InfraP4D cannot do much. Exit process
-          // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for now
-          exit(1);        
+          LOG(ERROR) << "Unable to initiate server credentials. This is an "
+                        "internal error.";
+          // assert(server_credentials); // Without gRPC, InfraP4D cannot do
+          // much. Exit process
+          // TODO(5abeel): assert() is resulting in a no-op. Using exit(1) for
+          // now
+          exit(1);
         }
 
         builder.AddListeningPort(FLAGS_local_stratum_url, server_credentials);
@@ -242,7 +244,6 @@ DpdkHal::~DpdkHal() {
         for (const auto& url : external_stratum_urls) {
           builder.AddListeningPort(url, server_credentials);
         }
-
       }
     }
 

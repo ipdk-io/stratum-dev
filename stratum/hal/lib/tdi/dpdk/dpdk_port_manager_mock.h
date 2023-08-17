@@ -16,22 +16,21 @@ class DpdkPortManagerMock : public DpdkPortManager {
  public:
   // ---------- Common public methods ----------
 
-  MOCK_METHOD(
-      ::util::Status, RegisterPortStatusEventWriter,
-      (std::unique_ptr<ChannelWriter<PortStatusEvent>> writer),
-      (override));
+  MOCK_METHOD(::util::Status, RegisterPortStatusEventWriter,
+              (std::unique_ptr<ChannelWriter<PortStatusEvent>> writer),
+              (override));
 
   MOCK_METHOD(::util::Status, UnregisterPortStatusEventWriter, (), (override));
 
   MOCK_METHOD(::util::Status, GetPortInfo,
-              (int device, int port, TargetDatapathId *target_dp_id),
+              (int device, int port, TargetDatapathId* target_dp_id),
               (override));
 
   MOCK_METHOD(::util::StatusOr<PortState>, GetPortState, (int device, int port),
               (override));
 
   MOCK_METHOD(::util::Status, GetPortCounters,
-               (int device, int port, PortCounters* counters), (override));
+              (int device, int port, PortCounters* counters), (override));
 
   MOCK_METHOD(::util::StatusOr<uint32>, GetPortIdFromPortKey,
               (int device, const PortKey& port_key), (override));

@@ -17,7 +17,6 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
-
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
@@ -48,8 +47,8 @@ constexpr int DpdkChassisManager::kMaxXcvrEventDepth;
 
 constexpr uint64 SPEED_BPS_UNKNOWN = 0;
 
-DpdkChassisManager::DpdkChassisManager(
-    OperationMode mode, DpdkPortManager* port_manager)
+DpdkChassisManager::DpdkChassisManager(OperationMode mode,
+                                       DpdkPortManager* port_manager)
     : mode_(mode),
       initialized_(false),
       gnmi_event_writer_(nullptr),
@@ -128,7 +127,7 @@ bool HasUnsupportedParams(const DpdkPortConfig& config) {
   return false;
 }
 
-} // namespace
+}  // namespace
 
 // Determines whether a port parameter has been configured.
 bool DpdkChassisManager::IsPortParamSet(
@@ -140,10 +139,8 @@ bool DpdkChassisManager::IsPortParamSet(
 
 // Sets the value of a port configuration parameter.
 ::util::Status DpdkChassisManager::SetPortParam(
-    uint64 node_id, uint32 port_id,
-    const SingletonPort& singleton_port,
+    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
     SetRequest::Request::Port::ValueCase value_case) {
-
   auto& config = node_id_to_port_id_to_port_config_[node_id][port_id];
   RETURN_IF_ERROR(config.SetParam(value_case, singleton_port));
 
@@ -180,12 +177,11 @@ bool DpdkChassisManager::IsPortParamSet(
 ::util::Status DpdkChassisManager::SetHotplugParam(
     uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
     DpdkHotplugParam param_type) {
-
   auto& config = node_id_to_port_id_to_port_config_[node_id][port_id];
   RETURN_IF_ERROR(config.SetHotplugParam(param_type, singleton_port));
 
   auto hotplug_params =
-    static_cast<DpdkPortManager::HotplugConfigParams*>(&config.hotplug);
+      static_cast<DpdkPortManager::HotplugConfigParams*>(&config.hotplug);
   auto unit = node_id_to_unit_[node_id];
   auto sdk_port_id = node_id_to_port_id_to_sdk_port_id_[node_id][port_id];
 
@@ -202,8 +198,8 @@ bool DpdkChassisManager::IsPortParamSet(
              << "Unsupported operation: requested port is already hotplugged";
     }
 
-    RETURN_IF_ERROR(HotplugPortHelper(node_id, unit, sdk_port_id,
-                                      singleton_port, &config));
+    RETURN_IF_ERROR(
+        HotplugPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
     config.hotplug_done = true;
     LOG(INFO) << "Port was successfully hotplugged";
 
@@ -217,8 +213,8 @@ bool DpdkChassisManager::IsPortParamSet(
       return MAKE_ERROR(ERR_INTERNAL)
              << "Unsupported operation: no hotplugged device to delete";
     }
-    RETURN_IF_ERROR(HotplugPortHelper(node_id, unit, sdk_port_id,
-                                      singleton_port, &config));
+    RETURN_IF_ERROR(
+        HotplugPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
     config.Remove(GNMI_CONFIG_HOTPLUG_REQUIRED);
     config.hotplug_done = false;
     hotplug_params->qemu_hotplug_mode = HOTPLUG_MODE_NONE;
@@ -227,7 +223,6 @@ bool DpdkChassisManager::IsPortParamSet(
   google::FlushLogFiles(google::INFO);
   return ::util::OkStatus();
 }
-
 
 ::util::Status DpdkChassisManager::AddPortHelper(
     uint64 node_id, int unit, uint32 sdk_port_id,
@@ -241,13 +236,13 @@ bool DpdkChassisManager::IsPortParamSet(
 
   if (config_params.admin_state() == ADMIN_STATE_UNKNOWN) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
-        << "Invalid admin state for port " << port_id << " in node " << node_id
-        << " (SDK Port " << sdk_port_id << ").";
+           << "Invalid admin state for port " << port_id << " in node "
+           << node_id << " (SDK Port " << sdk_port_id << ").";
   }
   if (config_params.admin_state() == ADMIN_STATE_DIAG) {
     return MAKE_ERROR(ERR_UNIMPLEMENTED)
-        << "Unsupported 'diags' admin state for port " << port_id << " in node "
-        << node_id << " (SDK Port " << sdk_port_id << ").";
+           << "Unsupported 'diags' admin state for port " << port_id
+           << " in node " << node_id << " (SDK Port " << sdk_port_id << ").";
   }
 
   config->admin_state = ADMIN_STATE_DISABLED;
@@ -286,10 +281,10 @@ bool DpdkChassisManager::IsPortParamSet(
   uint32 port_id = singleton_port.id();
 
   LOG(INFO) << "Hotplugging port " << port_id << " in node " << node_id
-      << " (SDK Port " << sdk_port_id << ").";
+            << " (SDK Port " << sdk_port_id << ").";
 
-  RETURN_IF_ERROR(port_manager_->HotplugPort(unit, sdk_port_id,
-                                              config->hotplug));
+  RETURN_IF_ERROR(
+      port_manager_->HotplugPort(unit, sdk_port_id, config->hotplug));
 
   return ::util::OkStatus();
 }
@@ -310,20 +305,20 @@ bool DpdkChassisManager::IsPortParamSet(
   if (!port_manager_->IsValidPort(unit, sdk_port_id)) {
     config->admin_state = ADMIN_STATE_UNKNOWN;
     return MAKE_ERROR(ERR_INTERNAL)
-        << "Port " << port_id << " in node " << node_id << " is not valid"
-        << " (SDK Port " << sdk_port_id << ").";
+           << "Port " << port_id << " in node " << node_id << " is not valid"
+           << " (SDK Port " << sdk_port_id << ").";
   }
 
   const auto& config_params = singleton_port.config_params();
   if (config_params.admin_state() == ADMIN_STATE_UNKNOWN) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
-        << "Invalid admin state for port " << port_id << " in node " << node_id
-        << " (SDK Port " << sdk_port_id << ").";
+           << "Invalid admin state for port " << port_id << " in node "
+           << node_id << " (SDK Port " << sdk_port_id << ").";
   }
   if (config_params.admin_state() == ADMIN_STATE_DIAG) {
     return MAKE_ERROR(ERR_UNIMPLEMENTED)
-        << "Unsupported 'diags' admin state for port " << port_id << " in node "
-        << node_id << " (SDK Port " << sdk_port_id << ").";
+           << "Unsupported 'diags' admin state for port " << port_id
+           << " in node " << node_id << " (SDK Port " << sdk_port_id << ").";
   }
 
   bool config_changed = false;
@@ -391,8 +386,8 @@ bool DpdkChassisManager::IsPortParamSet(
     auto* unit = gtl::FindOrNull(node_id_to_unit, node_id);
     if (unit == nullptr) {
       return MAKE_ERROR(ERR_INVALID_PARAM)
-          << "Invalid ChassisConfig, unknown node id " << node_id
-          << " for port " << port_id << ".";
+             << "Invalid ChassisConfig, unknown node id " << node_id
+             << " for port " << port_id << ".";
     }
     node_id_to_port_id_to_port_state[node_id][port_id] = PORT_STATE_UNKNOWN;
     node_id_to_port_id_to_time_last_changed[node_id][port_id] =
@@ -436,7 +431,7 @@ bool DpdkChassisManager::IsPortParamSet(
       // new port
       // if anything fails, config.admin_state will be set to
       // ADMIN_STATE_UNKNOWN (invalid)
-      //RETURN_IF_ERROR(
+      // RETURN_IF_ERROR(
       //    AddPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
       continue;
     } else {
@@ -609,16 +604,16 @@ bool DpdkChassisManager::IsPortParamSet(
     if (node_id_to_port_id_to_singleton_port_key !=
         node_id_to_port_id_to_singleton_port_key_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in the port layout. The stack "
-          << "needs to be rebooted to finish config push.";
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in the port layout. The stack "
+             << "needs to be rebooted to finish config push.";
     }
 
     if (node_id_to_unit != node_id_to_unit_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in node_id_to_unit. The stack "
-          << "needs to be rebooted to finish config push.";
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in node_id_to_unit. The stack "
+             << "needs to be rebooted to finish config push.";
     }
   }
 
@@ -638,8 +633,8 @@ bool DpdkChassisManager::IsPortParamSet(
   return ::util::OkStatus();
 }
 
-::util::StatusOr<const DpdkPortConfig*>
-DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
+::util::StatusOr<const DpdkPortConfig*> DpdkChassisManager::GetPortConfig(
+    uint64 node_id, uint32 port_id) const {
   auto* port_id_to_config =
       gtl::FindOrNull(node_id_to_port_id_to_port_config_, node_id);
   CHECK_RETURN_IF_FALSE(port_id_to_config != nullptr)
@@ -676,7 +671,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
 
-  ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId( node_id, port_id));
+  ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
   ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
   return port_manager_->GetPortInfo(unit, sdk_port_id, target_dp_id);
 }
@@ -819,8 +814,9 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return node_id_to_port_id_to_time_last_changed_[node_id][port_id];
 }
 
-::util::Status DpdkChassisManager::GetPortCounters(
-    uint64 node_id, uint32 port_id, PortCounters* counters) {
+::util::Status DpdkChassisManager::GetPortCounters(uint64 node_id,
+                                                   uint32 port_id,
+                                                   PortCounters* counters) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
@@ -865,8 +861,8 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
     // NOTE: This is the legacy AddPort method. DPDK does not support it.
-    RETURN_IF_ERROR(port_manager_->AddPort(
-        unit, sdk_port_id, SPEED_BPS_UNKNOWN, FEC_MODE_UNKNOWN));
+    RETURN_IF_ERROR(port_manager_->AddPort(unit, sdk_port_id, SPEED_BPS_UNKNOWN,
+                                           FEC_MODE_UNKNOWN));
     config_new->admin_state = ADMIN_STATE_DISABLED;
 
     if (config.admin_state == ADMIN_STATE_ENABLED) {
@@ -893,8 +889,7 @@ DpdkChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
 std::unique_ptr<DpdkChassisManager> DpdkChassisManager::CreateInstance(
     OperationMode mode, DpdkPortManager* port_manager) {
-  return absl::WrapUnique(
-      new DpdkChassisManager(mode, port_manager));
+  return absl::WrapUnique(new DpdkChassisManager(mode, port_manager));
 }
 
 ::util::StatusOr<int> DpdkChassisManager::GetUnitFromNodeId(

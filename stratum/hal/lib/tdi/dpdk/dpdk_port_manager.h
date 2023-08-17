@@ -30,7 +30,6 @@ namespace tdi {
 
 class DpdkPortManager : public TdiPortManager {
  public:
-
   struct PortConfigParams {
     DpdkPortType port_type;
     DpdkDeviceType device_type;
@@ -68,15 +67,14 @@ class DpdkPortManager : public TdiPortManager {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId *target_dp_id);
+                             TargetDatapathId* target_dp_id);
 
   ::util::StatusOr<PortState> GetPortState(int device, int port);
 
-  ::util::Status GetPortCounters(int device, int port,
-                                 PortCounters* counters);
+  ::util::Status GetPortCounters(int device, int port, PortCounters* counters);
 
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key);
+  ::util::StatusOr<uint32> GetPortIdFromPortKey(int device,
+                                                const PortKey& port_key);
 
   bool IsValidPort(int device, int port);
 
@@ -95,8 +93,8 @@ class DpdkPortManager : public TdiPortManager {
                                  FecMode fec_mode);
 
   // Adds a new port with the given parameters.
-  virtual ::util::Status AddPort(
-      int device, int port, const PortConfigParams& config);
+  virtual ::util::Status AddPort(int device, int port,
+                                 const PortConfigParams& config);
 
   // Adds/deletes a hotplug port.
   virtual ::util::Status HotplugPort(int device, int port,
@@ -145,7 +143,7 @@ class DpdkPortManager : public TdiPortManager {
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-    GUARDED_BY(port_status_event_writer_lock_);
+      GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

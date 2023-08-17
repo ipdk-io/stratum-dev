@@ -29,13 +29,13 @@
 #undef IPU_ADD_NEW_PORT
 
 #if !defined(IPU_ADD_NEW_PORT)
-  #define EXPECT_ADD_PORT_CALL(unit, port, config)
-  #define EXPECT_ENABLE_PORT_CALL(unit, port)
+#define EXPECT_ADD_PORT_CALL(unit, port, config)
+#define EXPECT_ENABLE_PORT_CALL(unit, port)
 #else
-  #define EXPECT_ADD_PORT_CALL(unit, port, config) \
-    EXPECT_CALL(*port_manager_, AddPort((unit), (port), _))
-  #define EXPECT_ENABLE_PORT_CALL(unit, port) \
-    EXPECT_CALL(*port_manager_, EnablePort(unit, port))
+#define EXPECT_ADD_PORT_CALL(unit, port, config) \
+  EXPECT_CALL(*port_manager_, AddPort((unit), (port), _))
+#define EXPECT_ENABLE_PORT_CALL(unit, port) \
+  EXPECT_CALL(*port_manager_, EnablePort(unit, port))
 #endif
 
 namespace stratum {
@@ -281,12 +281,13 @@ TEST_F(DpdkChassisManagerTest, RemovePort) {
 TEST_F(DpdkChassisManagerTest, IsPortParamSet) {
   SingletonPort sport;
   sport.mutable_config_params()->set_port_type(PORT_TYPE_VHOST);
-  ASSERT_FALSE(chassis_manager_->IsPortParamSet(
-      kUnit, kPort, ValueCase::kPortType));
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-      kUnit, kPort, sport, ValueCase::kPortType).ok());
-  ASSERT_TRUE(chassis_manager_->IsPortParamSet(
-      kUnit, kPort, ValueCase::kPortType));
+  ASSERT_FALSE(
+      chassis_manager_->IsPortParamSet(kUnit, kPort, ValueCase::kPortType));
+  ASSERT_TRUE(
+      chassis_manager_->SetPortParam(kUnit, kPort, sport, ValueCase::kPortType)
+          .ok());
+  ASSERT_TRUE(
+      chassis_manager_->IsPortParamSet(kUnit, kPort, ValueCase::kPortType));
 }
 
 TEST_F(DpdkChassisManagerTest, SetPortParam) {
@@ -309,16 +310,21 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
   config_params->set_socket_path("/socket/to/me");
   config_params->set_host_name("Fawlty");
 
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-                  kUnit, kPort, *sport, ValueCase::kPortType).ok());
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-                  kUnit, kPort, *sport, ValueCase::kDeviceType).ok());
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-                  kUnit, kPort, *sport, ValueCase::kQueueCount).ok());
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-                  kUnit, kPort, *sport, ValueCase::kSockPath).ok());
-  ASSERT_TRUE(chassis_manager_->SetPortParam(
-                  kUnit, kPort, *sport, ValueCase::kHostConfig).ok());
+  ASSERT_TRUE(
+      chassis_manager_->SetPortParam(kUnit, kPort, *sport, ValueCase::kPortType)
+          .ok());
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kDeviceType)
+                  .ok());
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kQueueCount)
+                  .ok());
+  ASSERT_TRUE(
+      chassis_manager_->SetPortParam(kUnit, kPort, *sport, ValueCase::kSockPath)
+          .ok());
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kHostConfig)
+                  .ok());
 }
 
 TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
@@ -326,8 +332,9 @@ TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
   PortConfigParams* config_params = sport.mutable_config_params();
   HotplugConfig* hotplug_config = config_params->mutable_hotplug_config();
   hotplug_config->set_qemu_socket_ip("/qemu/socket_ip");
-  ASSERT_TRUE(chassis_manager_->SetHotplugParam(
-                  kUnit, kPort, sport, PARAM_SOCK_IP).ok());
+  ASSERT_TRUE(
+      chassis_manager_->SetHotplugParam(kUnit, kPort, sport, PARAM_SOCK_IP)
+          .ok());
 }
 
 TEST_F(DpdkChassisManagerTest, ReplayPorts) {

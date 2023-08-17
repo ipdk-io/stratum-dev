@@ -22,37 +22,35 @@ namespace tdi {
 // ValueCase is not known.
 uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
   switch (value_case) {
-  case ValueCase::kPortType:
-    return GNMI_CONFIG_PORT_TYPE;
-  case ValueCase::kDeviceType:
-    return GNMI_CONFIG_DEVICE_TYPE;
-  case ValueCase::kQueueCount:
-    return GNMI_CONFIG_QUEUE_COUNT;
-  case ValueCase::kSockPath:
-    return GNMI_CONFIG_SOCKET_PATH;
+    case ValueCase::kPortType:
+      return GNMI_CONFIG_PORT_TYPE;
+    case ValueCase::kDeviceType:
+      return GNMI_CONFIG_DEVICE_TYPE;
+    case ValueCase::kQueueCount:
+      return GNMI_CONFIG_QUEUE_COUNT;
+    case ValueCase::kSockPath:
+      return GNMI_CONFIG_SOCKET_PATH;
 
-  case ValueCase::kHostConfig:
-    return GNMI_CONFIG_HOST_NAME;
-  case ValueCase::kPipelineName:
-    return GNMI_CONFIG_PIPELINE_NAME;
-  case ValueCase::kMempoolName:
-    return GNMI_CONFIG_MEMPOOL_NAME;
-  case ValueCase::kMtuValue:
-    return GNMI_CONFIG_MTU_VALUE;
+    case ValueCase::kHostConfig:
+      return GNMI_CONFIG_HOST_NAME;
+    case ValueCase::kPipelineName:
+      return GNMI_CONFIG_PIPELINE_NAME;
+    case ValueCase::kMempoolName:
+      return GNMI_CONFIG_MEMPOOL_NAME;
+    case ValueCase::kMtuValue:
+      return GNMI_CONFIG_MTU_VALUE;
 
-  case ValueCase::kPciBdf:
-    return GNMI_CONFIG_PCI_BDF_VALUE;
-  case ValueCase::kPacketDir:
-    return GNMI_CONFIG_PACKET_DIR;
-  default:
-    return 0;
+    case ValueCase::kPciBdf:
+      return GNMI_CONFIG_PCI_BDF_VALUE;
+    case ValueCase::kPacketDir:
+      return GNMI_CONFIG_PACKET_DIR;
+    default:
+      return 0;
   }
 }
 
-::util::Status DpdkPortConfig::SetParam(
-    ValueCase value_case,
-    const SingletonPort& singleton_port) {
-
+::util::Status DpdkPortConfig::SetParam(ValueCase value_case,
+                                        const SingletonPort& singleton_port) {
   const auto& config_params = singleton_port.config_params();
 
   switch (value_case) {
@@ -112,8 +110,8 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
     case ValueCase::kMtuValue:
       if (config_params.mtu() > MAX_MTU) {
         return MAKE_ERROR(ERR_INVALID_PARAM)
-             << "Unsupported MTU = " << config_params.mtu()
-             << ". MTU should be less than " << MAX_MTU << ".";
+               << "Unsupported MTU = " << config_params.mtu()
+               << ". MTU should be less than " << MAX_MTU << ".";
       }
       cfg.mtu = config_params.mtu();
       params_set |= GNMI_CONFIG_MTU_VALUE;
@@ -133,8 +131,7 @@ uint32_t DpdkPortConfig::ParamMaskForCase(ValueCase value_case) {
 }
 
 ::util::Status DpdkPortConfig::SetHotplugParam(
-  DpdkHotplugParam param_type, const SingletonPort& singleton_port) {
-
+    DpdkHotplugParam param_type, const SingletonPort& singleton_port) {
   const auto& params = singleton_port.config_params().hotplug_config();
 
   switch (param_type) {
