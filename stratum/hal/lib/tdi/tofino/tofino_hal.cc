@@ -6,6 +6,7 @@
 #include "stratum/hal/lib/tdi/tofino/tofino_hal.h"
 
 #include <limits.h>
+
 #include <utility>
 
 #include "absl/base/macros.h"
@@ -106,13 +107,10 @@ TofinoHal::~TofinoHal() {
 
   auto it = std::find_if(
       external_stratum_urls.begin(), external_stratum_urls.end(),
-      [](const std::string& url) {
-          return (url == FLAGS_local_stratum_url);
-      });
+      [](const std::string& url) { return (url == FLAGS_local_stratum_url); });
   CHECK_RETURN_IF_FALSE(it == external_stratum_urls.end())
       << "You used one of these reserved local URLs as an external URL: "
-      << FLAGS_local_stratum_url
-      << ".";
+      << FLAGS_local_stratum_url << ".";
 
   CHECK_RETURN_IF_FALSE(!FLAGS_persistent_config_dir.empty())
       << "persistent_config_dir flag needs to be explicitly given.";
@@ -122,13 +120,11 @@ TofinoHal::~TofinoHal() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoHal::Setup() {
-    return Setup(FLAGS_warmboot);
-}
+::util::Status TofinoHal::Setup() { return Setup(FLAGS_warmboot); }
 
 ::util::Status TofinoHal::Setup(bool warmboot) {
-  LOG(INFO) << "Setting up HAL in "
-            << (warmboot ? "WARMBOOT" : "COLDBOOT") << " mode...";
+  LOG(INFO) << "Setting up HAL in " << (warmboot ? "WARMBOOT" : "COLDBOOT")
+            << " mode...";
 
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_persistent_config_dir));
 
@@ -235,10 +231,9 @@ void TofinoHal::HandleSignal(int value) {
   external_server_->Shutdown(absl::ToChronoTime(absl::Now()));
 }
 
-TofinoHal* TofinoHal::CreateSingleton(
-    OperationMode mode,
-    SwitchInterface* switch_interface,
-    AuthPolicyChecker* auth_policy_checker) {
+TofinoHal* TofinoHal::CreateSingleton(OperationMode mode,
+                                      SwitchInterface* switch_interface,
+                                      AuthPolicyChecker* auth_policy_checker) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
     singleton_ = new TofinoHal(mode, switch_interface, auth_policy_checker);

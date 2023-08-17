@@ -41,10 +41,8 @@ constexpr int TofinoChassisManager::kMaxPortStatusEventDepth;
 constexpr int TofinoChassisManager::kMaxXcvrEventDepth;
 
 TofinoChassisManager::TofinoChassisManager(
-    OperationMode mode,
-    PhalInterface* phal_interface,
-    TdiSdeInterface* tdi_sde_interface,
-    TofinoPortManager* tofino_port_manager)
+    OperationMode mode, PhalInterface* phal_interface,
+    TdiSdeInterface* tdi_sde_interface, TofinoPortManager* tofino_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -117,8 +115,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   config->fec_mode = config_params.fec_mode();
 
   if (config_params.mtu() != 0) {
-    RETURN_IF_ERROR(
-        tofino_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortMtu(unit, sdk_port_id,
+                                                     config_params.mtu()));
   }
   config->mtu = config_params.mtu();
   if (config_params.autoneg() != TRI_STATE_UNKNOWN) {
@@ -143,8 +141,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
-  RETURN_IF_ERROR(
-      tofino_port_manager_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_FALSE));
+  RETURN_IF_ERROR(tofino_port_manager_->EnablePortShaping(unit, sdk_port_id,
+                                                          TRI_STATE_FALSE));
 
   return ::util::OkStatus();
 }
@@ -223,8 +221,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
             << " changed"
             << " (SDK Port " << sdk_port_id << ").";
     config->mtu.reset();
-    RETURN_IF_ERROR(
-        tofino_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+    RETURN_IF_ERROR(tofino_port_manager_->SetPortMtu(unit, sdk_port_id,
+                                                     config_params.mtu()));
     config->mtu = config_params.mtu();
     config_changed = true;
   }
@@ -336,8 +334,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
         singleton_port_key;
 
     // Translate the logical SDN port to SDK port (BF device port ID)
-    ASSIGN_OR_RETURN(uint32 sdk_port, tofino_port_manager_->GetPortIdFromPortKey(
-                                          *unit, singleton_port_key));
+    ASSIGN_OR_RETURN(
+        uint32 sdk_port,
+        tofino_port_manager_->GetPortIdFromPortKey(*unit, singleton_port_key));
     node_id_to_port_id_to_sdk_port_id[node_id][port_id] = sdk_port;
     node_id_to_sdk_port_id_to_port_id[node_id][sdk_port] = port_id;
 
@@ -527,8 +526,8 @@ TofinoChassisManager::~TofinoChassisManager() = default;
           << "Invalid port shaping config " << shaping_config.ShortDebugString()
           << ".";
   }
-  RETURN_IF_ERROR(
-      tofino_port_manager_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_TRUE));
+  RETURN_IF_ERROR(tofino_port_manager_->EnablePortShaping(unit, sdk_port_id,
+                                                          TRI_STATE_TRUE));
   LOG(INFO) << "Configured port shaping on SDK port " << sdk_port_id
             << " in node " << node_id << ": "
             << shaping_config.ShortDebugString() << ".";
@@ -841,9 +840,11 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     }
     default:
       RETURN_ERROR(ERR_UNIMPLEMENTED)
-        << "DataRequest field "
-        << request.descriptor()->FindFieldByNumber(request.request_case())->name()
-        << " is not supported yet!";
+          << "DataRequest field "
+          << request.descriptor()
+                 ->FindFieldByNumber(request.request_case())
+                 ->name()
+          << " is not supported yet!";
   }
   return resp;
 }
@@ -892,8 +893,9 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return node_id_to_port_id_to_time_last_changed_[node_id][port_id];
 }
 
-::util::Status TofinoChassisManager::GetPortCounters(
-    uint64 node_id, uint32 port_id, PortCounters* counters) {
+::util::Status TofinoChassisManager::GetPortCounters(uint64 node_id,
+                                                     uint32 port_id,
+                                                     PortCounters* counters) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
@@ -902,8 +904,8 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return tofino_port_manager_->GetPortCounters(unit, sdk_port_id, counters);
 }
 
-::util::StatusOr<std::map<uint64, int>> TofinoChassisManager::GetNodeIdToUnitMap()
-    const {
+::util::StatusOr<std::map<uint64, int>>
+TofinoChassisManager::GetNodeIdToUnitMap() const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
@@ -960,8 +962,8 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       config_new->mtu = *config.mtu;
     }
     if (config.autoneg) {
-      RETURN_IF_ERROR(tofino_port_manager_->SetPortAutonegPolicy(unit, sdk_port_id,
-                                                              *config.autoneg));
+      RETURN_IF_ERROR(tofino_port_manager_->SetPortAutonegPolicy(
+          unit, sdk_port_id, *config.autoneg));
       config_new->autoneg = *config.autoneg;
     }
     if (config.loopback_mode) {
@@ -1040,9 +1042,10 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
 std::unique_ptr<TofinoChassisManager> TofinoChassisManager::CreateInstance(
     OperationMode mode, PhalInterface* phal_interface,
-    TdiSdeInterface* tdi_sde_interface, TofinoPortManager* tofino_port_manager) {
+    TdiSdeInterface* tdi_sde_interface,
+    TofinoPortManager* tofino_port_manager) {
   return absl::WrapUnique(new TofinoChassisManager(
-        mode, phal_interface, tdi_sde_interface, tofino_port_manager));
+      mode, phal_interface, tdi_sde_interface, tofino_port_manager));
 }
 
 void TofinoChassisManager::SendPortOperStateGnmiEvent(
@@ -1100,9 +1103,8 @@ void TofinoChassisManager::ReadPortStatusEvents(
   } while (true);
 }
 
-void TofinoChassisManager::PortStatusEventHandler(int device, int port,
-                                              PortState new_state,
-                                              absl::Time time_last_changed) {
+void TofinoChassisManager::PortStatusEventHandler(
+    int device, int port, PortState new_state, absl::Time time_last_changed) {
   absl::WriterMutexLock l(&chassis_lock);
   // TODO(max): check for shutdown here
   // if (shutdown) {
@@ -1179,7 +1181,7 @@ void TofinoChassisManager::ReadTransceiverEvents(
 }
 
 void TofinoChassisManager::TransceiverEventHandler(int slot, int port,
-                                               HwState new_state) {
+                                                   HwState new_state) {
   absl::WriterMutexLock l(&chassis_lock);
 
   PortKey xcvr_port_key(slot, port);
@@ -1313,8 +1315,8 @@ void TofinoChassisManager::TransceiverEventHandler(int slot, int port,
   absl::WriterMutexLock l(&chassis_lock);
   ::util::Status status = ::util::OkStatus();
   // Unregister the linkscan and transceiver module event Writers.
-  APPEND_STATUS_IF_ERROR(status,
-                         tofino_port_manager_->UnregisterPortStatusEventWriter());
+  APPEND_STATUS_IF_ERROR(
+      status, tofino_port_manager_->UnregisterPortStatusEventWriter());
   // Close Channel.
   if (!port_status_event_channel_ || !port_status_event_channel_->Close()) {
     ::util::Status error = MAKE_ERROR(ERR_INTERNAL)

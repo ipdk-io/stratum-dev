@@ -6,18 +6,18 @@
 
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 
+#include <stdint.h>
+#include <stdio.h>
+
 #include <algorithm>
 #include <memory>
 #include <ostream>
-#include <stdint.h>
-#include <stdio.h>
 #include <string>
 #include <utility>
 
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
@@ -83,8 +83,8 @@ namespace {
   }
 }
 
-::util::StatusOr<bf_fec_type_t> FecModeHalToBf(
-    FecMode fec_mode, uint64 speed_bps) {
+::util::StatusOr<bf_fec_type_t> FecModeHalToBf(FecMode fec_mode,
+                                               uint64 speed_bps) {
   if (fec_mode == FEC_MODE_UNKNOWN || fec_mode == FEC_MODE_OFF) {
     return BF_FEC_TYP_NONE;
   } else if (fec_mode == FEC_MODE_ON || fec_mode == FEC_MODE_AUTO) {
@@ -123,8 +123,8 @@ namespace {
 }
 
 // A callback function executed in SDE port state change thread context.
-bf_status_t sde_port_status_callback(
-    bf_dev_id_t device, bf_dev_port_t dev_port, bool up, void* cookie) {
+bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
+                                     bool up, void* cookie) {
   absl::Time timestamp = absl::Now();
   TofinoPortManager* tofino_port_manager = TofinoPortManager::GetSingleton();
   if (!tofino_port_manager) {
@@ -154,7 +154,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device, int port) {
+::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device,
+                                                            int port) {
   int state = 0;
   RETURN_IF_TDI_ERROR(
       bf_pal_port_oper_state_get(static_cast<bf_dev_id_t>(device),
@@ -162,8 +163,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return state ? PORT_STATE_UP : PORT_STATE_DOWN;
 }
 
-::util::Status TofinoPortManager::GetPortCounters(
-    int device, int port, PortCounters* counters) {
+::util::Status TofinoPortManager::GetPortCounters(int device, int port,
+                                                  PortCounters* counters) {
   uint64_t stats[BF_NUM_RMON_COUNTERS] = {0};
   RETURN_IF_TDI_ERROR(
       bf_pal_port_all_stats_get(static_cast<bf_dev_id_t>(device),
@@ -191,8 +192,9 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::OnPortStatusEvent(
-    int device, int port, bool up, absl::Time timestamp) {
+::util::Status TofinoPortManager::OnPortStatusEvent(int device, int port,
+                                                    bool up,
+                                                    absl::Time timestamp) {
   // Create PortStatusEvent message.
   PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
   PortStatusEvent event = {device, port, state, timestamp};
@@ -221,8 +223,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::GetPortInfo(
-    int device, int port, TargetDatapathId *target_dp_id) {
+::util::Status TofinoPortManager::GetPortInfo(int device, int port,
+                                              TargetDatapathId* target_dp_id) {
   return ::util::OkStatus();
 }
 
@@ -230,14 +232,13 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::AddPort(
-    int device, int port, uint64 speed_bps, FecMode fec_mode) {
+::util::Status TofinoPortManager::AddPort(int device, int port,
+                                          uint64 speed_bps, FecMode fec_mode) {
   ASSIGN_OR_RETURN(auto bf_speed, PortSpeedHalToBf(speed_bps));
   ASSIGN_OR_RETURN(auto bf_fec_mode, FecModeHalToBf(fec_mode, speed_bps));
   RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),
                                       static_cast<bf_dev_port_t>(port),
-                                      bf_speed,
-                                      bf_fec_mode));
+                                      bf_speed, bf_fec_mode));
   return ::util::OkStatus();
 }
 
@@ -259,9 +260,10 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetPortShapingRate(
-    int device, int port, bool is_in_pps, uint32 burst_size,
-    uint64 rate_per_second) {
+::util::Status TofinoPortManager::SetPortShapingRate(int device, int port,
+                                                     bool is_in_pps,
+                                                     uint32 burst_size,
+                                                     uint64 rate_per_second) {
   if (!is_in_pps) {
     rate_per_second /= 1000;  // The SDE expects the bitrate in kbps.
   }
@@ -271,8 +273,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::EnablePortShaping(
-    int device, int port, TriState enable) {
+::util::Status TofinoPortManager::EnablePortShaping(int device, int port,
+                                                    TriState enable) {
   if (enable == TriState::TRI_STATE_TRUE) {
     RETURN_IF_TDI_ERROR(p4_pd_tm_enable_port_shaping(device, port));
   } else if (enable == TriState::TRI_STATE_FALSE) {
@@ -282,8 +284,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetPortAutonegPolicy(
-    int device, int port, TriState autoneg) {
+::util::Status TofinoPortManager::SetPortAutonegPolicy(int device, int port,
+                                                       TriState autoneg) {
   ASSIGN_OR_RETURN(auto autoneg_v, AutonegHalToBf(autoneg));
   RETURN_IF_TDI_ERROR(bf_pal_port_autoneg_policy_set(
       static_cast<bf_dev_id_t>(device), static_cast<bf_dev_port_t>(port),
@@ -362,8 +364,9 @@ bool TofinoPortManager::IsValidPort(int device, int port) {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetDeflectOnDropDestination(
-    int device, int port, int queue) {
+::util::Status TofinoPortManager::SetDeflectOnDropDestination(int device,
+                                                              int port,
+                                                              int queue) {
   // The DoD destination must be a pipe-local port.
   p4_pd_tm_pipe_t pipe = DEV_PORT_TO_PIPE(port);
   RETURN_IF_TDI_ERROR(

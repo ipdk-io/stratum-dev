@@ -4,14 +4,13 @@
 
 // Tofino-specific SDE wrapper methods.
 
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
+#include <stdio.h>
+#include <string.h>
 
 #include <algorithm>
 #include <atomic>
 #include <memory>
 #include <ostream>
-#include <stdio.h>
-#include <string.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -19,7 +18,6 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
-
 #include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/integral_types.h"
@@ -31,6 +29,7 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/utils.h"
 
@@ -45,7 +44,7 @@ extern "C" {
 
 // Flag to enable detailed logging in the SDE pipe manager.
 extern bool stat_mgr_enable_detail_trace;
-} // extern "C"
+}  // extern "C"
 
 namespace stratum {
 namespace hal {
@@ -91,20 +90,17 @@ std::string GetBfChipId(int device) {
 
 }  // namespace
 
-
 std::string TdiSdeWrapper::GetChipType(int device) const {
   return absl::StrCat(GetBfChipFamilyAndType(device), ", revision ",
                       GetBfChipRevision(device), ", chip_id ",
                       GetBfChipId(device));
 }
 
-std::string TdiSdeWrapper::GetSdeVersion() const {
-  return "9.11.0";
-}
+std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
 
-::util::Status TdiSdeWrapper::InitializeSde(
-    const std::string& sde_install_path, const std::string& sde_config_file,
-    bool run_in_background) {
+::util::Status TdiSdeWrapper::InitializeSde(const std::string& sde_install_path,
+                                            const std::string& sde_config_file,
+                                            bool run_in_background) {
   CHECK_RETURN_IF_FALSE(sde_install_path != "")
       << "sde_install_path is required";
   CHECK_RETURN_IF_FALSE(sde_config_file != "") << "sde_config_file is required";
@@ -143,9 +139,9 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddDevice(
-    int dev_id, const TdiDeviceConfig& device_config) {
-  const ::tdi::Device *device = nullptr;
+::util::Status TdiSdeWrapper::AddDevice(int dev_id,
+                                        const TdiDeviceConfig& device_config) {
+  const ::tdi::Device* device = nullptr;
   absl::WriterMutexLock l(&data_lock_);
 
   CHECK_RETURN_IF_FALSE(device_config.programs_size() > 0);
@@ -228,8 +224,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   }
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
-  RETURN_IF_TDI_ERROR(device->tdiInfoGet(
-       device_config.programs(0).name(), &tdi_info_));
+  RETURN_IF_TDI_ERROR(
+      device->tdiInfoGet(device_config.programs(0).name(), &tdi_info_));
 
   // FIXME: if all we ever do is create and push, this could be one call.
   tdi_id_mapper_ = TdiIdMapper::CreateInstance();
@@ -298,8 +294,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::HandlePacketRx(
-    bf_dev_id_t device, bf_pkt* pkt, bf_pkt_rx_ring_t rx_ring) {
+::util::Status TdiSdeWrapper::HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
+                                             bf_pkt_rx_ring_t rx_ring) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
   auto rx_writer = gtl::FindOrNull(device_to_packet_rx_writer_, device);
   CHECK_RETURN_IF_FALSE(rx_writer)
@@ -315,9 +311,10 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
   return ::util::OkStatus();
 }
 
-bf_status_t TdiSdeWrapper::BfPktTxNotifyCallback(
-    bf_dev_id_t device, bf_pkt_tx_ring_t tx_ring, uint64 tx_cookie,
-    uint32 status) {
+bf_status_t TdiSdeWrapper::BfPktTxNotifyCallback(bf_dev_id_t device,
+                                                 bf_pkt_tx_ring_t tx_ring,
+                                                 uint64 tx_cookie,
+                                                 uint32 status) {
   VLOG(1) << "Tx done notification for device: " << device
           << " tx ring: " << tx_ring << " tx cookie: " << tx_cookie
           << " status: " << status;
@@ -326,8 +323,9 @@ bf_status_t TdiSdeWrapper::BfPktTxNotifyCallback(
   return bf_pkt_free(device, pkt);
 }
 
-bf_status_t TdiSdeWrapper::BfPktRxNotifyCallback(
-    bf_dev_id_t device, bf_pkt* pkt, void* cookie, bf_pkt_rx_ring_t rx_ring) {
+bf_status_t TdiSdeWrapper::BfPktRxNotifyCallback(bf_dev_id_t device,
+                                                 bf_pkt* pkt, void* cookie,
+                                                 bf_pkt_rx_ring_t rx_ring) {
   TdiSdeWrapper* tdi_sde_wrapper = TdiSdeWrapper::GetSingleton();
   // TODO(max): Handle error
   tdi_sde_wrapper->HandlePacketRx(device, pkt, rx_ring);
