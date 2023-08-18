@@ -216,9 +216,9 @@ void ExpectMockWriteDataResponse(WriterMock<DataResponse>* writer,
 
 // ------------------------------------------------------------------------
 // [ RUN      ] Es2kSwitchTest.GetSdnPortId
-// I20230523 21:03:48.518360    12 es2k_switch.cc:59] Chassis config pushed successfully.
-// stratum/hal/lib/tdi/es2k/es2k_switch_test.cc:232: Failure
-// Value of: resp.has_sdn_port_id()
+// I20230523 21:03:48.518360    12 es2k_switch.cc:59] Chassis config pushed
+// successfully. stratum/hal/lib/tdi/es2k/es2k_switch_test.cc:232: Failure Value
+// of: resp.has_sdn_port_id()
 //   Actual: false
 // Expected: true
 // stratum/hal/lib/tdi/es2k/es2k_switch_test.cc:233: Failure

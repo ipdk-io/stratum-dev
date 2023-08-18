@@ -4,13 +4,12 @@
 
 // ES2K-specific SDE wrapper methods.
 
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
+#include <stdio.h>
+#include <string.h>
 
 #include <algorithm>
 #include <memory>
 #include <ostream>
-#include <stdio.h>
-#include <string.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,12 +26,13 @@
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/lib/utils.h"
 #include "tdi_rt/tdi_rt_defs.h"
 
 extern "C" {
-#include "bf_switchd/lib/bf_switchd_lib_init.h"
 #include "bf_pal/dev_intf.h"
+#include "bf_switchd/lib/bf_switchd_lib_init.h"
 }
 
 namespace stratum {
@@ -47,20 +47,14 @@ using namespace stratum::hal::tdi::helpers;
 }
 
 // NOTE: This is Tofino-specific.
-std::string TdiSdeWrapper::GetSdeVersion() const {
-  return "1.0.0";
-}
+std::string TdiSdeWrapper::GetSdeVersion() const { return "1.0.0"; }
 
 // Helper functions around reading the switch SKU.
 namespace {
 
-std::string GetBfChipFamilyAndType(int device) {
-  return "UNKNOWN";
-}
+std::string GetBfChipFamilyAndType(int device) { return "UNKNOWN"; }
 
-std::string GetBfChipRevision(int device) {
-  return "UNKNOWN";
-}
+std::string GetBfChipRevision(int device) { return "UNKNOWN"; }
 
 std::string GetBfChipId(int device) {
   uint64 chip_id = 0;
@@ -69,16 +63,15 @@ std::string GetBfChipId(int device) {
 
 }  // namespace
 
-
 std::string TdiSdeWrapper::GetChipType(int device) const {
   return absl::StrCat(GetBfChipFamilyAndType(device), ", revision ",
                       GetBfChipRevision(device), ", chip_id ",
                       GetBfChipId(device));
 }
 
-::util::Status TdiSdeWrapper::InitializeSde(
-    const std::string& sde_install_path, const std::string& sde_config_file,
-    bool run_in_background) {
+::util::Status TdiSdeWrapper::InitializeSde(const std::string& sde_install_path,
+                                            const std::string& sde_config_file,
+                                            bool run_in_background) {
   CHECK_RETURN_IF_FALSE(sde_install_path != "")
       << "sde_install_path is required";
   CHECK_RETURN_IF_FALSE(sde_config_file != "") << "sde_config_file is required";
@@ -101,18 +94,18 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddDevice(
-    int dev_id, const TdiDeviceConfig& device_config) {
-  const ::tdi::Device *device = nullptr;
+::util::Status TdiSdeWrapper::AddDevice(int dev_id,
+                                        const TdiDeviceConfig& device_config) {
+  const ::tdi::Device* device = nullptr;
   absl::WriterMutexLock l(&data_lock_);
 
   CHECK_RETURN_IF_FALSE(device_config.programs_size() > 0);
 
   tdi_id_mapper_.reset();
 
-  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_begin(
-      dev_id, BF_DEV_WARM_INIT_FAST_RECFG,
-      /* upgrade_agents */ true));
+  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_begin(dev_id,
+                                                    BF_DEV_WARM_INIT_FAST_RECFG,
+                                                    /* upgrade_agents */ true));
   bf_device_profile_t device_profile = {};
 
   // Commit new files to disk and build device profile for SDE to load.
@@ -184,8 +177,8 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
   }
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
-  RETURN_IF_TDI_ERROR(device->tdiInfoGet(
-       device_config.programs(0).name(), &tdi_info_));
+  RETURN_IF_TDI_ERROR(
+      device->tdiInfoGet(device_config.programs(0).name(), &tdi_info_));
 
   // FIXME: if all we ever do is create and push, this could be one call.
   tdi_id_mapper_ = TdiIdMapper::CreateInstance();
@@ -213,15 +206,14 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
 
 ::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string &table_name,
+    const std::string& table_name,
     void (*ipsec_notif_cb)(uint32_t dev_id, uint32_t ipsec_sa_spi,
                            bool soft_lifetime_expire, uint8_t ipsec_sa_protocol,
-                           char *ipsec_sa_dest_address, bool ipv4, void *cke),
-    void *cookie) const {
-
+                           char* ipsec_sa_dest_address, bool ipv4, void* cke),
+    void* cookie) const {
   if (!tdi_info_) {
     RETURN_ERROR(ERR_INTERNAL)
-                << "Unable to initialize notification table due to TDI internal error";
+        << "Unable to initialize notification table due to TDI internal error";
   }
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);
@@ -229,38 +221,41 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
 
   const ::tdi::Table* notifTable;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &notifTable));
-  
+
   // tdi_attributes_allocate
   std::unique_ptr<::tdi::TableAttributes> attributes_field;
-  ::tdi::TableAttributes *attributes_object;
-  RETURN_IF_TDI_ERROR(notifTable->attributeAllocate((tdi_attributes_type_e) TDI_RT_ATTRIBUTES_TYPE_IPSEC_SADB_EXPIRE_NOTIF,
-                                                  &attributes_field));
+  ::tdi::TableAttributes* attributes_object;
+  RETURN_IF_TDI_ERROR(notifTable->attributeAllocate(
+      (tdi_attributes_type_e)TDI_RT_ATTRIBUTES_TYPE_IPSEC_SADB_EXPIRE_NOTIF,
+      &attributes_field));
   attributes_object = attributes_field.get();
 
   // tdi_attributes_set_values
   const uint64_t enable = 1;
   RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_ENABLE,
-                enable));
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_ENABLE,
+      enable));
 
   RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_CALLBACK_C,
-                (uint64_t)ipsec_notif_cb));
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_CALLBACK_C,
+      (uint64_t)ipsec_notif_cb));
 
   RETURN_IF_TDI_ERROR(attributes_object->setValue(
-                (tdi_attributes_field_type_e) TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_COOKIE,
-                (uint64_t)cookie));
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_IPSEC_SADB_EXPIRE_TABLE_FIELD_TYPE_COOKIE,
+      (uint64_t)cookie));
 
   // target & flag create
-  const ::tdi::Device *device = nullptr;
+  const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> target;
   device->createTarget(&target);
 
   const auto flags = ::tdi::Flags(0);
-  RETURN_IF_TDI_ERROR(notifTable->tableAttributesSet(*real_session->tdi_session_,
-                                                    *target, flags,
-                                                    *attributes_object));
+  RETURN_IF_TDI_ERROR(notifTable->tableAttributesSet(
+      *real_session->tdi_session_, *target, flags, *attributes_object));
 
   return ::util::OkStatus();
 }

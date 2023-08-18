@@ -6,11 +6,12 @@
 
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 
+#include <stdint.h>
+#include <stdio.h>
+
 #include <algorithm>
 #include <memory>
 #include <ostream>
-#include <stdint.h>
-#include <stdio.h>
 #include <utility>
 
 #include "absl/memory/memory.h"
@@ -29,8 +30,8 @@
 #include "stratum/lib/channel/channel.h"
 
 extern "C" {
-#include "bf_types/bf_types.h"
 #include "bf_pal/bf_pal_port_intf.h"
+#include "bf_types/bf_types.h"
 }
 
 namespace stratum {
@@ -61,8 +62,8 @@ namespace {
 }
 
 // A callback function executed in SDE port state change thread context.
-bf_status_t sde_port_status_callback(
-    bf_dev_id_t device, bf_dev_port_t dev_port, bool up, void* cookie) {
+bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
+                                     bool up, void* cookie) {
   absl::Time timestamp = absl::Now();
   Es2kPortManager* es2k_port_manager = Es2kPortManager::GetSingleton();
   if (!es2k_port_manager) {
@@ -92,20 +93,21 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<PortState> Es2kPortManager::GetPortState(int device, int port) {
+::util::StatusOr<PortState> Es2kPortManager::GetPortState(int device,
+                                                          int port) {
   // Unsupported. Returns PORT_STATE_DOWN if called.
   return PORT_STATE_DOWN;
 }
 
-::util::Status Es2kPortManager::GetPortCounters(
-    int device, int port, PortCounters* counters) {
+::util::Status Es2kPortManager::GetPortCounters(int device, int port,
+                                                PortCounters* counters) {
   uint64_t stats[BF_PORT_NUM_COUNTERS] = {0};
 
   return ::util::OkStatus();
 }
 
-::util::Status Es2kPortManager::OnPortStatusEvent(
-    int device, int port, bool up, absl::Time timestamp) {
+::util::Status Es2kPortManager::OnPortStatusEvent(int device, int port, bool up,
+                                                  absl::Time timestamp) {
   // Create PortStatusEvent message.
   PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
   PortStatusEvent event = {device, port, state, timestamp};
@@ -132,8 +134,8 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status Es2kPortManager::GetPortInfo(
-    int device, int port, TargetDatapathId *target_dp_id) {
+::util::Status Es2kPortManager::GetPortInfo(int device, int port,
+                                            TargetDatapathId* target_dp_id) {
   return ::util::OkStatus();
 }
 
@@ -143,8 +145,8 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status Es2kPortManager::AddPort(
-    int device, int port, uint64 speed_bps, FecMode fec_mode) {
+::util::Status Es2kPortManager::AddPort(int device, int port, uint64 speed_bps,
+                                        FecMode fec_mode) {
   auto port_attrs = absl::make_unique<port_attributes_t>();
   RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),
                                       static_cast<bf_dev_port_t>(port),
@@ -167,13 +169,12 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 }
 
 ::util::Status Es2kPortManager::EnablePortShaping(int device, int port,
-                                               TriState enable) {
-
+                                                  TriState enable) {
   return ::util::OkStatus();
 }
 
-::util::Status Es2kPortManager::SetPortAutonegPolicy(
-    int device, int port, TriState autoneg) {
+::util::Status Es2kPortManager::SetPortAutonegPolicy(int device, int port,
+                                                     TriState autoneg) {
   return ::util::OkStatus();
 }
 
@@ -181,9 +182,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-bool Es2kPortManager::IsValidPort(int device, int port) {
-  return BF_SUCCESS;
-}
+bool Es2kPortManager::IsValidPort(int device, int port) { return BF_SUCCESS; }
 
 ::util::Status Es2kPortManager::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
@@ -194,7 +193,7 @@ bool Es2kPortManager::IsValidPort(int device, int port) {
   return ::util::OkStatus();
 }
 
-//TODO: Check with Sandeep: Is this required?
+// TODO: Check with Sandeep: Is this required?
 ::util::StatusOr<uint32> Es2kPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
   const int port = port_key.port;
@@ -235,8 +234,9 @@ bool Es2kPortManager::IsValidPort(int device, int port) {
   return ::util::OkStatus();
 }
 
-::util::Status Es2kPortManager::SetDeflectOnDropDestination(
-    int device, int port, int queue) {
+::util::Status Es2kPortManager::SetDeflectOnDropDestination(int device,
+                                                            int port,
+                                                            int queue) {
   return ::util::OkStatus();
 }
 

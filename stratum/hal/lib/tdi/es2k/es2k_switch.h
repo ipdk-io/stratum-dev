@@ -11,10 +11,10 @@
 #include <vector>
 
 #include "absl/synchronization/mutex.h"
-#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_node.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_node.h"
+#include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 
 // Suppress clang errors
 #undef LOCKS_EXCLUDED
@@ -80,8 +80,7 @@ class Es2kSwitch : public SwitchInterface {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kSwitch> CreateInstance(
-      Es2kChassisManager* chassis_manager,
-      TdiIpsecManager* ipsec_manager,
+      Es2kChassisManager* chassis_manager, TdiIpsecManager* ipsec_manager,
       const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
   // Es2kSwitch is neither copyable nor movable.
@@ -90,8 +89,7 @@ class Es2kSwitch : public SwitchInterface {
   Es2kSwitch(Es2kSwitch&&) = delete;
   Es2kSwitch& operator=(Es2kSwitch&&) = delete;
 
-  TdiIpsecManager* GetIPsecManager()
-    LOCKS_EXCLUDED(chassis_lock) {
+  TdiIpsecManager* GetIPsecManager() LOCKS_EXCLUDED(chassis_lock) {
     return ipsec_manager_;
   }
 
@@ -99,8 +97,8 @@ class Es2kSwitch : public SwitchInterface {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   Es2kSwitch(Es2kChassisManager* chassis_manager,
-      TdiIpsecManager* ipsec_manager,
-      const std::map<int, Es2kNode*>& device_id_to_es2k_node);
+             TdiIpsecManager* ipsec_manager,
+             const std::map<int, Es2kNode*>& device_id_to_es2k_node);
 
   // Helper to get Es2kNode pointer from device_id number or return error
   // indicating invalid device_id.

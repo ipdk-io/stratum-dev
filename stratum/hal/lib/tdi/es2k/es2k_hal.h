@@ -100,8 +100,7 @@ class Es2kHal final {
   // class.
   Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
           AuthPolicyChecker* auth_policy_checker,
-          absl::Notification* ready_sync,
-          absl::Notification* done_sync);
+          absl::Notification* ready_sync, absl::Notification* done_sync);
 
   // Initializes the HAL server and all the services it provides. Called in
   // CreateSingleton() as soon as the class instance is created.
