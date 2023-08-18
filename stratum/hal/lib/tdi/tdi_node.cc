@@ -37,8 +37,7 @@ TdiNode::TdiNode(TdiTableManager* tdi_table_manager,
       tdi_config_(),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_table_manager_(ABSL_DIE_IF_NULL(tdi_table_manager)),
-      tdi_action_profile_manager_(
-          ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
+      tdi_action_profile_manager_(ABSL_DIE_IF_NULL(tdi_action_profile_manager)),
       tdi_packetio_manager_(tdi_packetio_manager),
       tdi_pre_manager_(ABSL_DIE_IF_NULL(tdi_pre_manager)),
       tdi_counter_manager_(ABSL_DIE_IF_NULL(tdi_counter_manager)),
@@ -64,15 +63,13 @@ TdiNode::~TdiNode() = default;
 std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     TdiTableManager* tdi_table_manager,
     TdiActionProfileManager* tdi_action_profile_manager,
-    TdiPacketioManager* tdi_packetio_manager,
-    TdiPreManager* tdi_pre_manager,
-    TdiCounterManager* tdi_counter_manager,
-    TdiSdeInterface* tdi_sde_interface, int device_id,
-    bool initialized, uint64 node_id) {
-  return absl::WrapUnique(new TdiNode(
-      tdi_table_manager, tdi_action_profile_manager, tdi_packetio_manager,
-      tdi_pre_manager, tdi_counter_manager, tdi_sde_interface, device_id,
-      initialized, node_id));
+    TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
+    TdiCounterManager* tdi_counter_manager, TdiSdeInterface* tdi_sde_interface,
+    int device_id, bool initialized, uint64 node_id) {
+  return absl::WrapUnique(
+      new TdiNode(tdi_table_manager, tdi_action_profile_manager,
+                  tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
+                  tdi_sde_interface, device_id, initialized, node_id));
 }
 
 ::util::Status TdiNode::PushChassisConfig(const ChassisConfig& config,
@@ -89,7 +86,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
 }
 
 ::util::Status TdiNode::VerifyChassisConfig(const ChassisConfig& config,
-                                             uint64 node_id) {
+                                            uint64 node_id) {
   // RETURN_IF_ERROR(tdi_table_manager_->VerifyChassisConfig(config, node_id));
   // RETURN_IF_ERROR(
   //     tdi_action_profile_manager_->VerifyChassisConfig(config, node_id));
@@ -151,8 +148,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
       tdi_table_manager_->PushForwardingPipelineConfig(tdi_config_));
   RETURN_IF_ERROR(
       tdi_action_profile_manager_->PushForwardingPipelineConfig(tdi_config_));
-  RETURN_IF_ERROR(
-      tdi_pre_manager_->PushForwardingPipelineConfig(tdi_config_));
+  RETURN_IF_ERROR(tdi_pre_manager_->PushForwardingPipelineConfig(tdi_config_));
   RETURN_IF_ERROR(
       tdi_counter_manager_->PushForwardingPipelineConfig(tdi_config_));
 
@@ -445,13 +441,13 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
-      return tdi_action_profile_manager_->WriteActionProfileEntry(session,
-                                                                  type, entry);
+      return tdi_action_profile_manager_->WriteActionProfileEntry(session, type,
+                                                                  entry);
     default:
       break;
   }
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+         << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 ::util::Status TdiNode::ReadExternEntry(
@@ -461,13 +457,13 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId:
     case kTnaExternActionSelectorId:
-      return tdi_action_profile_manager_->ReadActionProfileEntry(
-          session, entry, writer);
+      return tdi_action_profile_manager_->ReadActionProfileEntry(session, entry,
+                                                                 writer);
     default:
       break;
   }
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+         << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
 
 }  // namespace tdi

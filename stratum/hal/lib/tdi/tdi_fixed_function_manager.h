@@ -7,9 +7,9 @@
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/common/common.pb.h"
 
 namespace stratum {
 namespace hal {
@@ -19,22 +19,21 @@ class TdiFixedFunctionManager {
  public:
   // Initializes Notification table callback
   ::util::Status InitNotificationTableWithCallback(
-    std::string table_name,
-    void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool, void*),
-    void *cookie)
-        LOCKS_EXCLUDED(lock_);
+      std::string table_name,
+      void (*ipsec_notif_cb)(uint32_t, uint32_t, bool, uint8_t, char*, bool,
+                             void*),
+      void* cookie) LOCKS_EXCLUDED(lock_);
 
   // Writes IPsec SADB  table entry.
   ::util::Status WriteSadbEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      std::string table_name,
-      const IPsecSadbConfigOp op_type,
-      IPsecSADBConfig &sadb_config) LOCKS_EXCLUDED(lock_);
+      std::string table_name, const IPsecSadbConfigOp op_type,
+      IPsecSADBConfig& sadb_config) LOCKS_EXCLUDED(lock_);
 
   // Fetch the SPI value from the TDI table
-   ::util::Status FetchSpi(
-       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-       std::string table_name, uint32 *spi) LOCKS_EXCLUDED(lock_);
+  ::util::Status FetchSpi(
+      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      std::string table_name, uint32* spi) LOCKS_EXCLUDED(lock_);
 
   // Creates a Fixed function table manager instance.
   static std::unique_ptr<TdiFixedFunctionManager> CreateInstance(
@@ -44,15 +43,19 @@ class TdiFixedFunctionManager {
   // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
   explicit TdiFixedFunctionManager(OperationMode mode,
-                            TdiSdeInterface* tdi_sde_interface, int device);
+                                   TdiSdeInterface* tdi_sde_interface,
+                                   int device);
 
   // Builds the IPSEC SADB table key information.
-  ::util::Status BuildSadbTableKey(TdiSdeInterface::TableKeyInterface* table_key,
-      IPsecSADBConfig &sadb_config) SHARED_LOCKS_REQUIRED(lock_);
+  ::util::Status BuildSadbTableKey(
+      TdiSdeInterface::TableKeyInterface* table_key,
+      IPsecSADBConfig& sadb_config) SHARED_LOCKS_REQUIRED(lock_);
 
   // Builds the IPSEC SADB table data information.
-  ::util::Status BuildSadbTableData(TdiSdeInterface::TableDataInterface* table_data,
-      IPsecSADBConfig &sadb_config); SHARED_LOCKS_REQUIRED(lock_);
+  ::util::Status BuildSadbTableData(
+      TdiSdeInterface::TableDataInterface* table_data,
+      IPsecSADBConfig& sadb_config);
+  SHARED_LOCKS_REQUIRED(lock_);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and

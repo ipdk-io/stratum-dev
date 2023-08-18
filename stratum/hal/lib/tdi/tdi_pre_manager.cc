@@ -19,7 +19,8 @@ namespace hal {
 namespace tdi {
 
 TdiPreManager::TdiPreManager(TdiSdeInterface* tdi_sde_interface, int device)
-    : tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)), device_(device) {}
+    : tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
+      device_(device) {}
 
 ::util::Status TdiPreManager::PushForwardingPipelineConfig(
     const TdiDeviceConfig& config) {
@@ -143,7 +144,7 @@ std::unique_ptr<TdiPreManager> TdiPreManager::CreateInstance(
                            device_, session, entry.multicast_group_id()));
       RETURN_IF_ERROR_WITH_APPEND(
           tdi_sde_interface_->DeleteMulticastGroup(device_, session,
-                                                  entry.multicast_group_id()))
+                                                   entry.multicast_group_id()))
               .with_logging()
           << "Failed to delete multicast group for request "
           << entry.ShortDebugString() << ".";

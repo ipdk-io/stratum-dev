@@ -9,9 +9,9 @@
 #include "absl/strings/match.h"
 #include "nlohmann/json.hpp"
 #include "stratum/glue/gtl/map_util.h"
+#include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_utils.h"
-#include "stratum/hal/lib/tdi/macros.h"
 
 namespace stratum {
 namespace hal {
@@ -47,8 +47,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
     // Action profiles
     for (const auto& action_profile : program.p4info().action_profiles()) {
       RETURN_IF_ERROR(BuildMapping(action_profile.preamble().id(),
-                                   action_profile.preamble().name(),
-                                   tdi_info));
+                                   action_profile.preamble().name(), tdi_info));
     }
     // FIXME(Yi): We need to scan all context.json to build correct mapping for
     // ActionProfiles and ActionSelectors. We may remove this workaround in the
@@ -82,8 +81,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
     // Registers
     for (const auto& register_entry : program.p4info().registers()) {
       RETURN_IF_ERROR(BuildMapping(register_entry.preamble().id(),
-                                   register_entry.preamble().name(),
-                                   tdi_info));
+                                   register_entry.preamble().name(), tdi_info));
     }
 
     // Meters
@@ -97,8 +95,8 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
 }
 
 ::util::Status TdiIdMapper::BuildMapping(uint32 p4info_id,
-                                          std::string p4info_name,
-                                          const ::tdi::TdiInfo* tdi_info) {
+                                         std::string p4info_name,
+                                         const ::tdi::TdiInfo* tdi_info) {
   const ::tdi::Table* table;
   auto tdi_status = tdi_info->tableFromIdGet(p4info_id, &table);
 

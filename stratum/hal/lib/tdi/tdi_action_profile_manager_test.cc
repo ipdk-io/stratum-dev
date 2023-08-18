@@ -109,16 +109,13 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      CreateTableData(kTdiRtTableId, _))
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
       .WillOnce(
           Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
               std::move(table_data_mock)))));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      InsertActionProfileMember(kDevice1, _, kTdiRtTableId, 1, _))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              InsertActionProfileMember(kDevice1, _, kTdiRtTableId, 1, _))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -168,16 +165,13 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      CreateTableData(kTdiRtTableId, _))
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
       .WillOnce(
           Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
               std::move(table_data_mock)))));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      ModifyActionProfileMember(kDevice1, _, kTdiRtTableId, 1, _))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              ModifyActionProfileMember(kDevice1, _, kTdiRtTableId, 1, _))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -227,16 +221,13 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      CreateTableData(kTdiRtTableId, _))
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, _))
       .WillOnce(
           Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
               std::move(table_data_mock)))));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      DeleteActionProfileMember(kDevice1, _, kTdiRtTableId, 1))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              DeleteActionProfileMember(kDevice1, _, kTdiRtTableId, 1))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -286,9 +277,8 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      InsertActionProfileGroup(kDevice1, _, kTdiRtTableId, 1, 4, _, _))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              InsertActionProfileGroup(kDevice1, _, kTdiRtTableId, 1, 4, _, _))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -338,9 +328,8 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      ModifyActionProfileGroup(kDevice1, _, kTdiRtTableId, 1, 4, _, _))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              ModifyActionProfileGroup(kDevice1, _, kTdiRtTableId, 1, 4, _, _))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -390,9 +379,8 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      DeleteActionProfileGroup(kDevice1, _, kTdiRtTableId, 1))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              DeleteActionProfileGroup(kDevice1, _, kTdiRtTableId, 1))
       .WillOnce(Return(::util::OkStatus()));
 
   // perform test and check results (act + assert)
@@ -495,8 +483,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
   EXPECT_CALL(writer_mock, Write(_)).WillOnce(Return(true));
 
   // perform test and check results (act + assert)
-  EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(
-      session_mock, entry, &writer_mock));
+  EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(session_mock, entry,
+                                                            &writer_mock));
 }
 
 /*
@@ -543,23 +531,17 @@ TEST_F(TdiActionProfileManagerTest,
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      GetActionProfileGroups(kDevice1, _, kTdiRtTableId, 1, _, _, _, _))
+  EXPECT_CALL(*sde_wrapper_mock_,
+              GetActionProfileGroups(kDevice1, _, kTdiRtTableId, 1, _, _, _, _))
       .WillOnce(
           DoAll(SetArgPointee<4>(group_ids), SetArgPointee<5>(max_group_sizes),
                 SetArgPointee<6>(member_ids), SetArgPointee<7>(member_status),
                 Return(::util::OkStatus())));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      GetActionProfileTdiRtId(kTdiRtTableId))
+  EXPECT_CALL(*sde_wrapper_mock_, GetActionProfileTdiRtId(kTdiRtTableId))
       .WillOnce(Return(1));
 
-  EXPECT_CALL(
-      *sde_wrapper_mock_,
-      GetP4InfoId(1))
-      .WillOnce(Return(1));
+  EXPECT_CALL(*sde_wrapper_mock_, GetP4InfoId(1)).WillOnce(Return(1));
 
   // JSON representation of the protobuf we expect ReadProfileActionEntry()
   // to specify when it calls the writer mock.
@@ -581,8 +563,8 @@ TEST_F(TdiActionProfileManagerTest,
   EXPECT_CALL(writer_mock, Write(EqualsProto(resp))).WillOnce(Return(true));
 
   // perform test and check results (act + assert)
-  EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(
-      session_mock, entry, &writer_mock));
+  EXPECT_OK(action_profile_manager_->ReadActionProfileEntry(session_mock, entry,
+                                                            &writer_mock));
 }
 
 /*
@@ -612,8 +594,8 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestUnsupportedType) {
       .WillOnce(Return(kTdiRtTableId));
 
   // perform test and check results (act + assert)
-  EXPECT_THAT(action_profile_manager_->ReadActionProfileEntry(
-                  session_mock, entry, writer),
+  EXPECT_THAT(action_profile_manager_->ReadActionProfileEntry(session_mock,
+                                                              entry, writer),
               DerivedFromStatus(OperNotSuppError()));
 }
 

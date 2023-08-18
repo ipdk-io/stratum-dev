@@ -46,7 +46,7 @@ constexpr char kActionMemberId[] = "$ACTION_MEMBER_ID";
 constexpr char kSelectorGroupId[] = "$SELECTOR_GROUP_ID";
 constexpr char kActionMemberStatus[] = "$ACTION_MEMBER_STATUS";
 
-//IPsec related consts used in fixed functions
+// IPsec related consts used in fixed functions
 constexpr char kIpsecSadbOffloadId[] = "offload-id";
 constexpr char kIpsecSadbDir[] = "direction";
 constexpr char kIpsecSadbReqId[] = "req-id";
