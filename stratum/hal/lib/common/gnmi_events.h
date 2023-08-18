@@ -84,13 +84,11 @@ class IPsecNotificationEvent : public GnmiEventProcess<IPsecNotificationEvent> {
   IPsecNotificationEvent(uint64 time_created, const IPsecNotification& notif)
       : time_created_(time_created), notif_(notif) {}
 
-  IPsecNotificationEvent(uint64 time_created,
-                         uint32_t dev_id,
-                         uint32_t ipsec_sa_spi,
-                         bool soft_lifetime_expire,
-                         uint8_t ipsec_sa_protocol,
-                         char *ipsec_sa_dest_address,
-                         bool ipv4) : time_created_(time_created) {
+  IPsecNotificationEvent(uint64 time_created, uint32_t dev_id,
+                         uint32_t ipsec_sa_spi, bool soft_lifetime_expire,
+                         uint8_t ipsec_sa_protocol, char* ipsec_sa_dest_address,
+                         bool ipv4)
+      : time_created_(time_created) {
     notif_.set_device_id(dev_id);
     notif_.set_ipsec_sa_spi(ipsec_sa_spi);
     notif_.set_soft_lifetime_expire(soft_lifetime_expire);

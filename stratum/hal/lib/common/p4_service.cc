@@ -156,7 +156,8 @@ P4Service::~P4Service() {}
         error_buffer_->AddError(
             error,
             absl::StrCat("Failed to push the saved forwarding pipeline configs "
-                         "for node ", e.first, ": "),
+                         "for node ",
+                         e.first, ": "),
             GTL_LOC);
         APPEND_STATUS_IF_ERROR(status, error);
       } else {
@@ -419,11 +420,11 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
       ::util::Status error;
       if (req->action() ==
           ::p4::v1::SetForwardingPipelineConfigRequest::VERIFY_AND_COMMIT) {
-        error = switch_interface_->PushForwardingPipelineConfig(
-            node_id, req->config());
+        error = switch_interface_->PushForwardingPipelineConfig(node_id,
+                                                                req->config());
       } else {  // VERIFY_AND_SAVE
-        error = switch_interface_->SaveForwardingPipelineConfig(
-            node_id, req->config());
+        error = switch_interface_->SaveForwardingPipelineConfig(node_id,
+                                                                req->config());
       }
       APPEND_STATUS_IF_ERROR(status, error);
       // If the config push was successful or reported reboot required, save
