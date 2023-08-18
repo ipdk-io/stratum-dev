@@ -19,24 +19,24 @@ namespace helpers {
 ::gnmi::SubscribeResponse GetResponse(const ::gnmi::Path& path);
 
 // Specialization for 'const char*'.
-::gnmi::SubscribeResponse GetResponse(
-    const ::gnmi::Path& path, const char* contents);
+::gnmi::SubscribeResponse GetResponse(const ::gnmi::Path& path,
+                                      const char* contents);
 
 // Specialization for 'const std::string&'.
-::gnmi::SubscribeResponse GetResponse(
-    const ::gnmi::Path& path, const std::string& contents);
+::gnmi::SubscribeResponse GetResponse(const ::gnmi::Path& path,
+                                      const std::string& contents);
 
 // Specialization for 'bool'.
-::gnmi::SubscribeResponse GetResponse(
-    const ::gnmi::Path& path, const bool contents);
+::gnmi::SubscribeResponse GetResponse(const ::gnmi::Path& path,
+                                      const bool contents);
 
 // Specialization for '::gnmi::Decimal64'.
-::gnmi::SubscribeResponse GetResponse(
-    const ::gnmi::Path& path, const ::gnmi::Decimal64& contents);
+::gnmi::SubscribeResponse GetResponse(const ::gnmi::Path& path,
+                                      const ::gnmi::Decimal64& contents);
 
 // A helper method that handles writing a response into the output stream.
-::util::Status SendResponse(
-    const ::gnmi::SubscribeResponse& resp, GnmiSubscribeStream* stream);
+::util::Status SendResponse(const ::gnmi::SubscribeResponse& resp,
+                            GnmiSubscribeStream* stream);
 
 // A helper method that returns a dummy functor that returns 'not supported yet'
 // string.
@@ -132,8 +132,7 @@ template <typename U, typename V>
 
 // IPsec ConfigSADEntry version
 template <typename V>
-::util::Status SetValue(YangParseTree* tree,
-                        IPsecSadbConfigOp op_type,
+::util::Status SetValue(YangParseTree* tree, IPsecSadbConfigOp op_type,
                         const V& value) {
   // Create a set request.
   SetRequest req;
