@@ -16,7 +16,6 @@
 #include "absl/hash/hash.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
-
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
@@ -40,9 +39,10 @@ using namespace stratum::hal::tdi::helpers;
 TdiSdeWrapper* TdiSdeWrapper::singleton_ = nullptr;
 ABSL_CONST_INIT absl::Mutex TdiSdeWrapper::init_lock_(absl::kConstInit);
 
-TdiSdeWrapper::TdiSdeWrapper() : port_status_event_writer_(nullptr),
-                                 device_to_packet_rx_writer_(),
-                                 tdi_info_(nullptr) {}
+TdiSdeWrapper::TdiSdeWrapper()
+    : port_status_event_writer_(nullptr),
+      device_to_packet_rx_writer_(),
+      tdi_info_(nullptr) {}
 
 // Create and start an new session.
 ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
@@ -111,15 +111,15 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<uint32> TdiSdeWrapper::GetTableId(std::string &table_name) const {
+::util::StatusOr<uint32> TdiSdeWrapper::GetTableId(
+    std::string& table_name) const {
   const ::tdi::Table* table;
   if (nullptr != tdi_info_) {
     RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &table));
-    return(table->tableInfoGet()->idGet());
+    return (table->tableInfoGet()->idGet());
   }
 
-  RETURN_ERROR(ERR_INTERNAL)
-              << "Error retreiving information from TDI";
+  RETURN_ERROR(ERR_INTERNAL) << "Error retreiving information from TDI";
 }
 
 }  // namespace tdi

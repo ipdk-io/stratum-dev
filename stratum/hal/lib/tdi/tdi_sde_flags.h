@@ -10,4 +10,3 @@
 DECLARE_bool(incompatible_enable_tdi_legacy_bytestring_responses);
 
 #endif  // STRATUM_HAL_LIB_TDI_TDI_SDE_FLAGS_H_
-
