@@ -62,8 +62,8 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
                                        act_prof_group);
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Unsupported extern type " << entry.extern_type_id() << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
 }
 
@@ -95,8 +95,8 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Unsupported extern type " << entry.extern_type_id() << ".";
+      return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+             << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
 
   return ::util::OkStatus();
@@ -192,7 +192,8 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();
@@ -245,7 +246,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
   }
 
   if (!writer->Write(resp)) {
-    RETURN_ERROR(ERR_INTERNAL) << "Write to stream channel failed.";
+    return MAKE_ERROR(ERR_INTERNAL) << "Write to stream channel failed.";
   }
 
   return ::util::OkStatus();
@@ -284,7 +285,8 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();

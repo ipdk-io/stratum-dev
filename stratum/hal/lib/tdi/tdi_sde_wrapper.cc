@@ -119,7 +119,7 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
     return (table->tableInfoGet()->idGet());
   }
 
-  RETURN_ERROR(ERR_INTERNAL) << "Error retreiving information from TDI";
+  return MAKE_ERROR(ERR_INTERNAL) << "Error retreiving information from TDI";
 }
 
 }  // namespace tdi

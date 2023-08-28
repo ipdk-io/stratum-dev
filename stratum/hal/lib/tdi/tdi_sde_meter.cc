@@ -194,9 +194,9 @@ using namespace stratum::hal::tdi::helpers;
         RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &pburst));
         pbursts->push_back(pburst);
       } else {
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Unknown meter field " << field_name << " in meter with id "
-            << table_id << ".";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unknown meter field " << field_name << " in meter with id "
+               << table_id << ".";
       }
     }
   }

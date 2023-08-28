@@ -430,8 +430,9 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
       return tdi_packetio_manager_->TransmitPacket(req.packet());
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED) << "Unsupported StreamMessageRequest "
-                                      << req.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported StreamMessageRequest " << req.ShortDebugString()
+             << ".";
   }
 }
 

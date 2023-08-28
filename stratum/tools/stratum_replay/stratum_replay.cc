@@ -59,7 +59,7 @@ using ClientStreamChannelReaderWriter =
 ::util::Status Main(int argc, char** argv) {
   if (argc < 2) {
     LOG(INFO) << kUsage;
-    RETURN_ERROR(ERR_INVALID_PARAM).without_logging() << "";
+    return MAKE_ERROR(ERR_INVALID_PARAM).without_logging() << "";
   }
 
   // Initialize the gRPC channel and P4Runtime service stub
@@ -112,7 +112,7 @@ using ClientStreamChannelReaderWriter =
   std::unique_ptr<ClientStreamChannelReaderWriter> stream =
       stub->StreamChannel(&context);
   if (!stream->Write(stream_req)) {
-    RETURN_ERROR(ERR_INTERNAL)
+    return MAKE_ERROR(ERR_INTERNAL)
         << "Failed to send request '" << stream_req.ShortDebugString()
         << "' to switch.";
   }

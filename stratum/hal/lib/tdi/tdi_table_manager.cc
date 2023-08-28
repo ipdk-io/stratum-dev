@@ -102,8 +102,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   auto last = std::unique(intervals_ms.begin(), intervals_ms.end());
   intervals_ms.erase(last, intervals_ms.end());
   if (intervals_ms.size() != 1) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Inconsistent register reset intervals are not supported.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Inconsistent register reset intervals are not supported.";
   }
 
   TimerDaemon::DescriptorPtr handle;
@@ -217,8 +217,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           CHECK_RETURN_IF_FALSE(!IsDontCareMatch(mk.optional()));
           ABSL_FALLTHROUGH_INTENDED;
         default:
-          RETURN_ERROR(ERR_INVALID_PARAM)
-              << "Invalid or unsupported match key: " << mk.ShortDebugString();
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Invalid or unsupported match key: "
+                 << mk.ShortDebugString();
       }
     } else {
       switch (expected_match_field.match_type()) {
@@ -235,21 +236,22 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           break;
         }
         default:
-          RETURN_ERROR(ERR_INVALID_PARAM)
-              << "Invalid field match type "
-              << ::p4::config::v1::MatchField_MatchType_Name(
-                     expected_match_field.match_type())
-              << ".";
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Invalid field match type "
+                 << ::p4::config::v1::MatchField_MatchType_Name(
+                        expected_match_field.match_type())
+                 << ".";
       }
     }
   }
 
   // Priority handling.
   if (!needs_priority && table_entry.priority()) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Non-zero priority for exact/LPM match.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Non-zero priority for exact/LPM match.";
   } else if (needs_priority && table_entry.priority() == 0) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Zero priority for ternary/range/optional match.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Zero priority for ternary/range/optional match.";
   } else if (needs_priority) {
     ASSIGN_OR_RETURN(uint64 priority,
                      ConvertPriorityFromP4rtToTdi(table_entry.priority()));
@@ -287,8 +289,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       break;
     case ::p4::v1::TableAction::kActionProfileActionSet:
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "Unsupported action type: " << table_entry.action().type_case();
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported action type: " << table_entry.action().type_case();
   }
 
   ASSIGN_OR_RETURN(auto table,
@@ -309,8 +311,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           meter_units_in_packets = true;
           break;
         default:
-          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                          << meter.ShortDebugString() << ".";
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Unsupported meter spec on meter "
+                 << meter.ShortDebugString() << ".";
       }
       RETURN_IF_ERROR(table_data->SetMeterConfig(
           meter_units_in_packets, table_entry.meter_config().cir(),
@@ -342,9 +345,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
   if (!table_entry.is_default_action()) {
     if (table.is_const_table()) {
-      RETURN_ERROR(ERR_PERMISSION_DENIED)
-          << "Can't write to table " << table.preamble().name()
-          << " because it has const entries.";
+      return MAKE_ERROR(ERR_PERMISSION_DENIED)
+             << "Can't write to table " << table.preamble().name()
+             << " because it has const entries.";
     }
     ASSIGN_OR_RETURN(auto table_key,
                      tdi_sde_interface_->CreateTableKey(table_id));
@@ -371,9 +374,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
             device_, session, table_id, table_key.get()));
         break;
       default:
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Unsupported update type: " << type << " in table entry "
-            << table_entry.ShortDebugString() << ".";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Unsupported update type: " << type << " in table entry "
+               << table_entry.ShortDebugString() << ".";
     }
   } else {
     CHECK_RETURN_IF_FALSE(type == ::p4::v1::Update::MODIFY)
@@ -463,11 +466,11 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
         break;
       }
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Invalid field match type "
-            << ::p4::config::v1::MatchField_MatchType_Name(
-                   expected_match_field.match_type())
-            << ".";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Invalid field match type "
+               << ::p4::config::v1::MatchField_MatchType_Name(
+                      expected_match_field.match_type())
+               << ".";
     }
   }
 
@@ -525,8 +528,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
         case ::p4::config::v1::MeterSpec::PACKETS:
           break;
         default:
-          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                          << meter.ShortDebugString() << ".";
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Unsupported meter spec on meter "
+                 << meter.ShortDebugString() << ".";
       }
       uint64 cir = 0;
       uint64 cburst = 0;
@@ -821,8 +825,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           meter_units_in_packets = true;
           break;
         default:
-          RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                          << meter.ShortDebugString() << ".";
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Unsupported meter spec on meter "
+                 << meter.ShortDebugString() << ".";
       }
       RETURN_IF_ERROR(table_data->SetMeterConfig(
           meter_units_in_packets, direct_meter_entry.config().cir(),
@@ -997,7 +1002,7 @@ TdiTableManager::ReadDirectMeterEntry(
   if (register_entry.has_index()) {
     register_index = register_entry.index().index();
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid register entry index";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid register entry index";
   }
 
   RETURN_IF_ERROR(tdi_sde_interface_->WriteRegister(
@@ -1024,8 +1029,9 @@ TdiTableManager::ReadDirectMeterEntry(
       case ::p4::config::v1::MeterSpec::PACKETS:
         break;
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                        << meter.ShortDebugString() << ".";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported meter spec on meter " << meter.ShortDebugString()
+               << ".";
     }
   }
   // Index 0 is a valid value and not a wildcard.
@@ -1089,8 +1095,9 @@ TdiTableManager::ReadDirectMeterEntry(
         meter_units_in_packets = true;
         break;
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                        << meter.ShortDebugString() << ".";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported meter spec on meter " << meter.ShortDebugString()
+               << ".";
     }
   }
 
@@ -1101,7 +1108,7 @@ TdiTableManager::ReadDirectMeterEntry(
   if (meter_entry.has_index()) {
     meter_index = meter_entry.index().index();
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
   }
 
   RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(

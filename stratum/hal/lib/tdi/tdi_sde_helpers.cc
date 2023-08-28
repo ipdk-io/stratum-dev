@@ -106,8 +106,8 @@ namespace helpers {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Unknown key_type: " << static_cast<int>(key_type) << ".";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Unknown key_type: " << static_cast<int>(key_type) << ".";
     }
 
     absl::StrAppend(&s, field_name, " { field_id: ", field_id,
@@ -180,8 +180,8 @@ namespace helpers {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Unknown data_type: " << static_cast<int>(data_type) << ".";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Unknown data_type: " << static_cast<int>(data_type) << ".";
     }
 
     absl::StrAppend(&s, field_name, " { field_id: ", field_id,

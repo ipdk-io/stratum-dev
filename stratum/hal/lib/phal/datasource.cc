@@ -74,7 +74,7 @@ void FetchOnce::CacheUpdated() { should_update_ = false; }
         return new NoCache();
 
     default:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "invalid cache type";
+        return MAKE_ERROR(ERR_INVALID_PARAM) << "invalid cache type";
     }
 }
 

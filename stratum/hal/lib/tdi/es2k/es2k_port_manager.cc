@@ -57,7 +57,7 @@ namespace {
     case TRI_STATE_FALSE:
       return 2;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
   }
 }
 

@@ -72,7 +72,7 @@ ls -1 stratum/hal/config/*/chassis_config.pb.txt | \
   RETURN_IF_ERROR(ReadProtoFromTextFile(FLAGS_chassis_config_file, &config));
   if (config.chassis().platform() != PLT_GENERIC_BAREFOOT_TOFINO &&
       config.chassis().platform() != PLT_GENERIC_BAREFOOT_TOFINO2) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_INVALID_PARAM)
         << "Chassis config is not for a Tofino platform";
   }
   for (auto& singleton_port : *config.mutable_singleton_ports()) {

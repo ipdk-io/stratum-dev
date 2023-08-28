@@ -96,14 +96,14 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
   const auto& config_params = singleton_port.config_params();
   if (config_params.admin_state() == ADMIN_STATE_UNKNOWN) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Invalid admin state for port " << port_id << " in node " << node_id
-        << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Invalid admin state for port " << port_id << " in node "
+           << node_id << " (SDK Port " << sdk_port_id << ").";
   }
   if (config_params.admin_state() == ADMIN_STATE_DIAG) {
-    RETURN_ERROR(ERR_UNIMPLEMENTED)
-        << "Unsupported 'diags' admin state for port " << port_id << " in node "
-        << node_id << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_UNIMPLEMENTED)
+           << "Unsupported 'diags' admin state for port " << port_id
+           << " in node " << node_id << " (SDK Port " << sdk_port_id << ").";
   }
 
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
@@ -160,9 +160,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
     config->admin_state = ADMIN_STATE_UNKNOWN;
     config->speed_bps.reset();
     config->fec_mode.reset();
-    RETURN_ERROR(ERR_INTERNAL)
-        << "Port " << port_id << " in node " << node_id << " is not valid"
-        << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_INTERNAL)
+           << "Port " << port_id << " in node " << node_id << " is not valid"
+           << " (SDK Port " << sdk_port_id << ").";
   }
 
   const auto& config_params = singleton_port.config_params();
@@ -189,29 +189,29 @@ TofinoChassisManager::~TofinoChassisManager() = default;
       if (config_old.fec_mode)
         port_old.mutable_config_params()->set_fec_mode(*config_old.fec_mode);
       AddPortHelper(node_id, unit, sdk_port_id, port_old, config);
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Could not add port " << port_id << " with new speed "
-          << singleton_port.speed_bps() << " to BF SDE"
-          << " (SDK Port " << sdk_port_id << ").";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Could not add port " << port_id << " with new speed "
+             << singleton_port.speed_bps() << " to BF SDE"
+             << " (SDK Port " << sdk_port_id << ").";
     }
   }
   // same for FEC mode
   if (config_params.fec_mode() != config_old.fec_mode) {
-    RETURN_ERROR(ERR_UNIMPLEMENTED)
-        << "The FEC mode for port " << port_id << " in node " << node_id
-        << " has changed; you need to delete the port and add it again"
-        << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_UNIMPLEMENTED)
+           << "The FEC mode for port " << port_id << " in node " << node_id
+           << " has changed; you need to delete the port and add it again"
+           << " (SDK Port " << sdk_port_id << ").";
   }
 
   if (config_params.admin_state() == ADMIN_STATE_UNKNOWN) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Invalid admin state for port " << port_id << " in node " << node_id
-        << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Invalid admin state for port " << port_id << " in node "
+           << node_id << " (SDK Port " << sdk_port_id << ").";
   }
   if (config_params.admin_state() == ADMIN_STATE_DIAG) {
-    RETURN_ERROR(ERR_UNIMPLEMENTED)
-        << "Unsupported 'diags' admin state for port " << port_id << " in node "
-        << node_id << " (SDK Port " << sdk_port_id << ").";
+    return MAKE_ERROR(ERR_UNIMPLEMENTED)
+           << "Unsupported 'diags' admin state for port " << port_id
+           << " in node " << node_id << " (SDK Port " << sdk_port_id << ").";
   }
 
   bool config_changed = false;
@@ -320,9 +320,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
 
     auto* unit = gtl::FindOrNull(node_id_to_unit, node_id);
     if (unit == nullptr) {
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Invalid ChassisConfig, unknown node id " << node_id
-          << " for port " << port_id << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Invalid ChassisConfig, unknown node id " << node_id
+             << " for port " << port_id << ".";
     }
     node_id_to_port_id_to_port_state[node_id][port_id] = PORT_STATE_UNKNOWN;
     node_id_to_port_id_to_time_last_changed[node_id][port_id] =
@@ -386,9 +386,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
       // sanity-check: if admin_state is not ADMIN_STATE_UNKNOWN, then the port
       // was added and the speed_bps was set.
       if (!config_old->speed_bps) {
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Invalid internal state in TofinoChassisManager, "
-            << "speed_bps field should contain a value";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Invalid internal state in TofinoChassisManager, "
+               << "speed_bps field should contain a value";
       }
 
       // if anything fails, config.admin_state will be set to
@@ -452,9 +452,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
             break;
           }
           default:
-            RETURN_ERROR(ERR_INVALID_PARAM)
-                << "Unsupported port type in DropTarget "
-                << drop_target.ShortDebugString();
+            return MAKE_ERROR(ERR_INVALID_PARAM)
+                   << "Unsupported port type in DropTarget "
+                   << drop_target.ShortDebugString();
         }
         RETURN_IF_ERROR(tofino_port_manager_->SetDeflectOnDropDestination(
             unit, sdk_port_id, drop_target.queue()));
@@ -522,9 +522,9 @@ TofinoChassisManager::~TofinoChassisManager() = default;
           shaping_config.byte_shaping().max_rate_bps()));
       break;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Invalid port shaping config " << shaping_config.ShortDebugString()
-          << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Invalid port shaping config "
+             << shaping_config.ShortDebugString() << ".";
   }
   RETURN_IF_ERROR(tofino_port_manager_->EnablePortShaping(unit, sdk_port_id,
                                                           TRI_STATE_TRUE));
@@ -650,17 +650,17 @@ TofinoChassisManager::~TofinoChassisManager() = default;
   if (initialized_) {
     if (node_id_to_port_id_to_singleton_port_key !=
         node_id_to_port_id_to_singleton_port_key_) {
-      RETURN_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in the port layout. The stack "
-          << "needs to be rebooted to finish config push.";
+      return MAKE_ERROR(ERR_REBOOT_REQUIRED)
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in the port layout. The stack "
+             << "needs to be rebooted to finish config push.";
     }
 
     if (node_id_to_unit != node_id_to_unit_) {
-      RETURN_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in node_id_to_unit. The stack "
-          << "needs to be rebooted to finish config push.";
+      return MAKE_ERROR(ERR_REBOOT_REQUIRED)
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in node_id_to_unit. The stack "
+             << "needs to be rebooted to finish config push.";
     }
   }
 
@@ -839,12 +839,12 @@ TofinoChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       break;
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "DataRequest field "
-          << request.descriptor()
-                 ->FindFieldByNumber(request.request_case())
-                 ->name()
-          << " is not supported yet!";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "DataRequest field "
+             << request.descriptor()
+                    ->FindFieldByNumber(request.request_case())
+                    ->name()
+             << " is not supported yet!";
   }
   return resp;
 }
@@ -939,14 +939,14 @@ TofinoChassisManager::GetNodeIdToUnitMap() const {
     }
 
     if (!config.speed_bps) {
-      RETURN_ERROR(ERR_INTERNAL)
-          << "Invalid internal state in TofinoChassisManager, "
-          << "speed_bps field should contain a value";
+      return MAKE_ERROR(ERR_INTERNAL)
+             << "Invalid internal state in TofinoChassisManager, "
+             << "speed_bps field should contain a value";
     }
     if (!config.fec_mode) {
-      RETURN_ERROR(ERR_INTERNAL)
-          << "Invalid internal state in TofinoChassisManager, "
-          << "fec_mode field should contain a value";
+      return MAKE_ERROR(ERR_INTERNAL)
+             << "Invalid internal state in TofinoChassisManager, "
+             << "fec_mode field should contain a value";
     }
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
@@ -1012,9 +1012,9 @@ TofinoChassisManager::GetNodeIdToUnitMap() const {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Unsupported port type in DropTarget "
-            << drop_target.ShortDebugString();
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported port type in DropTarget "
+               << drop_target.ShortDebugString();
     }
 
     RETURN_IF_ERROR(tofino_port_manager_->SetDeflectOnDropDestination(

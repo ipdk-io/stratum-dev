@@ -59,7 +59,7 @@ namespace {
     }
   }
 
-  RETURN_ERROR(ERR_INTERNAL) << "Could not find register data field id.";
+  return MAKE_ERROR(ERR_INTERNAL) << "Could not find register data field id.";
 }
 
 }  // namespace
@@ -195,9 +195,10 @@ namespace {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Unsupported register data type " << static_cast<int>(data_type)
-            << " for register in table " << table_id;
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported register data type "
+               << static_cast<int>(data_type) << " for register in table "
+               << table_id;
     }
   }
 

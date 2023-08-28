@@ -23,7 +23,7 @@ OpticsAdapter::OpticsAdapter(AttributeDatabaseInterface* attribute_db_interface)
     int module, int network_interface,
     OpticalTransceiverInfo* ot_info) {
   if (module <= 0 || network_interface <= 0) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid Slot/Port value. ";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid Slot/Port value. ";
   }
 
   std::vector<Path> paths = {
@@ -59,7 +59,7 @@ OpticsAdapter::OpticsAdapter(AttributeDatabaseInterface* attribute_db_interface)
     int module, int network_interface,
     const OpticalTransceiverInfo& ot_info) {
   if (module <= 0 || network_interface <= 0) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid Slot/Port value. ";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid Slot/Port value. ";
   }
 
   AttributeValueMap attrs;

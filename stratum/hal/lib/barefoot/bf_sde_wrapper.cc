@@ -138,8 +138,8 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Unknown key_type: " << static_cast<int>(key_type) << ".";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Unknown key_type: " << static_cast<int>(key_type) << ".";
     }
 
     absl::StrAppend(&s, field_name, " { field_id: ", field_id,
@@ -224,8 +224,8 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INTERNAL)
-            << "Unknown data_type: " << static_cast<int>(data_type) << ".";
+        return MAKE_ERROR(ERR_INTERNAL)
+               << "Unknown data_type: " << static_cast<int>(data_type) << ".";
     }
 
     absl::StrAppend(&s, field_name, " { field_id: ", field_id,
@@ -795,8 +795,8 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   bool is_active;
   RETURN_IF_BFRT_ERROR(table_data_->isActive(field_id, &is_active));
   if (!is_active) {
-    RETURN_ERROR(ERR_ENTRY_NOT_FOUND).without_logging()
-        << "Field $ACTION_MEMBER_ID is not active.";
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND).without_logging()
+           << "Field $ACTION_MEMBER_ID is not active.";
   }
   RETURN_IF_BFRT_ERROR(table_data_->getValue(field_id, action_member_id));
 
@@ -827,8 +827,8 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   bool is_active;
   RETURN_IF_BFRT_ERROR(table_data_->isActive(field_id, &is_active));
   if (!is_active) {
-    RETURN_ERROR(ERR_ENTRY_NOT_FOUND).without_logging()
-        << "Field $SELECTOR_GROUP_ID is not active.";
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND).without_logging()
+           << "Field $SELECTOR_GROUP_ID is not active.";
   }
   RETURN_IF_BFRT_ERROR(table_data_->getValue(field_id, selector_group_id));
 
@@ -988,7 +988,7 @@ bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
     case kHundredGigBps:
       return BF_SPEED_100G;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
   }
 }
 
@@ -1001,7 +1001,7 @@ bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
     case TRI_STATE_FALSE:
       return 2;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
   }
 }
 
@@ -1013,7 +1013,8 @@ bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
     // we have to "guess" the FEC type to use based on the port speed.
     switch (speed_bps) {
       case kOneGigBps:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode for 1Gbps mode.";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Invalid FEC mode for 1Gbps mode.";
       case kTenGigBps:
       case kFortyGigBps:
         return BF_FEC_TYP_FIRECODE;
@@ -1024,10 +1025,10 @@ bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
       case kFourHundredGigBps:
         return BF_FEC_TYP_REED_SOLOMON;
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
+        return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
     }
   }
-  RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode.";
+  return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode.";
 }
 
 ::util::StatusOr<bf_loopback_mode_e> LoopbackModeToBf(
@@ -1038,9 +1039,9 @@ bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
     case LOOPBACK_STATE_MAC:
       return BF_LPBK_MAC_NEAR;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Unsupported loopback mode: " << LoopbackState_Name(loopback_mode)
-          << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported loopback mode: "
+             << LoopbackState_Name(loopback_mode) << ".";
   }
 }
 
@@ -1182,7 +1183,7 @@ BfSdeWrapper::BfSdeWrapper() : port_status_event_writer_(nullptr) {}
 
 ::util::Status BfSdeWrapper::SetPortMtu(int device, int port, int32 mtu) {
   if (mtu < 0) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid MTU value.";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid MTU value.";
   }
   if (mtu == 0) mtu = kBfDefaultMtu;
   RETURN_IF_BFRT_ERROR(bf_pal_port_mtu_set(
@@ -1797,7 +1798,7 @@ namespace {
     }
   }
 
-  RETURN_ERROR(ERR_TABLE_FULL) << "Could not find free multicast node id.";
+  return MAKE_ERROR(ERR_TABLE_FULL) << "Could not find free multicast node id.";
 }
 
 ::util::StatusOr<uint32> BfSdeWrapper::CreateMulticastNode(
@@ -2379,7 +2380,7 @@ namespace {
     }
   }
 
-  RETURN_ERROR(ERR_INTERNAL) << "Could not find register data field id.";
+  return MAKE_ERROR(ERR_INTERNAL) << "Could not find register data field id.";
 }
 }  // namespace
 
@@ -2503,9 +2504,10 @@ namespace {
         break;
       }
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Unsupported register data type " << static_cast<int>(data_type)
-            << " for register in table " << table_id;
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported register data type "
+               << static_cast<int>(data_type) << " for register in table "
+               << table_id;
     }
   }
 
@@ -2670,9 +2672,9 @@ namespace {
         RETURN_IF_BFRT_ERROR(table_data->getValue(field_id, &pburst));
         pbursts->push_back(pburst);
       } else {
-        RETURN_ERROR(ERR_INVALID_PARAM)
-            << "Unknown meter field " << field_name << " in meter with id "
-            << table_id << ".";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unknown meter field " << field_name << " in meter with id "
+               << table_id << ".";
       }
     }
   }

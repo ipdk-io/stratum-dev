@@ -39,8 +39,8 @@ TdiPreManager::TdiPreManager(TdiSdeInterface* tdi_sde_interface, int device)
     case PreEntry::kCloneSessionEntry:
       return WriteCloneSessionEntry(session, type, entry.clone_session_entry());
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "Unsupported PRE entry: " << entry.ShortDebugString();
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported PRE entry: " << entry.ShortDebugString();
   }
 }
 
@@ -60,8 +60,8 @@ TdiPreManager::TdiPreManager(TdiSdeInterface* tdi_sde_interface, int device)
       break;
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "Unsupported PRE entry: " << entry.ShortDebugString();
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported PRE entry: " << entry.ShortDebugString();
   }
 
   return ::util::OkStatus();
@@ -156,7 +156,8 @@ std::unique_ptr<TdiPreManager> TdiPreManager::CreateInstance(
       break;
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported update type: " << type;
   }
   return ::util::OkStatus();
 }
@@ -273,9 +274,9 @@ std::unique_ptr<TdiPreManager> TdiPreManager::CreateInstance(
       break;
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "Unsupported update type: " << type << " on CloneSessionEntry "
-          << entry.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported update type: " << type << " on CloneSessionEntry "
+             << entry.ShortDebugString() << ".";
   }
 
   return ::util::OkStatus();

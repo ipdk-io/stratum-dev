@@ -169,7 +169,7 @@ namespace {
     }
   }
 
-  RETURN_ERROR(ERR_TABLE_FULL) << "Could not find free multicast node id.";
+  return MAKE_ERROR(ERR_TABLE_FULL) << "Could not find free multicast node id.";
 }
 
 ::util::StatusOr<uint32> TdiSdeWrapper::CreateMulticastNode(
