@@ -5,11 +5,12 @@
 
 #include "stratum/hal/lib/common/utils.h"
 
+#include <sys/stat.h>
+
 #include <cfenv>  // NOLINT
 #include <cmath>
 #include <regex>    // NOLINT
 #include <sstream>  // IWYU pragma: keep
-#include <sys/stat.h>
 
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
@@ -483,7 +484,7 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config) {
 bool IsRegularFile(const std::string& filename) {
   struct stat buf;
   int rc = lstat(filename.c_str(), &buf);
-  return (rc==0 && S_ISREG(buf.st_mode));
+  return (rc == 0 && S_ISREG(buf.st_mode));
 }
 
 }  // namespace hal
