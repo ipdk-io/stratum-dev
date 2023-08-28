@@ -61,8 +61,8 @@ cc_library(
 cc_library(
     name = "es2k_sde",
     deps = [
-        ":es2k_libs",
         ":es2k_hdrs",
+        ":es2k_libs",
     ],
 )
 
@@ -72,4 +72,3 @@ cc_library(
         "es2k-bin/lib/libtarget_sys.so",
     ]),
 )
-

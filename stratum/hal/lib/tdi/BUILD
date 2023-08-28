@@ -43,15 +43,15 @@ config_setting(
 )
 
 target_defines = select({
-    ":dpdk_target":   ["DPDK_TARGET"],
-    ":es2k_target":   ["ES2K_TARGET"],
+    ":dpdk_target": ["DPDK_TARGET"],
+    ":es2k_target": ["ES2K_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
     "//conditions:default": [],
 })
 
 target_sdk_headers = select({
-    ":dpdk_target":   ["@local_dpdk_bin//:dpdk_hdrs"],
-    ":es2k_target":   ["@local_es2k_bin//:es2k_hdrs"],
+    ":dpdk_target": ["@local_dpdk_bin//:dpdk_hdrs"],
+    ":es2k_target": ["@local_es2k_bin//:es2k_hdrs"],
     ":tofino_target": ["@local_tofino_bin//:tofino_hdrs"],
     "//conditions:default": [],
 })
@@ -92,8 +92,8 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "tdi_sde_flags",
-    hdrs = ["tdi_sde_flags.h"],
     srcs = ["tdi_sde_flags.cc"],
+    hdrs = ["tdi_sde_flags.h"],
     deps = [
         "@com_github_gflags_gflags//:gflags",
     ],
@@ -143,18 +143,18 @@ stratum_cc_library(
         ":tdi_sde_headers",
         ":tdi_sde_wrapper_interface",
         ":utils",
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
         "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/gtl:stl_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
-        "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/p4:utils",
-        "//stratum/lib/channel",
         "//stratum/lib:constants",
         "//stratum/lib:utils",
+        "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
@@ -246,11 +246,11 @@ stratum_cc_library(
     srcs = ["tdi_node.cc"],
     hdrs = ["tdi_node.h"],
     deps = [
-        ":tdi_cc_proto",
-        ":tdi_pipeline_utils",
         ":tdi_action_profile_manager",
+        ":tdi_cc_proto",
         ":tdi_counter_manager",
         ":tdi_packetio_manager",
+        ":tdi_pipeline_utils",
         ":tdi_pre_manager",
         ":tdi_sde_interface",
         ":tdi_table_manager",
@@ -352,10 +352,10 @@ stratum_cc_library(
     ],
     defines = target_defines,
     deps = [
-        ":tdi_cc_proto",
-        ":tdi_sde_interface",
-        ":tdi_constants",
         ":macros",
+        ":tdi_cc_proto",
+        ":tdi_constants",
+        ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -389,8 +389,8 @@ stratum_cc_library(
     hdrs = ["tdi_action_profile_manager.h"],
     deps = [
         ":tdi_cc_proto",
-        ":tdi_sde_interface",
         ":tdi_constants",
+        ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/status",
@@ -414,8 +414,8 @@ stratum_cc_test(
     name = "tdi_action_profile_manager_test",
     srcs = ["tdi_action_profile_manager_test.cc"],
     deps = [
-        ":tdi_sde_mock",
         ":tdi_action_profile_manager",
+        ":tdi_sde_mock",
         ":test_main",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/common:writer_mock",
@@ -449,8 +449,8 @@ stratum_cc_test(
     name = "tdi_fixed_function_manager_test",
     srcs = ["tdi_fixed_function_manager_test.cc"],
     deps = [
-        ":tdi_sde_mock",
         ":tdi_fixed_function_manager",
+        ":tdi_sde_mock",
         ":test_main",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/common:writer_mock",
@@ -476,11 +476,11 @@ stratum_cc_library(
         "//stratum/hal/lib/common:constants",
         "//stratum/hal/lib/common:utils",
         "//stratum/hal/lib/common:writer_interface",
-        "//stratum/lib/channel:channel",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
+        "//stratum/lib/channel",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
@@ -527,8 +527,8 @@ stratum_cc_test(
     name = "tdi_packetio_manager_test",
     srcs = ["tdi_packetio_manager_test.cc"],
     deps = [
-        ":tdi_sde_mock",
         ":tdi_packetio_manager",
+        ":tdi_sde_mock",
         ":test_main",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/common:writer_mock",
@@ -548,8 +548,8 @@ stratum_cc_library(
     hdrs = ["tdi_pre_manager.h"],
     deps = [
         ":tdi_cc_proto",
-        ":tdi_sde_interface",
         ":tdi_constants",
+        ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -574,8 +574,8 @@ stratum_cc_test(
     name = "tdi_pre_manager_test",
     srcs = ["tdi_pre_manager_test.cc"],
     deps = [
-        ":tdi_sde_mock",
         ":tdi_pre_manager",
+        ":tdi_sde_mock",
         ":test_main",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/common:writer_mock",
@@ -594,8 +594,8 @@ stratum_cc_library(
     srcs = ["tdi_counter_manager.cc"],
     hdrs = ["tdi_counter_manager.h"],
     deps = [
-        ":tdi_sde_interface",
         ":tdi_constants",
+        ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -620,8 +620,8 @@ stratum_cc_test(
     name = "tdi_counter_manager_test",
     srcs = ["tdi_counter_manager_test.cc"],
     deps = [
-        ":tdi_sde_mock",
         ":tdi_counter_manager",
+        ":tdi_sde_mock",
         ":tdi_table_manager",  # FIXME: for bfrt_table_sync_timeout_ms storage
         ":test_main",
         "//stratum/glue/status:status_test_util",

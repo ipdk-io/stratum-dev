@@ -55,8 +55,8 @@ cc_library(
 cc_library(
     name = "tofino_sde",
     deps = [
-        ":tofino_libs",
         ":tofino_hdrs",
+        ":tofino_libs",
     ],
 )
 
