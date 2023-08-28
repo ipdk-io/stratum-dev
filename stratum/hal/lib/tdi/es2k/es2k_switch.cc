@@ -24,10 +24,9 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-Es2kSwitch::Es2kSwitch(
-    Es2kChassisManager* chassis_manager,
-    TdiIpsecManager* ipsec_manager,
-    const std::map<int, Es2kNode*>& device_id_to_es2k_node)
+Es2kSwitch::Es2kSwitch(Es2kChassisManager* chassis_manager,
+                       TdiIpsecManager* ipsec_manager,
+                       const std::map<int, Es2kNode*>& device_id_to_es2k_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
       device_id_to_es2k_node_(device_id_to_es2k_node),
@@ -178,11 +177,10 @@ Es2kSwitch::~Es2kSwitch() {}
   return chassis_manager_->UnregisterEventNotifyWriter();
 }
 
-::util::Status Es2kSwitch::RetrieveValue(
-    uint64 node_id,
-    const DataRequest& request,
-    WriterInterface<DataResponse>* writer,
-    std::vector<::util::Status>* details) {
+::util::Status Es2kSwitch::RetrieveValue(uint64 node_id,
+                                         const DataRequest& request,
+                                         WriterInterface<DataResponse>* writer,
+                                         std::vector<::util::Status>* details) {
   absl::ReaderMutexLock l(&chassis_lock);
   for (const auto& req : request.requests()) {
     DataResponse resp;
@@ -223,7 +221,7 @@ Es2kSwitch::~Es2kSwitch() {}
       }
       // IPsecOffload request
       case DataRequest::Request::kIpsecOffloadInfo: {
-        uint32 fetched_spi=0;
+        uint32 fetched_spi = 0;
         auto fetch_status = ipsec_manager_->GetSpiData(fetched_spi);
         if (!fetch_status.ok()) {
           status.Update(fetch_status);
@@ -250,10 +248,8 @@ Es2kSwitch::~Es2kSwitch() {}
   return ::util::OkStatus();
 }
 
-::util::Status Es2kSwitch::SetValue(
-    uint64 node_id, const SetRequest& request,
-    std::vector<::util::Status>* details) {
-
+::util::Status Es2kSwitch::SetValue(uint64 node_id, const SetRequest& request,
+                                    std::vector<::util::Status>* details) {
   for (const auto& req : request.requests()) {
     ::util::Status status = ::util::OkStatus();
     switch (req.request_case()) {
@@ -261,7 +257,7 @@ Es2kSwitch::~Es2kSwitch() {}
         absl::WriterMutexLock l(&chassis_lock);
         auto op_type = req.ipsec_offload_config().ipsec_sadb_config_op();
         auto payload = const_cast<IPsecSADBConfig&>(
-                          req.ipsec_offload_config().ipsec_sadb_config_info());
+            req.ipsec_offload_config().ipsec_sadb_config_info());
         status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
         break;
       }
@@ -280,8 +276,7 @@ Es2kSwitch::~Es2kSwitch() {}
 }
 
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
-    Es2kChassisManager* chassis_manager,
-    TdiIpsecManager* ipsec_manager,
+    Es2kChassisManager* chassis_manager, TdiIpsecManager* ipsec_manager,
     const std::map<int, Es2kNode*>& device_id_to_es2k_node) {
   return absl::WrapUnique(
       new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_es2k_node));

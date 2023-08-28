@@ -40,8 +40,8 @@ using ::testing::DoAll;
 using ::testing::HasSubstr;
 using ::testing::Invoke;
 using ::testing::Matcher;
-using ::testing::NiceMock;
 using ::testing::Mock;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SaveArg;
 using ::testing::SetArgPointee;
@@ -217,8 +217,8 @@ class Es2kChassisManagerTest : public ::testing::Test {
           return ::util::OkStatus();
         });
 #endif
-    EXPECT_CALL(*port_manager_, AddPort(kUnit, kDefaultPortId,
-                                        kDefaultSpeedBps, kDefaultFecMode));
+    EXPECT_CALL(*port_manager_, AddPort(kUnit, kDefaultPortId, kDefaultSpeedBps,
+                                        kDefaultFecMode));
     EXPECT_CALL(*port_manager_, EnablePort(kUnit, kDefaultPortId));
 #if 0
     EXPECT_CALL(*phal_mock_,
@@ -299,7 +299,7 @@ class Es2kChassisManagerTest : public ::testing::Test {
   }
 
   std::unique_ptr<Es2kPortManagerMock> port_manager_;
-  //std::unique_ptr<ChannelWriter<PortStatusEvent>> sde_event_writer_;
+  // std::unique_ptr<ChannelWriter<PortStatusEvent>> sde_event_writer_;
   std::unique_ptr<Es2kChassisManager> chassis_manager_;
 
   static constexpr int kTestTransceiverWriterId = 20;
@@ -338,7 +338,7 @@ TEST_F(Es2kChassisManagerTest, AddPortFec) {
   RegisterSdkPortId(builder.AddPort(portId, port, ADMIN_STATE_ENABLED,
                                     kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_, AddPort(kUnit, portId + kSdkPortOffset,
-                                     kHundredGigBps, FEC_MODE_ON));
+                                      kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_, EnablePort(kUnit, portId + kSdkPortOffset));
   ASSERT_OK(PushChassisConfig(builder));
 
@@ -352,9 +352,8 @@ TEST_F(Es2kChassisManagerTest, SetPortLoopback) {
   SingletonPort* sport = builder.GetPort(kPortId);
   sport->mutable_config_params()->set_loopback_mode(LOOPBACK_STATE_MAC);
 
-  EXPECT_CALL(
-      *port_manager_,
-      SetPortLoopbackMode(kUnit, kDefaultPortId, LOOPBACK_STATE_MAC));
+  EXPECT_CALL(*port_manager_,
+              SetPortLoopbackMode(kUnit, kDefaultPortId, LOOPBACK_STATE_MAC));
   EXPECT_CALL(*port_manager_, EnablePort(kUnit, kDefaultPortId));
 
   ASSERT_OK(PushChassisConfig(builder));
@@ -512,8 +511,7 @@ TEST_F(Es2kChassisManagerTest, ReplayPorts) {
 #endif
 
 template <typename T>
-T GetPortData(Es2kChassisManager* chassis_manager_, uint64 node_id,
-              int port_id,
+T GetPortData(Es2kChassisManager* chassis_manager_, uint64 node_id, int port_id,
               DataRequest::Request::Port* (
                   DataRequest::Request::*get_mutable_message_func)(),
               const T& (DataResponse::*data_response_get_message_func)() const,

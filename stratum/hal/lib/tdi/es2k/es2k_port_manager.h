@@ -34,12 +34,11 @@ class Es2kPortManager : public TdiPortManager {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId *target_dp_id);
+                             TargetDatapathId* target_dp_id);
   ::util::StatusOr<PortState> GetPortState(int device, int port);
-  ::util::Status GetPortCounters(int device, int port,
-                                 PortCounters* counters);
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key);
+  ::util::Status GetPortCounters(int device, int port, PortCounters* counters);
+  ::util::StatusOr<uint32> GetPortIdFromPortKey(int device,
+                                                const PortKey& port_key);
   bool IsValidPort(int device, int port);
   ::util::Status AddPort(int device, int port);
   ::util::Status DeletePort(int device, int port);

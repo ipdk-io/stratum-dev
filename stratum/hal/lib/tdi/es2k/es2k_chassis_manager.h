@@ -195,7 +195,7 @@ class Es2kChassisManager {
 
   // Channel for receiving port status events from the Es2kPortManager.
   std::shared_ptr<Channel<TdiPortManager::PortStatusEvent>>
-    port_status_event_channel_ GUARDED_BY(chassis_lock);
+      port_status_event_channel_ GUARDED_BY(chassis_lock);
 
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;

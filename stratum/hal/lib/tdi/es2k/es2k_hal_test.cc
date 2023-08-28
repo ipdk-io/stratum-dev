@@ -50,8 +50,8 @@ class Es2kHalTest : public ::testing::Test {
     switch_mock_ = new ::testing::StrictMock<SwitchMock>();
     auth_policy_checker_mock_ =
         new ::testing::StrictMock<AuthPolicyCheckerMock>();
-    hal_ = Es2kHal::CreateSingleton(
-	kMode, switch_mock_, auth_policy_checker_mock_);
+    hal_ = Es2kHal::CreateSingleton(kMode, switch_mock_,
+                                    auth_policy_checker_mock_);
     ASSERT_NE(hal_, nullptr);
   }
 

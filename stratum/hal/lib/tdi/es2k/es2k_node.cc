@@ -71,10 +71,10 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
     TdiPacketioManager* tdi_packetio_manager, TdiPreManager* tdi_pre_manager,
     TdiCounterManager* tdi_counter_manager, TdiSdeInterface* tdi_sde_interface,
     int device_id, bool initialized, uint64 node_id) {
-  return absl::WrapUnique(new Es2kNode(
-      tdi_table_manager, tdi_action_profile_manager,
-      tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
-      tdi_sde_interface, device_id, initialized, node_id));
+  return absl::WrapUnique(
+      new Es2kNode(tdi_table_manager, tdi_action_profile_manager,
+                   tdi_packetio_manager, tdi_pre_manager, tdi_counter_manager,
+                   tdi_sde_interface, device_id, initialized, node_id));
 }
 
 ::util::Status Es2kNode::WriteForwardingEntries(
@@ -286,7 +286,6 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
 ::util::Status Es2kNode::WriteExternEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::ExternEntry& entry) {
-
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
          << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }
@@ -295,7 +294,6 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::ExternEntry& entry,
     WriterInterface<::p4::v1::ReadResponse>* writer) {
-
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
          << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
 }

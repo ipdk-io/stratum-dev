@@ -38,8 +38,8 @@ constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;
 /* static */
 constexpr int Es2kChassisManager::kMaxXcvrEventDepth;
 
-Es2kChassisManager::Es2kChassisManager(
-    OperationMode mode, Es2kPortManager* es2k_port_manager)
+Es2kChassisManager::Es2kChassisManager(OperationMode mode,
+                                       Es2kPortManager* es2k_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -128,8 +128,8 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
-  RETURN_IF_ERROR(
-      es2k_port_manager_->EnablePortShaping(unit, sdk_port_id, TRI_STATE_FALSE));
+  RETURN_IF_ERROR(es2k_port_manager_->EnablePortShaping(unit, sdk_port_id,
+                                                        TRI_STATE_FALSE));
 
   return ::util::OkStatus();
 }
@@ -586,7 +586,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return *sdk_port_id;
 }
 
-//TODO:Check with Sandeep if this is required
+// TODO:Check with Sandeep if this is required
 ::util::StatusOr<DataResponse> Es2kChassisManager::GetPortData(
     const DataRequest::Request& request) {
   if (!initialized_) {
@@ -708,9 +708,11 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     }
     default:
       RETURN_ERROR(ERR_UNIMPLEMENTED)
-        << "DataRequest field "
-        << request.descriptor()->FindFieldByNumber(request.request_case())->name()
-        << " is not supported yet!";
+          << "DataRequest field "
+          << request.descriptor()
+                 ->FindFieldByNumber(request.request_case())
+                 ->name()
+          << " is not supported yet!";
   }
   return resp;
 }
@@ -759,8 +761,9 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return node_id_to_port_id_to_time_last_changed_[node_id][port_id];
 }
 
-::util::Status Es2kChassisManager::GetPortCounters(
-    uint64 node_id, uint32 port_id, PortCounters* counters) {
+::util::Status Es2kChassisManager::GetPortCounters(uint64 node_id,
+                                                   uint32 port_id,
+                                                   PortCounters* counters) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
@@ -777,7 +780,8 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return node_id_to_unit_;
 }
 
-//TODO: Revisit this, port shaping and drop deflect removed. Check with Sandeep once
+// TODO: Revisit this, port shaping and drop deflect removed. Check with Sandeep
+// once
 ::util::Status Es2kChassisManager::ReplayPortsConfig(uint64 node_id) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
@@ -828,8 +832,8 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
       config_new->mtu = *config.mtu;
     }
     if (config.autoneg) {
-      RETURN_IF_ERROR(es2k_port_manager_->SetPortAutonegPolicy(unit, sdk_port_id,
-                                                              *config.autoneg));
+      RETURN_IF_ERROR(es2k_port_manager_->SetPortAutonegPolicy(
+          unit, sdk_port_id, *config.autoneg));
       config_new->autoneg = *config.autoneg;
     }
     if (config.loopback_mode) {
@@ -922,8 +926,8 @@ void Es2kChassisManager::ReadPortStatusEvents(
 }
 
 void Es2kChassisManager::PortStatusEventHandler(int device, int port,
-                                              PortState new_state,
-                                              absl::Time time_last_changed) {
+                                                PortState new_state,
+                                                absl::Time time_last_changed) {
   absl::WriterMutexLock l(&chassis_lock);
   // TODO(max): check for shutdown here
   // if (shutdown) {

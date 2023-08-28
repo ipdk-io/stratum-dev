@@ -3,8 +3,6 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/main.h"
-
 #include <map>
 #include <memory>
 #include <ostream>
@@ -16,6 +14,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/bin/tdi/main.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
@@ -48,13 +47,15 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-static void SetDefault(const char *name, const char *value) {
-  ::gflags::SetCommandLineOptionWithMode(name, value, ::gflags::SET_FLAGS_DEFAULT);
+static void SetDefault(const char* name, const char* value) {
+  ::gflags::SetCommandLineOptionWithMode(name, value,
+                                         ::gflags::SET_FLAGS_DEFAULT);
 }
 
 static void InitCommandLineFlags() {
   // Chassis config file
-  SetDefault("chassis_config_file", DEFAULT_CONFIG_DIR "es2k_port_config.pb.txt");
+  SetDefault("chassis_config_file",
+             DEFAULT_CONFIG_DIR "es2k_port_config.pb.txt");
 
   // Logging options
   SetDefault("log_dir", DEFAULT_LOG_DIR);
@@ -100,9 +101,9 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto es2k_port_manager = Es2kPortManager::CreateSingleton();
 
-  RETURN_IF_ERROR(sde_wrapper->InitializeSde(
-      FLAGS_es2k_sde_install, FLAGS_es2k_infrap4d_cfg,
-      es2k_infrap4d_background));
+  RETURN_IF_ERROR(sde_wrapper->InitializeSde(FLAGS_es2k_sde_install,
+                                             FLAGS_es2k_infrap4d_cfg,
+                                             es2k_infrap4d_background));
 
   const OperationMode mode = OPERATION_MODE_STANDALONE;
 
@@ -121,16 +122,15 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto packetio_manager =
       TdiPacketioManager::CreateInstance(sde_wrapper, device_id);
 
-  auto pre_manager =
-      TdiPreManager::CreateInstance(sde_wrapper, device_id);
+  auto pre_manager = TdiPreManager::CreateInstance(sde_wrapper, device_id);
 
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto es2k_node = Es2kNode::CreateInstance(
-      table_manager.get(), action_profile_manager.get(),
-      packetio_manager.get(), pre_manager.get(), counter_manager.get(),
-      sde_wrapper, device_id, initialized, node_id);
+      table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
+      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id,
+      initialized, node_id);
 
   std::map<int, Es2kNode*> device_id_to_es2k_node = {
       {device_id, es2k_node.get()},
@@ -141,8 +141,8 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto chassis_manager =
       Es2kChassisManager::CreateInstance(mode, es2k_port_manager);
 
-  auto ipsec_manager = 
-      TdiIpsecManager::CreateInstance(sde_wrapper, fixed_function_manager.get());
+  auto ipsec_manager = TdiIpsecManager::CreateInstance(
+      sde_wrapper, fixed_function_manager.get());
 
   auto es2k_switch = Es2kSwitch::CreateInstance(
       chassis_manager.get(), ipsec_manager.get(), device_id_to_es2k_node);
@@ -150,8 +150,9 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 
   // Create the 'Hal' class instance.
-  auto* hal = Es2kHal::CreateSingleton(
-      mode, es2k_switch.get(), auth_policy_checker.get(), ready_sync, done_sync);
+  auto* hal = Es2kHal::CreateSingleton(mode, es2k_switch.get(),
+                                       auth_policy_checker.get(), ready_sync,
+                                       done_sync);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.
