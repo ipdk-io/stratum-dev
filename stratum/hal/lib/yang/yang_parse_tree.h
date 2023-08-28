@@ -113,7 +113,8 @@ class TreeNode {
 
   // Overrides the default-not-supported handler procedure called when
   // a set-delete request is processed with a user-specified one.
-  TreeNode* SetOnDeleteWithValHandler(const TreeNodeDeleteWithValHandler& handler) {
+  TreeNode* SetOnDeleteWithValHandler(
+      const TreeNodeDeleteWithValHandler& handler) {
     on_delete_with_val_handler_ = handler;
     supports_on_delete_ = true;
     return this;
@@ -371,7 +372,8 @@ class TreeNode {
     return MAKE_ERROR() << "unsupported mode: DELETE for: '"
                         << path.ShortDebugString() << "'";
   };
-  // Special delete handler (developed for IPsec feature) with a protobuf::Message argument
+  // Special delete handler (developed for IPsec feature) with a
+  // protobuf::Message argument
   TreeNodeDeleteWithValHandler on_delete_with_val_handler_ =
       [](const ::gnmi::Path& path, const std::vector<std::string>&,
          CopyOnWriteChassisConfig*) -> ::util::Status {

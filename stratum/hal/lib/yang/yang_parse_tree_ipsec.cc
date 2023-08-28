@@ -4,16 +4,15 @@
 // Implements the YangParseTreePaths::AddSubtreeIPsec() method and its
 // supporting functions.
 
-#include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
-
 #include "gnmi/gnmi.pb.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
-#include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
-#include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/yang/yang_parse_tree.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
+#include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
 
 namespace stratum {
 namespace hal {
@@ -35,10 +34,8 @@ std::string ConvertIPsecNotificationToString(const IPsecNotification& notif) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // /ipsec-offload/ipsec-spi/rx-spi
-void SetUpIPsecFetchSPI(TreeNode* node,
-                        YangParseTree* tree) {
-  auto poll_functor = [tree](const GnmiEvent& event,
-                             const ::gnmi::Path& path,
+void SetUpIPsecFetchSPI(TreeNode* node, YangParseTree* tree) {
+  auto poll_functor = [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                              GnmiSubscribeStream* stream) {
     // Create a data retrieval request.
     DataRequest req;
@@ -67,8 +64,7 @@ void SetUpIPsecFetchSPI(TreeNode* node,
 
 ////////////////////////////////////////////////////////////////////////////////
 // /ipsec-offload/sad/sad-entry/config
-void SetUpIPsecSAConfig(TreeNode* node,
-                        YangParseTree* tree) {
+void SetUpIPsecSAConfig(TreeNode* node, YangParseTree* tree) {
   auto unsupported_functor = UnsupportedFunc();
 
   auto on_set_functor =
@@ -92,16 +88,15 @@ void SetUpIPsecSAConfig(TreeNode* node,
     RETURN_IF_ERROR(ParseProtoFromString(typed_val->proto_bytes(), &msg));
 
     // Send the message through SwitchInterface to TdiIpsecManager
-    RETURN_IF_ERROR(SetValue(tree,
-                             IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY,
-                             msg));
+    RETURN_IF_ERROR(
+        SetValue(tree, IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_ADD_ENTRY, msg));
 
     // In gnmi_publisher.cc::HandleUpdate() we had stripped the key from the
     // incoming gnmi::Path message (because this tree node is generic for all
     // Ipsec ConfigSADB messages). In order to return the correct path back
     // to gnmi client, re-add the key back to the path.
     // Re-add the key to path
-    ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
+    ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
     auto* elem = path_ptr->mutable_elem(2);
     (*elem->mutable_key())["offload-id"] = std::to_string(msg.offload_id());
     (*elem->mutable_key())["direction"] = std::to_string(msg.direction());
@@ -113,11 +108,10 @@ void SetUpIPsecSAConfig(TreeNode* node,
       [node, tree](const ::gnmi::Path& path,
                    const std::vector<std::string>& val,
                    CopyOnWriteChassisConfig* config) -> ::util::Status {
-
     // Needed for re-adding keys back to path
-    ::gnmi::Path *path_ptr = const_cast<::gnmi::Path *>(&path);
+    ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
     auto* elem = path_ptr->mutable_elem(2);
-    
+
     // TODO: remove later after gnmi_cli is fixed
     // gnmi_cli does not support multiple keys. For now, will make two
     // calls to delete in both directions if only one key passed.
@@ -135,22 +129,19 @@ void SetUpIPsecSAConfig(TreeNode* node,
     if (val.size() == 1) {
       msg.set_direction(true);
       // Send the message through SwitchInterface to TdiIpsecManager
-      RETURN_IF_ERROR(SetValue(tree,
-                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                               msg));
+      RETURN_IF_ERROR(SetValue(
+          tree, IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY, msg));
       msg.set_direction(false);
-      RETURN_IF_ERROR(SetValue(tree,
-                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                               msg));
+      RETURN_IF_ERROR(SetValue(
+          tree, IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY, msg));
 
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
     } else if (val.size() == 2) {
       bool direction = (val.at(1).compare("1") == 0) ? true : false;
       msg.set_direction(direction);
-      RETURN_IF_ERROR(SetValue(tree,
-                               IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY,
-                               msg));
+      RETURN_IF_ERROR(SetValue(
+          tree, IPsecSadbConfigOp::IPSEC_SADB_CONFIG_OP_DEL_ENTRY, msg));
       // Update response path
       (*elem->mutable_key())["offload-id"] = val.at(0);
       (*elem->mutable_key())["direction"] = val.at(1);
@@ -167,7 +158,6 @@ void SetUpIPsecSAConfig(TreeNode* node,
       ->SetOnReplaceHandler(on_set_functor)
       ->SetOnDeleteWithValHandler(on_del_functor)
       ->SetOnChangeHandler(unsupported_functor);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -186,33 +176,34 @@ void SetUpIPsecSADEntryState(TreeNode* node, YangParseTree* tree) {
 void SetUpIPsecNotification(TreeNode* node, YangParseTree* tree) {
   auto unsupported_functor = UnsupportedFunc();
   auto register_functor = RegisterFunc<IPsecNotificationEvent>();
-  auto on_change_functor = GetOnChangeFunctor(
-    &IPsecNotificationEvent::GetNotification, ConvertIPsecNotificationToString);
+  auto on_change_functor =
+      GetOnChangeFunctor(&IPsecNotificationEvent::GetNotification,
+                         ConvertIPsecNotificationToString);
   node->SetOnTimerHandler(unsupported_functor)
       ->SetOnPollHandler(unsupported_functor)
       ->SetOnChangeRegistration(register_functor)
       ->SetOnChangeHandler(on_change_functor);
 }
 
-} // namespace
+}  // namespace
 
 ////////////////////////
 //  AddSubtreeIPsec   //
 ////////////////////////
 
 void YangParseTreePaths::AddSubtreeIPsec(YangParseTree* tree) {
-  TreeNode* node = tree->AddNode(
-      GetPath("ipsec-offload")("ipsec-spi")("rx-spi")());
+  TreeNode* node =
+      tree->AddNode(GetPath("ipsec-offload")("ipsec-spi")("rx-spi")());
   SetUpIPsecFetchSPI(node, tree);
-  node = tree->AddNode(
-      GetPath("ipsec-offload")("sad")("sad-entry")("config")());
+  node =
+      tree->AddNode(GetPath("ipsec-offload")("sad")("sad-entry")("config")());
   SetUpIPsecSAConfig(node, tree);
-  node = tree->AddNode(
-      GetPath("ipsec-offload")("sad")("sad-entry")("state")());
+  node = tree->AddNode(GetPath("ipsec-offload")("sad")("sad-entry")("state")());
   SetUpIPsecSADEntryState(node, tree);
-  node = tree->AddNode(GetPath("ipsec-offload")()); // IPsec notification support
+  node =
+      tree->AddNode(GetPath("ipsec-offload")());  // IPsec notification support
   SetUpIPsecNotification(node, tree);
 }
 
-} // namespace hal
-} // namespace stratum
+}  // namespace hal
+}  // namespace stratum
