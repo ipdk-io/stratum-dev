@@ -10,6 +10,7 @@
 
 #include <pthread.h>
 #include <signal.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -99,8 +100,7 @@ class DpdkHal final {
   // class.
   DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
           AuthPolicyChecker* auth_policy_checker,
-          absl::Notification* ready_sync,
-          absl::Notification* done_sync);
+          absl::Notification* ready_sync, absl::Notification* done_sync);
 
   // Initializes the HAL server and all the services it provides. Called in
   // CreateSingleton() as soon as the class instance is created.

@@ -19,7 +19,7 @@ namespace tdi {
 using ValueCase = SetRequest::Request::Port::ValueCase;
 
 class DpdkPortConfig {
-public:
+ public:
   // ADMIN_STATE_UNKNOWN indicates that something went wrong during port
   // configuration, and the port add failed or was not attempted.
   AdminState admin_state;
@@ -37,9 +37,7 @@ public:
   // Whether the HOTPLUG config has been applied.
   bool hotplug_done;
 
-  DpdkPortConfig() {
-    Reset();
-  }
+  DpdkPortConfig() { Reset(); }
 
   // Determines whether the specified parameter has been configured.
   bool IsParamSet(ValueCase value_case) const {
@@ -66,14 +64,10 @@ public:
   }
 
   // Adds the specified parameters to the configuration set.
-  void Add(uint32 param_mask) {
-    params_set |= param_mask;
-  }
+  void Add(uint32 param_mask) { params_set |= param_mask; }
 
   // Removes the specified parameters from the configuration set.
-  void Remove(uint32_t param_mask) {
-    params_set &= ~param_mask;
-  }
+  void Remove(uint32_t param_mask) { params_set &= ~param_mask; }
 
   // Resets parameters to initial state.
   void Reset() {
@@ -85,7 +79,7 @@ public:
     hotplug = {};
   }
 
-private:
+ private:
   // Returns the parameter mask for a SetRequest::Request::Port::ValueCase.
   static uint32_t ParamMaskForCase(ValueCase value_case);
 

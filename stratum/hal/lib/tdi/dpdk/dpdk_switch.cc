@@ -112,7 +112,8 @@ DpdkSwitch::~DpdkSwitch() {}
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   if (!req.updates_size()) return ::util::OkStatus();  // nothing to do.
   CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in WriteRequest.";
-  CHECK_RETURN_IF_FALSE(results != nullptr) << "Results pointer must be non-null.";
+  CHECK_RETURN_IF_FALSE(results != nullptr)
+      << "Results pointer must be non-null.";
   absl::ReaderMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* tdi_node, GetTdiNodeFromNodeId(req.device_id()));
   return tdi_node->WriteForwardingEntries(req, results);
@@ -158,10 +159,10 @@ DpdkSwitch::~DpdkSwitch() {}
   return chassis_manager_->UnregisterEventNotifyWriter();
 }
 
-::util::Status DpdkSwitch::RetrieveValue(
-    uint64 node_id, const DataRequest& request,
-    WriterInterface<DataResponse>* writer,
-    std::vector<::util::Status>* details) {
+::util::Status DpdkSwitch::RetrieveValue(uint64 node_id,
+                                         const DataRequest& request,
+                                         WriterInterface<DataResponse>* writer,
+                                         std::vector<::util::Status>* details) {
   absl::ReaderMutexLock l(&chassis_lock);
   for (const auto& req : request.requests()) {
     DataResponse resp;
@@ -244,26 +245,24 @@ bool DpdkSwitch::IsPortParamSet(
 }
 
 ::util::Status DpdkSwitch::SetPortParam(
-    uint64 node_id, uint32 port_id,
-    const SingletonPort& singleton_port,
+    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
     SetRequest::Request::Port::ValueCase value_case) {
-  return chassis_manager_->SetPortParam(
-      node_id, port_id, singleton_port, value_case);
+  return chassis_manager_->SetPortParam(node_id, port_id, singleton_port,
+                                        value_case);
 }
 
-::util::Status DpdkSwitch::SetHotplugParam(
-    uint64 node_id, uint32 port_id, const SingletonPort& singleton_port,
-    DpdkHotplugParam param_type) {
-  return chassis_manager_->SetHotplugParam(
-      node_id, port_id, singleton_port, param_type);
+::util::Status DpdkSwitch::SetHotplugParam(uint64 node_id, uint32 port_id,
+                                           const SingletonPort& singleton_port,
+                                           DpdkHotplugParam param_type) {
+  return chassis_manager_->SetHotplugParam(node_id, port_id, singleton_port,
+                                           param_type);
 }
 
 std::unique_ptr<DpdkSwitch> DpdkSwitch::CreateInstance(
     DpdkChassisManager* chassis_manager, TdiSdeInterface* sde_interface,
     const std::map<int, TdiNode*>& device_id_to_tdi_node) {
   return absl::WrapUnique(
-         new DpdkSwitch(chassis_manager, sde_interface,
-                        device_id_to_tdi_node));
+      new DpdkSwitch(chassis_manager, sde_interface, device_id_to_tdi_node));
 }
 
 ::util::StatusOr<TdiNode*> DpdkSwitch::GetTdiNodeFromDeviceId(

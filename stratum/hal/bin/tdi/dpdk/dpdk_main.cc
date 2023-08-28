@@ -3,8 +3,6 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/main.h"
-
 #include <map>
 #include <memory>
 #include <ostream>
@@ -16,6 +14,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/bin/tdi/main.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
@@ -45,13 +44,15 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-static void SetDefault(const char *name, const char *value) {
-  ::gflags::SetCommandLineOptionWithMode(name, value, ::gflags::SET_FLAGS_DEFAULT);
+static void SetDefault(const char* name, const char* value) {
+  ::gflags::SetCommandLineOptionWithMode(name, value,
+                                         ::gflags::SET_FLAGS_DEFAULT);
 }
 
 static void InitCommandLineFlags() {
   // Chassis config file
-  SetDefault("chassis_config_file", DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt");
+  SetDefault("chassis_config_file",
+             DEFAULT_CONFIG_DIR "dpdk_port_config.pb.txt");
 
   // Logging options
   SetDefault("log_dir", DEFAULT_LOG_DIR);
@@ -94,13 +95,11 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
 
   RETURN_IF_ERROR(sde_wrapper->InitializeSde(
-      FLAGS_dpdk_sde_install, FLAGS_dpdk_infrap4d_cfg,
-      dpdk_shell_background));
+      FLAGS_dpdk_sde_install, FLAGS_dpdk_infrap4d_cfg, dpdk_shell_background));
 
   /* ========== */
   // NOTE: Rework for DPDK
-  ASSIGN_OR_RETURN(bool is_sw_model,
-                   sde_wrapper->IsSoftwareModel(device_id));
+  ASSIGN_OR_RETURN(bool is_sw_model, sde_wrapper->IsSoftwareModel(device_id));
   const OperationMode mode =
       is_sw_model ? OPERATION_MODE_SIM : OPERATION_MODE_STANDALONE;
 
@@ -118,16 +117,14 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto packetio_manager =
       TdiPacketioManager::CreateInstance(sde_wrapper, device_id);
 
-  auto pre_manager =
-      TdiPreManager::CreateInstance(sde_wrapper, device_id);
+  auto pre_manager = TdiPreManager::CreateInstance(sde_wrapper, device_id);
 
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto tdi_node = TdiNode::CreateInstance(
-      table_manager.get(), action_profile_manager.get(),
-      packetio_manager.get(), pre_manager.get(),
-      counter_manager.get(), sde_wrapper, device_id);
+      table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
+      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id);
 
   std::map<int, TdiNode*> device_id_to_tdi_node = {
       {device_id, tdi_node.get()},
@@ -135,8 +132,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto port_manager = DpdkPortManager::CreateSingleton();
 
-  auto chassis_manager =
-      DpdkChassisManager::CreateInstance(mode, port_manager);
+  auto chassis_manager = DpdkChassisManager::CreateInstance(mode, port_manager);
 
   auto dpdk_switch = DpdkSwitch::CreateInstance(
       chassis_manager.get(), sde_wrapper, device_id_to_tdi_node);

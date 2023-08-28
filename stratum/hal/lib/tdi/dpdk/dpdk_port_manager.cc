@@ -6,12 +6,13 @@
 
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
 
-#include <algorithm>
-#include <memory>
-#include <ostream>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <algorithm>
+#include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -22,8 +23,8 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/macros.h"
-#include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
+#include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/lib/channel/channel.h"
 
 extern "C" {
@@ -56,12 +57,13 @@ DpdkPortManager* DpdkPortManager::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<PortState> DpdkPortManager::GetPortState(int device, int port) {
+::util::StatusOr<PortState> DpdkPortManager::GetPortState(int device,
+                                                          int port) {
   return PORT_STATE_UP;
 }
 
-::util::Status DpdkPortManager::GetPortCounters(
-    int device, int port, PortCounters* counters) {
+::util::Status DpdkPortManager::GetPortCounters(int device, int port,
+                                                PortCounters* counters) {
   uint64_t stats[BF_PORT_NUM_COUNTERS] = {0};
   RETURN_IF_TDI_ERROR(
       bf_pal_port_all_stats_get(static_cast<bf_dev_id_t>(device),
@@ -99,21 +101,27 @@ DpdkPortManager* DpdkPortManager::GetSingleton() {
 
 namespace {
 dpdk_port_type_t get_target_port_type(DpdkPortType type) {
-  switch(type) {
-    case PORT_TYPE_VHOST: return BF_DPDK_LINK;
-    case PORT_TYPE_TAP: return BF_DPDK_TAP;
-    case PORT_TYPE_LINK: return BF_DPDK_LINK;
-    case PORT_TYPE_SOURCE: return BF_DPDK_SOURCE;
-    case PORT_TYPE_SINK: return BF_DPDK_SINK;
-    default: break;
+  switch (type) {
+    case PORT_TYPE_VHOST:
+      return BF_DPDK_LINK;
+    case PORT_TYPE_TAP:
+      return BF_DPDK_TAP;
+    case PORT_TYPE_LINK:
+      return BF_DPDK_LINK;
+    case PORT_TYPE_SOURCE:
+      return BF_DPDK_SOURCE;
+    case PORT_TYPE_SINK:
+      return BF_DPDK_SINK;
+    default:
+      break;
   }
   return BF_DPDK_PORT_MAX;
 }
-} // namespace
+}  // namespace
 
-::util::Status DpdkPortManager::GetPortInfo(
-    int device, int port, TargetDatapathId *target_dp_id) {
-  struct port_info_t *port_info = NULL;
+::util::Status DpdkPortManager::GetPortInfo(int device, int port,
+                                            TargetDatapathId* target_dp_id) {
+  struct port_info_t* port_info = NULL;
   RETURN_IF_TDI_ERROR(bf_pal_port_info_get(static_cast<bf_dev_id_t>(device),
                                            static_cast<bf_dev_port_t>(port),
                                            &port_info));
@@ -126,8 +134,7 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 ::util::Status DpdkPortManager::HotplugPort(
     int device, int port, HotplugConfigParams& hotplug_config) {
   auto hotplug_attrs = absl::make_unique<hotplug_attributes_t>();
-  strncpy(hotplug_attrs->qemu_socket_ip,
-          hotplug_config.qemu_socket_ip.c_str(),
+  strncpy(hotplug_attrs->qemu_socket_ip, hotplug_config.qemu_socket_ip.c_str(),
           sizeof(hotplug_attrs->qemu_socket_ip));
   strncpy(hotplug_attrs->qemu_vm_netdev_id,
           hotplug_config.qemu_vm_netdev_id.c_str(),
@@ -146,13 +153,11 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
   hotplug_attrs->qemu_socket_port = hotplug_config.qemu_socket_port;
   uint64 mac_address = hotplug_config.qemu_vm_mac_address;
 
-  std::string string_mac = (absl::StrFormat("%02x:%02x:%02x:%02x:%02x:%02x",
-                                            (mac_address >> 40) & 0xFF,
-                                            (mac_address >> 32) & 0xFF,
-                                            (mac_address >> 24) & 0xFF,
-                                            (mac_address >> 16) & 0xFF,
-                                            (mac_address >> 8) & 0xFF,
-                                             mac_address & 0xFF));
+  std::string string_mac =
+      (absl::StrFormat("%02x:%02x:%02x:%02x:%02x:%02x",
+                       (mac_address >> 40) & 0xFF, (mac_address >> 32) & 0xFF,
+                       (mac_address >> 24) & 0xFF, (mac_address >> 16) & 0xFF,
+                       (mac_address >> 8) & 0xFF, mac_address & 0xFF));
   strcpy(hotplug_attrs->qemu_vm_mac_address, string_mac.c_str());
 
   LOG(INFO) << "Parameters for hotplug are:"
@@ -166,13 +171,13 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
             << " qemu_hotplug=" << hotplug_attrs->qemu_hotplug;
 
   if (hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_ADD) {
-       RETURN_IF_TDI_ERROR(bf_pal_hotplug_add(static_cast<bf_dev_id_t>(device),
-                                              static_cast<bf_dev_port_t>(port),
-                                              hotplug_attrs.get()));
+    RETURN_IF_TDI_ERROR(bf_pal_hotplug_add(static_cast<bf_dev_id_t>(device),
+                                           static_cast<bf_dev_port_t>(port),
+                                           hotplug_attrs.get()));
   } else if (hotplug_config.qemu_hotplug_mode == HOTPLUG_MODE_DEL) {
-       RETURN_IF_TDI_ERROR(bf_pal_hotplug_del(static_cast<bf_dev_id_t>(device),
-                                              static_cast<bf_dev_port_t>(port),
-                                              hotplug_attrs.get()));
+    RETURN_IF_TDI_ERROR(bf_pal_hotplug_del(static_cast<bf_dev_id_t>(device),
+                                           static_cast<bf_dev_port_t>(port),
+                                           hotplug_attrs.get()));
   }
 
   return ::util::OkStatus();
@@ -180,17 +185,17 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
 
 ::util::Status DpdkPortManager::AddPort(int device, int port) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "AddPort(device, port) not supported";
+         << "AddPort(device, port) not supported";
 }
 
-::util::Status DpdkPortManager::AddPort(
-    int device, int port, uint64 speed_bps, FecMode fec_mode) {
+::util::Status DpdkPortManager::AddPort(int device, int port, uint64 speed_bps,
+                                        FecMode fec_mode) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-      << "AddPort(device, port, speed, fec_mode) not supported";
+         << "AddPort(device, port, speed, fec_mode) not supported";
 }
 
-::util::Status DpdkPortManager::AddPort(
-    int device, int port, const PortConfigParams& config) {
+::util::Status DpdkPortManager::AddPort(int device, int port,
+                                        const PortConfigParams& config) {
   static int port_in;
   static int port_out;
 
@@ -217,39 +222,37 @@ dpdk_port_type_t get_target_port_type(DpdkPortType type) {
             << " pipeline_in_name=" << port_attrs->pipe_in
             << " pipeline_out_name=" << port_attrs->pipe_out
             << " mempool_name=" << port_attrs->mempool_name
-            << " net_port=" << port_attrs->net_port
-            << " sdk_port_id= " << port;
+            << " net_port=" << port_attrs->net_port << " sdk_port_id= " << port;
 
   if (port_attrs->port_type == BF_DPDK_LINK) {
     // Update LINK parameters
-    if(config.port_type == PORT_TYPE_VHOST) {
+    if (config.port_type == PORT_TYPE_VHOST) {
       port_attrs->link.dev_hotplug_enabled = 1;
       strncpy(port_attrs->link.pcie_domain_bdf, config.port_name.c_str(),
-          sizeof(port_attrs->link.pcie_domain_bdf));
+              sizeof(port_attrs->link.pcie_domain_bdf));
       snprintf(port_attrs->link.dev_args, DEV_ARGS_LEN, "iface=%s,queues=%d",
-             config.socket_path.c_str(), config.queues);
+               config.socket_path.c_str(), config.queues);
     } else {
       strncpy(port_attrs->link.pcie_domain_bdf, config.pci_bdf.c_str(),
-          sizeof(port_attrs->link.pcie_domain_bdf));
+              sizeof(port_attrs->link.pcie_domain_bdf));
     }
-      LOG(INFO) << "LINK Parameters of the port are "
-                << " pcie_domain_bdf=" << port_attrs->link.pcie_domain_bdf
-                << " dev_args=" << port_attrs->link.dev_args;
-  }
-  else if (port_attrs->port_type == BF_DPDK_TAP) {
-      port_attrs->tap.mtu = config.mtu;
-      LOG(INFO) << "TAP Parameters of the port are "
-                << "mtu = " << port_attrs->tap.mtu;
+    LOG(INFO) << "LINK Parameters of the port are "
+              << " pcie_domain_bdf=" << port_attrs->link.pcie_domain_bdf
+              << " dev_args=" << port_attrs->link.dev_args;
+  } else if (port_attrs->port_type == BF_DPDK_TAP) {
+    port_attrs->tap.mtu = config.mtu;
+    LOG(INFO) << "TAP Parameters of the port are "
+              << "mtu = " << port_attrs->tap.mtu;
   }
 
-  auto bf_status = bf_pal_port_add(static_cast<bf_dev_id_t>(device),
-                                   static_cast<bf_dev_port_t>(port),
-                                   port_attrs.get());
+  auto bf_status =
+      bf_pal_port_add(static_cast<bf_dev_id_t>(device),
+                      static_cast<bf_dev_port_t>(port), port_attrs.get());
   if (bf_status != BF_SUCCESS) {
-      // Revert the port_in and port_out values
-      port_in--;
-      port_out--;
-      RETURN_IF_TDI_ERROR(bf_status);
+    // Revert the port_in and port_out values
+    port_in--;
+    port_out--;
+    RETURN_IF_TDI_ERROR(bf_status);
   }
 
   return ::util::OkStatus();

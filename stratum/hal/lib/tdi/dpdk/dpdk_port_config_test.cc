@@ -1,8 +1,9 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "gtest/gtest.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_config.h"
+
+#include "gtest/gtest.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 
@@ -119,9 +120,8 @@ TEST(DpskConfigParamTest, BadMtuValue) {
 TEST(DpdkConfigParamTest, HotplugSocketPort) {
   DpdkPortConfig config;
   SingletonPort sport;
-  sport.mutable_config_params()
-       ->mutable_hotplug_config()
-       ->set_qemu_socket_port(1984);
+  sport.mutable_config_params()->mutable_hotplug_config()->set_qemu_socket_port(
+      1984);
   ASSERT_TRUE(config.SetHotplugParam(PARAM_SOCK_PORT, sport).ok());
   ASSERT_TRUE(config.HasAllOf(GNMI_CONFIG_HOTPLUG_SOCKET_PORT));
   ASSERT_EQ(config.hotplug.qemu_socket_port, 1984);
