@@ -411,8 +411,9 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       return bfrt_packetio_manager_->TransmitPacket(req.packet());
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED) << "Unsupported StreamMessageRequest "
-                                      << req.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported StreamMessageRequest " << req.ShortDebugString()
+             << ".";
   }
 }
 
@@ -425,8 +426,8 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       return bfrt_action_profile_manager_->WriteActionProfileEntry(session,
                                                                    type, entry);
     default:
-      RETURN_ERROR() << "Unsupported extern entry: " << entry.ShortDebugString()
-                     << ".";
+      return MAKE_ERROR() << "Unsupported extern entry: "
+                          << entry.ShortDebugString() << ".";
   }
 }
 
@@ -440,8 +441,8 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       return bfrt_action_profile_manager_->ReadActionProfileEntry(
           session, entry, writer);
     default:
-      RETURN_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+             << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
   }
 }
 

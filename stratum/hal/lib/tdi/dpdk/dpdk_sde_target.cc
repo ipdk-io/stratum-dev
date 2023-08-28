@@ -200,7 +200,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const std::string& table_name, notification_table_callback_t callback,
     void* cookie) const LOCKS_EXCLUDED(data_lock_) {
-  RETURN_ERROR(ERR_OPER_NOT_SUPPORTED) << "Notification Table not supported";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "Notification Table not supported";
 }
 
 }  // namespace tdi

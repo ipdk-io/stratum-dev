@@ -66,7 +66,7 @@ namespace {
     case kHundredGigBps:
       return BF_SPEED_100G;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
   }
 }
 
@@ -79,7 +79,7 @@ namespace {
     case TRI_STATE_FALSE:
       return 2;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid autoneg state.";
   }
 }
 
@@ -91,7 +91,8 @@ namespace {
     // we have to "guess" the FEC type to use based on the port speed.
     switch (speed_bps) {
       case kOneGigBps:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode for 1Gbps mode.";
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Invalid FEC mode for 1Gbps mode.";
       case kTenGigBps:
       case kFortyGigBps:
         return BF_FEC_TYP_FIRECODE;
@@ -102,10 +103,10 @@ namespace {
       case kFourHundredGigBps:
         return BF_FEC_TYP_REED_SOLOMON;
       default:
-        RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
+        return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported port speed.";
     }
   }
-  RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode.";
+  return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid FEC mode.";
 }
 
 ::util::StatusOr<bf_loopback_mode_e> LoopbackModeToBf(
@@ -116,9 +117,9 @@ namespace {
     case LOOPBACK_STATE_MAC:
       return BF_LPBK_MAC_NEAR;
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Unsupported loopback mode: " << LoopbackState_Name(loopback_mode)
-          << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported loopback mode: "
+             << LoopbackState_Name(loopback_mode) << ".";
   }
 }
 
@@ -295,7 +296,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 
 ::util::Status TofinoPortManager::SetPortMtu(int device, int port, int32 mtu) {
   if (mtu < 0) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid MTU value.";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid MTU value.";
   }
   if (mtu == 0) mtu = kBfDefaultMtu;
   RETURN_IF_TDI_ERROR(bf_pal_port_mtu_set(

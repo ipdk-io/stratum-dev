@@ -212,8 +212,8 @@ std::string TdiSdeWrapper::GetChipType(int device) const {
                            char* ipsec_sa_dest_address, bool ipv4, void* cke),
     void* cookie) const {
   if (!tdi_info_) {
-    RETURN_ERROR(ERR_INTERNAL)
-        << "Unable to initialize notification table due to TDI internal error";
+    return MAKE_ERROR(ERR_INTERNAL) << "Unable to initialize notification "
+                                       "table due to TDI internal error";
   }
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);

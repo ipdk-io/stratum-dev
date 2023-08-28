@@ -61,8 +61,8 @@ BfrtActionProfileManager::CreateInstance(BfSdeInterface* bf_sde_interface,
                                        act_prof_group);
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM)
-          << "Unsupported extern type " << entry.extern_type_id() << ".";
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
 }
 
@@ -94,8 +94,8 @@ BfrtActionProfileManager::CreateInstance(BfSdeInterface* bf_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Unsupported extern type " << entry.extern_type_id() << ".";
+      return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+             << "Unsupported extern type " << entry.extern_type_id() << ".";
   }
 
   return ::util::OkStatus();
@@ -191,7 +191,8 @@ BfrtActionProfileManager::CreateInstance(BfSdeInterface* bf_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();
@@ -243,7 +244,7 @@ BfrtActionProfileManager::CreateInstance(BfSdeInterface* bf_sde_interface,
   }
 
   if (!writer->Write(resp)) {
-    RETURN_ERROR(ERR_INTERNAL) << "Write to stream channel failed.";
+    return MAKE_ERROR(ERR_INTERNAL) << "Write to stream channel failed.";
   }
 
   return ::util::OkStatus();
@@ -282,7 +283,8 @@ BfrtActionProfileManager::CreateInstance(BfSdeInterface* bf_sde_interface,
       break;
     }
     default:
-      RETURN_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();

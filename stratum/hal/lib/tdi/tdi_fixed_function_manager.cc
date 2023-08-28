@@ -96,8 +96,8 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
           device_, session, table_id, table_key.get()));
       break;
     default:
-      RETURN_ERROR(ERR_INTERNAL)
-          << "Unsupported update type: " << op_type << " for IPSEC SADB table.";
+      return MAKE_ERROR(ERR_INTERNAL) << "Unsupported update type: " << op_type
+                                      << " for IPSEC SADB table.";
   }
   return ::util::OkStatus();
 }

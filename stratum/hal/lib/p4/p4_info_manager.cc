@@ -180,8 +180,8 @@ P4InfoManager::FindRegisterByName(const std::string& register_name) const {
   return register_map_.FindByName(register_name);
 }
 
-::util::StatusOr<const std::string>
-P4InfoManager::FindResourceTypeByID(uint32 id_key) const {
+::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(
+    uint32 id_key) const {
   auto iter = id_to_resource_type_map_.find(id_key);
   if (iter == id_to_resource_type_map_.end()) {
     return MAKE_ERROR(ERR_INVALID_P4_INFO)
@@ -266,7 +266,7 @@ P4InfoManager::FindResourceTypeByID(uint32 id_key) const {
           bit_width = type_spec.bitstring().varbit().max_bitwidth();
           break;
         default:
-          RETURN_ERROR(ERR_UNIMPLEMENTED) << "Not implemented.";
+          return MAKE_ERROR(ERR_UNIMPLEMENTED) << "Not implemented.";
       }
       CHECK_RETURN_IF_FALSE(data.bitstring().size() * 8 <= bit_width);
       break;
@@ -284,9 +284,9 @@ P4InfoManager::FindResourceTypeByID(uint32 id_key) const {
       break;
     }
     default:
-      RETURN_ERROR(ERR_UNIMPLEMENTED)
-          << "P4data type " << data.data_case() << " in P4Data "
-          << data.ShortDebugString() << " is not supported.";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "P4data type " << data.data_case() << " in P4Data "
+             << data.ShortDebugString() << " is not supported.";
   }
 
   return ::util::OkStatus();
