@@ -24,13 +24,11 @@
 extern "C" {
 #endif
 
-void ipsec_notification_callback(uint32_t dev_id,
-                                 uint32_t ipsec_sa_spi,
+void ipsec_notification_callback(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                  bool soft_lifetime_expire,
                                  uint8_t ipsec_sa_protocol,
-                                 char *ipsec_sa_dest_address,
-                                 bool ipv4,
-                                 void *cookie);
+                                 char* ipsec_sa_dest_address, bool ipv4,
+                                 void* cookie);
 
 #ifdef __cplusplus
 }  // extern "C"
@@ -54,11 +52,11 @@ class TdiIpsecManager {
 
   virtual ::util::Status InitializeNotificationCallback();
 
-  virtual ::util::Status GetSpiData(uint32 &fetched_spi)
+  virtual ::util::Status GetSpiData(uint32& fetched_spi)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   virtual ::util::Status WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
-                                              IPsecSADBConfig &msg)
+                                              IPsecSADBConfig& msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   // TdiIpsecManager is neither copyable nor movable.
@@ -69,9 +67,9 @@ class TdiIpsecManager {
 
   virtual ::util::Status RegisterEventNotifyWriter(
       const std::shared_ptr<WriterInterface<GnmiEventPtr>>& writer) {
-          absl::WriterMutexLock l(&gnmi_event_lock_);
-          gnmi_event_writer_ = writer;
-          return ::util::OkStatus();
+    absl::WriterMutexLock l(&gnmi_event_lock_);
+    gnmi_event_writer_ = writer;
+    return ::util::OkStatus();
   }
 
   virtual ::util::Status UnregisterEventNotifyWriter() {
@@ -80,12 +78,10 @@ class TdiIpsecManager {
     return ::util::OkStatus();
   }
 
-  void SendSADExpireNotificationEvent(uint32_t dev_id,
-                                      uint32_t ipsec_sa_spi,
+  void SendSADExpireNotificationEvent(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                       bool soft_lifetime_expire,
                                       uint8_t ipsec_sa_protocol,
-                                      char *ipsec_sa_dest_address,
-                                      bool ipv4);
+                                      char* ipsec_sa_dest_address, bool ipv4);
 
  protected:
   // Default constructor. To be called by the Mock class instance only.

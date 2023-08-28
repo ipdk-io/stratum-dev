@@ -25,10 +25,8 @@
 
 #define IPSEC_CONFIG_SADB_TABLE_NAME \
   "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config"
-#define IPSEC_FETCH_SPI_TABLE_NAME \
-  "ipsec-offload.ipsec-offload.ipsec-spi"
-#define IPSEC_NOTIFICATION_TABLE_NAME \
-  "ipsec-offload"
+#define IPSEC_FETCH_SPI_TABLE_NAME "ipsec-offload.ipsec-offload.ipsec-spi"
+#define IPSEC_NOTIFICATION_TABLE_NAME "ipsec-offload"
 #define IPSEC_STATE_SADB_TABLE_NAME \
   "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-state"
 
@@ -39,28 +37,25 @@ namespace tdi {
 ABSL_CONST_INIT absl::Mutex _ipsec_mgr_lock(absl::kConstInit);
 
 /* #### C function callback #### */
-static void ipsec_notification_callback(uint32_t dev_id,
-                                        uint32_t ipsec_sa_spi,
+static void ipsec_notification_callback(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                         bool soft_lifetime_expire,
                                         uint8_t ipsec_sa_protocol,
-                                        char *ipsec_sa_dest_address,
-                                        bool ipv4, void *cookie) {
-  //printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, "
+                                        char* ipsec_sa_dest_address, bool ipv4,
+                                        void* cookie) {
+  // printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, "
   //       "ipsec_sa_protocol=%d, "
   //       "ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
   //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
   //       ipsec_sa_dest_address, ipv4, cookie);
-  auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager *>(cookie);
-  ipsec_mgr_hdl->SendSADExpireNotificationEvent(dev_id,
-                                                ipsec_sa_spi,
-                                                soft_lifetime_expire,
-                                                ipsec_sa_protocol,
-                                                ipsec_sa_dest_address,
-                                                ipv4);
+  auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager*>(cookie);
+  ipsec_mgr_hdl->SendSADExpireNotificationEvent(
+      dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
+      ipsec_sa_dest_address, ipv4);
 }
 
-TdiIpsecManager::TdiIpsecManager(TdiSdeInterface* tdi_sde_interface,
-                           TdiFixedFunctionManager* tdi_fixed_function_manager)
+TdiIpsecManager::TdiIpsecManager(
+    TdiSdeInterface* tdi_sde_interface,
+    TdiFixedFunctionManager* tdi_fixed_function_manager)
     : gnmi_event_writer_(nullptr),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       tdi_fixed_function_manager_(ABSL_DIE_IF_NULL(tdi_fixed_function_manager)),
@@ -84,20 +79,19 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status TdiIpsecManager::GetSpiData(uint32 &fetched_spi) {
+::util::Status TdiIpsecManager::GetSpiData(uint32& fetched_spi) {
   // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
-      auto status = InitializeNotificationCallback();
-      if (status == ::util::OkStatus()) {
-        notif_initialized_ = true;
-      }
+    auto status = InitializeNotificationCallback();
+    if (status == ::util::OkStatus()) {
+      notif_initialized_ = true;
+    }
   }
-  
+
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
-  auto status = tdi_fixed_function_manager_->FetchSpi(session, 
-                                                      IPSEC_FETCH_SPI_TABLE_NAME,
-                                                      &fetched_spi);
+  auto status = tdi_fixed_function_manager_->FetchSpi(
+      session, IPSEC_FETCH_SPI_TABLE_NAME, &fetched_spi);
   if (status != ::util::OkStatus()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
@@ -106,14 +100,14 @@ TdiIpsecManager::~TdiIpsecManager() = default;
 }
 
 ::util::Status TdiIpsecManager::WriteConfigSADBEntry(
-    const IPsecSadbConfigOp op_type, IPsecSADBConfig &msg) {
+    const IPsecSadbConfigOp op_type, IPsecSADBConfig& msg) {
   // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
-      auto status = InitializeNotificationCallback();
-      if (status == ::util::OkStatus()) {
-        notif_initialized_ = true;
-      }
+    auto status = InitializeNotificationCallback();
+    if (status == ::util::OkStatus()) {
+      notif_initialized_ = true;
+    }
   }
 
   if (op_type == IPSEC_SADB_CONFIG_OP_ADD_ENTRY) {
@@ -126,27 +120,21 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   }
 
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
-  auto status = tdi_fixed_function_manager_->WriteSadbEntry(session,
-                                          IPSEC_CONFIG_SADB_TABLE_NAME,
-                                          op_type,
-                                          msg);
+  auto status = tdi_fixed_function_manager_->WriteSadbEntry(
+      session, IPSEC_CONFIG_SADB_TABLE_NAME, op_type, msg);
   if (status != ::util::OkStatus()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more write operations failed. "
            << "offload-id=" << msg.offload_id()
-           << ", direction=" << msg.direction()
-           << ", op type=" << op_type
+           << ", direction=" << msg.direction() << ", op type=" << op_type
            << ", table_name=" << IPSEC_CONFIG_SADB_TABLE_NAME;
   }
   return ::util::OkStatus();
 }
 
-void TdiIpsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
-                                                  uint32_t ipsec_sa_spi,
-                                                  bool soft_lifetime_expire,
-                                                  uint8_t ipsec_sa_protocol,
-                                                  char *ipsec_sa_dest_address,
-                                                  bool ipv4) {
+void TdiIpsecManager::SendSADExpireNotificationEvent(
+    uint32_t dev_id, uint32_t ipsec_sa_spi, bool soft_lifetime_expire,
+    uint8_t ipsec_sa_protocol, char* ipsec_sa_dest_address, bool ipv4) {
   absl::ReaderMutexLock l(&gnmi_event_lock_);
   if (!gnmi_event_writer_) return;
   // Allocate and initialize an IPsecNotificationEvent event and pass it to
@@ -155,25 +143,23 @@ void TdiIpsecManager::SendSADExpireNotificationEvent(uint32_t dev_id,
   // the memory allocated to this event object once the event is handled by
   // the GnmiPublisher.
   if (!gnmi_event_writer_->Write(GnmiEventPtr(new IPsecNotificationEvent(
-          absl::ToUnixNanos(absl::UnixEpoch()),
-          dev_id, ipsec_sa_spi, soft_lifetime_expire,
-          ipsec_sa_protocol, ipsec_sa_dest_address, ipv4)))) {
+          absl::ToUnixNanos(absl::UnixEpoch()), dev_id, ipsec_sa_spi,
+          soft_lifetime_expire, ipsec_sa_protocol, ipsec_sa_dest_address,
+          ipv4)))) {
     // Remove WriterInterface if it is no longer operational.
     gnmi_event_writer_.reset();
   }
 }
 
-std::string TdiIpsecManager::ConvertEncryptionKeyEncoding(std::string hex)
-{
-    std::string ascii = "";
-    for (size_t i = 0; i < hex.length(); i += 3)
-    {
-        std::string part = hex.substr(i, 2);
-        // change it into base 16 and typecast to byte char
-        char ch = (char) (int)strtol(part.data(), nullptr, 16);
-        ascii.push_back(ch);
-    }
-    return ascii;
+std::string TdiIpsecManager::ConvertEncryptionKeyEncoding(std::string hex) {
+  std::string ascii = "";
+  for (size_t i = 0; i < hex.length(); i += 3) {
+    std::string part = hex.substr(i, 2);
+    // change it into base 16 and typecast to byte char
+    char ch = (char)(int)strtol(part.data(), nullptr, 16);
+    ascii.push_back(ch);
+  }
+  return ascii;
 }
 
 std::unique_ptr<TdiIpsecManager> TdiIpsecManager::CreateInstance(

@@ -15,10 +15,10 @@ class IPsecManagerMock : public TdiIpsecManager {
  public:
   MOCK_METHOD(::util::Status, InitializeNotificationCallback, ());
 
-  MOCK_METHOD(::util::Status, GetSpiData, (uint32 &fetched_spi));
+  MOCK_METHOD(::util::Status, GetSpiData, (uint32 & fetched_spi));
 
   MOCK_METHOD(::util::Status, WriteConfigSADBEntry,
-              (const IPsecSadbConfigOp op_type, IPsecSADBConfig &msg));
+              (const IPsecSadbConfigOp op_type, IPsecSADBConfig& msg));
 
   MOCK_METHOD(::util::Status, RegisterEventNotifyWriter,
               (const std::shared_ptr<WriterInterface<GnmiEventPtr>>& writer));
@@ -28,7 +28,7 @@ class IPsecManagerMock : public TdiIpsecManager {
   MOCK_METHOD(void, SendSADExpireNotificationEvent,
               (uint32_t dev_id, uint32_t ipsec_sa_spi,
                bool soft_lifetime_expire, uint8_t ipsec_sa_protocol,
-               char *ipsec_sa_dest_address, bool ipv4));
+               char* ipsec_sa_dest_address, bool ipv4));
 };
 
 }  // namespace tdi
@@ -36,4 +36,3 @@ class IPsecManagerMock : public TdiIpsecManager {
 }  // namespace stratum
 
 #endif  // STRATUM_HAL_LIB_TDI_IPSEC_MANAGER_MOCK_H_
-

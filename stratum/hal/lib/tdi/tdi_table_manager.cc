@@ -15,9 +15,9 @@
 #include "gflags/gflags.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
+#include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/utils.h"
-#include "stratum/hal/lib/p4/utils.h"
 #include "stratum/lib/utils.h"
 
 DEFINE_uint32(
@@ -557,7 +557,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     WriterInterface<::p4::v1::ReadResponse>* writer) {
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -587,7 +588,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -729,7 +731,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       << direct_counter_entry.ShortDebugString();
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -777,7 +780,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       << direct_meter_entry.ShortDebugString();
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -798,7 +802,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     // Nothing to be updated.
     return ::util::OkStatus();
   }
-
 
   ASSIGN_OR_RETURN(auto table,
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
@@ -848,7 +851,8 @@ TdiTableManager::ReadDirectCounterEntry(
 
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -890,7 +894,8 @@ TdiTableManager::ReadDirectMeterEntry(
 
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
-  ASSIGN_OR_RETURN(auto table_key, tdi_sde_interface_->CreateTableKey(table_id));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
   ASSIGN_OR_RETURN(auto table_data,
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
@@ -985,8 +990,8 @@ TdiTableManager::ReadDirectMeterEntry(
                         ::p4::v1::P4Data::kBitstring)
       << "Only bitstring registers data types are supported.";
 
-  ASSIGN_OR_RETURN(uint32 table_id,
-                   tdi_sde_interface_->GetTdiRtId(register_entry.register_id()));
+  ASSIGN_OR_RETURN(uint32 table_id, tdi_sde_interface_->GetTdiRtId(
+                                        register_entry.register_id()));
 
   absl::optional<uint32> register_index;
   if (register_entry.has_index()) {

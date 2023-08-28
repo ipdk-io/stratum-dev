@@ -43,7 +43,7 @@ class TdiPortManager {
 
   // Gets Port Info
   virtual ::util::Status GetPortInfo(int device, int port,
-                                     TargetDatapathId *target_dp_id) = 0;
+                                     TargetDatapathId* target_dp_id) = 0;
 
   // Gets the operational state of a port.
   virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
@@ -77,4 +77,3 @@ class TdiPortManager {
 }  // namespace stratum
 
 #endif  // STRATUM_HAL_LIB_TDI_TDI_PORT_MANAGER_H_
-
