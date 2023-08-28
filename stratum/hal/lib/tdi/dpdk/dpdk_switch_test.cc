@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from bcm_switch_test
@@ -61,12 +61,12 @@ MATCHER_P(DerivedFromStatus, status, "") {
 }
 
 constexpr uint64 kNodeId = 13579;
-constexpr int kUnit = 2;
+constexpr int kDevice = 2;
 constexpr char kErrorMsg[] = "Test error message";
 constexpr uint32 kPortId = 2468;
 
-const std::map<uint64, int>& NodeIdToUnitMap() {
-  static auto* map = new std::map<uint64, int>({{kNodeId, kUnit}});
+const std::map<uint64, int>& NodeIdToDeviceMap() {
+  static auto* map = new std::map<uint64, int>({{kNodeId, kDevice}});
   return *map;
 }
 
@@ -78,19 +78,19 @@ class DpdkSwitchTest : public ::testing::Test {
     chassis_manager_mock_ =
         absl::make_unique<NiceMock<DpdkChassisManagerMock>>();
     node_mock_ = absl::make_unique<NiceMock<TdiNodeMock>>();
-    unit_to_tdi_node_mock_[kUnit] = node_mock_.get();
+    device_to_tdi_node_mock_[kDevice] = node_mock_.get();
     switch_ = DpdkSwitch::CreateInstance(
-        chassis_manager_mock_.get(), sde_mock_.get(), unit_to_tdi_node_mock_);
+        chassis_manager_mock_.get(), sde_mock_.get(), device_to_tdi_node_mock_);
 #if 0
     // no 'shutdown'
     shutdown = false;  // global variable initialization
 #endif
 
-    ON_CALL(*chassis_manager_mock_, GetNodeIdToUnitMap())
-        .WillByDefault(Return(NodeIdToUnitMap()));
+    ON_CALL(*chassis_manager_mock_, GetNodeIdToDeviceMap())
+        .WillByDefault(Return(NodeIdToDeviceMap()));
   }
 
-  void TearDown() override { unit_to_tdi_node_mock_.clear(); }
+  void TearDown() override { device_to_tdi_node_mock_.clear(); }
 
   // This operation should always succeed.
   // We use it to set up a number of test cases.
@@ -109,7 +109,7 @@ class DpdkSwitchTest : public ::testing::Test {
   std::unique_ptr<TdiSdeMock> sde_mock_;
   std::unique_ptr<DpdkChassisManagerMock> chassis_manager_mock_;
   std::unique_ptr<TdiNodeMock> node_mock_;
-  std::map<int, TdiNode*> unit_to_tdi_node_mock_;
+  std::map<int, TdiNode*> device_to_tdi_node_mock_;
   std::unique_ptr<DpdkSwitch> switch_;
 };
 

@@ -50,8 +50,8 @@ using ::testing::WithArg;
 namespace {
 
 constexpr uint64 kNodeId = 7654321ULL;
-// For Es2k, unit is the 0-based index of the node in the ChassisConfig.
-constexpr int kUnit = 0;
+// For Es2k, device is the 0-based index of the node in the ChassisConfig.
+constexpr int kDevice = 0;
 constexpr int kSlot = 1;
 constexpr int kPort = 1;
 constexpr uint32 kPortId = 12345;
@@ -161,12 +161,12 @@ class Es2kChassisManagerTest : public ::testing::Test {
   void RegisterSdkPortId(const SingletonPort* singleton_port) {
     RegisterSdkPortId(singleton_port->id(), singleton_port->slot(),
                       singleton_port->port(), singleton_port->channel(),
-                      kUnit);  // TODO(bocon): look up unit from node
+                      kDevice);  // TODO(bocon): look up device from node
   }
 
   ::util::Status CheckCleanInternalState() {
-    CHECK_RETURN_IF_FALSE(chassis_manager_->unit_to_node_id_.empty());
-    CHECK_RETURN_IF_FALSE(chassis_manager_->node_id_to_unit_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->device_to_node_id_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->node_id_to_device_.empty());
     CHECK_RETURN_IF_FALSE(
         chassis_manager_->node_id_to_port_id_to_port_state_.empty());
     CHECK_RETURN_IF_FALSE(
@@ -217,9 +217,9 @@ class Es2kChassisManagerTest : public ::testing::Test {
           return ::util::OkStatus();
         });
 #endif
-    EXPECT_CALL(*port_manager_, AddPort(kUnit, kDefaultPortId, kDefaultSpeedBps,
-                                        kDefaultFecMode));
-    EXPECT_CALL(*port_manager_, EnablePort(kUnit, kDefaultPortId));
+    EXPECT_CALL(*port_manager_, AddPort(kDevice, kDefaultPortId,
+                                        kDefaultSpeedBps, kDefaultFecMode));
+    EXPECT_CALL(*port_manager_, EnablePort(kDevice, kDefaultPortId));
 #if 0
     EXPECT_CALL(*phal_mock_,
                 RegisterTransceiverEventWriter(
@@ -232,9 +232,10 @@ class Es2kChassisManagerTest : public ::testing::Test {
 
     RETURN_IF_ERROR(PushChassisConfig(builder->Get()));
 
-    auto unit = GetUnitFromNodeId(kNodeId);
-    CHECK_RETURN_IF_FALSE(unit.ok());
-    CHECK_RETURN_IF_FALSE(unit.ValueOrDie() == kUnit) << "Invalid unit number!";
+    auto device = GetDeviceFromNodeId(kNodeId);
+    CHECK_RETURN_IF_FALSE(device.ok());
+    CHECK_RETURN_IF_FALSE(device.ValueOrDie() == kDevice)
+        << "Invalid device number!";
     CHECK_RETURN_IF_FALSE(Initialized())
         << "Class is not initialized after push!";
     return ::util::OkStatus();
@@ -250,9 +251,9 @@ class Es2kChassisManagerTest : public ::testing::Test {
     return PushBaseChassisConfig(&builder);
   }
 
-  ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const {
+  ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const {
     absl::ReaderMutexLock l(&chassis_lock);
-    return chassis_manager_->GetUnitFromNodeId(node_id);
+    return chassis_manager_->GetDeviceFromNodeId(node_id);
   }
 
   ::util::Status Shutdown() { return chassis_manager_->Shutdown(); }
@@ -322,7 +323,7 @@ TEST_F(Es2kChassisManagerTest, RemovePort) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   builder.RemoveLastPort();
-  EXPECT_CALL(*port_manager_, DeletePort(kUnit, kDefaultPortId));
+  EXPECT_CALL(*port_manager_, DeletePort(kDevice, kDefaultPortId));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -337,9 +338,9 @@ TEST_F(Es2kChassisManagerTest, AddPortFec) {
 
   RegisterSdkPortId(builder.AddPort(portId, port, ADMIN_STATE_ENABLED,
                                     kHundredGigBps, FEC_MODE_ON));
-  EXPECT_CALL(*port_manager_, AddPort(kUnit, portId + kSdkPortOffset,
+  EXPECT_CALL(*port_manager_, AddPort(kDevice, portId + kSdkPortOffset,
                                       kHundredGigBps, FEC_MODE_ON));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, portId + kSdkPortOffset));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, portId + kSdkPortOffset));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -353,8 +354,8 @@ TEST_F(Es2kChassisManagerTest, SetPortLoopback) {
   sport->mutable_config_params()->set_loopback_mode(LOOPBACK_STATE_MAC);
 
   EXPECT_CALL(*port_manager_,
-              SetPortLoopbackMode(kUnit, kDefaultPortId, LOOPBACK_STATE_MAC));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, kDefaultPortId));
+              SetPortLoopbackMode(kDevice, kDefaultPortId, LOOPBACK_STATE_MAC));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, kDefaultPortId));
 
   ASSERT_OK(PushChassisConfig(builder));
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -388,13 +389,13 @@ TEST_F(Es2kChassisManagerTest, ApplyPortShaping) {
   builder.SetVendorConfig(vendor_config);
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
-  EXPECT_CALL(*port_manager_, SetPortShapingRate(kUnit, kDefaultPortId,
+  EXPECT_CALL(*port_manager_, SetPortShapingRate(kDevice, kDefaultPortId,
                                                 false, 16384, kTenGigBps))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, EnablePortShaping(kUnit, kDefaultPortId,
+  EXPECT_CALL(*port_manager_, EnablePortShaping(kDevice, kDefaultPortId,
                                                TRI_STATE_TRUE))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, kDefaultPortId))
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, kDefaultPortId))
       .Times(AtLeast(1));
 
   ASSERT_OK(PushChassisConfig(builder));
@@ -430,9 +431,9 @@ TEST_F(Es2kChassisManagerTest, ApplyDeflectOnDrop) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   EXPECT_CALL(*port_manager_,
-              SetDeflectOnDropDestination(kUnit, kDefaultPortId, 4))
+              SetDeflectOnDropDestination(kDevice, kDefaultPortId, 4))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kUnit, 56789, 1))
+  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kDevice, 56789, 1))
       .Times(AtLeast(1));
 
   ASSERT_OK(PushChassisConfig(builder));
@@ -483,25 +484,25 @@ TEST_F(Es2kChassisManagerTest, ReplayPorts) {
 
   const uint32 sdkPortId = kDefaultPortId;
   EXPECT_CALL(*port_manager_,
-              AddPort(kUnit, sdkPortId, kDefaultSpeedBps, kDefaultFecMode));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, sdkPortId));
+              AddPort(kDevice, sdkPortId, kDefaultSpeedBps, kDefaultFecMode));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId));
 
   // For now, when replaying the port configuration, we set the mtu and autoneg
   // even if the values where already the defaults. This seems like a good idea
   // to ensure configuration consistency.
-  EXPECT_CALL(*port_manager_, SetPortMtu(kUnit, sdkPortId, 0)).Times(AtLeast(1));
+  EXPECT_CALL(*port_manager_, SetPortMtu(kDevice, sdkPortId, 0)).Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
-              SetPortAutonegPolicy(kUnit, sdkPortId, TRI_STATE_UNKNOWN))
+              SetPortAutonegPolicy(kDevice, sdkPortId, TRI_STATE_UNKNOWN))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kUnit, sdkPortId, 4))
+  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kDevice, sdkPortId, 4))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kUnit, 56789, 1))
-      .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_,
-              SetPortShapingRate(kUnit, sdkPortId, false, 16384, kTenGigBps))
+  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kDevice, 56789, 1))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
-              EnablePortShaping(kUnit, sdkPortId, TRI_STATE_TRUE))
+              SetPortShapingRate(kDevice, sdkPortId, false, 16384, kTenGigBps))
+      .Times(AtLeast(1));
+  EXPECT_CALL(*port_manager_,
+              EnablePortShaping(kDevice, sdkPortId, TRI_STATE_TRUE))
       .Times(AtLeast(1));
 
   EXPECT_OK(ReplayPortsConfig(kNodeId));
@@ -574,11 +575,11 @@ TEST_F(Es2kChassisManagerTest, GetPortData) {
                                     kHundredGigBps, FEC_MODE_ON, TRI_STATE_TRUE,
                                     LOOPBACK_STATE_MAC));
   EXPECT_CALL(*port_manager_,
-              AddPort(kUnit, sdkPortId, kHundredGigBps, FEC_MODE_ON));
+              AddPort(kDevice, sdkPortId, kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_,
-              SetPortLoopbackMode(kUnit, sdkPortId, LOOPBACK_STATE_MAC));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, sdkPortId));
-  EXPECT_CALL(*port_manager_, GetPortState(kUnit, sdkPortId))
+              SetPortLoopbackMode(kDevice, sdkPortId, LOOPBACK_STATE_MAC));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId));
+  EXPECT_CALL(*port_manager_, GetPortState(kDevice, sdkPortId))
       .WillRepeatedly(Return(PORT_STATE_UP));
 
   PortCounters counters;
@@ -597,7 +598,7 @@ TEST_F(Es2kChassisManagerTest, GetPortData) {
   counters.set_out_errors(13);
   counters.set_in_fcs_errors(14);
 
-  EXPECT_CALL(*port_manager_, GetPortCounters(kUnit, sdkPortId, _))
+  EXPECT_CALL(*port_manager_, GetPortCounters(kDevice, sdkPortId, _))
       .WillOnce(DoAll(SetArgPointee<2>(counters), Return(::util::OkStatus())));
 
   ON_CALL(*port_manager_, SetPortAutonegPolicy(_, _, _))
@@ -639,9 +640,9 @@ TEST_F(Es2kChassisManagerTest, GetPortData) {
 
   // Operation status.
   // Emulate a few port status events.
-  TriggerPortStatusEvent(kUnit, sdkPortId, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged1);
-  TriggerPortStatusEvent(kUnit, 12, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, 12, PORT_STATE_UP,
                          kPortTimeLastChanged1);  // Unknown port
   TriggerPortStatusEvent(456, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged1);  // Unknown device
@@ -655,9 +656,9 @@ TEST_F(Es2kChassisManagerTest, GetPortData) {
 
   // Time last changed.
   // Check by simulating a port flip.
-  TriggerPortStatusEvent(kUnit, sdkPortId, PORT_STATE_DOWN,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_DOWN,
                          kPortTimeLastChanged2);
-  TriggerPortStatusEvent(kUnit, sdkPortId, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged3);
 #if 0
   ASSERT_TRUE(port_flip_done.WaitForNotificationWithTimeout(absl::Seconds(5)));
@@ -763,13 +764,13 @@ TEST_F(Es2kChassisManagerTest, UpdateInvalidPort) {
       builder.AddPort(portId, kPort + 1, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(new_port);
   EXPECT_CALL(*port_manager_,
-              AddPort(kUnit, sdkPortId, kDefaultSpeedBps, FEC_MODE_UNKNOWN))
+              AddPort(kDevice, sdkPortId, kDefaultSpeedBps, FEC_MODE_UNKNOWN))
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId))
       .WillOnce(Return(::util::OkStatus()));
   ASSERT_OK(PushChassisConfig(builder));
 
-  EXPECT_CALL(*port_manager_, IsValidPort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, IsValidPort(kDevice, sdkPortId))
       .WillOnce(Return(false));
 
   // Update port, but port is invalid.
@@ -823,9 +824,9 @@ TEST_F(Es2kChassisManagerTest, VerifyChassisConfigSuccess) {
   ChassisConfig config1;
   ASSERT_OK(ParseProtoFromString(kConfigText1, &config1));
 
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 1)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 1)))
       .WillRepeatedly(Return(1 + kSdkPortOffset));
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 2)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 2)))
       .WillRepeatedly(Return(2 + kSdkPortOffset));
 
   ASSERT_OK(VerifyChassisConfig(config1));

@@ -44,8 +44,8 @@ Es2kChassisManager::Es2kChassisManager(OperationMode mode,
       initialized_(false),
       port_status_event_channel_(nullptr),
       gnmi_event_writer_(nullptr),
-      unit_to_node_id_(),
-      node_id_to_unit_(),
+      device_to_node_id_(),
+      node_id_to_device_(),
       node_id_to_port_id_to_port_state_(),
       node_id_to_port_id_to_time_last_changed_(),
       node_id_to_port_id_to_port_config_(),
@@ -60,8 +60,8 @@ Es2kChassisManager::Es2kChassisManager()
       initialized_(false),
       port_status_event_channel_(nullptr),
       gnmi_event_writer_(nullptr),
-      unit_to_node_id_(),
-      node_id_to_unit_(),
+      device_to_node_id_(),
+      node_id_to_device_(),
       node_id_to_port_id_to_port_state_(),
       node_id_to_port_id_to_time_last_changed_(),
       node_id_to_port_id_to_port_config_(),
@@ -74,7 +74,7 @@ Es2kChassisManager::Es2kChassisManager()
 Es2kChassisManager::~Es2kChassisManager() = default;
 
 ::util::Status Es2kChassisManager::AddPortHelper(
-    uint64 node_id, int unit, uint32 sdk_port_id,
+    uint64 node_id, int device, uint32 sdk_port_id,
     const SingletonPort& singleton_port /* desired config */,
     /* out */ PortConfig* config /* new config */) {
   config->admin_state = ADMIN_STATE_UNKNOWN;
@@ -95,20 +95,21 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 
   LOG(INFO) << "Adding port " << port_id << " in node " << node_id
             << " (SDK Port " << sdk_port_id << ").";
-  RETURN_IF_ERROR(es2k_port_manager_->AddPort(
-      unit, sdk_port_id, singleton_port.speed_bps(), config_params.fec_mode()));
+  RETURN_IF_ERROR(es2k_port_manager_->AddPort(device, sdk_port_id,
+                                              singleton_port.speed_bps(),
+                                              config_params.fec_mode()));
   config->speed_bps = singleton_port.speed_bps();
   config->admin_state = ADMIN_STATE_DISABLED;
   config->fec_mode = config_params.fec_mode();
 
   if (config_params.mtu() != 0) {
-    RETURN_IF_ERROR(
-        es2k_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+    RETURN_IF_ERROR(es2k_port_manager_->SetPortMtu(device, sdk_port_id,
+                                                   config_params.mtu()));
   }
   config->mtu = config_params.mtu();
   if (config_params.autoneg() != TRI_STATE_UNKNOWN) {
     RETURN_IF_ERROR(es2k_port_manager_->SetPortAutonegPolicy(
-        unit, sdk_port_id, config_params.autoneg()));
+        device, sdk_port_id, config_params.autoneg()));
   }
   config->autoneg = config_params.autoneg();
 
@@ -117,25 +118,25 @@ Es2kChassisManager::~Es2kChassisManager() = default;
               << config_params.loopback_mode() << " (SDK Port " << sdk_port_id
               << ").";
     RETURN_IF_ERROR(es2k_port_manager_->SetPortLoopbackMode(
-        unit, sdk_port_id, config_params.loopback_mode()));
+        device, sdk_port_id, config_params.loopback_mode()));
   }
   config->loopback_mode = config_params.loopback_mode();
 
   if (config_params.admin_state() == ADMIN_STATE_ENABLED) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(es2k_port_manager_->EnablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(es2k_port_manager_->EnablePort(device, sdk_port_id));
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
-  RETURN_IF_ERROR(es2k_port_manager_->EnablePortShaping(unit, sdk_port_id,
+  RETURN_IF_ERROR(es2k_port_manager_->EnablePortShaping(device, sdk_port_id,
                                                         TRI_STATE_FALSE));
 
   return ::util::OkStatus();
 }
 
 ::util::Status Es2kChassisManager::UpdatePortHelper(
-    uint64 node_id, int unit, uint32 sdk_port_id,
+    uint64 node_id, int device, uint32 sdk_port_id,
     const SingletonPort& singleton_port /* desired config */,
     const PortConfig& config_old /* current config */,
     /* out */ PortConfig* config /* new config */) {
@@ -143,7 +144,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
   // SingletonPort ID is the SDN/Stratum port ID
   uint32 port_id = singleton_port.id();
 
-  if (!es2k_port_manager_->IsValidPort(unit, sdk_port_id)) {
+  if (!es2k_port_manager_->IsValidPort(device, sdk_port_id)) {
     config->admin_state = ADMIN_STATE_UNKNOWN;
     config->speed_bps.reset();
     config->fec_mode.reset();
@@ -154,11 +155,11 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 
   const auto& config_params = singleton_port.config_params();
   if (singleton_port.speed_bps() != config_old.speed_bps) {
-    RETURN_IF_ERROR(es2k_port_manager_->DisablePort(unit, sdk_port_id));
-    RETURN_IF_ERROR(es2k_port_manager_->DeletePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(es2k_port_manager_->DisablePort(device, sdk_port_id));
+    RETURN_IF_ERROR(es2k_port_manager_->DeletePort(device, sdk_port_id));
 
     ::util::Status status =
-        AddPortHelper(node_id, unit, sdk_port_id, singleton_port, config);
+        AddPortHelper(node_id, device, sdk_port_id, singleton_port, config);
     if (status.ok()) {
       return ::util::OkStatus();
     } else {
@@ -175,7 +176,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
         port_old.mutable_config_params()->set_mtu(*config_old.mtu);
       if (config_old.fec_mode)
         port_old.mutable_config_params()->set_fec_mode(*config_old.fec_mode);
-      AddPortHelper(node_id, unit, sdk_port_id, port_old, config);
+      AddPortHelper(node_id, device, sdk_port_id, port_old, config);
       return MAKE_ERROR(ERR_INVALID_PARAM)
              << "Could not add port " << port_id << " with new speed "
              << singleton_port.speed_bps() << " to BF SDE"
@@ -208,8 +209,8 @@ Es2kChassisManager::~Es2kChassisManager() = default;
             << " changed"
             << " (SDK Port " << sdk_port_id << ").";
     config->mtu.reset();
-    RETURN_IF_ERROR(
-        es2k_port_manager_->SetPortMtu(unit, sdk_port_id, config_params.mtu()));
+    RETURN_IF_ERROR(es2k_port_manager_->SetPortMtu(device, sdk_port_id,
+                                                   config_params.mtu()));
     config->mtu = config_params.mtu();
     config_changed = true;
   }
@@ -219,14 +220,14 @@ Es2kChassisManager::~Es2kChassisManager() = default;
             << " (SDK Port " << sdk_port_id << ").";
     config->autoneg.reset();
     RETURN_IF_ERROR(es2k_port_manager_->SetPortAutonegPolicy(
-        unit, sdk_port_id, config_params.autoneg()));
+        device, sdk_port_id, config_params.autoneg()));
     config->autoneg = config_params.autoneg();
     config_changed = true;
   }
   if (config_params.loopback_mode() != config_old.loopback_mode) {
     config->loopback_mode.reset();
     RETURN_IF_ERROR(es2k_port_manager_->SetPortLoopbackMode(
-        unit, sdk_port_id, config_params.loopback_mode()));
+        device, sdk_port_id, config_params.loopback_mode()));
     config->loopback_mode = config_params.loopback_mode();
     config_changed = true;
   }
@@ -251,13 +252,13 @@ Es2kChassisManager::~Es2kChassisManager() = default;
   if (need_disable) {
     LOG(INFO) << "Disabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(es2k_port_manager_->DisablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(es2k_port_manager_->DisablePort(device, sdk_port_id));
     config->admin_state = ADMIN_STATE_DISABLED;
   }
   if (need_enable) {
     LOG(INFO) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK Port " << sdk_port_id << ").";
-    RETURN_IF_ERROR(es2k_port_manager_->EnablePort(unit, sdk_port_id));
+    RETURN_IF_ERROR(es2k_port_manager_->EnablePort(device, sdk_port_id));
     config->admin_state = ADMIN_STATE_ENABLED;
   }
 
@@ -267,8 +268,8 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 ::util::Status Es2kChassisManager::PushChassisConfig(
     const ChassisConfig& config) {
   // new maps
-  std::map<int, uint64> unit_to_node_id;
-  std::map<uint64, int> node_id_to_unit;
+  std::map<int, uint64> device_to_node_id;
+  std::map<uint64, int> node_id_to_device;
   std::map<uint64, std::map<uint32, PortState>>
       node_id_to_port_id_to_port_state;
   std::map<uint64, std::map<uint32, absl::Time>>
@@ -282,11 +283,11 @@ Es2kChassisManager::~Es2kChassisManager() = default;
   std::map<PortKey, HwState> xcvr_port_key_to_xcvr_state;
 
   {
-    int unit = 0;
+    int device = 0;
     for (const auto& node : config.nodes()) {
-      unit_to_node_id[unit] = node.id();
-      node_id_to_unit[node.id()] = unit;
-      unit++;
+      device_to_node_id[device] = node.id();
+      node_id_to_device[node.id()] = device;
+      device++;
     }
   }
 
@@ -294,8 +295,8 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     uint32 port_id = singleton_port.id();
     uint64 node_id = singleton_port.node();
 
-    auto* unit = gtl::FindOrNull(node_id_to_unit, node_id);
-    if (unit == nullptr) {
+    auto* device = gtl::FindOrNull(node_id_to_device, node_id);
+    if (device == nullptr) {
       return MAKE_ERROR(ERR_INVALID_PARAM)
              << "Invalid ChassisConfig, unknown node id " << node_id
              << " for port " << port_id << ".";
@@ -311,7 +312,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 
     // Translate the logical SDN port to SDK port (BF device port ID)
     ASSIGN_OR_RETURN(uint32 sdk_port, es2k_port_manager_->GetPortIdFromPortKey(
-                                          *unit, singleton_port_key));
+                                          *device, singleton_port_key));
     node_id_to_port_id_to_sdk_port_id[node_id][port_id] = sdk_port;
     node_id_to_sdk_port_id_to_port_id[node_id][sdk_port] = port_id;
 
@@ -323,7 +324,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     uint32 port_id = singleton_port.id();
     uint64 node_id = singleton_port.node();
     // we checked that node_id was valid in the previous loop
-    auto unit = node_id_to_unit[node_id];
+    auto device = node_id_to_device[node_id];
 
     // TODO(antonin): we currently ignore slot
     // Stratum requires slot and port to be set. We use port and channel to
@@ -342,17 +343,17 @@ Es2kChassisManager::~Es2kChassisManager() = default;
       // if anything fails, config.admin_state will be set to
       // ADMIN_STATE_UNKNOWN (invalid)
       RETURN_IF_ERROR(
-          AddPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
+          AddPortHelper(node_id, device, sdk_port_id, singleton_port, &config));
     } else {  // port already exists, config may have changed
       if (config_old->admin_state == ADMIN_STATE_UNKNOWN) {
         // something is wrong with the port, we make sure the port is deleted
         // first (and ignore the error status if there is one), then add the
         // port again.
-        if (es2k_port_manager_->IsValidPort(unit, sdk_port_id)) {
-          es2k_port_manager_->DeletePort(unit, sdk_port_id);
+        if (es2k_port_manager_->IsValidPort(device, sdk_port_id)) {
+          es2k_port_manager_->DeletePort(device, sdk_port_id);
         }
-        RETURN_IF_ERROR(
-            AddPortHelper(node_id, unit, sdk_port_id, singleton_port, &config));
+        RETURN_IF_ERROR(AddPortHelper(node_id, device, sdk_port_id,
+                                      singleton_port, &config));
         continue;
       }
 
@@ -368,7 +369,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
 
       // if anything fails, config.admin_state will be set to
       // ADMIN_STATE_UNKNOWN (invalid)
-      RETURN_IF_ERROR(UpdatePortHelper(node_id, unit, sdk_port_id,
+      RETURN_IF_ERROR(UpdatePortHelper(node_id, device, sdk_port_id,
                                        singleton_port, *config_old, &config));
     }
   }
@@ -382,18 +383,18 @@ Es2kChassisManager::~Es2kChassisManager() = default;
           node_id_to_port_id_to_port_config[node_id].count(port_id) > 0) {
         continue;
       }
-      auto unit = node_id_to_unit_[node_id];
+      auto device = node_id_to_device_[node_id];
       uint32 sdk_port_id = node_id_to_port_id_to_sdk_port_id_[node_id][port_id];
       // remove ports which are no longer present in the ChassisConfig
       // TODO(bocon): Collect these errors and keep trying to remove old ports
       LOG(INFO) << "Deleting port " << port_id << " in node " << node_id
                 << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(es2k_port_manager_->DeletePort(unit, sdk_port_id));
+      RETURN_IF_ERROR(es2k_port_manager_->DeletePort(device, sdk_port_id));
     }
   }
 
-  unit_to_node_id_ = unit_to_node_id;
-  node_id_to_unit_ = node_id_to_unit;
+  device_to_node_id_ = device_to_node_id;
+  node_id_to_device_ = node_id_to_device;
   node_id_to_port_id_to_port_state_ = node_id_to_port_id_to_port_state;
   node_id_to_port_id_to_time_last_changed_ =
       node_id_to_port_id_to_time_last_changed;
@@ -432,24 +433,24 @@ Es2kChassisManager::~Es2kChassisManager() = default;
   }
 
   // Validate Node messages. Make sure there is no two nodes with the same id.
-  std::map<uint64, int> node_id_to_unit;
-  std::map<int, uint64> unit_to_node_id;
+  std::map<uint64, int> node_id_to_device;
+  std::map<int, uint64> device_to_node_id;
   for (const auto& node : config.nodes()) {
     CHECK_RETURN_IF_FALSE(node.slot() > 0)
         << "No positive slot in " << node.ShortDebugString();
     CHECK_RETURN_IF_FALSE(node.id() > 0)
         << "No positive ID in " << node.ShortDebugString();
     CHECK_RETURN_IF_FALSE(
-        gtl::InsertIfNotPresent(&node_id_to_unit, node.id(), -1))
+        gtl::InsertIfNotPresent(&node_id_to_device, node.id(), -1))
         << "The id for Node " << PrintNode(node) << " was already recorded "
         << "for another Node in the config.";
   }
   {
-    int unit = 0;
+    int device = 0;
     for (const auto& node : config.nodes()) {
-      unit_to_node_id[unit] = node.id();
-      node_id_to_unit[node.id()] = unit;
-      ++unit;
+      device_to_node_id[device] = node.id();
+      node_id_to_device[node.id()] = device;
+      ++device;
     }
   }
 
@@ -486,7 +487,7 @@ Es2kChassisManager::~Es2kChassisManager() = default;
     singleton_port_keys.insert(singleton_port_key);
     CHECK_RETURN_IF_FALSE(singleton_port.node() > 0)
         << "No valid node ID in " << singleton_port.ShortDebugString() << ".";
-    CHECK_RETURN_IF_FALSE(node_id_to_unit.count(singleton_port.node()))
+    CHECK_RETURN_IF_FALSE(node_id_to_device.count(singleton_port.node()))
         << "Node ID " << singleton_port.node() << " given for SingletonPort "
         << PrintSingletonPort(singleton_port)
         << " has not been given to any Node in the config.";
@@ -511,11 +512,11 @@ Es2kChassisManager::~Es2kChassisManager() = default;
         singleton_port_key;
 
     // Make sure that the port exists by getting the SDK port ID.
-    const int* unit = gtl::FindOrNull(node_id_to_unit, node_id);
-    CHECK_RETURN_IF_FALSE(unit != nullptr)
+    const int* device = gtl::FindOrNull(node_id_to_device, node_id);
+    CHECK_RETURN_IF_FALSE(device != nullptr)
         << "Node " << node_id << " not found for port " << port_id << ".";
     RETURN_IF_ERROR(
-        es2k_port_manager_->GetPortIdFromPortKey(*unit, singleton_port_key)
+        es2k_port_manager_->GetPortIdFromPortKey(*device, singleton_port_key)
             .status());
   }
 
@@ -530,10 +531,11 @@ Es2kChassisManager::~Es2kChassisManager() = default;
              << "needs to be rebooted to finish config push.";
     }
 
-    if (node_id_to_unit != node_id_to_unit_) {
+    if (node_id_to_device != node_id_to_device_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
              << "The switch is already initialized, but we detected the newly "
-             << "pushed config requires a change in node_id_to_unit. The stack "
+             << "pushed config requires a change in node_id_to_device. The "
+                "stack "
              << "needs to be rebooted to finish config push.";
     }
   }
@@ -722,7 +724,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
+  ASSIGN_OR_RETURN(auto device, GetDeviceFromNodeId(node_id));
 
   auto* port_id_to_port_state =
       gtl::FindOrNull(node_id_to_port_id_to_port_state_, node_id);
@@ -741,7 +743,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
             << ".";
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
   ASSIGN_OR_RETURN(auto port_state,
-                   es2k_port_manager_->GetPortState(unit, sdk_port_id));
+                   es2k_port_manager_->GetPortState(device, sdk_port_id));
   LOG(INFO) << "State of port " << port_id << " in node " << node_id
             << " (SDK port " << sdk_port_id
             << "): " << PrintPortState(port_state);
@@ -767,17 +769,17 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
+  ASSIGN_OR_RETURN(auto device, GetDeviceFromNodeId(node_id));
   ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
-  return es2k_port_manager_->GetPortCounters(unit, sdk_port_id, counters);
+  return es2k_port_manager_->GetPortCounters(device, sdk_port_id, counters);
 }
 
-::util::StatusOr<std::map<uint64, int>> Es2kChassisManager::GetNodeIdToUnitMap()
-    const {
+::util::StatusOr<std::map<uint64, int>>
+Es2kChassisManager::GetNodeIdToDeviceMap() const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  return node_id_to_unit_;
+  return node_id_to_device_;
 }
 
 // TODO: Revisit this, port shaping and drop deflect removed. Check with Sandeep
@@ -786,7 +788,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  ASSIGN_OR_RETURN(auto unit, GetUnitFromNodeId(node_id));
+  ASSIGN_OR_RETURN(auto device, GetDeviceFromNodeId(node_id));
 
   for (auto& p : node_id_to_port_id_to_port_state_[node_id])
     p.second = PORT_STATE_UNKNOWN;
@@ -797,7 +799,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
   LOG(INFO) << "Replaying ports for node " << node_id << ".";
 
-  auto replay_one_port = [node_id, unit, this](
+  auto replay_one_port = [node_id, device, this](
                              uint32 port_id, const PortConfig& config,
                              PortConfig* config_new) -> ::util::Status {
     VLOG(1) << "Replaying port " << port_id << " in node " << node_id << ".";
@@ -821,31 +823,31 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));
     RETURN_IF_ERROR(es2k_port_manager_->AddPort(
-        unit, sdk_port_id, *config.speed_bps, *config.fec_mode));
+        device, sdk_port_id, *config.speed_bps, *config.fec_mode));
     config_new->speed_bps = *config.speed_bps;
     config_new->admin_state = ADMIN_STATE_DISABLED;
     config_new->fec_mode = *config.fec_mode;
 
     if (config.mtu) {
       RETURN_IF_ERROR(
-          es2k_port_manager_->SetPortMtu(unit, sdk_port_id, *config.mtu));
+          es2k_port_manager_->SetPortMtu(device, sdk_port_id, *config.mtu));
       config_new->mtu = *config.mtu;
     }
     if (config.autoneg) {
       RETURN_IF_ERROR(es2k_port_manager_->SetPortAutonegPolicy(
-          unit, sdk_port_id, *config.autoneg));
+          device, sdk_port_id, *config.autoneg));
       config_new->autoneg = *config.autoneg;
     }
     if (config.loopback_mode) {
       RETURN_IF_ERROR(es2k_port_manager_->SetPortLoopbackMode(
-          unit, sdk_port_id, *config.loopback_mode));
+          device, sdk_port_id, *config.loopback_mode));
       config_new->loopback_mode = *config.loopback_mode;
     }
 
     if (config.admin_state == ADMIN_STATE_ENABLED) {
       VLOG(1) << "Enabling port " << port_id << " in node " << node_id
               << " (SDK port " << sdk_port_id << ").";
-      RETURN_IF_ERROR(es2k_port_manager_->EnablePort(unit, sdk_port_id));
+      RETURN_IF_ERROR(es2k_port_manager_->EnablePort(device, sdk_port_id));
       config_new->admin_state = ADMIN_STATE_ENABLED;
     }
 
@@ -936,7 +938,7 @@ void Es2kChassisManager::PortStatusEventHandler(int device, int port,
   // }
 
   // Update the state.
-  const uint64* node_id = gtl::FindOrNull(unit_to_node_id_, device);
+  const uint64* node_id = gtl::FindOrNull(device_to_node_id_, device);
   if (node_id == nullptr) {
     LOG(ERROR) << "Inconsistent state. Device " << device << " is not known!";
     return;
@@ -967,21 +969,21 @@ void Es2kChassisManager::PortStatusEventHandler(int device, int port,
             << ".";
 }
 
-::util::StatusOr<int> Es2kChassisManager::GetUnitFromNodeId(
+::util::StatusOr<int> Es2kChassisManager::GetDeviceFromNodeId(
     uint64 node_id) const {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  const int* unit = gtl::FindOrNull(node_id_to_unit_, node_id);
-  CHECK_RETURN_IF_FALSE(unit != nullptr)
+  const int* device = gtl::FindOrNull(node_id_to_device_, node_id);
+  CHECK_RETURN_IF_FALSE(device != nullptr)
       << "Node " << node_id << " is not configured or not known.";
 
-  return *unit;
+  return *device;
 }
 
 void Es2kChassisManager::CleanupInternalState() {
-  unit_to_node_id_.clear();
-  node_id_to_unit_.clear();
+  device_to_node_id_.clear();
+  node_id_to_device_.clear();
   node_id_to_port_id_to_port_state_.clear();
   node_id_to_port_id_to_time_last_changed_.clear();
   node_id_to_port_id_to_port_config_.clear();
