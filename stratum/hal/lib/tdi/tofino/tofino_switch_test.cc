@@ -78,12 +78,12 @@ class TofinoSwitchTest : public ::testing::Test {
     // Use NiceMock to suppress "uninteresting mock function call" warnings
     phal_mock_ = absl::make_unique<NiceMock<PhalMock>>();
     sde_mock_ = absl::make_unique<NiceMock<TdiSdeMock>>();
-    chassis_manager_mock_ = absl::make_unique<NiceMock<TofinoChassisManagerMock>>();
+    chassis_manager_mock_ =
+        absl::make_unique<NiceMock<TofinoChassisManagerMock>>();
     node_mock_ = absl::make_unique<NiceMock<TdiNodeMock>>();
     unit_to_ipdk_node_mock_[kUnit] = node_mock_.get();
-    switch_ = TofinoSwitch::CreateInstance(
-        chassis_manager_mock_.get(),
-        unit_to_ipdk_node_mock_);
+    switch_ = TofinoSwitch::CreateInstance(chassis_manager_mock_.get(),
+                                           unit_to_ipdk_node_mock_);
 #if 0
     // no 'shutdown'
     shutdown = false;  // global variable initialization
@@ -100,8 +100,7 @@ class TofinoSwitchTest : public ::testing::Test {
   void PushChassisConfigSuccessfully() {
     ChassisConfig config;
     config.add_nodes()->set_id(kNodeId);
-    EXPECT_CALL(*node_mock_,
-                PushChassisConfig(EqualsProto(config), kNodeId))
+    EXPECT_CALL(*node_mock_, PushChassisConfig(EqualsProto(config), kNodeId))
         .WillOnce(Return(::util::OkStatus()));
     EXPECT_OK(switch_->PushChassisConfig(config));
   }
@@ -119,7 +118,7 @@ class TofinoSwitchTest : public ::testing::Test {
 };
 
 TEST_F(TofinoSwitchTest, PushChassisConfigSucceeds) {
-    PushChassisConfigSuccessfully();
+  PushChassisConfigSuccessfully();
 }
 
 TEST_F(TofinoSwitchTest, PushChassisConfigFailsWhenNodePushFails) {
@@ -183,8 +182,7 @@ TEST_F(TofinoSwitchTest, PushForwardingPipelineConfigFailsWhenPushFails) {
   PushChassisConfigSuccessfully();
 
   ::p4::v1::ForwardingPipelineConfig config;
-  EXPECT_CALL(*node_mock_,
-              PushForwardingPipelineConfig(EqualsProto(config)))
+  EXPECT_CALL(*node_mock_, PushForwardingPipelineConfig(EqualsProto(config)))
       .WillOnce(Return(DefaultError()));
   EXPECT_THAT(switch_->PushForwardingPipelineConfig(kNodeId, config),
               DerivedFromStatus(DefaultError()));
@@ -195,8 +193,7 @@ TEST_F(TofinoSwitchTest, VerifyForwardingPipelineConfigSucceeds) {
 
   ::p4::v1::ForwardingPipelineConfig config;
   // Verify should always be called before push.
-  EXPECT_CALL(*node_mock_,
-              VerifyForwardingPipelineConfig(EqualsProto(config)))
+  EXPECT_CALL(*node_mock_, VerifyForwardingPipelineConfig(EqualsProto(config)))
       .WillOnce(Return(::util::OkStatus()));
   EXPECT_OK(switch_->VerifyForwardingPipelineConfig(kNodeId, config));
 }

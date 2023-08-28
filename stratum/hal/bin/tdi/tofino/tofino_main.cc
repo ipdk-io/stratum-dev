@@ -3,11 +3,10 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stratum/hal/bin/tdi/main.h"
-
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/logging.h"
+#include "stratum/hal/bin/tdi/main.h"
 #include "stratum/hal/lib/phal/phal_sim.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
@@ -16,8 +15,8 @@
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
-#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_hal.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_switch.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
@@ -47,11 +46,11 @@ namespace tdi {
 
   auto tofino_port_manager = TofinoPortManager::CreateSingleton();
 
-  RETURN_IF_ERROR(sde_wrapper->InitializeSde(
-      FLAGS_tdi_sde_install, FLAGS_tdi_switchd_cfg, FLAGS_tdi_switchd_background));
+  RETURN_IF_ERROR(sde_wrapper->InitializeSde(FLAGS_tdi_sde_install,
+                                             FLAGS_tdi_switchd_cfg,
+                                             FLAGS_tdi_switchd_background));
 
-  ASSIGN_OR_RETURN(bool is_sw_model,
-                   sde_wrapper->IsSoftwareModel(device_id));
+  ASSIGN_OR_RETURN(bool is_sw_model, sde_wrapper->IsSoftwareModel(device_id));
   const OperationMode mode =
       is_sw_model ? OPERATION_MODE_SIM : OPERATION_MODE_STANDALONE;
 
@@ -68,16 +67,14 @@ namespace tdi {
   auto packetio_manager =
       TdiPacketioManager::CreateInstance(sde_wrapper, device_id);
 
-  auto pre_manager =
-      TdiPreManager::CreateInstance(sde_wrapper, device_id);
+  auto pre_manager = TdiPreManager::CreateInstance(sde_wrapper, device_id);
 
   auto counter_manager =
       TdiCounterManager::CreateInstance(sde_wrapper, device_id);
 
   auto tdi_node = TdiNode::CreateInstance(
-      table_manager.get(), action_profile_manager.get(),
-      packetio_manager.get(), pre_manager.get(),
-      counter_manager.get(), sde_wrapper, device_id);
+      table_manager.get(), action_profile_manager.get(), packetio_manager.get(),
+      pre_manager.get(), counter_manager.get(), sde_wrapper, device_id);
 
   PhalInterface* phal = PhalSim::CreateSingleton();
 
@@ -88,15 +85,15 @@ namespace tdi {
   auto chassis_manager = TofinoChassisManager::CreateInstance(
       mode, phal, sde_wrapper, tofino_port_manager);
 
-  auto tdi_switch = TofinoSwitch::CreateInstance(
-      chassis_manager.get(), device_id_to_tdi_node);
+  auto tdi_switch = TofinoSwitch::CreateInstance(chassis_manager.get(),
+                                                 device_id_to_tdi_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 
   // Create the 'Hal' class instance.
-  auto* hal = TofinoHal::CreateSingleton(
-      stratum::hal::OPERATION_MODE_STANDALONE, tdi_switch.get(),
-      auth_policy_checker.get());
+  auto* hal =
+      TofinoHal::CreateSingleton(stratum::hal::OPERATION_MODE_STANDALONE,
+                                 tdi_switch.get(), auth_policy_checker.get());
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.

@@ -4,8 +4,6 @@
 
 // Dummy implementation of Tofino Port Manager.
 
-#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
-
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
@@ -14,6 +12,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 
@@ -42,12 +41,13 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device, int port) {
+::util::StatusOr<PortState> TofinoPortManager::GetPortState(int device,
+                                                            int port) {
   return PORT_STATE_UP;
 }
 
-::util::Status TofinoPortManager::GetPortCounters(
-    int device, int port, PortCounters* counters) {
+::util::Status TofinoPortManager::GetPortCounters(int device, int port,
+                                                  PortCounters* counters) {
   counters->set_in_octets(0);
   counters->set_out_octets(1);
   counters->set_in_unicast_pkts(2);
@@ -66,8 +66,9 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::OnPortStatusEvent(
-    int device, int port, bool up, absl::Time timestamp) {
+::util::Status TofinoPortManager::OnPortStatusEvent(int device, int port,
+                                                    bool up,
+                                                    absl::Time timestamp) {
   return ::util::OkStatus();
 }
 
@@ -84,8 +85,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::GetPortInfo(
-    int device, int port, TargetDatapathId *target_dp_id) {
+::util::Status TofinoPortManager::GetPortInfo(int device, int port,
+                                              TargetDatapathId* target_dp_id) {
   return ::util::OkStatus();
 }
 
@@ -93,8 +94,8 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::AddPort(
-    int device, int port, uint64 speed_bps, FecMode fec_mode) {
+::util::Status TofinoPortManager::AddPort(int device, int port,
+                                          uint64 speed_bps, FecMode fec_mode) {
   return ::util::OkStatus();
 }
 
@@ -110,19 +111,20 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetPortShapingRate(
-    int device, int port, bool is_in_pps, uint32 burst_size,
-    uint64 rate_per_second) {
+::util::Status TofinoPortManager::SetPortShapingRate(int device, int port,
+                                                     bool is_in_pps,
+                                                     uint32 burst_size,
+                                                     uint64 rate_per_second) {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::EnablePortShaping(
-    int device, int port, TriState enable) {
+::util::Status TofinoPortManager::EnablePortShaping(int device, int port,
+                                                    TriState enable) {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetPortAutonegPolicy(
-    int device, int port, TriState autoneg) {
+::util::Status TofinoPortManager::SetPortAutonegPolicy(int device, int port,
+                                                       TriState autoneg) {
   return ::util::OkStatus();
 }
 
@@ -130,9 +132,7 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-bool TofinoPortManager::IsValidPort(int device, int port) {
-  return true;
-}
+bool TofinoPortManager::IsValidPort(int device, int port) { return true; }
 
 ::util::Status TofinoPortManager::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
@@ -152,8 +152,9 @@ bool TofinoPortManager::IsValidPort(int device, int port) {
   return ::util::OkStatus();
 }
 
-::util::Status TofinoPortManager::SetDeflectOnDropDestination(
-    int device, int port, int queue) {
+::util::Status TofinoPortManager::SetDeflectOnDropDestination(int device,
+                                                              int port,
+                                                              int queue) {
   return ::util::OkStatus();
 }
 

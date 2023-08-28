@@ -14,12 +14,12 @@
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "stratum/glue/integral_types.h"
-#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
@@ -122,7 +122,8 @@ class TofinoChassisManager {
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
   TofinoChassisManager(OperationMode mode, PhalInterface* phal_interface,
-      TdiSdeInterface* tdi_sde_interface, TofinoPortManager* tofino_port_manager);
+                       TdiSdeInterface* tdi_sde_interface,
+                       TofinoPortManager* tofino_port_manager);
 
   ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
                                                     uint32 port_id) const
@@ -156,8 +157,8 @@ class TofinoChassisManager {
   // a ChannelReader thread which processes transceiver module insert/removal
   // events. Port is the 1-based frontpanel port number.
   // NOTE: This method should never be executed directly from a context which
-  // first accesses the internal structures of a class below TofinoChassisManager
-  // as this may result in deadlock.
+  // first accesses the internal structures of a class below
+  // TofinoChassisManager as this may result in deadlock.
   void TransceiverEventHandler(int slot, int port, HwState new_state)
       LOCKS_EXCLUDED(chassis_lock);
 

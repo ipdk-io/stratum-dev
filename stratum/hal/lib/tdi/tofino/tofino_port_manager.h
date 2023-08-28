@@ -30,12 +30,11 @@ class TofinoPortManager : public TdiPortManager {
   ::util::Status UnregisterPortStatusEventWriter()
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId *target_dp_id);
+                             TargetDatapathId* target_dp_id);
   ::util::StatusOr<PortState> GetPortState(int device, int port);
-  ::util::Status GetPortCounters(int device, int port,
-                                 PortCounters* counters);
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key);
+  ::util::Status GetPortCounters(int device, int port, PortCounters* counters);
+  ::util::StatusOr<uint32> GetPortIdFromPortKey(int device,
+                                                const PortKey& port_key);
   bool IsValidPort(int device, int port);
   ::util::Status AddPort(int device, int port);
   ::util::Status DeletePort(int device, int port);
@@ -45,9 +44,9 @@ class TofinoPortManager : public TdiPortManager {
   // Tofino-specific methods
   virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
                                  FecMode fec_mode);
-  virtual ::util::Status SetPortShapingRate(
-      int device, int port, bool is_in_pps, uint32 burst_size,
-      uint64 rate_per_second);
+  virtual ::util::Status SetPortShapingRate(int device, int port,
+                                            bool is_in_pps, uint32 burst_size,
+                                            uint64 rate_per_second);
   virtual ::util::Status EnablePortShaping(int device, int port,
                                            TriState enable);
   virtual ::util::Status SetPortAutonegPolicy(int device, int port,
@@ -99,7 +98,7 @@ class TofinoPortManager : public TdiPortManager {
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-    GUARDED_BY(port_status_event_writer_lock_);
+      GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

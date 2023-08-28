@@ -19,11 +19,11 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_test_util.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/tdi_sde_mock.h"
-#include "stratum/hal/lib/tdi/tofino/tofino_port_manager_mock.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/phal_mock.h"
 #include "stratum/hal/lib/common/writer_mock.h"
+#include "stratum/hal/lib/tdi/tdi_sde_mock.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_port_manager_mock.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/test_utils/matchers.h"
 #include "stratum/lib/utils.h"
@@ -327,7 +327,7 @@ TEST_F(TofinoChassisManagerTest, AddPortFec) {
   RegisterSdkPortId(builder.AddPort(portId, port, ADMIN_STATE_ENABLED,
                                     kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_, AddPort(kUnit, portId + kSdkPortOffset,
-                                     kHundredGigBps, FEC_MODE_ON));
+                                      kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_, EnablePort(kUnit, portId + kSdkPortOffset));
   ASSERT_OK(PushChassisConfig(builder));
 
@@ -377,11 +377,12 @@ TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
   builder.SetVendorConfig(vendor_config);
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
-  EXPECT_CALL(*port_manager_, SetPortShapingRate(kUnit, kPortId + kSdkPortOffset,
-                                                false, 16384, kTenGigBps))
+  EXPECT_CALL(*port_manager_,
+              SetPortShapingRate(kUnit, kPortId + kSdkPortOffset, false, 16384,
+                                 kTenGigBps))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_, EnablePortShaping(kUnit, kPortId + kSdkPortOffset,
-                                               TRI_STATE_TRUE))
+                                                TRI_STATE_TRUE))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_, EnablePort(kUnit, kPortId + kSdkPortOffset))
       .Times(AtLeast(1));
@@ -474,7 +475,8 @@ TEST_F(TofinoChassisManagerTest, ReplayPorts) {
   // For now, when replaying the port configuration, we set the mtu and autoneg
   // even if the values where already the defaults. This seems like a good idea
   // to ensure configuration consistency.
-  EXPECT_CALL(*port_manager_, SetPortMtu(kUnit, sdkPortId, 0)).Times(AtLeast(1));
+  EXPECT_CALL(*port_manager_, SetPortMtu(kUnit, sdkPortId, 0))
+      .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
               SetPortAutonegPolicy(kUnit, sdkPortId, TRI_STATE_UNKNOWN))
       .Times(AtLeast(1));
