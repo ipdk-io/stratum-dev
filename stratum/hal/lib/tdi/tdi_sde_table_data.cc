@@ -4,8 +4,6 @@
 
 // Target-agnostic SDE wrapper Table Data methods.
 
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
-
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -13,8 +11,8 @@
 #include <vector>
 
 #include "gflags/gflags_declare.h"
-#include "stratum/glue/integral_types.h"
 #include "stratum/glue/gtl/stl_util.h"
+#include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/p4/utils.h"
@@ -23,6 +21,7 @@
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/macros.h"
 
@@ -35,7 +34,7 @@ using namespace stratum::hal::tdi::helpers;
 ::util::Status TableData::SetParam(int id, const std::string& value) {
   tdi_id_t action_id = 0;
   size_t field_size_bits = 0;
-  const ::tdi::DataFieldInfo * dataFieldInfo;
+  const ::tdi::DataFieldInfo* dataFieldInfo;
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
@@ -54,7 +53,7 @@ using namespace stratum::hal::tdi::helpers;
 
 ::util::Status TableData::GetParam(int id, std::string* value) const {
   size_t field_size_bits;
-  const ::tdi::DataFieldInfo * dataFieldInfo;
+  const ::tdi::DataFieldInfo* dataFieldInfo;
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
@@ -84,7 +83,8 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::Status TableData::SetParam(std::string field_name, const std::string& value) {
+::util::Status TableData::SetParam(std::string field_name,
+                                   const std::string& value) {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
@@ -94,7 +94,8 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::Status TableData::GetParam(std::string field_name, uint64* value) const {
+::util::Status TableData::GetParam(std::string field_name,
+                                   uint64* value) const {
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
@@ -127,7 +128,8 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterCommitedBurstPackets, cburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPirPps, pir));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstPackets, pburst));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterPeakBurstPackets, pburst));
   } else {
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterCirKbps, BytesPerSecondToKbits(cir)));
@@ -176,14 +178,16 @@ using namespace stratum::hal::tdi::helpers;
   std::vector<tdi_id_t> data_field_ids;
   tdi_id_t field_id_bytes = 0;
   tdi_id_t field_id_packets = 0;
-  const ::tdi::DataFieldInfo *dataFieldInfoPackets;
-  const ::tdi::DataFieldInfo *dataFieldInfoBytes;
+  const ::tdi::DataFieldInfo* dataFieldInfoPackets;
+  const ::tdi::DataFieldInfo* dataFieldInfoBytes;
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
   tdi_id_t action_id = table_data_->actionIdGet();
-  dataFieldInfoPackets = table->tableInfoGet()->dataFieldGet(kCounterPackets, action_id);
-  dataFieldInfoBytes = table->tableInfoGet()->dataFieldGet(kCounterBytes, action_id);
+  dataFieldInfoPackets =
+      table->tableInfoGet()->dataFieldGet(kCounterPackets, action_id);
+  dataFieldInfoBytes =
+      table->tableInfoGet()->dataFieldGet(kCounterBytes, action_id);
   RETURN_IF_NULL(dataFieldInfoPackets);
   RETURN_IF_NULL(dataFieldInfoBytes);
   field_id_packets = dataFieldInfoPackets->idGet();
@@ -200,14 +204,16 @@ using namespace stratum::hal::tdi::helpers;
   CHECK_RETURN_IF_FALSE(packets);
   tdi_id_t field_id_bytes = 0;
   tdi_id_t field_id_packets = 0;
-  const ::tdi::DataFieldInfo *dataFieldInfoPackets;
-  const ::tdi::DataFieldInfo *dataFieldInfoBytes;
+  const ::tdi::DataFieldInfo* dataFieldInfoPackets;
+  const ::tdi::DataFieldInfo* dataFieldInfoBytes;
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(table_data_->getParent(&table));
 
   tdi_id_t action_id = table_data_->actionIdGet();
-  dataFieldInfoPackets = table->tableInfoGet()->dataFieldGet(kCounterPackets, action_id);
-  dataFieldInfoBytes = table->tableInfoGet()->dataFieldGet(kCounterBytes, action_id);
+  dataFieldInfoPackets =
+      table->tableInfoGet()->dataFieldGet(kCounterPackets, action_id);
+  dataFieldInfoBytes =
+      table->tableInfoGet()->dataFieldGet(kCounterBytes, action_id);
   RETURN_IF_NULL(dataFieldInfoPackets);
   RETURN_IF_NULL(dataFieldInfoBytes);
   field_id_packets = dataFieldInfoPackets->idGet();
