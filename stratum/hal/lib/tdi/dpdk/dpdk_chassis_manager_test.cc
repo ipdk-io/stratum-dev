@@ -29,13 +29,13 @@
 #undef IPU_ADD_NEW_PORT
 
 #if !defined(IPU_ADD_NEW_PORT)
-#define EXPECT_ADD_PORT_CALL(unit, port, config)
-#define EXPECT_ENABLE_PORT_CALL(unit, port)
+#define EXPECT_ADD_PORT_CALL(device, port, config)
+#define EXPECT_ENABLE_PORT_CALL(device, port)
 #else
-#define EXPECT_ADD_PORT_CALL(unit, port, config) \
-  EXPECT_CALL(*port_manager_, AddPort((unit), (port), _))
-#define EXPECT_ENABLE_PORT_CALL(unit, port) \
-  EXPECT_CALL(*port_manager_, EnablePort(unit, port))
+#define EXPECT_ADD_PORT_CALL(device, port, config) \
+  EXPECT_CALL(*port_manager_, AddPort((device), (port), _))
+#define EXPECT_ENABLE_PORT_CALL(device, port) \
+  EXPECT_CALL(*port_manager_, EnablePort(device, port))
 #endif
 
 namespace stratum {
@@ -63,8 +63,8 @@ using ::testing::WithArg;
 namespace {
 
 constexpr uint64 kNodeId = 7654321ULL;
-// For Tofino, unit is the 0-based index of the node in the ChassisConfig.
-constexpr int kUnit = 0;
+// For Tofino, device is the 0-based index of the node in the ChassisConfig.
+constexpr int kDevice = 0;
 constexpr int kSlot = 1;
 constexpr int kPort = 1;
 constexpr uint32 kPortId = 12345;
@@ -163,12 +163,12 @@ class DpdkChassisManagerTest : public ::testing::Test {
   void RegisterSdkPortId(const SingletonPort* singleton_port) {
     RegisterSdkPortId(singleton_port->id(), singleton_port->slot(),
                       singleton_port->port(), singleton_port->channel(),
-                      kUnit);  // TODO(bocon): look up unit from node
+                      kDevice);  // TODO(bocon): look up device from node
   }
 
   ::util::Status CheckCleanInternalState() {
-    CHECK_RETURN_IF_FALSE(chassis_manager_->unit_to_node_id_.empty());
-    CHECK_RETURN_IF_FALSE(chassis_manager_->node_id_to_unit_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->device_to_node_id_.empty());
+    CHECK_RETURN_IF_FALSE(chassis_manager_->node_id_to_device_.empty());
     CHECK_RETURN_IF_FALSE(
         chassis_manager_->node_id_to_port_id_to_port_state_.empty());
     CHECK_RETURN_IF_FALSE(
@@ -204,14 +204,15 @@ class DpdkChassisManagerTest : public ::testing::Test {
         << "Can only call PushBaseChassisConfig() for first ChassisConfig!";
     RegisterSdkPortId(builder->AddPort(kPortId, kPort, ADMIN_STATE_ENABLED));
 
-    EXPECT_ADD_PORT_CALL(kUnit, kDefaultPortId, _);
-    EXPECT_ENABLE_PORT_CALL(kUnit, kDefaultPortId);
+    EXPECT_ADD_PORT_CALL(kDevice, kDefaultPortId, _);
+    EXPECT_ENABLE_PORT_CALL(kDevice, kDefaultPortId);
 
     RETURN_IF_ERROR(PushChassisConfig(builder->Get()));
 
-    auto unit = GetUnitFromNodeId(kNodeId);
-    CHECK_RETURN_IF_FALSE(unit.ok());
-    CHECK_RETURN_IF_FALSE(unit.ValueOrDie() == kUnit) << "Invalid unit number!";
+    auto device = GetDeviceFromNodeId(kNodeId);
+    CHECK_RETURN_IF_FALSE(device.ok());
+    CHECK_RETURN_IF_FALSE(device.ValueOrDie() == kDevice)
+        << "Invalid device number!";
     CHECK_RETURN_IF_FALSE(Initialized())
         << "Class is not initialized after push!";
     return ::util::OkStatus();
@@ -227,9 +228,9 @@ class DpdkChassisManagerTest : public ::testing::Test {
     return PushBaseChassisConfig(&builder);
   }
 
-  ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const {
+  ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const {
     absl::ReaderMutexLock l(&chassis_lock);
-    return chassis_manager_->GetUnitFromNodeId(node_id);
+    return chassis_manager_->GetDeviceFromNodeId(node_id);
   }
 
   ::util::Status Shutdown() { return chassis_manager_->Shutdown(); }
@@ -272,7 +273,7 @@ TEST_F(DpdkChassisManagerTest, RemovePort) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   builder.RemoveLastPort();
-  EXPECT_CALL(*port_manager_, DeletePort(kUnit, kDefaultPortId));
+  EXPECT_CALL(*port_manager_, DeletePort(kDevice, kDefaultPortId));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -282,12 +283,12 @@ TEST_F(DpdkChassisManagerTest, IsPortParamSet) {
   SingletonPort sport;
   sport.mutable_config_params()->set_port_type(PORT_TYPE_VHOST);
   ASSERT_FALSE(
-      chassis_manager_->IsPortParamSet(kUnit, kPort, ValueCase::kPortType));
+      chassis_manager_->IsPortParamSet(kDevice, kPort, ValueCase::kPortType));
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kDevice, kPort, sport, ValueCase::kPortType)
+                  .ok());
   ASSERT_TRUE(
-      chassis_manager_->SetPortParam(kUnit, kPort, sport, ValueCase::kPortType)
-          .ok());
-  ASSERT_TRUE(
-      chassis_manager_->IsPortParamSet(kUnit, kPort, ValueCase::kPortType));
+      chassis_manager_->IsPortParamSet(kDevice, kPort, ValueCase::kPortType));
 }
 
 TEST_F(DpdkChassisManagerTest, SetPortParam) {
@@ -310,20 +311,20 @@ TEST_F(DpdkChassisManagerTest, SetPortParam) {
   config_params->set_socket_path("/socket/to/me");
   config_params->set_host_name("Fawlty");
 
-  ASSERT_TRUE(
-      chassis_manager_->SetPortParam(kUnit, kPort, *sport, ValueCase::kPortType)
-          .ok());
   ASSERT_TRUE(chassis_manager_
-                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kDeviceType)
+                  ->SetPortParam(kDevice, kPort, *sport, ValueCase::kPortType)
                   .ok());
   ASSERT_TRUE(chassis_manager_
-                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kQueueCount)
+                  ->SetPortParam(kDevice, kPort, *sport, ValueCase::kDeviceType)
                   .ok());
-  ASSERT_TRUE(
-      chassis_manager_->SetPortParam(kUnit, kPort, *sport, ValueCase::kSockPath)
-          .ok());
   ASSERT_TRUE(chassis_manager_
-                  ->SetPortParam(kUnit, kPort, *sport, ValueCase::kHostConfig)
+                  ->SetPortParam(kDevice, kPort, *sport, ValueCase::kQueueCount)
+                  .ok());
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kDevice, kPort, *sport, ValueCase::kSockPath)
+                  .ok());
+  ASSERT_TRUE(chassis_manager_
+                  ->SetPortParam(kDevice, kPort, *sport, ValueCase::kHostConfig)
                   .ok());
 }
 
@@ -333,7 +334,7 @@ TEST_F(DpdkChassisManagerTest, SetHotplugParam) {
   HotplugConfig* hotplug_config = config_params->mutable_hotplug_config();
   hotplug_config->set_qemu_socket_ip("/qemu/socket_ip");
   ASSERT_TRUE(
-      chassis_manager_->SetHotplugParam(kUnit, kPort, sport, PARAM_SOCK_IP)
+      chassis_manager_->SetHotplugParam(kDevice, kPort, sport, PARAM_SOCK_IP)
           .ok());
 }
 
@@ -378,8 +379,8 @@ TEST_F(DpdkChassisManagerTest, ReplayPorts) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   const uint32 sdkPortId = kDefaultPortId;
-  EXPECT_ADD_PORT_CALL(kUnit, sdkPortId, _);
-  EXPECT_ENABLE_PORT_CALL(kUnit, sdkPortId);
+  EXPECT_ADD_PORT_CALL(kDevice, sdkPortId, _);
+  EXPECT_ENABLE_PORT_CALL(kDevice, sdkPortId);
 
   EXPECT_OK(ReplayPortsConfig(kNodeId));
 
@@ -394,13 +395,13 @@ TEST_F(DpdkChassisManagerTest, DISABLED_UpdateInvalidPort) {
   SingletonPort* new_port =
       builder.AddPort(portId, kPort + 1, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(new_port);
-  EXPECT_CALL(*port_manager_, AddPort(kUnit, sdkPortId, _))
+  EXPECT_CALL(*port_manager_, AddPort(kDevice, sdkPortId, _))
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(*port_manager_, EnablePort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId))
       .WillOnce(Return(::util::OkStatus()));
   ASSERT_OK(PushChassisConfig(builder));
 
-  EXPECT_CALL(*port_manager_, IsValidPort(kUnit, sdkPortId))
+  EXPECT_CALL(*port_manager_, IsValidPort(kDevice, sdkPortId))
       .WillOnce(Return(false));
 
   // Update port, but port is invalid.
@@ -454,9 +455,9 @@ TEST_F(DpdkChassisManagerTest, VerifyChassisConfigSuccess) {
   ChassisConfig config1;
   ASSERT_OK(ParseProtoFromString(kConfigText1, &config1));
 
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 1)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 1)))
       .WillRepeatedly(Return(1 + kSdkPortOffset));
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kUnit, PortKey(1, 1, 2)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 2)))
       .WillRepeatedly(Return(2 + kSdkPortOffset));
 
   ASSERT_OK(VerifyChassisConfig(config1));

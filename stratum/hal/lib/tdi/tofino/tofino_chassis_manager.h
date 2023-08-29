@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TOFINO_TOFINO_CHASSIS_MANAGER_H_
@@ -66,10 +66,10 @@ class TofinoChassisManager {
                                                FrontPanelPortInfo* fp_port_info)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToUnitMap() const
+  virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToDeviceMap() const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const
+  virtual ::util::StatusOr<int> GetDeviceFromNodeId(uint64 node_id) const
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual std::string GetChipType(int device) const;
@@ -194,19 +194,19 @@ class TofinoChassisManager {
           reader) LOCKS_EXCLUDED(chassis_lock);
 
   // helper to add / configure / enable a port with TofinoPortManager
-  ::util::Status AddPortHelper(uint64 node_id, int unit, uint32 port_id,
+  ::util::Status AddPortHelper(uint64 node_id, int device, uint32 port_id,
                                const SingletonPort& singleton_port,
                                PortConfig* config);
 
   // helper to update port configuration with TofinoPortManager
-  ::util::Status UpdatePortHelper(uint64 node_id, int unit, uint32 port_id,
+  ::util::Status UpdatePortHelper(uint64 node_id, int device, uint32 port_id,
                                   const SingletonPort& singleton_port,
                                   const PortConfig& config_old,
                                   PortConfig* config);
 
   // Helper to apply a port shaping config to a single port.
   ::util::Status ApplyPortShapingConfig(
-      uint64 node_id, int unit, uint32 sdk_port_id,
+      uint64 node_id, int device, uint32 sdk_port_id,
       const TofinoConfig::BfPortShapingConfig::BfPerPortShapingConfig&
           shaping_config);
 
@@ -240,11 +240,11 @@ class TofinoChassisManager {
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
       GUARDED_BY(gnmi_event_lock_);
 
-  // Map from unit number to the node ID as specified by the config.
-  std::map<int, uint64> unit_to_node_id_ GUARDED_BY(chassis_lock);
+  // Map from device number to the node ID as specified by the config.
+  std::map<int, uint64> device_to_node_id_ GUARDED_BY(chassis_lock);
 
-  // Map from node ID to unit number.
-  std::map<uint64, int> node_id_to_unit_ GUARDED_BY(chassis_lock);
+  // Map from node ID to device number.
+  std::map<uint64, int> node_id_to_device_ GUARDED_BY(chassis_lock);
 
   // Map from node ID to another map from port ID to PortState representing
   // the state of the singleton port uniquely identified by (node ID, port ID).

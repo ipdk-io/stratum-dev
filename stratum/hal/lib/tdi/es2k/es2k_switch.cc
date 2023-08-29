@@ -45,7 +45,7 @@ Es2kSwitch::~Es2kSwitch() {}
   absl::WriterMutexLock l(&chassis_lock);
   RETURN_IF_ERROR(chassis_manager_->PushChassisConfig(config));
   ASSIGN_OR_RETURN(const auto& node_id_to_device_id,
-                   chassis_manager_->GetNodeIdToUnitMap());
+                   chassis_manager_->GetNodeIdToDeviceMap());
   node_id_to_tdi_node_.clear();
   for (const auto& entry : node_id_to_device_id) {
     uint64 node_id = entry.first;
@@ -211,7 +211,7 @@ Es2kSwitch::~Es2kSwitch() {}
       // Node information request
       case DataRequest::Request::kNodeInfo: {
         auto device_id =
-            chassis_manager_->GetUnitFromNodeId(req.node_info().node_id());
+            chassis_manager_->GetDeviceFromNodeId(req.node_info().node_id());
         if (!device_id.ok()) {
           status.Update(device_id.status());
         } else {
@@ -287,7 +287,7 @@ std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
   Es2kNode* es2k_node = gtl::FindPtrOrNull(device_id_to_es2k_node_, device_id);
   if (es2k_node == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
-           << "Unit " << device_id << " is unknown.";
+           << "Device " << device_id << " is unknown.";
   }
   return es2k_node;
 }

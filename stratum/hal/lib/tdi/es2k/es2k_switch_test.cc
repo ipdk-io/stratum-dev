@@ -62,12 +62,12 @@ MATCHER_P(DerivedFromStatus, status, "") {
 }
 
 constexpr uint64 kNodeId = 13579;
-constexpr int kUnit = 2;
+constexpr int kDevice = 2;
 constexpr char kErrorMsg[] = "Test error message";
 constexpr uint32 kPortId = 2468;
 
-const std::map<uint64, int>& NodeIdToUnitMap() {
-  static auto* map = new std::map<uint64, int>({{kNodeId, kUnit}});
+const std::map<uint64, int>& NodeIdToDeviceMap() {
+  static auto* map = new std::map<uint64, int>({{kNodeId, kDevice}});
   return *map;
 }
 
@@ -79,16 +79,16 @@ class Es2kSwitchTest : public ::testing::Test {
         absl::make_unique<NiceMock<Es2kChassisManagerMock>>();
     ipsec_manager_mock_ = absl::make_unique<NiceMock<IPsecManagerMock>>();
     node_mock_ = absl::make_unique<NiceMock<Es2kNodeMock>>();
-    unit_to_ipdk_node_mock_[kUnit] = node_mock_.get();
+    device_to_node_mock_[kDevice] = node_mock_.get();
     switch_ = Es2kSwitch::CreateInstance(chassis_manager_mock_.get(),
                                          ipsec_manager_mock_.get(),
-                                         unit_to_ipdk_node_mock_);
+                                         device_to_node_mock_);
 
-    ON_CALL(*chassis_manager_mock_, GetNodeIdToUnitMap())
-        .WillByDefault(Return(NodeIdToUnitMap()));
+    ON_CALL(*chassis_manager_mock_, GetNodeIdToDeviceMap())
+        .WillByDefault(Return(NodeIdToDeviceMap()));
   }
 
-  void TearDown() override { unit_to_ipdk_node_mock_.clear(); }
+  void TearDown() override { device_to_node_mock_.clear(); }
 
   // This operation should always succeed.
   // We use it to set up a number of test cases.
@@ -107,7 +107,7 @@ class Es2kSwitchTest : public ::testing::Test {
   std::unique_ptr<Es2kChassisManagerMock> chassis_manager_mock_;
   std::unique_ptr<IPsecManagerMock> ipsec_manager_mock_;
   std::unique_ptr<Es2kNodeMock> node_mock_;
-  std::map<int, Es2kNode*> unit_to_ipdk_node_mock_;
+  std::map<int, Es2kNode*> device_to_node_mock_;
   std::unique_ptr<Es2kSwitch> switch_;
 };
 

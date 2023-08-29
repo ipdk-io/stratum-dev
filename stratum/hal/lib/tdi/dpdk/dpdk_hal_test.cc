@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from common/hal_test.cc
@@ -78,7 +78,7 @@ class DpdkHalTest : public ::testing::Test {
 
   void FillTestChassisConfigAndSave(ChassisConfig* chassis_config) {
     const std::string& chassis_config_text = absl::Substitute(
-        kChassisConfigTemplate, kNodeId1, kUnit1 + 1, kNodeId2, kUnit2 + 1);
+        kChassisConfigTemplate, kNodeId1, kDevice1 + 1, kNodeId2, kDevice2 + 1);
     ASSERT_OK(ParseProtoFromString(chassis_config_text, chassis_config));
     ASSERT_OK(
         WriteStringToFile(chassis_config_text, FLAGS_chassis_config_file));
@@ -140,8 +140,8 @@ class DpdkHalTest : public ::testing::Test {
   static constexpr char kErrorMsg[] = "Some error";
   static constexpr uint64 kNodeId1 = 123123123;
   static constexpr uint64 kNodeId2 = 456456456;
-  static constexpr int kUnit1 = 0;
-  static constexpr int kUnit2 = 1;
+  static constexpr int kDevice1 = 0;
+  static constexpr int kDevice2 = 1;
   static constexpr OperationMode kMode = OPERATION_MODE_STANDALONE;
 
   static ::testing::StrictMock<SwitchMock>* switch_mock_;
@@ -155,8 +155,8 @@ constexpr char DpdkHalTest::kForwardingPipelineConfigsTemplate[];
 constexpr char DpdkHalTest::kErrorMsg[];
 constexpr uint64 DpdkHalTest::kNodeId1;
 constexpr uint64 DpdkHalTest::kNodeId2;
-constexpr int DpdkHalTest::kUnit1;
-constexpr int DpdkHalTest::kUnit2;
+constexpr int DpdkHalTest::kDevice1;
+constexpr int DpdkHalTest::kDevice2;
 constexpr OperationMode DpdkHalTest::kMode;
 
 ::testing::StrictMock<SwitchMock>* DpdkHalTest::switch_mock_ = nullptr;
