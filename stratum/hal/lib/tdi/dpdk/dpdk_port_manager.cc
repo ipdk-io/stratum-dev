@@ -284,9 +284,8 @@ bool DpdkPortManager::IsValidPort(int device, int port) {
 ::util::StatusOr<uint32> DpdkPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
   const int port = port_key.port;
-  CHECK_RETURN_IF_FALSE(port >= 0)
-      << "Port ID must be non-negative. Attempted to get port " << port
-      << " on dev " << device << ".";
+  RET_CHECK(port >= 0) << "Port ID must be non-negative. Attempted to get port "
+                       << port << " on dev " << device << ".";
 
   // PortKey uses three possible values for channel:
   //     > 0: port is channelized (first channel is 1)
@@ -297,12 +296,12 @@ bool DpdkPortManager::IsValidPort(int device, int port) {
   //     Otherwise, port is already 0 in the non-channelized case
   const int channel =
       (port_key.channel > 0) ? port_key.channel - 1 : port_key.channel;
-  CHECK_RETURN_IF_FALSE(channel >= 0)
-      << "Channel must be set for port " << port << " on dev " << device << ".";
+  RET_CHECK(channel >= 0) << "Channel must be set for port " << port
+                          << " on dev " << device << ".";
 
   char port_string[MAX_PORT_HDL_STRING_LEN];
   int r = snprintf(port_string, sizeof(port_string), "%d/%d", port, channel);
-  CHECK_RETURN_IF_FALSE(r > 0 && r < sizeof(port_string))
+  RET_CHECK(r > 0 && r < sizeof(port_string))
       << "Failed to build port string for port " << port << " channel "
       << channel << " on dev " << device << ".";
 
