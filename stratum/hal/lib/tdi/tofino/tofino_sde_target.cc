@@ -55,8 +55,7 @@ using namespace stratum::hal::tdi::helpers;
 ::util::StatusOr<bool> TdiSdeWrapper::IsSoftwareModel(int device) {
   bool is_sw_model = true;
   auto bf_status = bf_pal_pltfm_type_get(device, &is_sw_model);
-  CHECK_RETURN_IF_FALSE(bf_status == BF_SUCCESS)
-      << "Error getting software model status.";
+  RET_CHECK(bf_status == BF_SUCCESS) << "Error getting software model status.";
   return is_sw_model;
 }
 
@@ -101,9 +100,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
 ::util::Status TdiSdeWrapper::InitializeSde(const std::string& sde_install_path,
                                             const std::string& sde_config_file,
                                             bool run_in_background) {
-  CHECK_RETURN_IF_FALSE(sde_install_path != "")
-      << "sde_install_path is required";
-  CHECK_RETURN_IF_FALSE(sde_config_file != "") << "sde_config_file is required";
+  RET_CHECK(sde_install_path != "") << "sde_install_path is required";
+  RET_CHECK(sde_config_file != "") << "sde_config_file is required";
 
   // Parse bf_switchd arguments.
   auto switchd_main_ctx = absl::make_unique<bf_switchd_context_t>();
@@ -144,7 +142,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   const ::tdi::Device* device = nullptr;
   absl::WriterMutexLock l(&data_lock_);
 
-  CHECK_RETURN_IF_FALSE(device_config.programs_size() > 0);
+  RET_CHECK(device_config.programs_size() > 0);
 
   tdi_id_mapper_.reset();
 
@@ -173,7 +171,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
     p4_program->bfrt_json_file = &(*tdi_path)[0];
     p4_program->num_p4_pipelines = program.pipelines_size();
     path_strings.emplace_back(std::move(tdi_path));
-    CHECK_RETURN_IF_FALSE(program.pipelines_size() > 0);
+    RET_CHECK(program.pipelines_size() > 0);
     for (int j = 0; j < program.pipelines_size(); ++j) {
       const auto& pipeline = program.pipelines(j);
       const std::string pipeline_path =
@@ -194,7 +192,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
       path_strings.emplace_back(std::move(config_path));
       path_strings.emplace_back(std::move(context_path));
 
-      CHECK_RETURN_IF_FALSE(pipeline.scope_size() <= MAX_P4_PIPELINES);
+      RET_CHECK(pipeline.scope_size() <= MAX_P4_PIPELINES);
       pipeline_profile->num_pipes_in_scope = pipeline.scope_size();
       for (int p = 0; p < pipeline.scope_size(); ++p) {
         const auto& scope = pipeline.scope(p);
@@ -210,16 +208,16 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   // Set SDE log levels for modules of interest.
   // TODO(max): create story around SDE logs. How to get them into glog? What
   // levels to enable for which modules?
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  CHECK_RETURN_IF_FALSE(
-      bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
+            0);
+  RET_CHECK(
       bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
   stat_mgr_enable_detail_trace = false;
   if (VLOG_IS_ON(2)) {
-    CHECK_RETURN_IF_FALSE(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
-                                               BF_LOG_WARN) == 0);
+    RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
+                                   BF_LOG_WARN) == 0);
     stat_mgr_enable_detail_trace = true;
   }
 
@@ -233,8 +231,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
       tdi_id_mapper_->PushForwardingPipelineConfig(device_config, tdi_info_));
 
   int port = p4_devport_mgr_pcie_cpu_port_get(dev_id);
-  CHECK_RETURN_IF_FALSE(port != -1);
-  CHECK_RETURN_IF_FALSE(p4_pd_tm_set_cpuport(dev_id, port) == 0)
+  RET_CHECK(port != -1);
+  RET_CHECK(p4_pd_tm_set_cpuport(dev_id, port) == 0)
       << "Unable to set CPU port " << port << " on device " << dev_id;
 
   return ::util::OkStatus();
@@ -298,8 +296,8 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
                                              bf_pkt_rx_ring_t rx_ring) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
   auto rx_writer = gtl::FindOrNull(device_to_packet_rx_writer_, device);
-  CHECK_RETURN_IF_FALSE(rx_writer)
-      << "No Rx callback registered for device id " << device << ".";
+  RET_CHECK(rx_writer) << "No Rx callback registered for device id " << device
+                       << ".";
 
   std::string buffer(reinterpret_cast<const char*>(bf_pkt_get_pkt_data(pkt)),
                      bf_pkt_get_pkt_size(pkt));
