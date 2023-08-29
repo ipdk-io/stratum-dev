@@ -38,9 +38,9 @@ def stratum_deps():
     if "com_github_grpc_grpc" not in native.existing_rules():
         http_archive(
             name = "com_github_grpc_grpc",
-            urls = ["https://github.com/grpc/grpc/archive/v1.40.0.tar.gz"],
-            strip_prefix = "grpc-1.40.0",
-            sha256 = "13e7c6460cd979726e5b3b129bb01c34532f115883ac696a75eb7f1d6a9765ed",
+            urls = ["https://github.com/grpc/grpc/archive/v1.41.0.tar.gz"],
+            strip_prefix = "grpc-1.41.0",
+            sha256 = "e5fb30aae1fa1cffa4ce00aa0bbfab908c0b899fcf0bbc30e268367d660d8656",
         )
 
     if "com_google_googleapis" not in native.existing_rules():
