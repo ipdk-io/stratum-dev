@@ -70,7 +70,7 @@ namespace {
     const std::string& register_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
@@ -130,11 +130,11 @@ namespace {
     uint32 table_id, absl::optional<uint32> register_index,
     std::vector<uint32>* register_indices, std::vector<uint64>* register_values,
     absl::Duration timeout) {
-  CHECK_RETURN_IF_FALSE(register_indices);
-  CHECK_RETURN_IF_FALSE(register_values);
+  RET_CHECK(register_indices);
+  RET_CHECK(register_values);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   RETURN_IF_ERROR(SynchronizeRegisters(dev_id, session, table_id, timeout));
 
@@ -190,7 +190,7 @@ namespace {
         // fetching the data in an uint64 vector with one entry per pipe.
         std::vector<uint64> register_data;
         RETURN_IF_TDI_ERROR(table_data->getValue(f1_field_id, &register_data));
-        CHECK_RETURN_IF_FALSE(register_data.size() > 0);
+        RET_CHECK(register_data.size() > 0);
         register_values->push_back(register_data[0]);
         break;
       }
@@ -212,7 +212,7 @@ namespace {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 table_id, absl::Duration timeout) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
