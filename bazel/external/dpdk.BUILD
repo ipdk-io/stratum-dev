@@ -6,7 +6,6 @@
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -55,14 +54,14 @@ cc_library(
 cc_library(
     name = "dpdk_sde",
     deps = [
-        ":dpdk_libs",
         ":dpdk_hdrs",
+        ":dpdk_libs",
     ],
 )
 
 cc_library(
     name = "dpdk_rte",
-    srcs = glob(["dpdk-bin/lib/x86_64-linux-gnu/*.so*"])
+    srcs = glob(["dpdk-bin/lib/x86_64-linux-gnu/*.so*"]),
 )
 
 # Runtime libraries

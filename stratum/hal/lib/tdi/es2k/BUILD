@@ -5,8 +5,6 @@
 # Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load(
     "//bazel:rules.bzl",
     "HOST_ARCHES",
@@ -32,18 +30,18 @@ stratum_cc_library(
         "//stratum/hal/lib/common:error_buffer",
         "//stratum/hal/lib/common:p4_service",
         "//stratum/hal/lib/common:switch_interface",
-        "//stratum/lib/security:auth_policy_checker",
-        "//stratum/lib/security:credentials_manager",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
+        "//stratum/lib/security:auth_policy_checker",
+        "//stratum/lib/security:credentials_manager",
         "@com_github_google_glog//:glog",
+        "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
-        "@com_github_grpc_grpc//:grpc++",
     ],
 )
 
@@ -161,10 +159,10 @@ stratum_cc_library(
     hdrs = ["es2k_switch.h"],
     deps = [
         ":es2k_node",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/glue/status:status_macros",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/status:status_macros",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/tdi:tdi_ipsec_manager",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
@@ -192,11 +190,11 @@ stratum_cc_library(
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/common:utils",
         "//stratum/hal/lib/common:writer_interface",
+        "//stratum/hal/lib/tdi:tdi_sde_headers",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/lib:error",
-        "//stratum/hal/lib/tdi:tdi_sde_headers",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
@@ -255,9 +253,9 @@ stratum_cc_test(
         "//stratum/glue/net_util:ports",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/common:switch_mock",
+        "//stratum/lib:utils",
         "//stratum/lib/security:auth_policy_checker_mock",
         "//stratum/lib/test_utils:matchers",
-        "//stratum/lib:utils",
         "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
         "@com_google_absl//absl/strings",
@@ -270,7 +268,7 @@ stratum_cc_test(
     srcs = ["es2k_switch_test.cc"],
     deps = [
         ":es2k_chassis_manager_mock",
-	":es2k_node_mock",
+        ":es2k_node_mock",
         ":es2k_switch",
         ":test_main",
         "//stratum/glue/status:status_test_util",
@@ -279,9 +277,9 @@ stratum_cc_test(
         "//stratum/hal/lib/p4:p4_table_mapper_mock",
         "//stratum/hal/lib/tdi:tdi_ipsec_manager_mock",
         "//stratum/hal/lib/tdi:tdi_sde_mock",
+        "//stratum/lib:utils",
         "//stratum/lib/channel:channel_mock",
         "//stratum/lib/test_utils:matchers",
-        "//stratum/lib:utils",
         "@com_google_absl//absl/memory",
         "@com_google_googletest//:gtest",
     ],
