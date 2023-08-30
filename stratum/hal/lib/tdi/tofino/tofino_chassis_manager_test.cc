@@ -54,7 +54,7 @@ using TransceiverEvent = PhalInterface::TransceiverEvent;
 
 constexpr uint64 kNodeId = 7654321ULL;
 // For Tofino, device is the 0-based index of the node in the ChassisConfig.
-constexpr int device = 0;
+constexpr int kDevice = 0;
 constexpr int kSlot = 1;
 constexpr int kPort = 1;
 constexpr uint32 kPortId = 12345;
@@ -159,7 +159,7 @@ class TofinoChassisManagerTest : public ::testing::Test {
   void RegisterSdkPortId(const SingletonPort* singleton_port) {
     RegisterSdkPortId(singleton_port->id(), singleton_port->slot(),
                       singleton_port->port(), singleton_port->channel(),
-                      device);  // TODO(bocon): look up device from node
+                      kDevice);  // TODO(bocon): look up device from node
   }
 
   ::util::Status CheckCleanInternalState() {
@@ -212,9 +212,9 @@ class TofinoChassisManagerTest : public ::testing::Test {
           return ::util::OkStatus();
         });
 
-    EXPECT_CALL(*port_manager_, AddPort(device, kPortId + kSdkPortOffset,
+    EXPECT_CALL(*port_manager_, AddPort(kDevice, kPortId + kSdkPortOffset,
                                         kDefaultSpeedBps, kDefaultFecMode));
-    EXPECT_CALL(*port_manager_, EnablePort(device, kPortId + kSdkPortOffset));
+    EXPECT_CALL(*port_manager_, EnablePort(kDevice, kPortId + kSdkPortOffset));
 
     EXPECT_CALL(*phal_mock_,
                 RegisterTransceiverEventWriter(
@@ -227,7 +227,7 @@ class TofinoChassisManagerTest : public ::testing::Test {
     RETURN_IF_ERROR(PushChassisConfig(builder->Get()));
     auto device = GetDeviceFromNodeId(kNodeId);
     CHECK_RETURN_IF_FALSE(device.ok());
-    CHECK_RETURN_IF_FALSE(device.ValueOrDie() == device)
+    CHECK_RETURN_IF_FALSE(device.ValueOrDie() == kDevice)
         << "Invalid device number!";
     CHECK_RETURN_IF_FALSE(Initialized())
         << "Class is not initialized after push!";
@@ -312,7 +312,7 @@ TEST_F(TofinoChassisManagerTest, RemovePort) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   builder.RemoveLastPort();
-  EXPECT_CALL(*port_manager_, DeletePort(device, kPortId + kSdkPortOffset));
+  EXPECT_CALL(*port_manager_, DeletePort(kDevice, kPortId + kSdkPortOffset));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -327,9 +327,9 @@ TEST_F(TofinoChassisManagerTest, AddPortFec) {
 
   RegisterSdkPortId(builder.AddPort(portId, port, ADMIN_STATE_ENABLED,
                                     kHundredGigBps, FEC_MODE_ON));
-  EXPECT_CALL(*port_manager_, AddPort(device, portId + kSdkPortOffset,
+  EXPECT_CALL(*port_manager_, AddPort(kDevice, portId + kSdkPortOffset,
                                       kHundredGigBps, FEC_MODE_ON));
-  EXPECT_CALL(*port_manager_, EnablePort(device, portId + kSdkPortOffset));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, portId + kSdkPortOffset));
   ASSERT_OK(PushChassisConfig(builder));
 
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -343,9 +343,9 @@ TEST_F(TofinoChassisManagerTest, SetPortLoopback) {
   sport->mutable_config_params()->set_loopback_mode(LOOPBACK_STATE_MAC);
 
   EXPECT_CALL(*port_manager_,
-              SetPortLoopbackMode(device, kPortId + kSdkPortOffset,
+              SetPortLoopbackMode(kDevice, kPortId + kSdkPortOffset,
                                   LOOPBACK_STATE_MAC));
-  EXPECT_CALL(*port_manager_, EnablePort(device, kPortId + kSdkPortOffset));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, kPortId + kSdkPortOffset));
 
   ASSERT_OK(PushChassisConfig(builder));
   ASSERT_OK(ShutdownAndTestCleanState());
@@ -379,14 +379,14 @@ TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   EXPECT_CALL(*port_manager_,
-              SetPortShapingRate(device, kPortId + kSdkPortOffset, false, 16384,
-                                 kTenGigBps))
+              SetPortShapingRate(kDevice, kPortId + kSdkPortOffset, false,
+                                 16384, kTenGigBps))
       .Times(AtLeast(1));
   EXPECT_CALL(
       *port_manager_,
-      EnablePortShaping(device, kPortId + kSdkPortOffset, TRI_STATE_TRUE))
+      EnablePortShaping(kDevice, kPortId + kSdkPortOffset, TRI_STATE_TRUE))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, EnablePort(device, kPortId + kSdkPortOffset))
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, kPortId + kSdkPortOffset))
       .Times(AtLeast(1));
 
   ASSERT_OK(PushChassisConfig(builder));
@@ -420,9 +420,9 @@ TEST_F(TofinoChassisManagerTest, ApplyDeflectOnDrop) {
   ASSERT_OK(PushBaseChassisConfig(&builder));
 
   EXPECT_CALL(*port_manager_,
-              SetDeflectOnDropDestination(device, kPortId + kSdkPortOffset, 4))
+              SetDeflectOnDropDestination(kDevice, kPortId + kSdkPortOffset, 4))
       .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(device, 56789, 1))
+  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kDevice, 56789, 1))
       .Times(AtLeast(1));
 
   ASSERT_OK(PushChassisConfig(builder));
@@ -471,26 +471,27 @@ TEST_F(TofinoChassisManagerTest, ReplayPorts) {
 
   const uint32 sdkPortId = kPortId + kSdkPortOffset;
   EXPECT_CALL(*port_manager_,
-              AddPort(device, sdkPortId, kDefaultSpeedBps, kDefaultFecMode));
-  EXPECT_CALL(*port_manager_, EnablePort(device, sdkPortId));
+              AddPort(kDevice, sdkPortId, kDefaultSpeedBps, kDefaultFecMode));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId));
 
   // For now, when replaying the port configuration, we set the mtu and autoneg
   // even if the values where already the defaults. This seems like a good idea
   // to ensure configuration consistency.
-  EXPECT_CALL(*port_manager_, SetPortMtu(device, sdkPortId, 0))
+  EXPECT_CALL(*port_manager_, SetPortMtu(kDevice, sdkPortId, 0))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
-              SetPortAutonegPolicy(device, sdkPortId, TRI_STATE_UNKNOWN))
-      .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(device, sdkPortId, 4))
-      .Times(AtLeast(1));
-  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(device, 56789, 1))
+              SetPortAutonegPolicy(kDevice, sdkPortId, TRI_STATE_UNKNOWN))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
-              SetPortShapingRate(device, sdkPortId, false, 16384, kTenGigBps))
+              SetDeflectOnDropDestination(kDevice, sdkPortId, 4))
+      .Times(AtLeast(1));
+  EXPECT_CALL(*port_manager_, SetDeflectOnDropDestination(kDevice, 56789, 1))
       .Times(AtLeast(1));
   EXPECT_CALL(*port_manager_,
-              EnablePortShaping(device, sdkPortId, TRI_STATE_TRUE))
+              SetPortShapingRate(kDevice, sdkPortId, false, 16384, kTenGigBps))
+      .Times(AtLeast(1));
+  EXPECT_CALL(*port_manager_,
+              EnablePortShaping(kDevice, sdkPortId, TRI_STATE_TRUE))
       .Times(AtLeast(1));
 
   EXPECT_OK(ReplayPortsConfig(kNodeId));
@@ -579,11 +580,11 @@ TEST_F(TofinoChassisManagerTest, GetPortData) {
                                     kHundredGigBps, FEC_MODE_ON, TRI_STATE_TRUE,
                                     LOOPBACK_STATE_MAC));
   EXPECT_CALL(*port_manager_,
-              AddPort(device, sdkPortId, kHundredGigBps, FEC_MODE_ON));
+              AddPort(kDevice, sdkPortId, kHundredGigBps, FEC_MODE_ON));
   EXPECT_CALL(*port_manager_,
-              SetPortLoopbackMode(device, sdkPortId, LOOPBACK_STATE_MAC));
-  EXPECT_CALL(*port_manager_, EnablePort(device, sdkPortId));
-  EXPECT_CALL(*port_manager_, GetPortState(device, sdkPortId))
+              SetPortLoopbackMode(kDevice, sdkPortId, LOOPBACK_STATE_MAC));
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId));
+  EXPECT_CALL(*port_manager_, GetPortState(kDevice, sdkPortId))
       .WillRepeatedly(Return(PORT_STATE_UP));
 
   PortCounters counters;
@@ -602,7 +603,7 @@ TEST_F(TofinoChassisManagerTest, GetPortData) {
   counters.set_out_errors(13);
   counters.set_in_fcs_errors(14);
 
-  EXPECT_CALL(*port_manager_, GetPortCounters(device, sdkPortId, _))
+  EXPECT_CALL(*port_manager_, GetPortCounters(kDevice, sdkPortId, _))
       .WillOnce(DoAll(SetArgPointee<2>(counters), Return(::util::OkStatus())));
 
   FrontPanelPortInfo front_panel_port_info;
@@ -654,9 +655,9 @@ TEST_F(TofinoChassisManagerTest, GetPortData) {
 
   // Operation status.
   // Emulate a few port status events.
-  TriggerPortStatusEvent(device, sdkPortId, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged1);
-  TriggerPortStatusEvent(device, 12, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, 12, PORT_STATE_UP,
                          kPortTimeLastChanged1);  // Unknown port
   TriggerPortStatusEvent(456, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged1);  // Unknown device
@@ -668,9 +669,9 @@ TEST_F(TofinoChassisManagerTest, GetPortData) {
 
   // Time last changed.
   // Check by simulating a port flip.
-  TriggerPortStatusEvent(device, sdkPortId, PORT_STATE_DOWN,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_DOWN,
                          kPortTimeLastChanged2);
-  TriggerPortStatusEvent(device, sdkPortId, PORT_STATE_UP,
+  TriggerPortStatusEvent(kDevice, sdkPortId, PORT_STATE_UP,
                          kPortTimeLastChanged3);
   ASSERT_TRUE(port_flip_done.WaitForNotificationWithTimeout(absl::Seconds(5)));
   OperStatus oper_status =
@@ -779,13 +780,13 @@ TEST_F(TofinoChassisManagerTest, UpdateInvalidPort) {
       builder.AddPort(portId, kPort + 1, ADMIN_STATE_ENABLED);
   RegisterSdkPortId(new_port);
   EXPECT_CALL(*port_manager_,
-              AddPort(device, sdkPortId, kDefaultSpeedBps, FEC_MODE_UNKNOWN))
+              AddPort(kDevice, sdkPortId, kDefaultSpeedBps, FEC_MODE_UNKNOWN))
       .WillOnce(Return(::util::OkStatus()));
-  EXPECT_CALL(*port_manager_, EnablePort(device, sdkPortId))
+  EXPECT_CALL(*port_manager_, EnablePort(kDevice, sdkPortId))
       .WillOnce(Return(::util::OkStatus()));
   ASSERT_OK(PushChassisConfig(builder));
 
-  EXPECT_CALL(*port_manager_, IsValidPort(device, sdkPortId))
+  EXPECT_CALL(*port_manager_, IsValidPort(kDevice, sdkPortId))
       .WillOnce(Return(false));
 
   // Update port, but port is invalid.
@@ -839,9 +840,9 @@ TEST_F(TofinoChassisManagerTest, VerifyChassisConfigSuccess) {
   ChassisConfig config1;
   ASSERT_OK(ParseProtoFromString(kConfigText1, &config1));
 
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(device, PortKey(1, 1, 1)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 1)))
       .WillRepeatedly(Return(1 + kSdkPortOffset));
-  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(device, PortKey(1, 1, 2)))
+  EXPECT_CALL(*port_manager_, GetPortIdFromPortKey(kDevice, PortKey(1, 1, 2)))
       .WillRepeatedly(Return(2 + kSdkPortOffset));
 
   ASSERT_OK(VerifyChassisConfig(config1));
