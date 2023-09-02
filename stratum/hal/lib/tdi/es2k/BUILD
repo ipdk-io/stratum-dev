@@ -30,6 +30,7 @@ stratum_cc_library(
         "//stratum/hal/lib/common:error_buffer",
         "//stratum/hal/lib/common:p4_service",
         "//stratum/hal/lib/common:switch_interface",
+        "//stratum/hal/lib/common:target_options",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",

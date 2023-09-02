@@ -18,6 +18,7 @@
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/credentials_manager.h"
@@ -46,6 +47,7 @@ DEFINE_uint32(grpc_max_send_msg_size, 0,
               "grpc server max send message size (0 = gRPC default).");
 DEFINE_bool(grpc_open_insecure_mode, false,
             "open grpc server ports in insecure mode for gNMI, gNOI, and P4RT");
+
 DECLARE_string(forwarding_pipeline_configs_file);
 
 namespace stratum {
@@ -90,7 +92,8 @@ int Es2kHal::pipe_write_fd_ = -1;
 
 Es2kHal::Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
                  AuthPolicyChecker* auth_policy_checker,
-                 absl::Notification* ready_sync, absl::Notification* done_sync)
+                 absl::Notification* ready_sync, absl::Notification* done_sync,
+                 const TargetOptions* target_options)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -101,7 +104,11 @@ Es2kHal::Es2kHal(OperationMode mode, SwitchInterface* switch_interface,
       old_signal_handlers_(),
       signal_waiter_tid_(0),
       ready_sync_(ready_sync),
-      done_sync_(done_sync) {}
+      done_sync_(done_sync) {
+  if (target_options) {
+    target_options_ = *target_options;
+  }
+}
 
 Es2kHal::~Es2kHal() {
   // TODO(unknown): Handle this error?
@@ -303,11 +310,12 @@ Es2kHal* Es2kHal::CreateSingleton(OperationMode mode,
                                   SwitchInterface* switch_interface,
                                   AuthPolicyChecker* auth_policy_checker,
                                   absl::Notification* ready_sync,
-                                  absl::Notification* done_sync) {
+                                  absl::Notification* done_sync,
+                                  const TargetOptions* target_options) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
     singleton_ = new Es2kHal(mode, switch_interface, auth_policy_checker,
-                             ready_sync, done_sync);
+                             ready_sync, done_sync, target_options);
 
     ::util::Status status = singleton_->RegisterSignalHandlers();
     if (!status.ok()) {
@@ -352,10 +360,12 @@ Es2kHal* Es2kHal::GetSingleton() {
 
   // Build the HAL services.
   config_monitoring_service_ = absl::make_unique<ConfigMonitoringService>(
-      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get());
+      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get(),
+      target_options_);
 
   p4_service_ = absl::make_unique<P4Service>(
-      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get());
+      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get(),
+      target_options_);
 
   return ::util::OkStatus();
 }

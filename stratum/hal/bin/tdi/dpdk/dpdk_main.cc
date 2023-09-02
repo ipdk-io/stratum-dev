@@ -16,6 +16,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/bin/tdi/main.h"
 #include "stratum/hal/lib/common/common.pb.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
@@ -139,11 +140,14 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 
+  TargetOptions target_options;
+  target_options.allowPipelineOverwrite = false;
+  target_options.pushUpdatedChassisConfig = false;
+
   // Create the 'Hal' class instance.
-  auto* hal = DpdkHal::CreateSingleton(
-      // NOTE: Shouldn't first parameter be 'mode'?
-      stratum::hal::OPERATION_MODE_STANDALONE, dpdk_switch.get(),
-      auth_policy_checker.get(), ready_sync, done_sync);
+  auto* hal = DpdkHal::CreateSingleton(mode, dpdk_switch.get(),
+                                       auth_policy_checker.get(), ready_sync,
+                                       done_sync, &target_options);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.

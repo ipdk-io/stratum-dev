@@ -16,6 +16,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/bin/tdi/main.h"
 #include "stratum/hal/lib/common/common.pb.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_node.h"
@@ -149,10 +150,13 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 
+  TargetOptions target_options;
+  target_options.secureChassisConfig = true;
+
   // Create the 'Hal' class instance.
   auto* hal = Es2kHal::CreateSingleton(mode, es2k_switch.get(),
                                        auth_policy_checker.get(), ready_sync,
-                                       done_sync);
+                                       done_sync, &target_options);
   CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.

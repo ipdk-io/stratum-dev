@@ -24,6 +24,7 @@
 #include "stratum/hal/lib/common/config_monitoring_service.h"
 #include "stratum/hal/lib/common/p4_service.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
 namespace stratum {
@@ -82,7 +83,7 @@ class DpdkHal final {
                                   AuthPolicyChecker* auth_policy_checker,
                                   absl::Notification* ready_sync = nullptr,
                                   absl::Notification* done_sync = nullptr,
-                                  const TargetOptions* target_options = nullptr);
+                                  const TargetOptions* target_options = nullptr)
       LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..

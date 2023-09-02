@@ -269,11 +269,11 @@ DpdkHal::~DpdkHal() {
     external_server_ = builder.BuildAndStart();
     if (external_server_ == nullptr) {
       return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to start Stratum external facing services. This is an "
+             << "Failed to start Stratum external-facing services. This is an "
              << "internal error.";
     }
     LOG(ERROR) << log_output_str
-               << "Stratum external facing services are listening to "
+               << "Stratum external-facing services are listening to "
                << absl::StrJoin(external_stratum_urls, ", ") << ", "
                << FLAGS_local_stratum_url << "...";
   }
