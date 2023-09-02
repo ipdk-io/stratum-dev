@@ -34,7 +34,6 @@ stratum_cc_binary(
         "es2k_port_config.pb.txt",
         "es2k_skip_p4.conf",
     ],
-    defines = ["ES2K_TARGET"],
     deps = [
         "//stratum/hal/bin/tdi:main",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",

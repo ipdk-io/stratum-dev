@@ -21,18 +21,6 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
-config_setting(
-    name = "dpdk_target",
-    define_values = {
-        "target": "dpdk",
-    },
-)
-
-target_defines = select({
-    ":dpdk_target": ["DPDK_TARGET"],
-    "//conditions:default": [],
-})
-
 stratum_cc_library(
     name = "admin_service",
     srcs = [
@@ -226,7 +214,6 @@ stratum_cc_library(
         # TODO(Yi): generate this when we generating the OpenConfig proto files
         "gnmi_caps.pb.txt",
     ],
-    defines = target_defines,
     deps = [
         ":channel_writer_wrapper",
         ":common_cc_proto",
@@ -579,7 +566,7 @@ stratum_cc_library(
     hdrs = ["p4_service.h"],
     defines = [
         "P4RUNTIME_VER=" + P4RUNTIME_VER,
-    ] + target_defines,
+    ],
     deps = [
         ":channel_writer_wrapper",
         ":common_cc_proto",
