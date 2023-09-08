@@ -857,24 +857,25 @@ cc_library(
     ],
 )
 
-stratum_cc_test(
-    name = "gnmi_publisher_test",
-    srcs = [
-        "gnmi_publisher_test.cc",
-    ],
-    deps = [
-        ":gnmi_publisher",
-        ":subscribe_reader_writer_mock",
-        ":switch_mock",
-        ":test_main",
-        "//stratum/glue:logging",
-        "//stratum/glue/status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/glue/status:status_test_util",
-        "//stratum/hal/lib/yang:yang_parse_tree",
-        "//stratum/hal/lib/yang:yang_parse_tree_paths",
-        "@com_github_openconfig_hercules//:openconfig_cc_proto",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_googletest//:gtest",
-    ],
-)
+# Built as part of config_monitoring_service_test.
+#stratum_cc_test(
+#    name = "gnmi_publisher_test",
+#    srcs = [
+#        "gnmi_publisher_test.cc",
+#    ],
+#    deps = [
+#        ":gnmi_publisher",
+#        ":subscribe_reader_writer_mock",
+#        ":switch_mock",
+#        ":test_main",
+#        "//stratum/glue:logging",
+#        "//stratum/glue/status",
+#        "//stratum/glue/status:status_macros",
+#        "//stratum/glue/status:status_test_util",
+#        "//stratum/hal/lib/yang:yang_parse_tree",
+#        "//stratum/hal/lib/yang:yang_parse_tree_paths",
+#        "@com_github_openconfig_hercules//:openconfig_cc_proto",
+#        "@com_google_absl//absl/container:flat_hash_map",
+#        "@com_google_googletest//:gtest",
+#    ],
+#)
