@@ -35,8 +35,6 @@ if(ES2K_TARGET)
     find_package(OpenSSL REQUIRED)
 endif()
 
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
