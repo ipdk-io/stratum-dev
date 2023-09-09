@@ -12,15 +12,15 @@ class TargetOptions {
   TargetOptions();
 
   // Whether ConfigMonitoringService should push the updated chassis
-  // configuration.
+  // configuration. Default: true.
   bool pushUpdatedChassisConfig;
 
   // Whether ConfigMonitoringService should require that the config file
-  // be a regular file (not a symlink).
+  // be a regular file (not a symlink). Default: false.
   bool secureChassisConfig;
 
   // Whether P4Service supports overwrite of an already-configured pipeline
-  // for a single device.
+  // for a single device. Default: true.
   bool allowPipelineOverwrite;
 
   // Default target options.

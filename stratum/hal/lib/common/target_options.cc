@@ -6,6 +6,8 @@
 namespace stratum {
 namespace hal {
 
+// Note: default values MUST maintain backward compatibility with
+// existing code.
 TargetOptions::TargetOptions()
     : pushUpdatedChassisConfig(true),
       secureChassisConfig(false),
