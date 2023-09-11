@@ -133,7 +133,7 @@ Namespaced as <em>::stratum::hal::yang::interface</em></td>
 </tr>
 </tbody>
 </table>
-<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-enable MD033 -->
 
 ## Further changes
 
