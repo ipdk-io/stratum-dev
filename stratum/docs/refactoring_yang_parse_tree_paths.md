@@ -1,6 +1,6 @@
 # Refactoring YangParseTreePaths
 
-## 1. Background
+## Background
 
 The developers who implemented OpenConfig/gNMI support for DPDK in
 P4-OVS made extensive changes to the implementation of the
@@ -14,7 +14,7 @@ P4-OVS made extensive changes to the implementation of the
 In the process, roughly 1500 lines of code were added to the file.
 Further changes are planned.
 
-## 2. Problem Statement
+## Problem statement
 
 - yang\_parse\_tree\_paths is a common file. We cannot make arbitrary
   changes to it without affecting other targets, especially not changes
@@ -23,7 +23,7 @@ Further changes are planned.
   The modified file has \~5600 lines, which is unmanageable.
 - We expect to be making additional changes in the future.
 
-## 3. Proposed Solution
+## Proposed solution
 
 Refactor *yang\_parse\_tree\_paths.cc* into a number of smaller files,
 each preferably having no more than 1000 lines of source code.
@@ -51,6 +51,7 @@ Move the YANG files to a new *stratum/hal/lib/yang* directory (paralleling
 
 The result of the refactoring is as follows:
 
+<!-- markdownlint-disable MD033 -->
 <table>
 <tbody>
 <tr class="odd">
@@ -132,10 +133,11 @@ Namespaced as <em>::stratum::hal::yang::interface</em></td>
 </tr>
 </tbody>
 </table>
+<!-- markdownlint-enable MD033 -->
 
-## 5. Further Changes
+## Further changes
 
-### 5.1 DPDK support
+### DPDK support
 
 For DPDK, we have added the following to *stratum/hal/lib/tdi/dpdk*:
 
@@ -143,22 +145,20 @@ For DPDK, we have added the following to *stratum/hal/lib/tdi/dpdk*:
 - dpdk_parse_tree_interface.cc
 - dpdk_parse_tree_interface.h
 
-### 5.2 Unit tests
+### Unit tests
 
 It might be worth looking into refactoring *yang\_parse\_tree\_test.cc*.
 
-- At \~5600 lines, its size is excessive for a manually maintained
-  file.
-- We might also (cough) want to add unit tests for the new
-  functionality.
+- At \~5600 lines, its size is excessive for a manually maintained file.
+- We should also (cough) provide test cases for the new functionality.
 
-## 6. Alternatives
+## Alternatives
 
 We could limit the refactoring to *AddSubtreeInterface* and its
 support functions.
 
-- This would reduce the impact on the existing code, but it would do
-  nothing for the maintainability of yang\_parse\_tree\_paths.cc.
+This would reduce the impact on the existing code, but it would do
+nothing for the maintainability of *yang\_parse\_tree\_paths.cc*.
 
 We would still need to create the following files in order to support DPDK:
 
@@ -167,4 +167,3 @@ We would still need to create the following files in order to support DPDK:
 - yang_parse_tree_helpers.h
 - yang_parse_tree_interface.cc
 - yang_parse_tree_interface.h
-
