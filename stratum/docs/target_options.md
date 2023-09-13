@@ -24,8 +24,8 @@ unit test cases that use symlinks to manage the test environment.
   in common code. The DPDK_TARGET conditionals go against this convention.
 
 - Compile-time conditionals complicate the Bazel build and lead to
-  recompilation when we change change targets. This is undesirable,
-  especially in common source files.
+  recompilation when we change targets.
+  This is undesirable, especially in common source files.
 
 - Change 3 is sensitive to which target is being built *and* whether the code
   is being compiled for unit test purposes. We do not want to introduce more
