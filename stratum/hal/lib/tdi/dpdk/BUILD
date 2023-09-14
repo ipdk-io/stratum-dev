@@ -19,12 +19,6 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
-target_defines = [
-    "DPDK_TARGET",  # shouldn't be necessary
-]
-
-# dpdk_port_manager
-
 stratum_cc_library(
     name = "dpdk_port_manager",
     srcs = ["dpdk_port_manager.cc"],
@@ -165,7 +159,6 @@ stratum_cc_library(
     name = "dpdk_switch",
     srcs = ["dpdk_switch.cc"],
     hdrs = ["dpdk_switch.h"],
-    defines = target_defines,
     deps = [
         ":dpdk_chassis_manager",
         "//stratum/glue:integral_types",
@@ -189,7 +182,6 @@ stratum_cc_library(
 stratum_cc_test(
     name = "dpdk_chassis_manager_test",
     srcs = ["dpdk_chassis_manager_test.cc"],
-    defines = target_defines,
     deps = [
         ":dpdk_chassis_manager",
         ":dpdk_port_manager_mock",
@@ -219,7 +211,6 @@ stratum_cc_library(
     testonly = 1,
     hdrs = ["dpdk_chassis_manager_mock.h"],
     arches = HOST_ARCHES,
-    defines = target_defines,
     deps = [
         ":dpdk_chassis_manager",
         "@com_google_googletest//:gtest",
@@ -230,7 +221,6 @@ stratum_cc_library(
     name = "test_main",
     testonly = 1,
     srcs = ["test_main.cc"],
-    defines = target_defines,
     deps = [
         "//stratum/glue:init_google",
         "//stratum/glue:logging",
@@ -243,7 +233,6 @@ stratum_cc_library(
     name = "dpdk_hal",
     srcs = ["dpdk_hal.cc"],
     hdrs = ["dpdk_hal.h"],
-    defines = target_defines,
     deps = [
         "//stratum/glue:logging",
         "//stratum/hal/lib/common:common_cc_proto",
@@ -251,6 +240,7 @@ stratum_cc_library(
         "//stratum/hal/lib/common:error_buffer",
         "//stratum/hal/lib/common:p4_service",
         "//stratum/hal/lib/common:switch_interface",
+        "//stratum/hal/lib/common:target_options",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
@@ -271,7 +261,6 @@ stratum_cc_test(
     srcs = [
         "dpdk_hal_test.cc",
     ],
-    defines = target_defines,
     deps = [
         ":dpdk_hal",
         ":test_main",
@@ -306,7 +295,6 @@ stratum_cc_test(
     srcs = [
         "dpdk_switch_test.cc",
     ],
-    defines = target_defines,
     deps = [
         ":dpdk_chassis_manager_mock",
         ":dpdk_switch",

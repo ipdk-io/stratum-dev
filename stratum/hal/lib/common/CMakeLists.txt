@@ -21,6 +21,8 @@ add_library(stratum_hal_lib_common_o OBJECT
     p4_service.cc
     p4_service.h
     server_writer_wrapper.h
+    target_options.cc
+    target_options.h
     utils.cc
     utils.h
     writer_interface.h

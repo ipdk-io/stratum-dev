@@ -18,6 +18,7 @@
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/credentials_manager.h"
@@ -91,7 +92,8 @@ int DpdkHal::pipe_write_fd_ = -1;
 
 DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
                  AuthPolicyChecker* auth_policy_checker,
-                 absl::Notification* ready_sync, absl::Notification* done_sync)
+                 absl::Notification* ready_sync, absl::Notification* done_sync,
+                 const TargetOptions* target_options)
     : mode_(mode),
       switch_interface_(ABSL_DIE_IF_NULL(switch_interface)),
       auth_policy_checker_(ABSL_DIE_IF_NULL(auth_policy_checker)),
@@ -102,7 +104,11 @@ DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
       old_signal_handlers_(),
       signal_waiter_tid_(0),
       ready_sync_(ready_sync),
-      done_sync_(done_sync) {}
+      done_sync_(done_sync) {
+  if (target_options) {
+    target_options_ = *target_options;
+  }
+}
 
 DpdkHal::~DpdkHal() {
   // TODO(unknown): Handle this error?
@@ -263,11 +269,11 @@ DpdkHal::~DpdkHal() {
     external_server_ = builder.BuildAndStart();
     if (external_server_ == nullptr) {
       return MAKE_ERROR(ERR_INTERNAL)
-             << "Failed to start Stratum external facing services. This is an "
+             << "Failed to start Stratum external-facing services. This is an "
              << "internal error.";
     }
     LOG(ERROR) << log_output_str
-               << "Stratum external facing services are listening to "
+               << "Stratum external-facing services are listening to "
                << absl::StrJoin(external_stratum_urls, ", ") << ", "
                << FLAGS_local_stratum_url << "...";
   }
@@ -303,11 +309,12 @@ DpdkHal* DpdkHal::CreateSingleton(OperationMode mode,
                                   SwitchInterface* switch_interface,
                                   AuthPolicyChecker* auth_policy_checker,
                                   absl::Notification* ready_sync,
-                                  absl::Notification* done_sync) {
+                                  absl::Notification* done_sync,
+                                  const TargetOptions* target_options) {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
     singleton_ = new DpdkHal(mode, switch_interface, auth_policy_checker,
-                             ready_sync, done_sync);
+                             ready_sync, done_sync, target_options);
 
     ::util::Status status = singleton_->RegisterSignalHandlers();
     if (!status.ok()) {
@@ -352,10 +359,12 @@ DpdkHal* DpdkHal::GetSingleton() {
 
   // Build the HAL services.
   config_monitoring_service_ = absl::make_unique<ConfigMonitoringService>(
-      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get());
+      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get(),
+      target_options_);
 
   p4_service_ = absl::make_unique<P4Service>(
-      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get());
+      mode_, switch_interface_, auth_policy_checker_, error_buffer_.get(),
+      target_options_);
 
   return ::util::OkStatus();
 }

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_CONFIG_MONITORING_SERVICE_H_
@@ -17,6 +18,7 @@
 #include "stratum/hal/lib/common/error_buffer.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/common/target_options.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
 namespace stratum {
@@ -37,6 +39,12 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   ConfigMonitoringService(OperationMode mode, SwitchInterface* switch_interface,
                           AuthPolicyChecker* auth_policy_checker,
                           ErrorBuffer* error_buffer);
+
+  ConfigMonitoringService(OperationMode mode, SwitchInterface* switch_interface,
+                          AuthPolicyChecker* auth_policy_checker,
+                          ErrorBuffer* error_buffer,
+                          const TargetOptions& target_options);
+
   ~ConfigMonitoringService() override;
 
   // Sets up the service in coldboot and warmboot mode. In the coldboot mode,
@@ -165,6 +173,9 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
 
   // An object handling gNMI Subscribe, Set and Get requests.
   GnmiPublisher gnmi_publisher_;
+
+  // Target-specific options.
+  const TargetOptions target_options_;
 
   friend class ConfigMonitoringServiceTest;
 };

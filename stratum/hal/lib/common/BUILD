@@ -21,18 +21,6 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
-config_setting(
-    name = "dpdk_target",
-    define_values = {
-        "target": "dpdk",
-    },
-)
-
-target_defines = select({
-    ":dpdk_target": ["DPDK_TARGET"],
-    "//conditions:default": [],
-})
-
 stratum_cc_library(
     name = "admin_service",
     srcs = [
@@ -226,19 +214,34 @@ stratum_cc_library(
         # TODO(Yi): generate this when we generating the OpenConfig proto files
         "gnmi_caps.pb.txt",
     ],
-    defines = target_defines,
     deps = [
-        "//stratum/hal/lib/yang:yang_parse_tree",
-        "//stratum/hal/lib/yang:yang_parse_tree_paths",
         ":channel_writer_wrapper",
         ":common_cc_proto",
+        ":constants",
         ":error_buffer",
         ":openconfig_converter",
         ":switch_interface",
-        ":writer_interface",
+        ":target_options",
         ":utils",
-        ":constants",
+        ":writer_interface",
+        "//stratum/glue/gtl:map_util",
+        "//stratum/glue/gtl:stl_util",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue:logging",
+        "//stratum/hal/lib/yang:yang_parse_tree",
+        "//stratum/hal/lib/yang:yang_parse_tree_paths",
+        "//stratum/lib/security:auth_policy_checker",
+        "//stratum/lib:constants",
+        "//stratum/lib:macros",
+        "//stratum/lib:timer_daemon",
+        "//stratum/lib:utils",
+        "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
+        "@com_github_openconfig_gnmi_proto//:gnmi_cc_proto",
+        "@com_github_openconfig_hercules//:openconfig_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
@@ -248,21 +251,6 @@ stratum_cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
-        "@com_github_grpc_grpc//:grpc++",
-        "@com_github_openconfig_gnmi_proto//:gnmi_cc_proto",
-        "@com_github_openconfig_gnmi_proto//:gnmi_cc_grpc",
-        "//stratum/glue:logging",
-        "@com_github_openconfig_hercules//:openconfig_cc_proto",
-        "//stratum/glue/status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/lib:constants",
-        "//stratum/lib:macros",
-        "//stratum/lib:timer_daemon",
-        "//stratum/lib:utils",
-        "//stratum/lib/security:auth_policy_checker",
-        "//stratum/public/lib:error",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/glue/gtl:stl_util",
         #FIXME(boc)
         #"//util/time:clock",
     ],
@@ -289,7 +277,7 @@ stratum_cc_test(
         ":writer_mock",
         "//stratum/glue/status:status_test_util",
         "//stratum/hal/lib/yang:yang_parse_tree_mock",
-        "//stratum/hal/lib/yang:yang_parse_tree_test",
+        "//stratum/hal/lib/yang:yang_parse_tree_test",  # why?
         "//stratum/lib:constants",
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
@@ -578,13 +566,14 @@ stratum_cc_library(
     hdrs = ["p4_service.h"],
     defines = [
         "P4RUNTIME_VER=" + P4RUNTIME_VER,
-    ] + target_defines,
+    ],
     deps = [
         ":channel_writer_wrapper",
         ":common_cc_proto",
         ":error_buffer",
         ":server_writer_wrapper",
         ":switch_interface",
+        ":target_options",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
@@ -879,3 +868,9 @@ cc_library(
 #        "@com_google_googletest//:gtest",
 #    ],
 #)
+
+stratum_cc_library(
+    name = "target_options",
+    srcs = ["target_options.cc"],
+    hdrs = ["target_options.h"],
+)

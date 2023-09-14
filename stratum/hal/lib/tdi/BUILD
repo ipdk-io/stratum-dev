@@ -43,8 +43,6 @@ config_setting(
 )
 
 target_defines = select({
-    ":dpdk_target": ["DPDK_TARGET"],
-    ":es2k_target": ["ES2K_TARGET"],
     ":tofino_target": ["TOFINO_TARGET"],
     "//conditions:default": [],
 })

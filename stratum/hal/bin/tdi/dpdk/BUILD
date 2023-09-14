@@ -34,7 +34,6 @@ stratum_cc_binary(
         "dpdk_port_config.pb.txt",
         "dpdk_skip_p4.conf",
     ],
-    defines = ["DPDK_TARGET"],
     deps = [
         "//stratum/hal/bin/tdi:main",
         "//stratum/hal/lib/tdi/dpdk:dpdk_chassis_manager",
