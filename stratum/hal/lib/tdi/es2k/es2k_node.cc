@@ -80,10 +80,9 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
 ::util::Status Es2kNode::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   absl::WriterMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == TdiNode::getNodeId())
+  RET_CHECK(req.device_id() == TdiNode::getNodeId())
       << "Request device id must be same as id of this Es2kNode.";
-  CHECK_RETURN_IF_FALSE(req.atomicity() ==
-                        ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
+  RET_CHECK(req.atomicity() == ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
       << "Request atomicity "
       << ::p4::v1::WriteRequest::Atomicity_Name(req.atomicity())
       << " is not supported.";
@@ -166,11 +165,11 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == TdiNode::getNodeId())
+  RET_CHECK(req.device_id() == TdiNode::getNodeId())
       << "Request device id must be same as id of this Es2kNode.";
   if (!TdiNode::getInitialized() || !TdiNode::getPipelineInitialized()) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
@@ -274,8 +273,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
       }
     }
   }
-  CHECK_RETURN_IF_FALSE(writer->Write(resp))
-      << "Write to stream channel failed.";
+  RET_CHECK(writer->Write(resp)) << "Write to stream channel failed.";
   if (!success) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
