@@ -47,7 +47,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId: {
       ::p4::v1::ActionProfileMember act_prof_member;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_member))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_member))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile member.";
       return DoWriteActionProfileMember(session, bfrt_table_id, type,
@@ -55,7 +55,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     }
     case kTnaExternActionSelectorId: {
       ::p4::v1::ActionProfileGroup act_prof_group;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_group))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_group))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile group.";
       return DoWriteActionProfileGroup(session, bfrt_table_id, type,
@@ -78,7 +78,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId: {
       ::p4::v1::ActionProfileMember act_prof_member;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_member))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_member))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile member";
       RETURN_IF_ERROR(DoReadActionProfileMember(session, bfrt_table_id,
@@ -87,7 +87,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     }
     case kTnaExternActionSelectorId: {
       ::p4::v1::ActionProfileGroup act_prof_group;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_group))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_group))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile group";
       RETURN_IF_ERROR(DoReadActionProfileGroup(session, bfrt_table_id,
@@ -161,7 +161,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     uint32 bfrt_table_id, const ::p4::v1::Update::Type type,
     const ::p4::v1::ActionProfileMember& action_profile_member) {
   // Lock is already acquired by the caller
-  CHECK_RETURN_IF_FALSE(type != ::p4::v1::Update::UNSPECIFIED)
+  RET_CHECK(type != ::p4::v1::Update::UNSPECIFIED)
       << "Invalid update type " << type;
 
   // Action data
@@ -204,7 +204,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     uint32 bfrt_table_id,
     const ::p4::v1::ActionProfileMember& action_profile_member,
     WriterInterface<::p4::v1::ReadResponse>* writer) {
-  CHECK_RETURN_IF_FALSE(action_profile_member.action_profile_id() != 0)
+  RET_CHECK(action_profile_member.action_profile_id() != 0)
       << "Reading all action profiles is not supported yet.";
 
   std::vector<int> member_ids;
@@ -256,7 +256,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 bfrt_table_id, const ::p4::v1::Update::Type type,
     const ::p4::v1::ActionProfileGroup& action_profile_group) {
-  CHECK_RETURN_IF_FALSE(type != ::p4::v1::Update::UNSPECIFIED)
+  RET_CHECK(type != ::p4::v1::Update::UNSPECIFIED)
       << "Invalid update type " << type;
 
   std::vector<uint32> member_ids;
@@ -297,7 +297,7 @@ TdiActionProfileManager::CreateInstance(TdiSdeInterface* tdi_sde_interface,
     uint32 bfrt_table_id,
     const ::p4::v1::ActionProfileGroup& action_profile_group,
     WriterInterface<::p4::v1::ReadResponse>* writer) {
-  CHECK_RETURN_IF_FALSE(action_profile_group.action_profile_id() != 0)
+  RET_CHECK(action_profile_group.action_profile_id() != 0)
       << "Reading all action profiles is not supported yet.";
 
   std::vector<int> group_ids;

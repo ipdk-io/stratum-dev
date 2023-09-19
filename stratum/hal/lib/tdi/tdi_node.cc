@@ -136,7 +136,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  CHECK_RETURN_IF_FALSE(tdi_config_.programs_size() > 0);
+  RET_CHECK(tdi_config_.programs_size() > 0);
 
   // Calling AddDevice() overwrites any previous pipeline.
   RETURN_IF_ERROR(tdi_sde_interface_->AddDevice(device_id_, tdi_config_));
@@ -158,9 +158,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
 
 ::util::Status TdiNode::VerifyForwardingPipelineConfig(
     const ::p4::v1::ForwardingPipelineConfig& config) const {
-  CHECK_RETURN_IF_FALSE(config.has_p4info()) << "Missing P4 info";
-  CHECK_RETURN_IF_FALSE(!config.p4_device_config().empty())
-      << "Missing P4 device config";
+  RET_CHECK(config.has_p4info()) << "Missing P4 info";
+  RET_CHECK(!config.p4_device_config().empty()) << "Missing P4 device config";
   BfPipelineConfig bf_config;
   RETURN_IF_ERROR(ExtractBfPipelineConfig(config, &bf_config));
   RETURN_IF_ERROR(tdi_table_manager_->VerifyForwardingPipelineConfig(config));
@@ -191,10 +190,9 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
 ::util::Status TdiNode::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   absl::WriterMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == node_id_)
+  RET_CHECK(req.device_id() == node_id_)
       << "Request device id must be same as id of this TdiNode.";
-  CHECK_RETURN_IF_FALSE(req.atomicity() ==
-                        ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
+  RET_CHECK(req.atomicity() == ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
       << "Request atomicity "
       << ::p4::v1::WriteRequest::Atomicity_Name(req.atomicity())
       << " is not supported.";
@@ -277,11 +275,11 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == node_id_)
+  RET_CHECK(req.device_id() == node_id_)
       << "Request device id must be same as id of this TdiNode.";
   if (!initialized_ || !pipeline_initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
@@ -385,8 +383,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
       }
     }
   }
-  CHECK_RETURN_IF_FALSE(writer->Write(resp))
-      << "Write to stream channel failed.";
+  RET_CHECK(writer->Write(resp)) << "Write to stream channel failed.";
   if (!success) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";

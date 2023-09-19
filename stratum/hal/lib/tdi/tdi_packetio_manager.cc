@@ -51,8 +51,7 @@ std::unique_ptr<TdiPacketioManager> TdiPacketioManager::CreateInstance(
 
 ::util::Status TdiPacketioManager::PushForwardingPipelineConfig(
     const TdiDeviceConfig& config) {
-  CHECK_RETURN_IF_FALSE(config.programs_size() == 1)
-      << "Only one program is supported.";
+  RET_CHECK(config.programs_size() == 1) << "Only one program is supported.";
   const auto& program = config.programs(0);
   {
     absl::WriterMutexLock l(&data_lock_);
@@ -150,8 +149,7 @@ class BitBuffer {
 
   // Add a bytestring to the back of the buffer.
   ::util::Status PushBack(const std::string& bytestring, size_t bitwidth) {
-    CHECK_RETURN_IF_FALSE(bytestring.size() <=
-                          (bitwidth + kBitsPerByte - 1) / kBitsPerByte)
+    RET_CHECK(bytestring.size() <= (bitwidth + kBitsPerByte - 1) / kBitsPerByte)
         << "Bytestring " << StringToHex(bytestring) << " overflows bit width "
         << bitwidth << ".";
 
@@ -169,7 +167,7 @@ class BitBuffer {
     }
     // Remove bits from partial byte at the front.
     while (new_bits.size() > bitwidth) {
-      CHECK_RETURN_IF_FALSE(new_bits.front() == 0)
+      RET_CHECK(new_bits.front() == 0)
           << "Bytestring " << StringToHex(bytestring) << " overflows bit width "
           << bitwidth << ".";
       new_bits.pop_front();
@@ -234,7 +232,7 @@ class BitBuffer {
                            [&id](::p4::v1::PacketMetadata metadata) {
                              return metadata.metadata_id() == id;
                            });
-    CHECK_RETURN_IF_FALSE(it != packet.metadata().end())
+    RET_CHECK(it != packet.metadata().end())
         << "Missing metadata with Id " << id << " in PacketOut "
         << packet.ShortDebugString();
     RETURN_IF_ERROR(bit_buf.PushBack(it->value(), bitwidth));
@@ -253,7 +251,7 @@ class BitBuffer {
 ::util::Status TdiPacketioManager::ParsePacketIn(const std::string& buffer,
                                                  ::p4::v1::PacketIn* packet) {
   absl::ReaderMutexLock l(&data_lock_);
-  CHECK_RETURN_IF_FALSE(buffer.size() >= packetin_header_size_)
+  RET_CHECK(buffer.size() >= packetin_header_size_)
       << "Received packet is too small.";
 
   BitBuffer bit_buf;
@@ -356,9 +354,9 @@ class BitBuffer {
     }
   }
 
-  CHECK_RETURN_IF_FALSE(packetin_bits % 8 == 0)
+  RET_CHECK(packetin_bits % 8 == 0)
       << "PacketIn header size must be multiple of 8 bits.";
-  CHECK_RETURN_IF_FALSE(packetout_bits % 8 == 0)
+  RET_CHECK(packetout_bits % 8 == 0)
       << "PacketOut header size must be multiple of 8 bits.";
   packetin_header_ = std::move(packetin_header);
   packetout_header_ = std::move(packetout_header);

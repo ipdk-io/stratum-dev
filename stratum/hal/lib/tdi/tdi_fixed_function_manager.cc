@@ -121,7 +121,7 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
 ::util::Status TdiFixedFunctionManager::BuildSadbTableKey(
     TdiSdeInterface::TableKeyInterface* table_key,
     IPsecSADBConfig& sadb_config) {
-  CHECK_RETURN_IF_FALSE(table_key);
+  RET_CHECK(table_key);
 
   RETURN_IF_ERROR(
       table_key->SetExact(kIpsecSadbOffloadId, sadb_config.offload_id()));
@@ -135,7 +135,7 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
     IPsecSADBConfig& sadb_config) {
   SadbConfigWrapper sanitize_on_exit(sadb_config);
 
-  CHECK_RETURN_IF_FALSE(table_data);
+  RET_CHECK(table_data);
 
   RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbReqId, sadb_config.req_id()));
   RETURN_IF_ERROR(table_data->SetParam(kIpsecSadbSpi, sadb_config.spi()));

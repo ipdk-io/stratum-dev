@@ -89,7 +89,7 @@ namespace {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session) {
   if (VLOG_IS_ON(2)) {
     auto real_session = std::dynamic_pointer_cast<Session>(session);
-    CHECK_RETURN_IF_FALSE(real_session);
+    RET_CHECK(real_session);
 
     const ::tdi::Table* table;
     const ::tdi::Device* device = nullptr;
@@ -130,7 +130,7 @@ namespace {
 ::util::StatusOr<uint32> TdiSdeWrapper::GetFreeMulticastNodeId(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -179,7 +179,7 @@ namespace {
   ::absl::ReaderMutexLock l(&data_lock_);
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Table* table;  // PRE node table.
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(kPreNodeTable, &table));
@@ -219,7 +219,7 @@ namespace {
   ::absl::ReaderMutexLock l(&data_lock_);
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -249,7 +249,7 @@ namespace {
     const std::vector<uint32>& mc_node_ids) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -277,12 +277,12 @@ namespace {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 mc_node_id, int* replication_id, std::vector<uint32>* lag_ids,
     std::vector<uint32>* ports) {
-  CHECK_RETURN_IF_FALSE(replication_id);
-  CHECK_RETURN_IF_FALSE(lag_ids);
-  CHECK_RETURN_IF_FALSE(ports);
+  RET_CHECK(replication_id);
+  RET_CHECK(lag_ids);
+  RET_CHECK(ports);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -322,7 +322,7 @@ namespace {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 group_id, const std::vector<uint32>& mc_node_ids, bool insert) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -387,7 +387,7 @@ namespace {
     uint32 group_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
@@ -411,11 +411,11 @@ namespace {
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 group_id, std::vector<uint32>* group_ids,
     std::vector<std::vector<uint32>>* mc_node_ids) {
-  CHECK_RETURN_IF_FALSE(group_ids);
-  CHECK_RETURN_IF_FALSE(mc_node_ids);
+  RET_CHECK(group_ids);
+  RET_CHECK(mc_node_ids);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
