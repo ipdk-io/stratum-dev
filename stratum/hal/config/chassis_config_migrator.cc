@@ -1,4 +1,5 @@
 // Copyright 2021-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <string>
@@ -30,6 +31,10 @@ ls -1 stratum/hal/config/*/chassis_config.pb.txt | \
   xargs -n 1 bazel run //stratum/hal/config:chassis_config_migrator -- \
     -chassis_config_file
 )USAGE";
+
+// Suppress gcc "no previous declaration" warnings.
+::util::Status MigrateSingletonPort(SingletonPort* singleton_port);
+::util::Status Main(int argc, char** argv);
 
 ::util::Status MigrateSingletonPort(SingletonPort* singleton_port) {
   // Only change the port name if it matches the <port>/<slot> pattern.
@@ -66,8 +71,7 @@ ls -1 stratum/hal/config/*/chassis_config.pb.txt | \
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();
 
-  CHECK_RETURN_IF_FALSE(!FLAGS_chassis_config_file.empty())
-      << "No chassis config given.";
+  RET_CHECK(!FLAGS_chassis_config_file.empty()) << "No chassis config given.";
   ChassisConfig config;
   RETURN_IF_ERROR(ReadProtoFromTextFile(FLAGS_chassis_config_file, &config));
   if (config.chassis().platform() != PLT_GENERIC_BAREFOOT_TOFINO &&
