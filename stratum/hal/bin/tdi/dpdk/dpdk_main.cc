@@ -148,7 +148,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto* hal = DpdkHal::CreateSingleton(mode, dpdk_switch.get(),
                                        auth_policy_checker.get(), ready_sync,
                                        done_sync, &target_options);
-  CHECK_RETURN_IF_FALSE(hal) << "Failed to create the Stratum Hal instance.";
+  RET_CHECK(hal) << "Failed to create the Stratum Hal instance.";
 
   // Set up P4 runtime servers.
   ::util::Status status = hal->Setup();
