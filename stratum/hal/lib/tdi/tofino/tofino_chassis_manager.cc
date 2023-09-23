@@ -909,7 +909,7 @@ TofinoChassisManager::GetNodeIdToDeviceMap() const {
   return node_id_to_device_;
 }
 
-::util::Status TofinoChassisManager::ReplayPortsConfig(uint64 node_id) {
+::util::Status TofinoChassisManager::ReplayChassisConfig(uint64 node_id) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }

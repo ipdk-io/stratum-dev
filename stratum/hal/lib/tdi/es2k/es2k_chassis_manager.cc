@@ -780,7 +780,7 @@ Es2kChassisManager::GetNodeIdToDeviceMap() const {
 
 // TODO: Revisit this, port shaping and drop deflect removed. Check with Sandeep
 // once
-::util::Status Es2kChassisManager::ReplayPortsConfig(uint64 node_id) {
+::util::Status Es2kChassisManager::ReplayChassisConfig(uint64 node_id) {
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }

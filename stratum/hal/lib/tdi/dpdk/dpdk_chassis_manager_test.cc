@@ -212,9 +212,9 @@ class DpdkChassisManagerTest : public ::testing::Test {
     return ::util::OkStatus();
   }
 
-  ::util::Status ReplayPortsConfig(uint64 node_id) {
+  ::util::Status ReplayChassisConfig(uint64 node_id) {
     absl::WriterMutexLock l(&chassis_lock);
-    return chassis_manager_->ReplayPortsConfig(node_id);
+    return chassis_manager_->ReplayChassisConfig(node_id);
   }
 
   ::util::Status PushBaseChassisConfig() {
@@ -376,7 +376,7 @@ TEST_F(DpdkChassisManagerTest, ReplayPorts) {
   EXPECT_ADD_PORT_CALL(kDevice, sdkPortId, _);
   EXPECT_ENABLE_PORT_CALL(kDevice, sdkPortId);
 
-  EXPECT_OK(ReplayPortsConfig(kNodeId));
+  EXPECT_OK(ReplayChassisConfig(kNodeId));
 
   ASSERT_OK(ShutdownAndTestCleanState());
 }
