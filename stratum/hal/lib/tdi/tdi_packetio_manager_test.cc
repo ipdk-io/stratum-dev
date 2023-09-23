@@ -90,7 +90,7 @@ class TdiPacketioManagerTest : public ::testing::Test {
   }
 
   static constexpr int kDevice1 = 0;
-  static constexpr char kP4Info[] = R"PROTO(
+  static constexpr char kP4Info[] = R"pb(
     controller_packet_metadata {
       preamble {
         id: 67146229
@@ -138,7 +138,7 @@ class TdiPacketioManagerTest : public ::testing::Test {
         bitwidth: 16
       }
     }
-  )PROTO";
+  )pb";
 
   std::unique_ptr<TdiSdeMock> tdi_sde_wrapper_mock_;
   std::unique_ptr<TdiPacketioManager> tdi_packetio_manager_;
@@ -161,7 +161,7 @@ TEST_F(TdiPacketioManagerTest, PushForwardingPipelineConfigAndShutdown) {
 
 TEST_F(TdiPacketioManagerTest, PushInvalidPacketInConfigAndShutdown) {
   // The total length of packet-in metadata is not byte aligned
-  const char invalid_packet_in[] = R"PROTO(
+  const char invalid_packet_in[] = R"pb(
     controller_packet_metadata {
       preamble {
         id: 67146229
@@ -175,7 +175,7 @@ TEST_F(TdiPacketioManagerTest, PushInvalidPacketInConfigAndShutdown) {
         bitwidth: 9
       }
     }
-  )PROTO";
+  )pb";
   auto status = PushPipelineConfig(invalid_packet_in, false);
   EXPECT_THAT(
       status,
@@ -186,7 +186,7 @@ TEST_F(TdiPacketioManagerTest, PushInvalidPacketInConfigAndShutdown) {
 
 TEST_F(TdiPacketioManagerTest, PushInvalidPacketOutConfigAndShutdown) {
   // The total length of packet-out metadata is not byte aligned
-  const char invalid_packet_out[] = R"PROTO(
+  const char invalid_packet_out[] = R"pb(
     controller_packet_metadata {
       preamble {
         id: 67121543
@@ -200,7 +200,7 @@ TEST_F(TdiPacketioManagerTest, PushInvalidPacketOutConfigAndShutdown) {
         bitwidth: 9
       }
     }
-  )PROTO";
+  )pb";
   auto status = PushPipelineConfig(invalid_packet_out, false);
   EXPECT_THAT(
       status,
@@ -213,7 +213,7 @@ TEST_F(TdiPacketioManagerTest, PushInvalidPacketOutConfigAndShutdown) {
 TEST_F(TdiPacketioManagerTest,
        PushUnknownControllerPacketMetadataConfigAndShutdown) {
   // The unknown
-  const char p4info_with_known[] = R"PROTO(
+  const char p4info_with_known[] = R"pb(
     controller_packet_metadata {
       preamble {
         id: 1234567
@@ -235,7 +235,7 @@ TEST_F(TdiPacketioManagerTest,
         bitwidth: 8
       }
     }
-  )PROTO";
+  )pb";
   EXPECT_OK(PushPipelineConfig(p4info_with_known));
   EXPECT_OK(Shutdown());
 }
@@ -243,7 +243,7 @@ TEST_F(TdiPacketioManagerTest,
 TEST_F(TdiPacketioManagerTest, TransmitPacketAfterPipelineConfigPush) {
   EXPECT_OK(PushPipelineConfig());
   p4::v1::PacketOut packet_out;
-  const char packet_out_str[] = R"PROTO(
+  const char packet_out_str[] = R"pb(
     payload: "abcde"
     metadata {
       metadata_id: 1
@@ -261,7 +261,7 @@ TEST_F(TdiPacketioManagerTest, TransmitPacketAfterPipelineConfigPush) {
       metadata_id: 4
       value: "\xbf\x01"
     }
-  )PROTO";
+  )pb";
   EXPECT_OK(ParseProtoFromString(packet_out_str, &packet_out));
   const std::string expected_packet(
       "\0\x80\0\0\0\0\0\0\0\0\0\0\xBF\x1"
@@ -277,7 +277,7 @@ TEST_F(TdiPacketioManagerTest, TransmitInvalidPacketAfterPipelineConfigPush) {
   EXPECT_OK(PushPipelineConfig());
   p4::v1::PacketOut packet_out;
   // Missing the third metadata.
-  const char packet_out_str[] = R"PROTO(
+  const char packet_out_str[] = R"pb(
     payload: "abcde"
     metadata {
       metadata_id: 1
@@ -291,7 +291,7 @@ TEST_F(TdiPacketioManagerTest, TransmitInvalidPacketAfterPipelineConfigPush) {
       metadata_id: 3
       value: "\x0"
     }
-  )PROTO";
+  )pb";
   EXPECT_OK(ParseProtoFromString(packet_out_str, &packet_out));
   auto status = tdi_packetio_manager_->TransmitPacket(packet_out);
   EXPECT_FALSE(status.ok());
@@ -304,7 +304,7 @@ TEST_F(TdiPacketioManagerTest, TestPacketIn) {
   EXPECT_OK(PushPipelineConfig());
   auto writer = std::make_shared<WriterMock<::p4::v1::PacketIn>>();
   EXPECT_OK(tdi_packetio_manager_->RegisterPacketReceiveWriter(writer));
-  const char expected_packet_in_str[] = R"PROTO(
+  const char expected_packet_in_str[] = R"pb(
     payload: "abcde"
     metadata {
       metadata_id: 1
@@ -314,7 +314,7 @@ TEST_F(TdiPacketioManagerTest, TestPacketIn) {
       metadata_id: 2
       value: "\000"
     }
-  )PROTO";
+  )pb";
   ::p4::v1::PacketIn expected_packet_in;
   EXPECT_OK(ParseProtoFromString(expected_packet_in_str, &expected_packet_in));
   const std::string packet_from_asic(

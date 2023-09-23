@@ -57,7 +57,7 @@ TEST_F(TdiPreManagerTest, DeleteMulticastGroupTest) {
       .WillOnce(Return(::util::OkStatus()));
 
   // TODO(max): remove replicas, ignored on delete.
-  const std::string kMulticastGroupEntryText = R"PROTO(
+  const std::string kMulticastGroupEntryText = R"pb(
     multicast_group_entry {
       multicast_group_id: 55
       replicas {
@@ -73,7 +73,7 @@ TEST_F(TdiPreManagerTest, DeleteMulticastGroupTest) {
         instance: 0
       }
     }
-  )PROTO";
+  )pb";
   ::p4::v1::PacketReplicationEngineEntry entry;
   ASSERT_OK(ParseProtoFromString(kMulticastGroupEntryText, &entry));
 

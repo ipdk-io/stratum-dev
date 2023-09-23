@@ -46,7 +46,7 @@ class TdiTableManagerTest : public ::testing::Test {
   }
 
   ::util::Status PushTestConfig() {
-    const std::string kSamplePipelineText = R"PROTO(
+    const std::string kSamplePipelineText = R"pb(
       programs {
         name: "test pipeline config",
         p4info {
@@ -133,7 +133,7 @@ class TdiTableManagerTest : public ::testing::Test {
           }
         }
       }
-    )PROTO";
+    )pb";
     TdiDeviceConfig config;
     RETURN_IF_ERROR(ParseProtoFromString(kSamplePipelineText, &config));
     return tdi_table_manager_->PushForwardingPipelineConfig(config);
@@ -177,7 +177,7 @@ TEST_F(TdiTableManagerTest, WriteDirectCounterEntryTest) {
                         std::unique_ptr<TdiSdeInterface::TableDataInterface>>(
               std::move(table_data_mock)))));
 
-  const std::string kDirectCounterEntryText = R"PROTO(
+  const std::string kDirectCounterEntryText = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -194,7 +194,7 @@ TEST_F(TdiTableManagerTest, WriteDirectCounterEntryTest) {
       byte_count: 200
       packet_count: 100
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::DirectCounterEntry entry;
   ASSERT_OK(ParseProtoFromString(kDirectCounterEntryText, &entry));
@@ -233,7 +233,7 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
                         std::unique_ptr<TdiSdeInterface::TableDataInterface>>(
               std::move(table_data_mock)))));
 
-  const std::string kDirectMeterEntryText = R"PROTO(
+  const std::string kDirectMeterEntryText = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -252,7 +252,7 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
       pir: 100
       pburst: 1000
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::DirectMeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kDirectMeterEntryText, &entry));
@@ -276,7 +276,7 @@ TEST_F(TdiTableManagerTest, WriteIndirectMeterEntryTest) {
                                  Optional(kMeterIndex), false, 1, 100, 2, 200))
       .WillOnce(Return(::util::OkStatus()));
 
-  const std::string kMeterEntryText = R"PROTO(
+  const std::string kMeterEntryText = R"pb(
     meter_id: 55555
     index {
       index: 12345
@@ -287,7 +287,7 @@ TEST_F(TdiTableManagerTest, WriteIndirectMeterEntryTest) {
       pir: 2
       pburst: 200
     }
-  )PROTO";
+  )pb";
   ::p4::v1::MeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kMeterEntryText, &entry));
 
@@ -299,7 +299,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryModifyWithoutMeterId) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
 
-  const std::string kMeterEntryText = R"PROTO(
+  const std::string kMeterEntryText = R"pb(
     meter_id: 0
     index {
       index: 12345
@@ -310,7 +310,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryModifyWithoutMeterId) {
       pir: 2
       pburst: 200
     }
-  )PROTO";
+  )pb";
   ::p4::v1::MeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kMeterEntryText, &entry));
 
@@ -325,7 +325,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryInsertDelete) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
 
-  const std::string kMeterEntryText = R"PROTO(
+  const std::string kMeterEntryText = R"pb(
     meter_id: 55555
     index {
       index: 12345
@@ -336,7 +336,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryInsertDelete) {
       pir: 2
       pburst: 200
     }
-  )PROTO";
+  )pb";
   ::p4::v1::MeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kMeterEntryText, &entry));
 
@@ -376,7 +376,7 @@ TEST_F(TdiTableManagerTest, ReadSingleIndirectMeterEntryTest) {
                         SetArgPointee<6>(cbursts), SetArgPointee<7>(pirs),
                         SetArgPointee<8>(pbursts), SetArgPointee<9>(in_pps),
                         Return(::util::OkStatus())));
-    const std::string kMeterResponseText = R"PROTO(
+    const std::string kMeterResponseText = R"pb(
       entities {
         meter_entry {
           meter_id: 55555
@@ -391,18 +391,18 @@ TEST_F(TdiTableManagerTest, ReadSingleIndirectMeterEntryTest) {
           }
         }
       }
-    )PROTO";
+    )pb";
     ::p4::v1::ReadResponse resp;
     ASSERT_OK(ParseProtoFromString(kMeterResponseText, &resp));
     EXPECT_CALL(writer_mock, Write(EqualsProto(resp))).WillOnce(Return(true));
   }
 
-  const std::string kMeterEntryText = R"PROTO(
+  const std::string kMeterEntryText = R"pb(
     meter_id: 55555
     index {
       index: 12345
     }
-  )PROTO";
+  )pb";
   ::p4::v1::MeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kMeterEntryText, &entry));
 
@@ -415,7 +415,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryReadWithoutId) {
   auto session_mock = std::make_shared<SessionMock>();
   WriterMock<::p4::v1::ReadResponse> writer_mock;
 
-  const std::string kMeterEntryText = R"PROTO(
+  const std::string kMeterEntryText = R"pb(
     meter_id: 0
     index {
       index: 12345
@@ -426,7 +426,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryReadWithoutId) {
       pir: 2
       pburst: 200
     }
-  )PROTO";
+  )pb";
   ::p4::v1::MeterEntry entry;
   ASSERT_OK(ParseProtoFromString(kMeterEntryText, &entry));
 

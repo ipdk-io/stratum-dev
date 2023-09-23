@@ -52,7 +52,7 @@ TEST_F(TdiCounterManagerTest, ModifyIndirectCounterTest) {
   EXPECT_CALL(*tdi_sde_wrapper_mock_, GetTdiRtId(kCounterId))
       .WillOnce(Return(kBfRtCounterId));
 
-  const std::string kIndirectCounterEntryText = R"PROTO(
+  const std::string kIndirectCounterEntryText = R"pb(
     counter_id: 55
     index {
       index: 100
@@ -61,7 +61,7 @@ TEST_F(TdiCounterManagerTest, ModifyIndirectCounterTest) {
       byte_count: 100
       packet_count: 200
     }
-  )PROTO";
+  )pb";
   ::p4::v1::CounterEntry entry;
   ASSERT_OK(ParseProtoFromString(kIndirectCounterEntryText, &entry));
 
