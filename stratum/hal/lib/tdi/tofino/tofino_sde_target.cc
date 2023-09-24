@@ -15,10 +15,10 @@
 #include <utility>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/cleanup/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
