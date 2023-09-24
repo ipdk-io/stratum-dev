@@ -32,11 +32,7 @@ ls -1 stratum/hal/config/*/chassis_config.pb.txt | \
     -chassis_config_file
 )USAGE";
 
-// Suppress gcc "no previous declaration" warnings.
-::util::Status MigrateSingletonPort(SingletonPort* singleton_port);
-::util::Status Main(int argc, char** argv);
-
-::util::Status MigrateSingletonPort(SingletonPort* singleton_port) {
+static ::util::Status MigrateSingletonPort(SingletonPort* singleton_port) {
   // Only change the port name if it matches the <port>/<slot> pattern.
   bool fix_name = true;
   std::vector<std::string> parts = absl::StrSplit(singleton_port->name(), '/');
@@ -66,7 +62,7 @@ ls -1 stratum/hal/config/*/chassis_config.pb.txt | \
   return ::util::OkStatus();
 }
 
-::util::Status Main(int argc, char** argv) {
+static ::util::Status Main(int argc, char** argv) {
   ::gflags::SetUsageMessage(kUsage);
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();

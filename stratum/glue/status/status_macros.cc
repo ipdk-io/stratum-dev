@@ -77,8 +77,9 @@ static LogSeverity GetSuppressedSeverity(LogSeverity severity,
   }
 }
 
-void LogErrorWithSuppression(const ::util::Status& status, const char* filename,
-                             int line, int log_level) {
+static void LogErrorWithSuppression(const ::util::Status& status,
+                                    const char* filename, int line,
+                                    int log_level) {
   const LogSeverity severity = GetSuppressedSeverity(ERROR, log_level);
   LogError(status, filename, line, severity,
            false /* should_log_stack_trace */);
