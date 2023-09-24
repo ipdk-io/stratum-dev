@@ -84,7 +84,6 @@ stratum_cc_library(
         ":es2k_port_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -92,6 +91,7 @@ stratum_cc_library(
         "//stratum/lib:constants",
         "//stratum/lib:utils",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/cleanup",
         "@local_es2k_bin//:es2k_sde",
     ],
 )

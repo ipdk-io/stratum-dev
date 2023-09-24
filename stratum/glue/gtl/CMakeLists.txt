@@ -5,7 +5,6 @@
 #
 
 target_sources(stratum_glue_o PRIVATE
-    cleanup.h
     map_util.h
     source_location.h
     stl_util.h

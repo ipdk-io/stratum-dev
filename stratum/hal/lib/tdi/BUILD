@@ -143,7 +143,6 @@ stratum_cc_library(
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/gtl:stl_util",
         "//stratum/glue/status",
@@ -154,6 +153,7 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
@@ -187,7 +187,6 @@ stratum_cc_library(
         ":tdi_cc_proto",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/lib:macros",
@@ -196,6 +195,7 @@ stratum_cc_library(
         "@com_github_gflags_gflags//:gflags",
         "@com_github_nlohmann_json//:json",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -506,7 +506,6 @@ stratum_cc_library(
         ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
@@ -517,6 +516,7 @@ stratum_cc_library(
         "//stratum/hal/lib/p4:utils",
         "//stratum/lib:utils",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
 )

@@ -13,7 +13,7 @@
 #include <deque>
 #include <string>
 
-#include "stratum/glue/gtl/cleanup.h"
+#include "absl/cleanup/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/p4/utils.h"
