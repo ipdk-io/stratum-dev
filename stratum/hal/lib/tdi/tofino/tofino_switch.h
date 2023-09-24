@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TOFINO_TOFINO_SWITCH_H_
@@ -12,6 +12,7 @@
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 

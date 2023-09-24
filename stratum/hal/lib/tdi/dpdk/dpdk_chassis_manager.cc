@@ -28,6 +28,7 @@
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_config.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_constants.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/public/proto/error.pb.h"
@@ -37,8 +38,6 @@ namespace hal {
 namespace tdi {
 
 using PortStatusEvent = TdiPortManager::PortStatusEvent;
-
-ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 
 /* static */
 constexpr int DpdkChassisManager::kMaxPortStatusEventDepth;

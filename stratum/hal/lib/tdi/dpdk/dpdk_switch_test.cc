@@ -18,6 +18,7 @@
 #include "stratum/hal/lib/common/writer_mock.h"
 #include "stratum/hal/lib/p4/p4_table_mapper_mock.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager_mock.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_node_mock.h"
 #include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/lib/channel/channel_mock.h"
@@ -81,10 +82,7 @@ class DpdkSwitchTest : public ::testing::Test {
     device_to_tdi_node_mock_[kDevice] = node_mock_.get();
     switch_ = DpdkSwitch::CreateInstance(
         chassis_manager_mock_.get(), sde_mock_.get(), device_to_tdi_node_mock_);
-#if 0
-    // no 'shutdown'
     shutdown = false;  // global variable initialization
-#endif
 
     ON_CALL(*chassis_manager_mock_, GetNodeIdToDeviceMap())
         .WillByDefault(Return(NodeIdToDeviceMap()));

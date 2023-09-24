@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"
@@ -30,8 +31,6 @@ namespace hal {
 namespace tdi {
 
 using PortStatusEvent = TdiPortManager::PortStatusEvent;
-
-ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 
 /* static */
 constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;

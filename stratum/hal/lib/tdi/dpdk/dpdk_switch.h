@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_DPDK_SWITCH_H_
@@ -13,6 +13,7 @@
 #include "p4/v1/p4runtime.pb.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/switch_interface.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 
 namespace stratum {
 namespace hal {
