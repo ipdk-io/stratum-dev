@@ -391,7 +391,7 @@ TEST(PortUtilsTest, AggregatePortLedColorsStatePairs) {
                  std::make_pair(LED_COLOR_GREEN, LED_STATE_SOLID)}));
 }
 
-void DoubleToDecimalTest(double from, int64 digits, uint32 precision) {
+static void DoubleToDecimalTest(double from, int64 digits, uint32 precision) {
   auto res = ConvertDoubleToDecimal64(from, precision);
   EXPECT_TRUE(res.ok());
   auto decimal_val = res.ValueOrDie();
