@@ -460,7 +460,7 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
       // action to take on first and only call
       .WillOnce(Return(kTdiRtTableId));
 
-  const std::string kActionProfMemberResponseText = R"PROTO(
+  const std::string kActionProfMemberResponseText = R"pb(
       entities {
         action_profile_member {
           action_profile_id: 1
@@ -474,7 +474,7 @@ TEST_F(TdiActionProfileManagerTest, ReadActionProfileEntryTestActionProfileId) {
           }
         }
       }
-    )PROTO";
+    )pb";
   ::p4::v1::ReadResponse resp;
   ASSERT_OK(ParseProtoFromString(kActionProfMemberResponseText, &resp));
 
@@ -545,7 +545,7 @@ TEST_F(TdiActionProfileManagerTest,
 
   // JSON representation of the protobuf we expect ReadProfileActionEntry()
   // to specify when it calls the writer mock.
-  const std::string kActionProfGroupResponseText = R"PROTO(
+  const std::string kActionProfGroupResponseText = R"pb(
       entities {
         action_profile_group {
           action_profile_id: 1
@@ -557,7 +557,7 @@ TEST_F(TdiActionProfileManagerTest,
           max_size: 4
         }
       }
-    )PROTO";
+    )pb";
   ::p4::v1::ReadResponse resp;
   ASSERT_OK(ParseProtoFromString(kActionProfGroupResponseText, &resp));
   EXPECT_CALL(writer_mock, Write(EqualsProto(resp))).WillOnce(Return(true));

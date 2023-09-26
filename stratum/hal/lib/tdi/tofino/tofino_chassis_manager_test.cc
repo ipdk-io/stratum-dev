@@ -344,7 +344,7 @@ TEST_F(TofinoChassisManagerTest, SetPortLoopback) {
 }
 
 TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
-  const std::string kVendorConfigText = R"PROTO(
+  const std::string kVendorConfigText = R"pb(
     tofino_config {
       node_id_to_port_shaping_config {
         key: 7654321
@@ -361,7 +361,7 @@ TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
         }
       }
     }
-  )PROTO";
+  )pb";
 
   VendorConfig vendor_config;
   ASSERT_OK(ParseProtoFromString(kVendorConfigText, &vendor_config));
@@ -386,7 +386,7 @@ TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
 }
 
 TEST_F(TofinoChassisManagerTest, ApplyDeflectOnDrop) {
-  const std::string kVendorConfigText = R"PROTO(
+  const std::string kVendorConfigText = R"pb(
     tofino_config {
       node_id_to_deflect_on_drop_configs {
         key: 7654321
@@ -402,7 +402,7 @@ TEST_F(TofinoChassisManagerTest, ApplyDeflectOnDrop) {
         }
       }
     }
-  )PROTO";
+  )pb";
 
   VendorConfig vendor_config;
   ASSERT_OK(ParseProtoFromString(kVendorConfigText, &vendor_config));
@@ -422,7 +422,7 @@ TEST_F(TofinoChassisManagerTest, ApplyDeflectOnDrop) {
 }
 
 TEST_F(TofinoChassisManagerTest, ReplayPorts) {
-  const std::string kVendorConfigText = R"PROTO(
+  const std::string kVendorConfigText = R"pb(
     tofino_config {
       node_id_to_deflect_on_drop_configs {
         key: 7654321
@@ -452,7 +452,7 @@ TEST_F(TofinoChassisManagerTest, ReplayPorts) {
         }
       }
     }
-  )PROTO";
+  )pb";
 
   VendorConfig vendor_config;
   ASSERT_OK(ParseProtoFromString(kVendorConfigText, &vendor_config));
