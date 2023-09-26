@@ -226,9 +226,9 @@ class TofinoChassisManagerTest : public ::testing::Test {
     return ::util::OkStatus();
   }
 
-  ::util::Status ReplayPortsConfig(uint64 node_id) {
+  ::util::Status ReplayChassisConfig(uint64 node_id) {
     absl::WriterMutexLock l(&chassis_lock);
-    return chassis_manager_->ReplayPortsConfig(node_id);
+    return chassis_manager_->ReplayChassisConfig(node_id);
   }
 
   ::util::Status PushBaseChassisConfig() {
@@ -486,7 +486,7 @@ TEST_F(TofinoChassisManagerTest, ReplayPorts) {
               EnablePortShaping(kDevice, sdkPortId, TRI_STATE_TRUE))
       .Times(AtLeast(1));
 
-  EXPECT_OK(ReplayPortsConfig(kNodeId));
+  EXPECT_OK(ReplayChassisConfig(kNodeId));
 
   ASSERT_OK(ShutdownAndTestCleanState());
 }

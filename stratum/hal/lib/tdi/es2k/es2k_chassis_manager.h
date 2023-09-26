@@ -59,7 +59,7 @@ class Es2kChassisManager {
                                          PortCounters* counters)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::Status ReplayPortsConfig(uint64 node_id)
+  virtual ::util::Status ReplayChassisConfig(uint64 node_id)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::StatusOr<std::map<uint64, int>> GetNodeIdToDeviceMap() const

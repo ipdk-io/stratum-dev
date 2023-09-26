@@ -59,7 +59,7 @@ class TofinoChassisManager {
                                          PortCounters* counters)
       SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::Status ReplayPortsConfig(uint64 node_id)
+  virtual ::util::Status ReplayChassisConfig(uint64 node_id)
       EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status GetFrontPanelPortInfo(uint64 node_id, uint32 port_id,
