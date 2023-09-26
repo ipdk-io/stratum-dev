@@ -15,10 +15,10 @@
 #include <utility>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
@@ -245,11 +245,12 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   RETURN_IF_TDI_ERROR(
       bf_pkt_alloc(device, &pkt, buffer.size(), BF_DMA_CPU_PKT_TRANSMIT_0));
   auto pkt_cleaner =
-      gtl::MakeCleanup([pkt, device]() { bf_pkt_free(device, pkt); });
+      absl::MakeCleanup([pkt, device]() { bf_pkt_free(device, pkt); });
   RETURN_IF_TDI_ERROR(bf_pkt_data_copy(
       pkt, reinterpret_cast<const uint8*>(buffer.data()), buffer.size()));
   RETURN_IF_TDI_ERROR(bf_pkt_tx(device, pkt, BF_PKT_TX_RING_0, pkt));
-  pkt_cleaner.release();
+  std::move(pkt_cleaner).Cancel();
+
   return ::util::OkStatus();
 }
 
