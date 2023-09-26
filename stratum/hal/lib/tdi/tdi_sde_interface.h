@@ -139,15 +139,35 @@ class TdiSdeInterface {
 
     // Convenience function to update the meter config in the table data.
     // This hides the IDs for the $METER_SPEC_* fields.
-    virtual ::util::Status SetMeterConfig(bool in_pps, uint64 cir,
-                                          uint64 cburst, uint64 pir,
-                                          uint64 pburst) = 0;
+    virtual ::util::Status SetMeterConfig(bool in_pps,
+                                      uint64 cir_unit, uint64 cburst_unit,
+                                      uint64 pir_unit, uint64 pburst_unit,
+                                      uint64 cir, uint64 cburst,
+                                      uint64 pir, uint64 pburst,
+                                      uint64 greenBytes, uint64 greenPackets,
+                                              uint64 yellowBytes, uint64 yellowPackets,
+                                              uint64 redBytes, uint64 redPackets) = 0;
 
     // Get the meter values.
-    virtual ::util::Status GetMeterConfig(bool in_pps, uint64* cir,
-                                          uint64* cburst, uint64* pir,
-                                          uint64* pburst) const = 0;
+    virtual ::util::Status GetMeterConfig(bool in_pps,
+		                      uint64* cir_unit, uint64* cburst_unit,
+                                      uint64* pir_unit, uint64* pburst_unit,
+                                      uint64* cir, uint64* cburst,
+                                      uint64* pir, uint64* pburst,
+                                      uint64* greenBytes, uint64* greenPackets,
+                                              uint64* yellowBytes, uint64* yellowPackets,
+                                              uint64* redBytes, uint64* redPackets) = 0;
+/*
+    // Convenience function to update the meter counter values in the table data.
+    virtual ::util::Status SetMeterCounterData(uint64 bytes, uint64 packets,
+		                               uint64 bytes, uint64 packets,
+					       uint64 bytes, uint64 packets) = 0;
 
+    // Get the meter counter values.
+    virtual ::util::Status GetMeterCounterData(uint64* bytes, uint64* packets,
+		                               uint64* bytes, uint64* packets,
+					       uint64* bytes, uint64* packets) const = 0;
+*/
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;
 

@@ -304,26 +304,38 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
       switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
+	      case ::p4::config::v1::MeterSpec::BYTES:
+		      meter_units_in_packets = false;
+		      break;
+	      case ::p4::config::v1::MeterSpec::PACKETS:
+		      meter_units_in_packets = true;
+		      break;
+	      default:
+		      return MAKE_ERROR(ERR_INVALID_PARAM)
+			      << "Unsupported meter spec on meter "
+			      << meter.ShortDebugString() << ".";
       }
       RETURN_IF_ERROR(table_data->SetMeterConfig(
-          meter_units_in_packets, table_entry.meter_config().cir(),
-          table_entry.meter_config().cburst(), table_entry.meter_config().pir(),
-          table_entry.meter_config().pburst()));
+			      meter_units_in_packets,
+			      table_entry.meter_config().policer_meter_config().policer_spec_cir_unit(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_cbs_unit(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_eir_unit(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_ebs_unit(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_cir(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_cbs(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_eir(),
+			      table_entry.meter_config().policer_meter_config().policer_spec_ebs(),
+			      table_entry.meter_counter_data().green().byte_count(),
+table_entry.meter_counter_data().green().packet_count(),
+table_entry.meter_counter_data().yellow().byte_count(),
+table_entry.meter_counter_data().yellow().packet_count(),
+table_entry.meter_counter_data().red ().byte_count(),
+table_entry.meter_counter_data().red ().packet_count()));
     }
     if (resource_type == "Direct-Counter" && table_entry.has_counter_data()) {
-      RETURN_IF_ERROR(table_data->SetCounterData(
-          table_entry.counter_data().byte_count(),
-          table_entry.counter_data().packet_count()));
+	    RETURN_IF_ERROR(table_data->SetCounterData(
+				    table_entry.counter_data().byte_count(),
+				    table_entry.counter_data().packet_count()));
     }
   }
 
@@ -331,217 +343,232 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 }
 
 ::util::Status TdiTableManager::WriteTableEntry(
-    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const ::p4::v1::Update::Type type,
-    const ::p4::v1::TableEntry& table_entry) {
-  CHECK_RETURN_IF_FALSE(type != ::p4::v1::Update::UNSPECIFIED)
-      << "Invalid update type " << type;
+		std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+		const ::p4::v1::Update::Type type,
+		const ::p4::v1::TableEntry& table_entry) {
+	CHECK_RETURN_IF_FALSE(type != ::p4::v1::Update::UNSPECIFIED)
+		<< "Invalid update type " << type;
 
-  absl::ReaderMutexLock l(&lock_);
-  ASSIGN_OR_RETURN(auto table,
-                   p4_info_manager_->FindTableByID(table_entry.table_id()));
-  ASSIGN_OR_RETURN(uint32 table_id,
-                   tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
+	absl::ReaderMutexLock l(&lock_);
+	ASSIGN_OR_RETURN(auto table,
+			p4_info_manager_->FindTableByID(table_entry.table_id()));
+	ASSIGN_OR_RETURN(uint32 table_id,
+			tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
 
-  if (!table_entry.is_default_action()) {
-    if (table.is_const_table()) {
-      return MAKE_ERROR(ERR_PERMISSION_DENIED)
-             << "Can't write to table " << table.preamble().name()
-             << " because it has const entries.";
-    }
-    ASSIGN_OR_RETURN(auto table_key,
-                     tdi_sde_interface_->CreateTableKey(table_id));
-    RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
+	if (!table_entry.is_default_action()) {
+		if (table.is_const_table()) {
+			return MAKE_ERROR(ERR_PERMISSION_DENIED)
+				<< "Can't write to table " << table.preamble().name()
+				<< " because it has const entries.";
+		}
+		ASSIGN_OR_RETURN(auto table_key,
+				tdi_sde_interface_->CreateTableKey(table_id));
+		RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
 
-    ASSIGN_OR_RETURN(auto table_data,
-                     tdi_sde_interface_->CreateTableData(
-                         table_id, table_entry.action().action().action_id()));
-    if (type == ::p4::v1::Update::INSERT || type == ::p4::v1::Update::MODIFY) {
-      RETURN_IF_ERROR(BuildTableData(table_entry, table_data.get()));
-    }
+		ASSIGN_OR_RETURN(auto table_data,
+				tdi_sde_interface_->CreateTableData(
+					table_id, table_entry.action().action().action_id()));
+		if (type == ::p4::v1::Update::INSERT || type == ::p4::v1::Update::MODIFY) {
+			RETURN_IF_ERROR(BuildTableData(table_entry, table_data.get()));
+		}
 
-    switch (type) {
-      case ::p4::v1::Update::INSERT:
-        RETURN_IF_ERROR(tdi_sde_interface_->InsertTableEntry(
-            device_, session, table_id, table_key.get(), table_data.get()));
-        break;
-      case ::p4::v1::Update::MODIFY:
-        RETURN_IF_ERROR(tdi_sde_interface_->ModifyTableEntry(
-            device_, session, table_id, table_key.get(), table_data.get()));
-        break;
-      case ::p4::v1::Update::DELETE:
-        RETURN_IF_ERROR(tdi_sde_interface_->DeleteTableEntry(
-            device_, session, table_id, table_key.get()));
-        break;
-      default:
-        return MAKE_ERROR(ERR_INTERNAL)
-               << "Unsupported update type: " << type << " in table entry "
-               << table_entry.ShortDebugString() << ".";
-    }
-  } else {
-    CHECK_RETURN_IF_FALSE(type == ::p4::v1::Update::MODIFY)
-        << "The table default entry can only be modified.";
-    CHECK_RETURN_IF_FALSE(table_entry.match_size() == 0)
-        << "Default action must not contain match fields.";
-    CHECK_RETURN_IF_FALSE(table_entry.priority() == 0)
-        << "Default action must not contain a priority field.";
+		switch (type) {
+			case ::p4::v1::Update::INSERT:
+				RETURN_IF_ERROR(tdi_sde_interface_->InsertTableEntry(
+							device_, session, table_id, table_key.get(), table_data.get()));
+				break;
+			case ::p4::v1::Update::MODIFY:
+				RETURN_IF_ERROR(tdi_sde_interface_->ModifyTableEntry(
+							device_, session, table_id, table_key.get(), table_data.get()));
+				break;
+			case ::p4::v1::Update::DELETE:
+				RETURN_IF_ERROR(tdi_sde_interface_->DeleteTableEntry(
+							device_, session, table_id, table_key.get()));
+				break;
+			default:
+				return MAKE_ERROR(ERR_INTERNAL)
+					<< "Unsupported update type: " << type << " in table entry "
+					<< table_entry.ShortDebugString() << ".";
+		}
+	} else {
+		CHECK_RETURN_IF_FALSE(type == ::p4::v1::Update::MODIFY)
+			<< "The table default entry can only be modified.";
+		CHECK_RETURN_IF_FALSE(table_entry.match_size() == 0)
+			<< "Default action must not contain match fields.";
+		CHECK_RETURN_IF_FALSE(table_entry.priority() == 0)
+			<< "Default action must not contain a priority field.";
 
-    if (table_entry.has_action()) {
-      ASSIGN_OR_RETURN(
-          auto table_data,
-          tdi_sde_interface_->CreateTableData(
-              table_id, table_entry.action().action().action_id()));
-      RETURN_IF_ERROR(BuildTableData(table_entry, table_data.get()));
-      RETURN_IF_ERROR(tdi_sde_interface_->SetDefaultTableEntry(
-          device_, session, table_id, table_data.get()));
-    } else {
-      RETURN_IF_ERROR(tdi_sde_interface_->ResetDefaultTableEntry(
-          device_, session, table_id));
-    }
-  }
+		if (table_entry.has_action()) {
+			ASSIGN_OR_RETURN(
+					auto table_data,
+					tdi_sde_interface_->CreateTableData(
+						table_id, table_entry.action().action().action_id()));
+			RETURN_IF_ERROR(BuildTableData(table_entry, table_data.get()));
+			RETURN_IF_ERROR(tdi_sde_interface_->SetDefaultTableEntry(
+						device_, session, table_id, table_data.get()));
+		} else {
+			RETURN_IF_ERROR(tdi_sde_interface_->ResetDefaultTableEntry(
+						device_, session, table_id));
+		}
+	}
 
-  return ::util::OkStatus();
+	return ::util::OkStatus();
 }
 
 // TODO(max): the need for the original request might go away when the table
 // data is correctly initialized with only the fields we care about.
 ::util::StatusOr<::p4::v1::TableEntry> TdiTableManager::BuildP4TableEntry(
-    const ::p4::v1::TableEntry& request,
-    const TdiSdeInterface::TableKeyInterface* table_key,
-    const TdiSdeInterface::TableDataInterface* table_data) {
-  ::p4::v1::TableEntry result;
+		const ::p4::v1::TableEntry& request,
+		const TdiSdeInterface::TableKeyInterface* table_key,
+		const TdiSdeInterface::TableDataInterface* table_data) {
+	::p4::v1::TableEntry result;
 
-  ASSIGN_OR_RETURN(auto table,
-                   p4_info_manager_->FindTableByID(request.table_id()));
-  result.set_table_id(request.table_id());
+	ASSIGN_OR_RETURN(auto table,
+			p4_info_manager_->FindTableByID(request.table_id()));
+	result.set_table_id(request.table_id());
 
-  bool has_priority_field = false;
-  // Match keys
-  for (const auto& expected_match_field : table.match_fields()) {
-    ::p4::v1::FieldMatch match;  // Added to the entry later.
-    match.set_field_id(expected_match_field.id());
-    switch (expected_match_field.match_type()) {
-      case ::p4::config::v1::MatchField::EXACT: {
-        RETURN_IF_ERROR(table_key->GetExact(
-            expected_match_field.id(), match.mutable_exact()->mutable_value()));
-        if (!IsDontCareMatch(match.exact())) {
-          *result.add_match() = match;
-        }
-        break;
-      }
-      case ::p4::config::v1::MatchField::TERNARY: {
-        has_priority_field = true;
-        std::string value, mask;
-        RETURN_IF_ERROR(
-            table_key->GetTernary(expected_match_field.id(), &value, &mask));
-        match.mutable_ternary()->set_value(value);
-        match.mutable_ternary()->set_mask(mask);
-        if (!IsDontCareMatch(match.ternary())) {
-          *result.add_match() = match;
-        }
-        break;
-      }
-      case ::p4::config::v1::MatchField::LPM: {
-        std::string prefix;
-        uint16 prefix_length = 0;
-        RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(), &prefix,
-                                          &prefix_length));
-        match.mutable_lpm()->set_value(prefix);
-        match.mutable_lpm()->set_prefix_len(prefix_length);
-        if (!IsDontCareMatch(match.lpm())) {
-          *result.add_match() = match;
-        }
-        break;
-      }
-      case ::p4::config::v1::MatchField::RANGE: {
-        has_priority_field = true;
-        std::string low, high;
-        RETURN_IF_ERROR(
-            table_key->GetRange(expected_match_field.id(), &low, &high));
-        match.mutable_range()->set_low(low);
-        match.mutable_range()->set_high(high);
-        if (!IsDontCareMatch(match.range(), expected_match_field.bitwidth())) {
-          *result.add_match() = match;
-        }
-        break;
-      }
-      default:
-        return MAKE_ERROR(ERR_INVALID_PARAM)
-               << "Invalid field match type "
-               << ::p4::config::v1::MatchField_MatchType_Name(
-                      expected_match_field.match_type())
-               << ".";
-    }
-  }
+	bool has_priority_field = false;
+	// Match keys
+	for (const auto& expected_match_field : table.match_fields()) {
+		::p4::v1::FieldMatch match;  // Added to the entry later.
+		match.set_field_id(expected_match_field.id());
+		switch (expected_match_field.match_type()) {
+			case ::p4::config::v1::MatchField::EXACT: {
+									  RETURN_IF_ERROR(table_key->GetExact(
+												  expected_match_field.id(), match.mutable_exact()->mutable_value()));
+									  if (!IsDontCareMatch(match.exact())) {
+										  *result.add_match() = match;
+									  }
+									  break;
+								  }
+			case ::p4::config::v1::MatchField::TERNARY: {
+									    has_priority_field = true;
+									    std::string value, mask;
+									    RETURN_IF_ERROR(
+											    table_key->GetTernary(expected_match_field.id(), &value, &mask));
+									    match.mutable_ternary()->set_value(value);
+									    match.mutable_ternary()->set_mask(mask);
+									    if (!IsDontCareMatch(match.ternary())) {
+										    *result.add_match() = match;
+									    }
+									    break;
+								    }
+			case ::p4::config::v1::MatchField::LPM: {
+									std::string prefix;
+									uint16 prefix_length = 0;
+									RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(), &prefix,
+												&prefix_length));
+									match.mutable_lpm()->set_value(prefix);
+									match.mutable_lpm()->set_prefix_len(prefix_length);
+									if (!IsDontCareMatch(match.lpm())) {
+										*result.add_match() = match;
+									}
+									break;
+								}
+			case ::p4::config::v1::MatchField::RANGE: {
+									  has_priority_field = true;
+									  std::string low, high;
+									  RETURN_IF_ERROR(
+											  table_key->GetRange(expected_match_field.id(), &low, &high));
+									  match.mutable_range()->set_low(low);
+									  match.mutable_range()->set_high(high);
+									  if (!IsDontCareMatch(match.range(), expected_match_field.bitwidth())) {
+										  *result.add_match() = match;
+									  }
+									  break;
+								  }
+			default:
+								  return MAKE_ERROR(ERR_INVALID_PARAM)
+									  << "Invalid field match type "
+									  << ::p4::config::v1::MatchField_MatchType_Name(
+											  expected_match_field.match_type())
+									  << ".";
+		}
+	}
 
-  // Default actions do not have a priority, even when the table usually
-  // requires one. The SDE would return 0 (highest) which we must not translate.
-  if (request.is_default_action()) {
-    has_priority_field = false;
-  }
+	// Default actions do not have a priority, even when the table usually
+	// requires one. The SDE would return 0 (highest) which we must not translate.
+	if (request.is_default_action()) {
+		has_priority_field = false;
+	}
 
-  // Priority.
-  if (has_priority_field) {
-    uint32 bf_priority;
-    RETURN_IF_ERROR(table_key->GetPriority(&bf_priority));
-    ASSIGN_OR_RETURN(uint64 p4rt_priority,
-                     ConvertPriorityFromTdiToP4rt(bf_priority));
-    result.set_priority(p4rt_priority);
-  }
+	// Priority.
+	if (has_priority_field) {
+		uint32 bf_priority;
+		RETURN_IF_ERROR(table_key->GetPriority(&bf_priority));
+		ASSIGN_OR_RETURN(uint64 p4rt_priority,
+				ConvertPriorityFromTdiToP4rt(bf_priority));
+		result.set_priority(p4rt_priority);
+	}
 
-  // Action and action data
-  int action_id;
-  RETURN_IF_ERROR(table_data->GetActionId(&action_id));
-  // TODO(max): perform check if action id is valid for this table.
-  if (action_id) {
-    ASSIGN_OR_RETURN(auto action, p4_info_manager_->FindActionByID(action_id));
-    result.mutable_action()->mutable_action()->set_action_id(action_id);
-    for (const auto& expected_param : action.params()) {
-      std::string value;
-      RETURN_IF_ERROR(table_data->GetParam(expected_param.id(), &value));
-      auto* param = result.mutable_action()->mutable_action()->add_params();
-      param->set_param_id(expected_param.id());
-      param->set_value(value);
-    }
-  } else {
-    // Action profile member id
-    uint64 action_member_id;
-    if (table_data->GetActionMemberId(&action_member_id).ok()) {
-      result.mutable_action()->set_action_profile_member_id(action_member_id);
-    }
+	// Action and action data
+	int action_id;
+	RETURN_IF_ERROR(table_data->GetActionId(&action_id));
+	// TODO(max): perform check if action id is valid for this table.
+	if (action_id) {
+		ASSIGN_OR_RETURN(auto action, p4_info_manager_->FindActionByID(action_id));
+		result.mutable_action()->mutable_action()->set_action_id(action_id);
+		for (const auto& expected_param : action.params()) {
+			std::string value;
+			RETURN_IF_ERROR(table_data->GetParam(expected_param.id(), &value));
+			auto* param = result.mutable_action()->mutable_action()->add_params();
+			param->set_param_id(expected_param.id());
+			param->set_value(value);
+		}
+	} else {
+		// Action profile member id
+		uint64 action_member_id;
+		if (table_data->GetActionMemberId(&action_member_id).ok()) {
+			result.mutable_action()->set_action_profile_member_id(action_member_id);
+		}
 
-    // Action profile group id
-    uint64 selector_group_id;
-    if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
-      result.mutable_action()->set_action_profile_group_id(selector_group_id);
-    }
-  }
+		// Action profile group id
+		uint64 selector_group_id;
+		if (table_data->GetSelectorGroupId(&selector_group_id).ok()) {
+			result.mutable_action()->set_action_profile_group_id(selector_group_id);
+		}
+	}
 
-  for (const auto& resource_id : table.direct_resource_ids()) {
-    ASSIGN_OR_RETURN(auto resource_type,
-                     p4_info_manager_->FindResourceTypeByID(resource_id));
-    if (resource_type == "Direct-Meter" && request.has_meter_config()) {
-      ASSIGN_OR_RETURN(auto meter,
-                       p4_info_manager_->FindDirectMeterByID(resource_id));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
-      uint64 cir = 0;
-      uint64 cburst = 0;
-      uint64 pir = 0;
-      uint64 pburst = 0;
-      RETURN_IF_ERROR(
-          table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
+	for (const auto& resource_id : table.direct_resource_ids()) {
+		ASSIGN_OR_RETURN(auto resource_type,
+				p4_info_manager_->FindResourceTypeByID(resource_id));
+		if (resource_type == "Direct-Meter" && request.has_meter_config()) {
+			ASSIGN_OR_RETURN(auto meter,
+					p4_info_manager_->FindDirectMeterByID(resource_id));
+			switch (meter.spec().unit()) {
+				case ::p4::config::v1::MeterSpec::BYTES:
+				case ::p4::config::v1::MeterSpec::PACKETS:
+					break;
+				default:
+					return MAKE_ERROR(ERR_INVALID_PARAM)
+						<< "Unsupported meter spec on meter "
+						<< meter.ShortDebugString() << ".";
+			}
+			/*
+			uint64 cir = 0;
+			uint64 cburst = 0;
+			uint64 pir = 0;
+			uint64 pburst = 0;
+			uint64 cir_unit = 0;
+			uint64 cburst_unit = 0;
+			uint64 pir_unit = 0;
+			uint64 pburst_unit = 0;
+			RETURN_IF_ERROR(table_data->GetMeterConfig(false, &cir_unit, &cburst_unit, &pir_unit, &pburst_unit, &cir, &cburst, &pir, &pburst));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_cir_unit(static_cast<int64>(cir_unit));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_cbs_unit(static_cast<int64>(cburst_unit));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_eir_unit(static_cast<int64>(pir_unit));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_ebs_unit(static_cast<int64>(pburst_unit));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_cir(static_cast<int64>(cir));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_cbs(static_cast<int64>(cburst));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_eir(static_cast<int64>(pir));
+      result.mutable_meter_config()->mutable_policer_meter_config()->set_policer_spec_ebs(static_cast<int64>(pburst));
+*/
+			/*
       result.mutable_meter_config()->set_cir(static_cast<int64>(cir));
       result.mutable_meter_config()->set_cburst(static_cast<int64>(cburst));
       result.mutable_meter_config()->set_pir(static_cast<int64>(pir));
       result.mutable_meter_config()->set_pburst(static_cast<int64>(pburst));
+ */
     }
     if (resource_type == "Direct-Counter" && request.has_counter_data()) {
       uint64 bytes = 0;
@@ -830,10 +857,21 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << meter.ShortDebugString() << ".";
       }
       RETURN_IF_ERROR(table_data->SetMeterConfig(
-          meter_units_in_packets, direct_meter_entry.config().cir(),
-          direct_meter_entry.config().cburst(),
-          direct_meter_entry.config().pir(),
-          direct_meter_entry.config().pburst()));
+          meter_units_in_packets,
+	  direct_meter_entry.config().policer_meter_config().policer_spec_cir_unit(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_cbs_unit(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_eir_unit(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_ebs_unit(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_cir(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_cbs(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_eir(),
+          direct_meter_entry.config().policer_meter_config().policer_spec_ebs(),
+	  direct_meter_entry.counter_data().green().byte_count(),
+direct_meter_entry.counter_data().green().packet_count(),
+direct_meter_entry.counter_data().yellow().byte_count(),
+direct_meter_entry.counter_data().yellow().packet_count(),
+direct_meter_entry.counter_data().red ().byte_count(),
+direct_meter_entry.counter_data().red ().packet_count()));
       break;
     }
   }
@@ -915,7 +953,7 @@ TdiTableManager::ReadDirectMeterEntry(
 
   // TODO(max): build response entry from returned data
   ::p4::v1::DirectMeterEntry result = direct_meter_entry;
-
+/*
   uint64 cir = 0;
   uint64 cburst = 0;
   uint64 pir = 0;
@@ -926,7 +964,40 @@ TdiTableManager::ReadDirectMeterEntry(
   result.mutable_config()->set_cburst(static_cast<int64>(cburst));
   result.mutable_config()->set_pir(static_cast<int64>(pir));
   result.mutable_config()->set_pburst(static_cast<int64>(pburst));
-
+*/
+      uint64 cir = 0;
+      uint64 cburst = 0;
+      uint64 pir = 0;
+      uint64 pburst = 0;
+      uint64 cir_unit = 0;
+      uint64 cburst_unit = 0;
+      uint64 pir_unit = 0;
+      uint64 pburst_unit = 0;
+      uint64 greenBytes = 0;
+uint64 greenPackets = 0;
+uint64 yellowBytes = 0;
+uint64 yellowPackets = 0;
+uint64 redBytes = 0;
+uint64 redPackets = 0;
+      RETURN_IF_ERROR(
+          table_data->GetMeterConfig(false, &cir_unit, &cburst_unit, &pir_unit, &pburst_unit, &cir, &cburst, &pir, &pburst,
+		                     &greenBytes, &greenPackets,
+&yellowBytes, &yellowPackets,
+&redBytes, &redPackets));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_cir_unit(static_cast<int64>(cir_unit));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_cbs_unit(static_cast<int64>(cburst_unit));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_eir_unit(static_cast<int64>(pir_unit));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_ebs_unit(static_cast<int64>(pburst_unit));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_cir(static_cast<int64>(cir));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_cbs(static_cast<int64>(cburst));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_eir(static_cast<int64>(pir));
+      result.mutable_config()->mutable_policer_meter_config()->set_policer_spec_ebs(static_cast<int64>(pburst));
+      result.mutable_counter_data()->mutable_green()->set_byte_count(static_cast<int64>(greenBytes));
+result.mutable_counter_data()->mutable_green()->set_byte_count(static_cast<int64>(greenPackets));
+result.mutable_counter_data()->mutable_yellow()->set_byte_count(static_cast<int64>(yellowBytes));
+result.mutable_counter_data()->mutable_yellow()->set_byte_count(static_cast<int64>(yellowPackets));
+result.mutable_counter_data()->mutable_red()->set_byte_count(static_cast<int64>(redBytes));
+result.mutable_counter_data()->mutable_red()->set_byte_count(static_cast<int64>(redPackets));
   return result;
 }
 

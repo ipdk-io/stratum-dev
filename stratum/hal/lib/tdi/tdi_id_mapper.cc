@@ -57,7 +57,7 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
                                                 pipeline.context()));
     }
 
-    // Externs
+    /* // Externs
     for (const auto& p4extern : program.p4info().externs()) {
       // TODO(Yi): Now we only support ActionProfile and ActionSelector
       // Things like DirectCounter are not listed as a table in tdi.json
@@ -70,7 +70,8 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
                                      extern_instance.preamble().name(),
                                      tdi_info));
       }
-    }
+    }  
+    */
 
     // Indirect counters
     for (const auto& counter : program.p4info().counters()) {
@@ -89,7 +90,25 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
       RETURN_IF_ERROR(BuildMapping(meter_entry.preamble().id(),
                                    meter_entry.preamble().name(), tdi_info));
     }
+
+    // Externs
+    for (const auto& p4extern : program.p4info().externs()) {
+      // TODO(Yi): Now we only support ActionProfile and ActionSelector
+      // Things like DirectCounter are not listed as a table in tdi.json
+      if (p4extern.extern_type_id() != kTnaExternActionProfileId &&
+          p4extern.extern_type_id() != kTnaExternActionSelectorId &&
+          p4extern.extern_type_id() != kTnaExternPacketModMeter) {
+        continue;
+      }
+      for (const auto& extern_instance : p4extern.instances()) {
+        if (p4extern.extern_type_id() == kTnaExternPacketModMeter) {
+         RETURN_IF_ERROR(BuildMapping(extern_instance.preamble().id(),
+                                     extern_instance.preamble().name(),
+                                     tdi_info));
+       }
+    }
   }
+ }
 
   return ::util::OkStatus();
 }

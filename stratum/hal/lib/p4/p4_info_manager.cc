@@ -15,7 +15,7 @@
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
-
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 // This flag allows unit tests to simplify their P4Info setup.  For example,
 // a test that only wants to verify something about a Counter can enable this
 // flag to avoid adding Actions, Tables, and Header Fields to its tested P4Info.
@@ -37,6 +37,7 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
+      extern_map_("Extern"),
       all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
@@ -49,6 +50,7 @@ P4InfoManager::P4InfoManager()
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
+      extern_map_("Extern"),
       all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
@@ -84,6 +86,43 @@ P4InfoManager::~P4InfoManager() {}
       status, value_set_map_.BuildMaps(p4_info_.value_sets(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
+
+  APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
+
+  if (!p4_info_.externs().empty()) {
+     for (const auto& p4extern : p4_info_.externs()) {
+         if (p4extern.extern_type_id() == stratum::hal::tdi::kTnaExternPacketModMeter) {
+            const auto& extern_instances = p4extern.instances();
+            PreambleCallback preamble_cb =
+                std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                        std::placeholders::_2);
+           for (const auto& extern_instance : extern_instances) {
+               p4::config::v1::Meter meter;
+                *meter.mutable_preamble() = extern_instance.preamble();
+                p4::config::v1::MeterSpec meter_spec;
+                meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
+                       *meter.mutable_spec() = meter_spec;
+               meter_objects.Add(std::move(meter));
+            }
+           meter_map_.BuildMaps(meter_objects, preamble_cb);
+        }
+        if (p4extern.extern_type_id() == stratum::hal::tdi::kTnaExternDirectPacketModMeter) {
+           const auto& extern_instances = p4extern.instances();
+           PreambleCallback preamble_cb =
+                std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                        std::placeholders::_2);
+           for (const auto& extern_instance : extern_instances) {
+               p4::config::v1::DirectMeter direct_meter;
+               *direct_meter.mutable_preamble() = extern_instance.preamble();
+               p4::config::v1::MeterSpec meter_spec;
+               meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
+               *direct_meter.mutable_spec() = meter_spec;
+               direct_meter_objects.Add(std::move(direct_meter));
+            }
+            direct_meter_map_.BuildMaps(direct_meter_objects, preamble_cb);
+        } 
+     }
+  }
 
   APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
 
@@ -179,6 +218,11 @@ P4InfoManager::FindRegisterByID(uint32 register_id) const {
 P4InfoManager::FindRegisterByName(const std::string& register_name) const {
   return register_map_.FindByName(register_name);
 }
+
+::util::StatusOr<const ::p4::config::v1::Extern>
+P4InfoManager::FindExternByName(const std::string& extern_name) const {
+  return extern_map_.FindByName(extern_name);
+ }
 
 ::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(
     uint32 id_key) const {

@@ -85,10 +85,30 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   ::util::Status GetSelectorGroupId(uint64* selector_group_id) const override;
   ::util::Status SetCounterData(uint64 bytes, uint64 packets) override;
   ::util::Status GetCounterData(uint64* bytes, uint64* packets) const override;
-  ::util::Status SetMeterConfig(bool in_pps, uint64 cir, uint64 cburst,
-                                uint64 pir, uint64 pburst) override;
-  ::util::Status GetMeterConfig(bool in_pps, uint64* cir, uint64* cburst,
-                                uint64* pir, uint64* pburst) const override;
+  ::util::Status SetMeterConfig(bool in_pps, 
+                              uint64 cir_unit, uint64 cburst_unit,
+                              uint64 pir_unit, uint64 pburst_unit,
+                              uint64 cir, uint64 cburst,
+                              uint64 pir, uint64 pburst,
+                              uint64 greenBytes, uint64 greenPackets,
+                                              uint64 yellowBytes, uint64 yellowPackets,
+                                              uint64 redBytes, uint64 redPackets) override;
+  ::util::Status GetMeterConfig(bool in_pps, 
+                              uint64* cir_unit, uint64* cburst_unit,
+                              uint64* pir_unit, uint64* pburst_unit,
+                              uint64* cir, uint64* cburst,
+                              uint64* pir, uint64* pburst,
+                              uint64* greenBytes, uint64* greenPackets,
+                                              uint64* yellowBytes, uint64* yellowPackets,
+                                              uint64* redBytes, uint64* redPackets) override;
+  /*
+  ::util::Status SetMeterCounterData(uint64 bytes, uint64 packets,
+		                     uint64 bytes, uint64 packets,
+				     uint64 bytes, uint64 packets) override;
+  ::util::Status GetMeterCounterData(uint64* bytes, uint64* packets,
+		                     uint64* bytes, uint64* packets,
+				     uint64* bytes, uint64* packets) const override;
+*/
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
 

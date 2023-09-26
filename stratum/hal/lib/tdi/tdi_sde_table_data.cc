@@ -121,8 +121,14 @@ using namespace stratum::hal::tdi::helpers;
   return GetField(*(table_data_.get()), kSelectorGroupId, selector_group_id);
 }
 
-::util::Status TableData::SetMeterConfig(bool in_pps, uint64 cir, uint64 cburst,
-                                         uint64 pir, uint64 pburst) {
+::util::Status TableData::SetMeterConfig(bool in_pps,
+	                      uint64 cir_unit, uint64 cburst_unit,
+                              uint64 pir_unit, uint64 pburst_unit,
+                              uint64 cir, uint64 cburst,
+                              uint64 pir, uint64 pburst,
+			      uint64 greenBytes, uint64 greenPackets,
+                                              uint64 yellowBytes, uint64 yellowPackets,
+                                              uint64 redBytes, uint64 redPackets) {
   if (in_pps) {
     RETURN_IF_ERROR(SetField(table_data_.get(), kMeterCirPps, cir));
     RETURN_IF_ERROR(
@@ -132,6 +138,15 @@ using namespace stratum::hal::tdi::helpers;
         SetField(table_data_.get(), kMeterPeakBurstPackets, pburst));
   } else {
     RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterCirKbpsUnit, cir_unit));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterCommitedBurstKbitsUnit,
+                             cburst_unit));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterPirKbpsUnit, pir_unit));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstKbitsUnit,
+                             pburst_unit));
+    RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterCirKbps, BytesPerSecondToKbits(cir)));
     RETURN_IF_ERROR(SetField(table_data_.get(), kMeterCommitedBurstKbits,
                              BytesPerSecondToKbits(cburst)));
@@ -139,13 +154,34 @@ using namespace stratum::hal::tdi::helpers;
         SetField(table_data_.get(), kMeterPirKbps, BytesPerSecondToKbits(pir)));
     RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstKbits,
                              BytesPerSecondToKbits(pburst)));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstKbits,
+                             BytesPerSecondToKbits(pburst)));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstKbits,
+                             BytesPerSecondToKbits(pburst)));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterGreenCounterBytes,
+                             BytesPerSecondToKbits(greenBytes)));
+RETURN_IF_ERROR(SetField(table_data_.get(), kMeterGreenCounterPackets,
+                             BytesPerSecondToKbits(greenPackets)));
+RETURN_IF_ERROR(SetField(table_data_.get(), kMeterYellowCounterBytes,
+                             BytesPerSecondToKbits(yellowBytes)));
+RETURN_IF_ERROR(SetField(table_data_.get(), kMeterYellowCounterPackets,
+                             BytesPerSecondToKbits(yellowPackets)));
+RETURN_IF_ERROR(SetField(table_data_.get(), kMeterRedCounterBytes,
+                             BytesPerSecondToKbits(redBytes)));
+RETURN_IF_ERROR(SetField(table_data_.get(), kMeterRedCounterPackets,
+                             BytesPerSecondToKbits(redPackets)));
   }
   return ::util::OkStatus();
 }
 
-::util::Status TableData::GetMeterConfig(bool in_pps, uint64* cir,
-                                         uint64* cburst, uint64* pir,
-                                         uint64* pburst) const {
+::util::Status TableData::GetMeterConfig(bool in_pps,
+		              uint64* cir_unit, uint64* cburst_unit,
+                              uint64* pir_unit, uint64* pburst_unit,
+                              uint64* cir, uint64* cburst,
+                              uint64* pir, uint64* pburst,
+			      uint64* greenBytes, uint64* greenPackets,
+                                              uint64* yellowBytes, uint64* yellowPackets,
+                                              uint64* redBytes, uint64* redPackets) {
   if (in_pps) {
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, cir));
     RETURN_IF_ERROR(
@@ -154,19 +190,78 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kMeterPeakBurstPackets, pburst));
   } else {
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirKbpsUnit, cir_unit));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterCommitedBurstKbitsUnit, cburst_unit));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirKbpsUnit, pir_unit));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterPeakBurstKbitsUnit, pburst_unit));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirKbps, cir));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterCommitedBurstKbits, cburst));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirKbps, pir));
+    RETURN_IF_ERROR( 
+        GetField(*(table_data_.get()), kMeterPeakBurstKbits, pburst));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterGreenCounterBytes, greenBytes));
+RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterGreenCounterPackets, greenPackets));
+RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterYellowCounterBytes, yellowBytes));
+RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterYellowCounterPackets, yellowPackets));
+RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterRedCounterBytes, redBytes));
+RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kMeterRedCounterPackets, redPackets));
+
+/*
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterCirKbpsUnit, cir_unit));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterCommitedBurstKbitsUnit,
+                             cburst_unit));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kMeterPirKbpsUnit, pir_unit));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kMeterPeakBurstKbitsUnit,
+                             pburst_unit));
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirKbps, cir));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kMeterCommitedBurstKbits, cburst));
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirKbps, pir));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kMeterPeakBurstKbits, pburst));
+*/
     *cir = KbitsToBytesPerSecond(*cir);
     *cburst = KbitsToBytesPerSecond(*cburst);
     *pir = KbitsToBytesPerSecond(*pir);
     *pburst = KbitsToBytesPerSecond(*pburst);
+    *cir_unit = KbitsToBytesPerSecond(*cir_unit);
+    *cburst_unit = KbitsToBytesPerSecond(*cburst_unit);
+    *pir_unit = KbitsToBytesPerSecond(*pir_unit);
+    *pburst_unit = KbitsToBytesPerSecond(*pburst_unit);
+    *greenBytes = KbitsToBytesPerSecond(*greenBytes);
+*greenPackets = KbitsToBytesPerSecond(*greenPackets);
+*yellowBytes = KbitsToBytesPerSecond(*yellowBytes);
+*yellowPackets = KbitsToBytesPerSecond(*yellowPackets);
+*redBytes = KbitsToBytesPerSecond(*redBytes);
+*redPackets = KbitsToBytesPerSecond(*redPackets);
   }
   return ::util::OkStatus();
 }
+/*
+::util::Status TableData::SetMeterCounterData(uint64 greenBytes, uint64 greenPackets,
+		                              uint64 yellowBytes, uint64 yellowPackets,
+					      uint64 redBytes, uint64 redPackets) {
+  return ::util::OkStatus();
+}
+
+::util::Status TableData::GetMeterCounterData(uint64* greenBytes, uint64* greenPackets,
+                                              uint64* yellowBytes, uint64* yellowPackets,
+                                              uint64* redBytes, uint64* redPackets) {
+  return ::util::OkStatus();
+}
+*/
 
 // The P4Runtime `CounterData` message has no mechanism to differentiate between
 // byte-only, packet-only or both counter types. This make it impossible to

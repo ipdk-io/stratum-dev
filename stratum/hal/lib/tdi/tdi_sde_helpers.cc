@@ -1,3 +1,4 @@
+
 // Copyright 2019-present Barefoot Networks, Inc.
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
@@ -208,7 +209,8 @@ namespace helpers {
   field_id = keyFieldInfo->idGet();
   data_type = keyFieldInfo->dataTypeGet();
 
-  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64 || 
+		        data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
 
@@ -254,7 +256,8 @@ namespace helpers {
   field_id = keyFieldInfo->idGet();
   data_type = keyFieldInfo->dataTypeGet();
 
-  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||  
+                        data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_key->setValue(field_id, value));
@@ -276,7 +279,8 @@ namespace helpers {
   field_id = dataFieldInfo->idGet();
   data_type = dataFieldInfo->dataTypeGet();
 
-  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||  
+                        data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_data.getValue(field_id, field_value));
@@ -342,7 +346,8 @@ namespace helpers {
   field_id = dataFieldInfo->idGet();
   data_type = dataFieldInfo->dataTypeGet();
 
-  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||  
+                        data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_data->setValue(field_id, value));
@@ -365,15 +370,16 @@ namespace helpers {
   data_type = dataFieldInfo->dataTypeGet();
 
   CHECK_RETURN_IF_FALSE(data_type == TDI_FIELD_DATA_TYPE_STRING)
-      << "Setting string but field " << field_name << " has type "
-      << static_cast<int>(data_type);
+	  << "Setting string but field " << field_name << " has type "
+	  << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_data->setValue(field_id, field_value));
 
   return ::util::OkStatus();
 }
 
 ::util::Status SetFieldBool(::tdi::TableData* table_data,
-                            std::string field_name, const bool& field_value) {
+		std::string field_name, const bool& field_value) {
+	constexpr char kMeterPirKbps[] = "$METER_SPEC_PIR_KBPS";
   tdi_id_t field_id;
   const ::tdi::Table* table;
   tdi_field_data_type_e data_type;

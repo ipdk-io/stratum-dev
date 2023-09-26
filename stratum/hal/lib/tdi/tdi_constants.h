@@ -15,7 +15,10 @@ namespace tdi {
 // TNA Extern types
 constexpr uint32 kTnaExternActionProfileId = 131;
 constexpr uint32 kTnaExternActionSelectorId = 132;
-constexpr uint32 kTnaExternDirectCounter = 133;
+constexpr uint32 kTnaExternDirectCounter = 130;
+constexpr uint32 kTnaExternPacketModMeter = 133;
+constexpr uint32 kTnaExternDirectPacketModMeter = 134;
+
 
 // Built-in table and field names.
 constexpr char kMcNodeDevPort[] = "$DEV_PORT";
@@ -29,14 +32,25 @@ constexpr char kPreMgidTable[] = "$pre.mgid";
 constexpr char kPreNodeTable[] = "$pre.node";
 constexpr char kRegisterIndex[] = "$REGISTER_INDEX";
 constexpr char kMeterIndex[] = "$METER_INDEX";
-constexpr char kMeterCirKbps[] = "$METER_SPEC_CIR_KBPS";
-constexpr char kMeterCommitedBurstKbits[] = "$METER_SPEC_CBS_KBITS";
-constexpr char kMeterPirKbps[] = "$METER_SPEC_PIR_KBPS";
-constexpr char kMeterPeakBurstKbits[] = "$METER_SPEC_PBS_KBITS";
+constexpr char kMeterProfileIdKbps[] = "$POLICER_METER_SPEC_PROF_ID";
+constexpr char kMeterCirKbps[] = "$POLICER_METER_SPEC_CIR";
+constexpr char kMeterCommitedBurstKbits[] = "$POLICER_METER_SPEC_CBS";
+constexpr char kMeterPirKbps[] = "$POLICER_METER_SPEC_EIR";
+constexpr char kMeterPeakBurstKbits[] = "$POLICER_METER_SPEC_EBS";
+constexpr char kMeterCirKbpsUnit[] = "$POLICER_METER_SPEC_CIR_UNIT";
+constexpr char kMeterCommitedBurstKbitsUnit[] = "$POLICER_METER_SPEC_CBS_UNIT";
+constexpr char kMeterPirKbpsUnit[] = "$POLICER_METER_SPEC_EIR_UNIT";
+constexpr char kMeterPeakBurstKbitsUnit[] = "$POLICER_METER_SPEC_EBS_UNIT";
 constexpr char kMeterCirPps[] = "$METER_SPEC_CIR_PPS";
 constexpr char kMeterCommitedBurstPackets[] = "$METER_SPEC_CBS_PKTS";
 constexpr char kMeterPirPps[] = "$METER_SPEC_PIR_PPS";
 constexpr char kMeterPeakBurstPackets[] = "$METER_SPEC_PBS_PKTS";
+constexpr char kMeterGreenCounterBytes[] = "$POLICER_METER_SPEC_GBYTE_CNTR";
+constexpr char kMeterGreenCounterPackets[] = "$POLICER_METER_SPEC_GPKT_CNTR";
+constexpr char kMeterYellowCounterBytes[] = "$POLICER_METER_SPEC_YBYTE_CNTR";
+constexpr char kMeterYellowCounterPackets[] = "$POLICER_METER_SPEC_YPKT_CNTR";
+constexpr char kMeterRedCounterBytes[] = "$POLICER_METER_SPEC_RBYTE_CNTR";
+constexpr char kMeterRedCounterPackets[] = "$POLICER_METER_SPEC_RPKT_CNTR";
 constexpr char kCounterIndex[] = "$COUNTER_INDEX";
 constexpr char kCounterBytes[] = "$COUNTER_SPEC_BYTES";
 constexpr char kCounterPackets[] = "$COUNTER_SPEC_PKTS";
