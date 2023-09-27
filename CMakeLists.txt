@@ -30,6 +30,8 @@ endif()
 find_package(absl REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
 
 if(ES2K_TARGET)
     find_package(OpenSSL REQUIRED)
@@ -99,12 +101,12 @@ endfunction()
 # Google libraries
 function(add_stratum_google_libs _TGT)
     target_link_libraries(${_TGT} PUBLIC
-        glog
-        gflags
-        gpr
-        grpc
-        protobuf
-        grpc++
+        gflags::gflags_shared
+        glog::glog
+        gRPC::gpr
+        gRPC::grpc
+        gRPC::grpc++
+        protobuf::libprotobuf
     )
 endfunction()
 
