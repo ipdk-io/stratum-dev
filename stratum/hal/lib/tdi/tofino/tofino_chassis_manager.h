@@ -18,6 +18,7 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"

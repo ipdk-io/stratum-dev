@@ -22,6 +22,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/phal_mock.h"
 #include "stratum/hal/lib/common/writer_mock.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager_mock.h"
 #include "stratum/lib/constants.h"

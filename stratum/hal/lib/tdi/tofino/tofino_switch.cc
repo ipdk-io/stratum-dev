@@ -14,6 +14,7 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 #include "stratum/hal/lib/tdi/utils.h"

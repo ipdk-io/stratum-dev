@@ -16,6 +16,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_node.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"
 #include "stratum/lib/macros.h"

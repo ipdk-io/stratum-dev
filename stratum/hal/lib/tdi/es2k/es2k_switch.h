@@ -14,6 +14,7 @@
 #include "stratum/hal/lib/common/switch_interface.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_node.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 
 // Suppress clang errors

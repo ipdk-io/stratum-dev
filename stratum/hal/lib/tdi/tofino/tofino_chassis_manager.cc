@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/common/phal_interface.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
@@ -32,8 +33,6 @@ namespace tdi {
 
 using PortStatusEvent = TdiPortManager::PortStatusEvent;
 using TransceiverEvent = PhalInterface::TransceiverEvent;
-
-ABSL_CONST_INIT absl::Mutex chassis_lock(absl::kConstInit);
 
 /* static */
 constexpr int TofinoChassisManager::kMaxPortStatusEventDepth;

@@ -16,6 +16,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
+#include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/constants.h"

@@ -382,6 +382,15 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_global_vars",
+    srcs = ["tdi_global_vars.cc"],
+    hdrs = ["tdi_global_vars.h"],
+    deps = [
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_action_profile_manager",
     srcs = ["tdi_action_profile_manager.cc"],
     hdrs = ["tdi_action_profile_manager.h"],
