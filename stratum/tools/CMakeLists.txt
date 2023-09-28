@@ -16,12 +16,12 @@ target_link_libraries(gnmi_cli PUBLIC
     stratum_static
     gnmi_proto
     grpc_proto
-    grpc
-    protobuf
-    gflags
-    grpc++
+    gflags::gflags_shared
+    gRPC::grpc
+    gRPC::grpc++
+    gRPC::re2
+    protobuf::libprotobuf
     pthread
-    re2
 )
 
 if(HAVE_POSIX_AIO)
