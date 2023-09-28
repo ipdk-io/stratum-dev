@@ -5,7 +5,7 @@
 // P4InfoManager implementation.
 
 #include "stratum/hal/lib/p4/p4_info_manager.h"
-
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include <utility>
 
 #include "absl/strings/ascii.h"
@@ -15,7 +15,6 @@
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
-
 // This flag allows unit tests to simplify their P4Info setup.  For example,
 // a test that only wants to verify something about a Counter can enable this
 // flag to avoid adding Actions, Tables, and Header Fields to its tested P4Info.
@@ -37,6 +36,7 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
+      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
       all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
@@ -49,6 +49,7 @@ P4InfoManager::P4InfoManager()
       meter_map_("Meter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
+      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
       all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
@@ -56,6 +57,7 @@ P4InfoManager::~P4InfoManager() {}
 // Since P4InfoManager can be used in a verify role, it attempts to continue
 // processing after most errors in order to describe every problem it
 // encounters in p4_info_.
+
 ::util::Status P4InfoManager::InitializeAndVerify() {
   if (!all_resource_ids_.empty() || !all_resource_names_.empty()) {
     return MAKE_ERROR(ERR_INTERNAL) << "P4Info is already initialized";
@@ -84,6 +86,26 @@ P4InfoManager::~P4InfoManager() {}
       status, value_set_map_.BuildMaps(p4_info_.value_sets(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
+
+  if (!p4_info_.externs().empty()) {
+     for (const auto& p4extern : p4_info_.externs()) {
+        if (p4extern.extern_type_id() == stratum::hal::tdi::kEs2kExternDirectPacketModMeter) {
+           const auto& extern_instances = p4extern.instances();
+           PreambleCallback preamble_cb =
+                std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                        std::placeholders::_2);
+           for (const auto& extern_instance : extern_instances) {
+               p4::config::v1::DirectPacketModMeter direct_pkt_mod_meter;
+               *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+               p4::config::v1::MeterSpec meter_spec;
+               meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
+               *direct_pkt_mod_meter.mutable_spec() = meter_spec;
+               direct_meter_objects.Add(std::move(direct_pkt_mod_meter));
+            }
+            direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects, preamble_cb);
+        }
+     }
+  }
 
   APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
 
@@ -178,6 +200,16 @@ P4InfoManager::FindRegisterByID(uint32 register_id) const {
 ::util::StatusOr<const ::p4::config::v1::Register>
 P4InfoManager::FindRegisterByName(const std::string& register_name) const {
   return register_map_.FindByName(register_name);
+}
+
+::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+P4InfoManager::FindDirectPktModMeterByID(uint32 meter_id) const {
+  return direct_pkt_mod_meter_map_.FindByID(meter_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+P4InfoManager::FindDirectPktModMeterByName(const std::string& meter_name) const {
+  return direct_pkt_mod_meter_map_.FindByName(meter_name);
 }
 
 ::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(

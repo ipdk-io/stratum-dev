@@ -106,6 +106,11 @@ class P4InfoManager {
       const std::string& register_name) const;
   virtual ::util::StatusOr<const std::string> FindResourceTypeByID(
       uint32 id_key) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+  FindDirectPktModMeterByID(uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+  FindDirectPktModMeterByName(const std::string& meter_name) const;
+
 
   // GetSwitchStackAnnotations attempts to parse any @switchstack annotations
   // in the input object's P4Info Preamble.  If the P4 object has multiple
@@ -246,7 +251,6 @@ class P4InfoManager {
     }
 
     const std::string resource_type_;  // String used in errors and logs.
-
     // These maps facilitate lookups from P4 name/ID to resource type T.
     absl::flat_hash_map<uint32, const T*> id_to_resource_map_;
     absl::flat_hash_map<std::string, const T*> name_to_resource_map_;
@@ -280,13 +284,14 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::Meter> meter_map_;
   P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
   P4ResourceMap<::p4::config::v1::Register> register_map_;
-
+  P4ResourceMap<::p4::config::v1::DirectPacketModMeter> direct_pkt_mod_meter_map_;
   // These containers verify that all P4 names and IDs are unique across all
   // types of resources that have an embedded Preamble.
   absl::flat_hash_set<uint32> all_resource_ids_;
   absl::flat_hash_map<std::string, const ::p4::config::v1::Preamble*>
       all_resource_names_;
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
+  google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter> direct_meter_objects;
 };
 
 }  // namespace hal

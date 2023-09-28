@@ -91,7 +91,22 @@ class TableData : public TdiSdeInterface::TableDataInterface {
                                 uint64* pir, uint64* pburst) const override;
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
-
+  ::util::Status SetPktModMeterConfig(bool in_pps,
+                                      uint64 cir_unit, uint64 cburst_unit,
+                                      uint64 pir_unit, uint64 pburst_unit,
+                                      uint64 cir, uint64 cburst,
+                                      uint64 pir, uint64 pburst,
+                                      uint64 greenBytes, uint64 greenPackets,
+                                      uint64 yellowBytes, uint64 yellowPackets,
+                                      uint64 redBytes, uint64 redPackets) override;
+  ::util::Status GetPktModMeterConfig(bool in_pps,
+                                      uint64* cir_unit, uint64* cburst_unit,
+                                      uint64* pir_unit, uint64* pburst_unit,
+                                      uint64* cir, uint64* cburst,
+                                      uint64* pir, uint64* pburst,
+                                      uint64* greenBytes, uint64* greenPackets,
+                                      uint64* yellowBytes, uint64* yellowPackets,
+                                      uint64* redBytes, uint64* redPackets) override;
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
   CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,

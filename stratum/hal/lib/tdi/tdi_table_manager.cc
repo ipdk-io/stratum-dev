@@ -324,7 +324,40 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           table_entry.counter_data().byte_count(),
           table_entry.counter_data().packet_count()));
     }
-  }
+    if (resource_type == "DirectPacketModMeter" && table_entry.has_meter_config()) {
+      bool meter_units_in_packets;  // or bytes
+      ASSIGN_OR_RETURN(auto meter,
+                       p4_info_manager_->FindDirectPktModMeterByID(resource_id));
+      switch (meter.spec().unit()) {
+        case ::p4::config::v1::MeterSpec::BYTES:
+          meter_units_in_packets = false;
+          break;
+        case ::p4::config::v1::MeterSpec::PACKETS:
+          meter_units_in_packets = true;
+          break;
+        default:
+          return MAKE_ERROR(ERR_INVALID_PARAM)
+                 << "Unsupported meter spec on meter "
+                 << meter.ShortDebugString() << ".";
+      }
+      RETURN_IF_ERROR(table_data->SetPktModMeterConfig(
+          meter_units_in_packets,
+          table_entry.meter_config().policer_meter_config().policer_spec_cir_unit(),
+          table_entry.meter_config().policer_meter_config().policer_spec_cbs_unit(),
+          table_entry.meter_config().policer_meter_config().policer_spec_eir_unit(),
+          table_entry.meter_config().policer_meter_config().policer_spec_ebs_unit(),
+          table_entry.meter_config().policer_meter_config().policer_spec_cir(),
+          table_entry.meter_config().policer_meter_config().policer_spec_cbs(),
+          table_entry.meter_config().policer_meter_config().policer_spec_eir(),
+          table_entry.meter_config().policer_meter_config().policer_spec_ebs(),
+          table_entry.meter_counter_data().green().byte_count(),
+          table_entry.meter_counter_data().green().packet_count(),
+          table_entry.meter_counter_data().yellow().byte_count(),
+          table_entry.meter_counter_data().yellow().packet_count(),
+          table_entry.meter_counter_data().red ().byte_count(),
+          table_entry.meter_counter_data().red ().packet_count()));
+    }
+ }
 
   return ::util::OkStatus();
 }
@@ -355,6 +388,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     ASSIGN_OR_RETURN(auto table_data,
                      tdi_sde_interface_->CreateTableData(
                          table_id, table_entry.action().action().action_id()));
+
     if (type == ::p4::v1::Update::INSERT || type == ::p4::v1::Update::MODIFY) {
       RETURN_IF_ERROR(BuildTableData(table_entry, table_data.get()));
     }
@@ -912,19 +946,81 @@ TdiTableManager::ReadDirectMeterEntry(
   RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
-  // TODO(max): build response entry from returned data
-  ::p4::v1::DirectMeterEntry result = direct_meter_entry;
+  ASSIGN_OR_RETURN(auto table,
+                        p4_info_manager_->FindTableByID(table_id));
 
-  uint64 cir = 0;
-  uint64 cburst = 0;
-  uint64 pir = 0;
-  uint64 pburst = 0;
-  RETURN_IF_ERROR(
-      table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
-  result.mutable_config()->set_cir(static_cast<int64>(cir));
-  result.mutable_config()->set_cburst(static_cast<int64>(cburst));
-  result.mutable_config()->set_pir(static_cast<int64>(pir));
-  result.mutable_config()->set_pburst(static_cast<int64>(pburst));
+  ::p4::v1::DirectMeterEntry result = direct_meter_entry;
+  for (const auto& resource_id : table.direct_resource_ids()) {
+     ASSIGN_OR_RETURN(auto resource_type,
+                      p4_info_manager_->FindResourceTypeByID(resource_id));
+     if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
+     // build response entry from returned data
+     uint64 cir = 0;
+     uint64 cburst = 0;
+     uint64 pir = 0;
+     uint64 pburst = 0;
+     RETURN_IF_ERROR(
+        table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
+     result.mutable_config()->set_cir(static_cast<int64>(cir));
+     result.mutable_config()->set_cburst(static_cast<int64>(cburst));
+     result.mutable_config()->set_pir(static_cast<int64>(pir));
+     result.mutable_config()->set_pburst(static_cast<int64>(pburst));
+     }
+     if (resource_type == "DirectPacketModMeter" && table_entry.has_meter_config()) {
+     // build response entry from returned data
+     uint64 pktMod_cir = 0;
+     uint64 pktMod_cburst = 0;
+     uint64 pktMod_pir = 0;
+     uint64 pktMod_pburst = 0;
+     uint64 pktMod_cir_unit = 0;
+     uint64 pktMod_cburst_unit = 0;
+     uint64 pktMod_pir_unit = 0;
+     uint64 pktMod_pburst_unit = 0;
+     uint64 pktMod_greenBytes = 0;
+     uint64 pktMod_greenPackets = 0;
+     uint64 pktMod_yellowBytes = 0;
+     uint64 pktMod_yellowPackets = 0;
+     uint64 pktMod_redBytes = 0;
+     uint64 pktMod_redPackets = 0;
+
+     RETURN_IF_ERROR(
+        table_data->GetPktModMeterConfig(false, &pktMod_cir_unit, &pktMod_cburst_unit,
+                                         &pktMod_pir_unit, &pktMod_pburst_unit,
+                                         &pktMod_cir, &pktMod_cburst, &pktMod_pir,
+                                         &pktMod_pburst, &pktMod_greenBytes,
+                                         &pktMod_greenPackets,&pktMod_yellowBytes,
+                                         &pktMod_yellowPackets,&pktMod_redBytes,
+                                         &pktMod_redPackets));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_cir_unit(static_cast<int64>(pktMod_cir_unit));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_cbs_unit(static_cast<int64>(pktMod_cburst_unit));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_eir_unit(static_cast<int64>(pktMod_pir_unit));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_ebs_unit(static_cast<int64>(pktMod_pburst_unit));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_cir(static_cast<int64>(pktMod_cir));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_cbs(static_cast<int64>(pktMod_cburst));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_eir(static_cast<int64>(pktMod_pir));
+     result.mutable_config()->mutable_policer_meter_config()
+	     ->set_policer_spec_ebs(static_cast<int64>(pktMod_pburst));
+     result.mutable_counter_data()->mutable_green()
+	     ->set_byte_count(static_cast<int64>(pktMod_greenBytes));
+     result.mutable_counter_data()->mutable_green()
+	     ->set_byte_count(static_cast<int64>(pktMod_greenPackets));
+     result.mutable_counter_data()->mutable_yellow()
+	     ->set_byte_count(static_cast<int64>(pktMod_yellowBytes));
+     result.mutable_counter_data()->mutable_yellow()
+	     ->set_byte_count(static_cast<int64>(pktMod_yellowPackets));
+     result.mutable_counter_data()->mutable_red()
+	     ->set_byte_count(static_cast<int64>(pktMod_redBytes));
+     result.mutable_counter_data()->mutable_red()
+	     ->set_byte_count(static_cast<int64>(pktMod_redPackets));
+     }
+  }
 
   return result;
 }
@@ -1057,7 +1153,6 @@ TdiTableManager::ReadDirectMeterEntry(
     result.mutable_config()->set_cburst(cbursts[i]);
     result.mutable_config()->set_pir(pirs[i]);
     result.mutable_config()->set_pburst(pbursts[i]);
-
     *resp.add_entities()->mutable_meter_entry() = result;
   }
 
