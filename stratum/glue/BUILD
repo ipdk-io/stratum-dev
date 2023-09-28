@@ -58,3 +58,8 @@ stratum_cc_library(
         "integral_types.h",
     ],
 )
+
+cc_library(
+    name = "platform",
+    hdrs = ["platform.h"],
+)
