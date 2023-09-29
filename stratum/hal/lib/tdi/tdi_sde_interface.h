@@ -15,6 +15,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/lib/channel/channel.h"
 
@@ -148,32 +149,20 @@ class TdiSdeInterface {
                                           uint64* cburst, uint64* pir,
                                           uint64* pburst) const = 0;
 
+    // Convenience function to update the packet mod meter config in the table
+    // data. This hides the IDs for the $METER_SPEC_* fields.
+    virtual ::util::Status SetPktModMeterConfig(
+        const PktModMeterConfig& cfg) = 0;
+
+    // Get the meter values.
+    virtual ::util::Status GetPktModMeterConfig(
+        PktModMeterConfig& cfg) const = 0;
+
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;
 
     // Resets all data fields.
     virtual ::util::Status Reset(int action_id) = 0;
-
-    // Convenience function to update the packet mod meter config in the table data.
-    // This hides the IDs for the $METER_SPEC_* fields.
-    virtual ::util::Status SetPktModMeterConfig(bool in_pps,
-                                                uint64 cir_unit, uint64 cburst_unit,
-                                                uint64 pir_unit, uint64 pburst_unit,
-                                                uint64 cir, uint64 cburst, uint64 pir,
-                                                uint64 pburst,
-                                                uint64 greenBytes, uint64 greenPackets,
-                                                uint64 yellowBytes, uint64 yellowPackets,
-                                                uint64 redBytes, uint64 redPackets) = 0;
-
-    // Get the meter values.
-    virtual ::util::Status GetPktModMeterConfig(bool in_pps,
-                                                uint64* cir_unit, uint64* cburst_unit,
-                                                uint64* pir_unit, uint64* pburst_unit,
-                                                uint64* cir, uint64* cburst,
-                                                uint64* pir, uint64* pburst,
-                                                uint64* greenBytes, uint64* greenPackets,
-                                                uint64* yellowBytes, uint64* yellowPackets,
-                                                uint64* redBytes, uint64* redPackets) = 0;
   };
 
   virtual ~TdiSdeInterface() {}

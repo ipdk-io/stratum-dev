@@ -93,11 +93,11 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
     // PacketModMeter Externs
     for (const auto& p4extern : program.p4info().externs()) {
       if (p4extern.extern_type_id() == kEs2kExternPacketModMeter) {
-       for (const auto& extern_instance : p4extern.instances()) {
-         RETURN_IF_ERROR(BuildMapping(extern_instance.preamble().id(),
-                                    extern_instance.preamble().name(),
-                                    tdi_info));
-       }
+        for (const auto& extern_instance : p4extern.instances()) {
+          RETURN_IF_ERROR(BuildMapping(extern_instance.preamble().id(),
+                                       extern_instance.preamble().name(),
+                                       tdi_info));
+        }
       }
     }
   }

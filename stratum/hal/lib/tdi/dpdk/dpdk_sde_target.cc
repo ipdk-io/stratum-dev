@@ -19,6 +19,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
@@ -201,6 +202,19 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
     void* cookie) const LOCKS_EXCLUDED(data_lock_) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
          << "Notification Table not supported";
+}
+
+// PacketModMeter 
+::util::Status TdiSdeWrapper::SetPktModMeterConfig(
+    const PktModMeterConfig& cfg) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED)
+         << "Packet-mode meter not supported";
+}
+
+::util::Status TdiSdeWrapper::GetPktModMeterConfig(
+    PktModMeterConfig& cfg) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED)
+         << "Packet-mode meter not supported";
 }
 
 }  // namespace tdi

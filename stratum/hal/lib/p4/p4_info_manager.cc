@@ -15,6 +15,7 @@
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
+
 // This flag allows unit tests to simplify their P4Info setup.  For example,
 // a test that only wants to verify something about a Counter can enable this
 // flag to avoid adding Actions, Tables, and Header Fields to its tested P4Info.
@@ -87,6 +88,8 @@ P4InfoManager::~P4InfoManager() {}
   APPEND_STATUS_IF_ERROR(
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
 
+  // This code depends on a proposed change to the P4Runtime specification,
+  // and is provisional.
   if (!p4_info_.externs().empty()) {
      for (const auto& p4extern : p4_info_.externs()) {
         if (p4extern.extern_type_id() == stratum::hal::tdi::kEs2kExternDirectPacketModMeter) {

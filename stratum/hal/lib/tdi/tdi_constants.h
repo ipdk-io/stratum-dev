@@ -70,7 +70,7 @@ constexpr uint64 kMaxPriority = (1u << 24) - 1;
 
 constexpr absl::Duration kDefaultSyncTimeout = absl::Seconds(1);
 
-// ES2k specific const
+// ES2k specific const used in PacketModMeter
 constexpr uint32 kEs2kExternPacketModMeter = 133;
 constexpr uint32 kEs2kExternDirectPacketModMeter = 134;
 constexpr char kEs2kMeterProfileIdKbps[] = "$POLICER_METER_SPEC_PROF_ID";
@@ -79,13 +79,17 @@ constexpr char kEs2kMeterCommitedBurstKbits[] = "$POLICER_METER_SPEC_CBS";
 constexpr char kEs2kMeterPirKbps[] = "$POLICER_METER_SPEC_EIR";
 constexpr char kEs2kMeterPeakBurstKbits[] = "$POLICER_METER_SPEC_EBS";
 constexpr char kEs2kMeterCirKbpsUnit[] = "$POLICER_METER_SPEC_CIR_UNIT";
-constexpr char kEs2kMeterCommitedBurstKbitsUnit[] = "$POLICER_METER_SPEC_CBS_UNIT";
+constexpr char kEs2kMeterCommitedBurstKbitsUnit[] =
+    "$POLICER_METER_SPEC_CBS_UNIT";
 constexpr char kEs2kMeterPirKbpsUnit[] = "$POLICER_METER_SPEC_EIR_UNIT";
 constexpr char kEs2kMeterPeakBurstKbitsUnit[] = "$POLICER_METER_SPEC_EBS_UNIT";
 constexpr char kEs2kMeterGreenCounterBytes[] = "$POLICER_METER_SPEC_GBYTE_CNTR";
-constexpr char kEs2kMeterGreenCounterPackets[] = "$POLICER_METER_SPEC_GPKT_CNTR";
-constexpr char kEs2kMeterYellowCounterBytes[] = "$POLICER_METER_SPEC_YBYTE_CNTR";
-constexpr char kEs2kMeterYellowCounterPackets[] = "$POLICER_METER_SPEC_YPKT_CNTR";
+constexpr char kEs2kMeterGreenCounterPackets[] =
+    "$POLICER_METER_SPEC_GPKT_CNTR";
+constexpr char kEs2kMeterYellowCounterBytes[] =
+    "$POLICER_METER_SPEC_YBYTE_CNTR";
+constexpr char kEs2kMeterYellowCounterPackets[] =
+    "$POLICER_METER_SPEC_YPKT_CNTR";
 constexpr char kEs2kMeterRedCounterBytes[] = "$POLICER_METER_SPEC_RBYTE_CNTR";
 constexpr char kEs2kMeterRedCounterPackets[] = "$POLICER_METER_SPEC_RPKT_CNTR";
 

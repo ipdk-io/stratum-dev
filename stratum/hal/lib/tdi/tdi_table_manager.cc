@@ -16,6 +16,7 @@
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
+#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
@@ -324,10 +325,11 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           table_entry.counter_data().byte_count(),
           table_entry.counter_data().packet_count()));
     }
-    if (resource_type == "DirectPacketModMeter" && table_entry.has_meter_config()) {
+    if (resource_type == "DirectPacketModMeter" &&
+        table_entry.has_meter_config()) {
       bool meter_units_in_packets;  // or bytes
-      ASSIGN_OR_RETURN(auto meter,
-                       p4_info_manager_->FindDirectPktModMeterByID(resource_id));
+      ASSIGN_OR_RETURN(
+          auto meter, p4_info_manager_->FindDirectPktModMeterByID(resource_id));
       switch (meter.spec().unit()) {
         case ::p4::config::v1::MeterSpec::BYTES:
           meter_units_in_packets = false;
@@ -340,24 +342,40 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << "Unsupported meter spec on meter "
                  << meter.ShortDebugString() << ".";
       }
-      RETURN_IF_ERROR(table_data->SetPktModMeterConfig(
-          meter_units_in_packets,
-          table_entry.meter_config().policer_meter_config().policer_spec_cir_unit(),
-          table_entry.meter_config().policer_meter_config().policer_spec_cbs_unit(),
-          table_entry.meter_config().policer_meter_config().policer_spec_eir_unit(),
-          table_entry.meter_config().policer_meter_config().policer_spec_ebs_unit(),
-          table_entry.meter_config().policer_meter_config().policer_spec_cir(),
-          table_entry.meter_config().policer_meter_config().policer_spec_cbs(),
-          table_entry.meter_config().policer_meter_config().policer_spec_eir(),
-          table_entry.meter_config().policer_meter_config().policer_spec_ebs(),
-          table_entry.meter_counter_data().green().byte_count(),
-          table_entry.meter_counter_data().green().packet_count(),
-          table_entry.meter_counter_data().yellow().byte_count(),
-          table_entry.meter_counter_data().yellow().packet_count(),
-          table_entry.meter_counter_data().red ().byte_count(),
-          table_entry.meter_counter_data().red ().packet_count()));
+      PktModMeterConfig config = {0};
+      config.in_pps = meter_units_in_packets,
+      config.cir_unit = table_entry.meter_config()
+                            .policer_meter_config()
+                            .policer_spec_cir_unit();
+      config.cburst_unit = table_entry.meter_config()
+                               .policer_meter_config()
+                               .policer_spec_cbs_unit();
+      config.pir_unit = table_entry.meter_config()
+                            .policer_meter_config()
+                            .policer_spec_eir_unit();
+      config.pburst_unit = table_entry.meter_config()
+                               .policer_meter_config()
+                               .policer_spec_ebs_unit();
+      config.cir =
+          table_entry.meter_config().policer_meter_config().policer_spec_cir();
+      config.cburst =
+          table_entry.meter_config().policer_meter_config().policer_spec_cbs();
+      config.pir =
+          table_entry.meter_config().policer_meter_config().policer_spec_eir();
+      config.pburst =
+          table_entry.meter_config().policer_meter_config().policer_spec_ebs();
+      config.greenBytes = table_entry.meter_counter_data().green().byte_count();
+      config.greenPackets =
+          table_entry.meter_counter_data().green().packet_count();
+      config.yellowBytes =
+          table_entry.meter_counter_data().yellow().byte_count();
+      config.yellowPackets =
+          table_entry.meter_counter_data().yellow().packet_count();
+      config.redBytes = table_entry.meter_counter_data().red().byte_count();
+      config.redPackets = table_entry.meter_counter_data().red().packet_count();
+      RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
     }
- }
+  }
 
   return ::util::OkStatus();
 }
@@ -946,80 +964,68 @@ TdiTableManager::ReadDirectMeterEntry(
   RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
-  ASSIGN_OR_RETURN(auto table,
-                        p4_info_manager_->FindTableByID(table_id));
+  ASSIGN_OR_RETURN(auto table, p4_info_manager_->FindTableByID(table_id));
 
   ::p4::v1::DirectMeterEntry result = direct_meter_entry;
   for (const auto& resource_id : table.direct_resource_ids()) {
-     ASSIGN_OR_RETURN(auto resource_type,
-                      p4_info_manager_->FindResourceTypeByID(resource_id));
-     if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
-     // build response entry from returned data
-     uint64 cir = 0;
-     uint64 cburst = 0;
-     uint64 pir = 0;
-     uint64 pburst = 0;
-     RETURN_IF_ERROR(
-        table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
-     result.mutable_config()->set_cir(static_cast<int64>(cir));
-     result.mutable_config()->set_cburst(static_cast<int64>(cburst));
-     result.mutable_config()->set_pir(static_cast<int64>(pir));
-     result.mutable_config()->set_pburst(static_cast<int64>(pburst));
-     }
-     if (resource_type == "DirectPacketModMeter" && table_entry.has_meter_config()) {
-     // build response entry from returned data
-     uint64 pktMod_cir = 0;
-     uint64 pktMod_cburst = 0;
-     uint64 pktMod_pir = 0;
-     uint64 pktMod_pburst = 0;
-     uint64 pktMod_cir_unit = 0;
-     uint64 pktMod_cburst_unit = 0;
-     uint64 pktMod_pir_unit = 0;
-     uint64 pktMod_pburst_unit = 0;
-     uint64 pktMod_greenBytes = 0;
-     uint64 pktMod_greenPackets = 0;
-     uint64 pktMod_yellowBytes = 0;
-     uint64 pktMod_yellowPackets = 0;
-     uint64 pktMod_redBytes = 0;
-     uint64 pktMod_redPackets = 0;
+    ASSIGN_OR_RETURN(auto resource_type,
+                     p4_info_manager_->FindResourceTypeByID(resource_id));
+    if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
+      // build response entry from returned data
+      uint64 cir = 0;
+      uint64 cburst = 0;
+      uint64 pir = 0;
+      uint64 pburst = 0;
+      RETURN_IF_ERROR(
+          table_data->GetMeterConfig(false, &cir, &cburst, &pir, &pburst));
+      result.mutable_config()->set_cir(static_cast<int64>(cir));
+      result.mutable_config()->set_cburst(static_cast<int64>(cburst));
+      result.mutable_config()->set_pir(static_cast<int64>(pir));
+      result.mutable_config()->set_pburst(static_cast<int64>(pburst));
+    }
+    if (resource_type == "DirectPacketModMeter" &&
+        table_entry.has_meter_config()) {
+      // build response entry from returned data
+      PktModMeterConfig cfg = {0};
+      RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
 
-     RETURN_IF_ERROR(
-        table_data->GetPktModMeterConfig(false, &pktMod_cir_unit, &pktMod_cburst_unit,
-                                         &pktMod_pir_unit, &pktMod_pburst_unit,
-                                         &pktMod_cir, &pktMod_cburst, &pktMod_pir,
-                                         &pktMod_pburst, &pktMod_greenBytes,
-                                         &pktMod_greenPackets,&pktMod_yellowBytes,
-                                         &pktMod_yellowPackets,&pktMod_redBytes,
-                                         &pktMod_redPackets));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_cir_unit(static_cast<int64>(pktMod_cir_unit));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_cbs_unit(static_cast<int64>(pktMod_cburst_unit));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_eir_unit(static_cast<int64>(pktMod_pir_unit));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_ebs_unit(static_cast<int64>(pktMod_pburst_unit));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_cir(static_cast<int64>(pktMod_cir));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_cbs(static_cast<int64>(pktMod_cburst));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_eir(static_cast<int64>(pktMod_pir));
-     result.mutable_config()->mutable_policer_meter_config()
-	     ->set_policer_spec_ebs(static_cast<int64>(pktMod_pburst));
-     result.mutable_counter_data()->mutable_green()
-	     ->set_byte_count(static_cast<int64>(pktMod_greenBytes));
-     result.mutable_counter_data()->mutable_green()
-	     ->set_byte_count(static_cast<int64>(pktMod_greenPackets));
-     result.mutable_counter_data()->mutable_yellow()
-	     ->set_byte_count(static_cast<int64>(pktMod_yellowBytes));
-     result.mutable_counter_data()->mutable_yellow()
-	     ->set_byte_count(static_cast<int64>(pktMod_yellowPackets));
-     result.mutable_counter_data()->mutable_red()
-	     ->set_byte_count(static_cast<int64>(pktMod_redBytes));
-     result.mutable_counter_data()->mutable_red()
-	     ->set_byte_count(static_cast<int64>(pktMod_redPackets));
-     }
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_cir(static_cast<int64>(cfg.cir));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_eir(static_cast<int64>(cfg.pir));
+      result.mutable_config()
+          ->mutable_policer_meter_config()
+          ->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
+      result.mutable_counter_data()->mutable_green()->set_byte_count(
+          static_cast<int64>(cfg.greenBytes));
+      result.mutable_counter_data()->mutable_green()->set_byte_count(
+          static_cast<int64>(cfg.greenPackets));
+      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
+          static_cast<int64>(cfg.yellowBytes));
+      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
+          static_cast<int64>(cfg.yellowPackets));
+      result.mutable_counter_data()->mutable_red()->set_byte_count(
+          static_cast<int64>(cfg.redBytes));
+      result.mutable_counter_data()->mutable_red()->set_byte_count(
+          static_cast<int64>(cfg.redPackets));
+    }
   }
 
   return result;

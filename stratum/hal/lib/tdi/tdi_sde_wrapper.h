@@ -18,6 +18,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi_id_mapper.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
@@ -89,8 +90,11 @@ class TableData : public TdiSdeInterface::TableDataInterface {
                                 uint64 pir, uint64 pburst) override;
   ::util::Status GetMeterConfig(bool in_pps, uint64* cir, uint64* cburst,
                                 uint64* pir, uint64* pburst) const override;
+  ::util::Status SetPktModMeterConfig(const PktModMeterConfig& cfg) override;
+  ::util::Status GetPktModMeterConfig(PktModMeterConfig& cfg) const override;
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
+  /*
   ::util::Status SetPktModMeterConfig(bool in_pps,
                                       uint64 cir_unit, uint64 cburst_unit,
                                       uint64 pir_unit, uint64 pburst_unit,
@@ -98,15 +102,17 @@ class TableData : public TdiSdeInterface::TableDataInterface {
                                       uint64 pir, uint64 pburst,
                                       uint64 greenBytes, uint64 greenPackets,
                                       uint64 yellowBytes, uint64 yellowPackets,
-                                      uint64 redBytes, uint64 redPackets) override;
+                                      uint64 redBytes, uint64 redPackets)
+  override;
   ::util::Status GetPktModMeterConfig(bool in_pps,
                                       uint64* cir_unit, uint64* cburst_unit,
                                       uint64* pir_unit, uint64* pburst_unit,
                                       uint64* cir, uint64* cburst,
                                       uint64* pir, uint64* pburst,
                                       uint64* greenBytes, uint64* greenPackets,
-                                      uint64* yellowBytes, uint64* yellowPackets,
-                                      uint64* redBytes, uint64* redPackets) override;
+                                      uint64* yellowBytes, uint64*
+  yellowPackets, uint64* redBytes, uint64* redPackets) override;
+  */
   // Allocates a new table data object.
   static ::util::StatusOr<std::unique_ptr<TdiSdeInterface::TableDataInterface>>
   CreateTableData(const ::tdi::TdiInfo* tdi_info, uint32 table_id,
