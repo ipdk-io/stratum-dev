@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 
@@ -17,8 +17,8 @@ namespace tdi {
 using namespace stratum::hal::tdi::helpers;
 
 ::util::Status TableData::SetPktModMeterConfig(
-		const PktModMeterConfig& cfg) {
-  if (cfg.in_pps) {
+    const TdiPktModMeterConfig& cfg) {
+  if (cfg.isPktModMeter) {
     RETURN_IF_ERROR(SetField(table_data_.get(), kMeterCirPps, cfg.cir));
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterCommitedBurstPackets, cfg.cburst));
@@ -28,19 +28,18 @@ using namespace stratum::hal::tdi::helpers;
   } else {
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kEs2kMeterCirKbpsUnit, cfg.cir_unit));
-    RETURN_IF_ERROR(
-        SetField(table_data_.get(), kEs2kMeterCommitedBurstKbitsUnit,
-                             cfg.cburst_unit));
+    RETURN_IF_ERROR(SetField(
+        table_data_.get(), kEs2kMeterCommitedBurstKbitsUnit, cfg.cburst_unit));
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kEs2kMeterPirKbpsUnit, cfg.pir_unit));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbitsUnit,
                              cfg.pburst_unit));
-    RETURN_IF_ERROR(
-        SetField(table_data_.get(), kEs2kMeterCirKbps, BytesPerSecondToKbits(cfg.cir)));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCirKbps,
+                             BytesPerSecondToKbits(cfg.cir)));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCommitedBurstKbits,
                              BytesPerSecondToKbits(cfg.cburst)));
-    RETURN_IF_ERROR(
-        SetField(table_data_.get(), kEs2kMeterPirKbps, BytesPerSecondToKbits(cfg.pir)));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPirKbps,
+                             BytesPerSecondToKbits(cfg.pir)));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
                              BytesPerSecondToKbits(cfg.pburst)));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
@@ -63,39 +62,46 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::Status TableData::GetPktModMeterConfig(PktModMeterConfig& cfg) const {
-  if (cfg.in_pps) {
+::util::Status TableData::GetPktModMeterConfig(
+    TdiPktModMeterConfig& cfg) const {
+  if (cfg.isPktModMeter) {
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, &cfg.cir));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kMeterCommitedBurstPackets, &cfg.cburst));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCommitedBurstPackets,
+                             &cfg.cburst));
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirPps, &cfg.pir));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kMeterPeakBurstPackets, &cfg.pburst));
   } else {
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterCommitedBurstKbitsUnit, &cfg.cburst_unit));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterPirKbpsUnit, &cfg.pir_unit));
+        GetField(*(table_data_.get()), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()),
+                             kEs2kMeterCommitedBurstKbitsUnit,
+                             &cfg.cburst_unit));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterPeakBurstKbitsUnit, &cfg.pburst_unit));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterCirKbps, &cfg.cir));
+        GetField(*(table_data_.get()), kEs2kMeterPirKbpsUnit, &cfg.pir_unit));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterPeakBurstKbitsUnit,
+                             &cfg.pburst_unit));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterCommitedBurstKbits, &cfg.cburst));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterPirKbps, &cfg.pir));
+        GetField(*(table_data_.get()), kEs2kMeterCirKbps, &cfg.cir));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterCommitedBurstKbits,
+                             &cfg.cburst));
+    RETURN_IF_ERROR(
+        GetField(*(table_data_.get()), kEs2kMeterPirKbps, &cfg.pir));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kEs2kMeterPeakBurstKbits, &cfg.pburst));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterGreenCounterBytes, &cfg.greenBytes));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterGreenCounterPackets, &cfg.greenPackets));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterYellowCounterBytes, &cfg.yellowBytes));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterYellowCounterPackets, &cfg.yellowPackets));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterRedCounterBytes, &cfg.redBytes));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterRedCounterPackets, &cfg.redPackets));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterGreenCounterBytes,
+                             &cfg.greenBytes));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()),
+                             kEs2kMeterGreenCounterPackets, &cfg.greenPackets));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterYellowCounterBytes,
+                             &cfg.yellowBytes));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()),
+                             kEs2kMeterYellowCounterPackets,
+                             &cfg.yellowPackets));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterRedCounterBytes,
+                             &cfg.redBytes));
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterRedCounterPackets,
+                             &cfg.redPackets));
 
     cfg.cir_unit = KbitsToBytesPerSecond(cfg.cir_unit);
     cfg.cburst_unit = KbitsToBytesPerSecond(cfg.cburst_unit);

@@ -15,8 +15,8 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
-#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/lib/channel/channel.h"
 
 typedef void (*notification_table_callback_t)(uint32_t dev_id,
@@ -152,11 +152,11 @@ class TdiSdeInterface {
     // Convenience function to update the packet mod meter config in the table
     // data. This hides the IDs for the $METER_SPEC_* fields.
     virtual ::util::Status SetPktModMeterConfig(
-        const PktModMeterConfig& cfg) = 0;
+        const TdiPktModMeterConfig& cfg) = 0;
 
     // Get the meter values.
     virtual ::util::Status GetPktModMeterConfig(
-        PktModMeterConfig& cfg) const = 0;
+        TdiPktModMeterConfig& cfg) const = 0;
 
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;

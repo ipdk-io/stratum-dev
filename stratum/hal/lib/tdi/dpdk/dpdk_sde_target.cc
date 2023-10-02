@@ -19,7 +19,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/tdi/macros.h"
-#include "stratum/hal/lib/tdi/struct.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
@@ -204,17 +204,14 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
          << "Notification Table not supported";
 }
 
-// PacketModMeter 
-::util::Status TdiSdeWrapper::SetPktModMeterConfig(
-    const PktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED)
-         << "Packet-mode meter not supported";
+// PacketModMeter
+::util::Status TableData::SetPktModMeterConfig(
+    const TdiPktModMeterConfig& cfg) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "Packet-mode meter not supported";
 }
 
-::util::Status TdiSdeWrapper::GetPktModMeterConfig(
-    PktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED)
-         << "Packet-mode meter not supported";
+::util::Status TableData::GetPktModMeterConfig(TdiPktModMeterConfig& cfg) {
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "Packet-mode meter not supported";
 }
 
 }  // namespace tdi

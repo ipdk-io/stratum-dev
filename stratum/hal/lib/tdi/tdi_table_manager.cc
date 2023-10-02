@@ -16,8 +16,8 @@
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
-#include "stratum/hal/lib/tdi/struct.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
 
@@ -342,8 +342,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << "Unsupported meter spec on meter "
                  << meter.ShortDebugString() << ".";
       }
-      PktModMeterConfig config = {0};
-      config.in_pps = meter_units_in_packets,
+      TdiPktModMeterConfig config = {0};
+      config.isPktModMeter = meter_units_in_packets,
       config.cir_unit = table_entry.meter_config()
                             .policer_meter_config()
                             .policer_spec_cir_unit();
@@ -986,7 +986,7 @@ TdiTableManager::ReadDirectMeterEntry(
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
       // build response entry from returned data
-      PktModMeterConfig cfg = {0};
+      TdiPktModMeterConfig cfg = {0};
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
 
       result.mutable_config()
