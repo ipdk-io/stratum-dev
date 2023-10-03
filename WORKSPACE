@@ -34,7 +34,7 @@ git_repository(
     remote = "https://github.com/ipdk-io/p4runtime-dev.git",
     # strip_prefix = "proto",  # https://github.com/bazelbuild/bazel/issues/10062
     patch_cmds = ["mv proto/* ."],  # Workaround since strip_prefix is broken.
-    commit = "ebd7abaeaae492425994d51c052c1786f92d69a2",
+    commit = "40e36a3fdef7781f090436e6c5739768b7be05f8",
 )
 
 # ---------------------------------------------------------------------------
