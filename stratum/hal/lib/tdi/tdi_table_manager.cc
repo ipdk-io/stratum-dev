@@ -342,7 +342,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << "Unsupported meter spec on meter "
                  << meter.ShortDebugString() << ".";
       }
-      TdiPktModMeterConfig config = {0};
+      TdiPktModMeterConfig config;
       config.isPktModMeter = meter_units_in_packets,
       config.cir_unit = table_entry.meter_config()
                             .policer_meter_config()
@@ -767,7 +767,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     return ReadSingleTableEntry(session, table_entry, writer);
   }
 
-  CHECK(false) << "This should never happen.";
+  return MAKE_ERROR(ERR_INTERNAL) << "This should never happen.";
 }
 
 // Modify the counter data of a table entry.
@@ -986,7 +986,7 @@ TdiTableManager::ReadDirectMeterEntry(
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
       // build response entry from returned data
-      TdiPktModMeterConfig cfg = {0};
+      TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
 
       result.mutable_config()

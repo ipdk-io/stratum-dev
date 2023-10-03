@@ -207,11 +207,14 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
 // PacketModMeter
 ::util::Status TableData::SetPktModMeterConfig(
     const TdiPktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "Packet-mode meter not supported";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "Packet-mode meter not supported";
 }
 
-::util::Status TableData::GetPktModMeterConfig(TdiPktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << "Packet-mode meter not supported";
+::util::Status TableData::GetPktModMeterConfig(
+    TdiPktModMeterConfig& cfg) const {
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "Packet-mode meter not supported";
 }
 
 }  // namespace tdi

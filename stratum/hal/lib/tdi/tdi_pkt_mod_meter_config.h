@@ -12,6 +12,25 @@ namespace tdi {
 
 // ES2K PacketModMeter Configuration and stats structure
 struct TdiPktModMeterConfig {
+  TdiPktModMeterConfig()
+      : cir_unit(0),
+        cburst_unit(0),
+        pir_unit(0),
+        pburst_unit(0),
+        cir(0),
+        cburst(0),
+        pir(0),
+        pburst(0),
+        greenBytes(0),
+        greenPackets(0),
+        yellowBytes(0),
+        yellowPackets(0),
+        redBytes(0),
+        redPackets(0),
+        isPktModMeter(false) {}
+
+  ~TdiPktModMeterConfig() = default;
+
   uint64 cir_unit;       // Committed Information Rate Unit
   uint64 cburst_unit;    // Committed Burst Unit
   uint64 pir_unit;       // Peak Information Rate Unit

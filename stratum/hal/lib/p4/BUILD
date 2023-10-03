@@ -143,6 +143,7 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/tdi:tdi_constants",	# fix this
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/proto:p4_annotation_cc_proto",
