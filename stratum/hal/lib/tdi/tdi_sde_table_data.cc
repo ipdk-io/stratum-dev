@@ -19,7 +19,6 @@
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
-#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/utils.h"
@@ -67,9 +66,7 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(table_data_->getValue(
       id, value->size(),
       reinterpret_cast<uint8*>(gtl::string_as_array(value))));
-  if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
-    *value = ByteStringToP4RuntimeByteString(*value);
-  }
+  *value = ByteStringToP4RuntimeByteString(*value);
   return ::util::OkStatus();
 }
 
