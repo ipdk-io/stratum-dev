@@ -208,7 +208,8 @@ namespace helpers {
   field_id = keyFieldInfo->idGet();
   data_type = keyFieldInfo->dataTypeGet();
 
-  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||
+            data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
 
@@ -254,7 +255,8 @@ namespace helpers {
   field_id = keyFieldInfo->idGet();
   data_type = keyFieldInfo->dataTypeGet();
 
-  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||
+            data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_key->setValue(field_id, value));
@@ -276,7 +278,8 @@ namespace helpers {
   field_id = dataFieldInfo->idGet();
   data_type = dataFieldInfo->dataTypeGet();
 
-  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||
+            data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_data.getValue(field_id, field_value));
@@ -342,7 +345,8 @@ namespace helpers {
   field_id = dataFieldInfo->idGet();
   data_type = dataFieldInfo->dataTypeGet();
 
-  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64)
+  RET_CHECK(data_type == TDI_FIELD_DATA_TYPE_UINT64 ||
+            data_type == TDI_FIELD_DATA_TYPE_BYTE_STREAM)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_TDI_ERROR(table_data->setValue(field_id, value));

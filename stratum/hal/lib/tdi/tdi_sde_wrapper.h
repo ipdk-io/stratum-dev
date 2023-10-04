@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi_id_mapper.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
@@ -89,6 +90,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
                                 uint64 pir, uint64 pburst) override;
   ::util::Status GetMeterConfig(bool in_pps, uint64* cir, uint64* cburst,
                                 uint64* pir, uint64* pburst) const override;
+  ::util::Status SetPktModMeterConfig(const TdiPktModMeterConfig& cfg) override;
+  ::util::Status GetPktModMeterConfig(TdiPktModMeterConfig& cfg) const override;
   ::util::Status GetActionId(int* action_id) const override;
   ::util::Status Reset(int action_id) override;
 

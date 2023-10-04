@@ -27,6 +27,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/tdi/macros.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
@@ -339,6 +340,19 @@ bf_status_t TdiSdeWrapper::BfPktRxNotifyCallback(bf_dev_id_t device,
     void* cookie) const LOCKS_EXCLUDED(data_lock_) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
          << "Notification Table not supported";
+}
+
+// PacketModMeter
+::util::Status TableData::SetPktModMeterConfig(
+    const TdiPktModMeterConfig& cfg) {
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         <" PacketModMeter not supported";
+}
+
+::util::Status TableData::GetPktModMeterConfig(
+    TdiPktModMeterConfig& cfg) const {
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "PacketModMeter not supported";
 }
 
 }  // namespace tdi

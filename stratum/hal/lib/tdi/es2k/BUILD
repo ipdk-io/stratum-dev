@@ -79,7 +79,10 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_sde_target",
-    srcs = ["es2k_sde_target.cc"],
+    srcs = [
+        "es2k_sde_target.cc",
+        "es2k_sde_table_data.cc",
+    ],
     deps = [
         ":es2k_port_manager",
         "//stratum/glue:integral_types",
@@ -87,6 +90,7 @@ stratum_cc_library(
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/tdi:tdi_constants",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
         "//stratum/lib:constants",
         "//stratum/lib:utils",

@@ -56,7 +56,10 @@ target_sdk_headers = select({
 
 stratum_cc_library(
     name = "tdi_sde_interface",
-    hdrs = ["tdi_sde_interface.h"],
+    hdrs = [
+        "tdi_pkt_mod_meter_config.h",
+        "tdi_sde_interface.h",
+    ],
     defines = target_defines,
     deps = [
         ":tdi_cc_proto",

@@ -16,6 +16,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/lib/channel/channel.h"
 
 typedef void (*notification_table_callback_t)(uint32_t dev_id,
@@ -147,6 +148,15 @@ class TdiSdeInterface {
     virtual ::util::Status GetMeterConfig(bool in_pps, uint64* cir,
                                           uint64* cburst, uint64* pir,
                                           uint64* pburst) const = 0;
+
+    // Convenience function to update the packet mod meter config in the table
+    // data. This hides the IDs for the $METER_SPEC_* fields.
+    virtual ::util::Status SetPktModMeterConfig(
+        const TdiPktModMeterConfig& cfg) = 0;
+
+    // Get the meter values.
+    virtual ::util::Status GetPktModMeterConfig(
+        TdiPktModMeterConfig& cfg) const = 0;
 
     // Get the action ID.
     virtual ::util::Status GetActionId(int* action_id) const = 0;
