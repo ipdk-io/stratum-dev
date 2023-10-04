@@ -64,6 +64,8 @@ using namespace stratum::hal::tdi::helpers;
 
 ::util::Status TableData::GetPktModMeterConfig(
     TdiPktModMeterConfig& cfg) const {
+
+  // Condition checks for Indirect PacketModMeter
   if (cfg.isPktModMeter) {
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, &cfg.cir));
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCommitedBurstPackets,
@@ -71,7 +73,10 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirPps, &cfg.pir));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kMeterPeakBurstPackets, &cfg.pburst));
-  } else {
+  }
+
+  // Condition checks for Direct PacketModMeter
+  else {
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
     RETURN_IF_ERROR(GetField(*(table_data_.get()),

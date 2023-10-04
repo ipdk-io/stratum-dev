@@ -343,6 +343,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << meter.ShortDebugString() << ".";
       }
       TdiPktModMeterConfig config;
+      memset(&config, 0, sizeof(config));
       config.isPktModMeter = meter_units_in_packets,
       config.cir_unit = table_entry.meter_config()
                             .policer_meter_config()
@@ -987,6 +988,7 @@ TdiTableManager::ReadDirectMeterEntry(
         table_entry.has_meter_config()) {
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
+      memset(&cfg, 0, sizeof(cfg));
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
 
       result.mutable_config()

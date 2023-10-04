@@ -71,8 +71,14 @@ constexpr uint64 kMaxPriority = (1u << 24) - 1;
 constexpr absl::Duration kDefaultSyncTimeout = absl::Seconds(1);
 
 // ES2k specific const used in PacketModMeter
+// Values for "kEs2kExternPacketModMeter" and "kEs2kExternDirectPacketModMeter"
+// has been referred from es2k-specific p4info.proto file,
+// P4IDs of the enum prefix for Externs.
 constexpr uint32 kEs2kExternPacketModMeter = 133;
 constexpr uint32 kEs2kExternDirectPacketModMeter = 134;
+
+// Field name for below mentioned parameters has been referred from compiler
+// generated artifact - tdi.json file
 constexpr char kEs2kMeterProfileIdKbps[] = "$POLICER_METER_SPEC_PROF_ID";
 constexpr char kEs2kMeterCirKbps[] = "$POLICER_METER_SPEC_CIR";
 constexpr char kEs2kMeterCommitedBurstKbits[] = "$POLICER_METER_SPEC_CBS";
