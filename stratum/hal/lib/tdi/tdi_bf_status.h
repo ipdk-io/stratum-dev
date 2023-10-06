@@ -1,9 +1,9 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_TDI_MACROS_H_
-#define STRATUM_HAL_LIB_TDI_MACROS_H_
+#ifndef STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_
+#define STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_
 
 extern "C" {
 #include "bf_types/bf_types.h"
@@ -17,9 +17,10 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-class BooleanBfStatus {
+// Wrapper object for a bf_status code from the SDE.
+class TdiBfStatus {
  public:
-  explicit BooleanBfStatus(bf_status_t status) : status_(status) {}
+  explicit TdiBfStatus(bf_status_t status) : status_(status) {}
   operator bool() const { return status_ == BF_SUCCESS; }
   inline bf_status_t status() const { return status_; }
   inline ErrorCode error_code() const {
@@ -71,21 +72,21 @@ class BooleanBfStatus {
   bf_status_t status_;
 };
 
-// A macro for simplify checking and logging the return value of a SDE function
+// A macro to simplify checking and logging the return value of a SDE function
 // call.
 #define RETURN_IF_TDI_ERROR(expr)                             \
-  if (const BooleanBfStatus __ret = BooleanBfStatus(expr)) {  \
+  if (const TdiBfStatus __ret = TdiBfStatus(expr)) {          \
   } else /* NOLINT */                                         \
     return MAKE_ERROR(__ret.error_code())                     \
            << "'" << #expr << "' failed with error message: " \
            << FixMessage(bf_err_str(__ret.status()))
 
-// A macro for simplify creating a new error or appending new info to an
+// A macro to simplify creating a new error or appending new info to an
 // error based on the return value of a SDE function call. The caller function
 // will not return. The variable given as "status" must be an object of type
 // ::util::Status.
 #define APPEND_STATUS_IF_BFRT_ERROR(status, expr)                           \
-  if (const BooleanBfStatus __ret = BooleanBfStatus(expr)) {                \
+  if (const TdiBfStatus __ret = TdiBfStatus(expr)) {                        \
   } else /* NOLINT */                                                       \
     status =                                                                \
         APPEND_ERROR(!status.ok() ? status                                  \
@@ -103,4 +104,4 @@ class BooleanBfStatus {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_MACROS_H_
+#endif  // STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_

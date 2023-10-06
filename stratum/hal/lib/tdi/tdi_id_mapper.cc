@@ -9,7 +9,7 @@
 #include "absl/strings/match.h"
 #include "nlohmann/json.hpp"
 #include "stratum/glue/gtl/map_util.h"
-#include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_utils.h"
 

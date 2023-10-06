@@ -80,8 +80,8 @@ stratum_cc_library(
 stratum_cc_library(
     name = "es2k_sde_target",
     srcs = [
-        "es2k_sde_target.cc",
         "es2k_sde_table_data.cc",
+        "es2k_sde_target.cc",
     ],
     deps = [
         ":es2k_port_manager",
@@ -110,7 +110,7 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:macros",
+        "//stratum/hal/lib/tdi:tdi_bf_status",
         "//stratum/hal/lib/tdi:tdi_port_manager",
         "//stratum/hal/lib/tdi:tdi_sde_common",
         "//stratum/lib/channel",

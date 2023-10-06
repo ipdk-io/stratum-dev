@@ -18,7 +18,7 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/macros.h"
+#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
@@ -207,14 +207,12 @@ std::string TdiSdeWrapper::GetSdeVersion() const {
 // PacketModMeter
 ::util::Status TableData::SetPktModMeterConfig(
     const TdiPktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-         << "PacketModMeter not supported";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketModMeter not supported";
 }
 
 ::util::Status TableData::GetPktModMeterConfig(
     TdiPktModMeterConfig& cfg) const {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-         << "PacketModMeter not supported";
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketModMeter not supported";
 }
 
 }  // namespace tdi
