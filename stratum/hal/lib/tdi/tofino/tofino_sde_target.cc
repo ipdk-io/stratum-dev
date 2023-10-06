@@ -242,6 +242,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
 //  Packetio
 
 ::util::Status TdiSdeWrapper::TxPacket(int device, const std::string& buffer) {
+#ifdef TOFINO_PACKETIO
   bf_pkt* pkt = nullptr;
   RETURN_IF_TDI_ERROR(
       bf_pkt_alloc(device, &pkt, buffer.size(), BF_DMA_CPU_PKT_TRANSMIT_0));
@@ -251,11 +252,12 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
       pkt, reinterpret_cast<const uint8*>(buffer.data()), buffer.size()));
   RETURN_IF_TDI_ERROR(bf_pkt_tx(device, pkt, BF_PKT_TX_RING_0, pkt));
   std::move(pkt_cleaner).Cancel();
-
+#endif
   return ::util::OkStatus();
 }
 
 ::util::Status TdiSdeWrapper::StartPacketIo(int device) {
+#ifdef TOFINO_PACKETIO
   if (!bf_pkt_is_inited(device)) {
     RETURN_IF_TDI_ERROR(bf_pkt_init());
   }
@@ -275,10 +277,12 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
                            static_cast<bf_pkt_rx_ring_t>(rx_ring), nullptr));
   }
   VLOG(1) << "Registered packetio callbacks on device " << device << ".";
+#endif
   return ::util::OkStatus();
 }
 
 ::util::Status TdiSdeWrapper::StopPacketIo(int device) {
+#ifdef TOFINO_PACKETIO
   for (int tx_ring = BF_PKT_TX_RING_0; tx_ring < BF_PKT_TX_RING_MAX;
        ++tx_ring) {
     RETURN_IF_TDI_ERROR(bf_pkt_tx_done_notif_deregister(
@@ -291,8 +295,11 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
         bf_pkt_rx_deregister(device, static_cast<bf_pkt_rx_ring_t>(rx_ring)));
   }
   VLOG(1) << "Unregistered packetio callbacks on device " << device << ".";
+#endif
   return ::util::OkStatus();
 }
+
+#ifdef TOFINO_PACKETIO
 
 ::util::Status TdiSdeWrapper::HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
                                              bf_pkt_rx_ring_t rx_ring) {
@@ -331,6 +338,8 @@ bf_status_t TdiSdeWrapper::BfPktRxNotifyCallback(bf_dev_id_t device,
   tdi_sde_wrapper->HandlePacketRx(device, pkt, rx_ring);
   return bf_pkt_free(device, pkt);
 }
+
+#endif // TOFINO_PACKETIO
 
 // IPsec notification
 

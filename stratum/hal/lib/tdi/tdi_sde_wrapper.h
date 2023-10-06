@@ -24,7 +24,7 @@
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
 
-#ifdef TOFINO_TARGET
+#ifdef TOFINO_PACKETIO
 // FIXME: Target-specific code in a target-agnostic file.
 #include "pkt_mgr/pkt_mgr_intf.h"
 #endif
@@ -354,7 +354,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // Return the singleton instance to be used in the SDE callbacks.
   static TdiSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
 
-#ifdef TOFINO_TARGET
+#ifdef TOFINO_PACKETIO
   // FIXME: Target-specific code in a target-agnostic class.
   // Writes a received packet to the registered Rx writer. Called from the SDE
   // callback function.
@@ -391,7 +391,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // RW mutex lock for protecting the pipeline state.
   mutable absl::Mutex data_lock_;
 
-#ifdef TOFINO_TARGET
+#ifdef TOFINO_PACKETIO
   // Callback registed with the SDE for Tx notifications.
   static bf_status_t BfPktTxNotifyCallback(bf_dev_id_t device,
                                            bf_pkt_tx_ring_t tx_ring,
