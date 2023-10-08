@@ -105,7 +105,7 @@ endfunction()
 
 # OpenSSL libraries
 function(add_stratum_openssl_libs _TGT)
-    if(WITH_OPENSSL)
+    if(ES2K_TARGET)
         target_link_libraries(${_TGT} PUBLIC OpenSSL::Crypto)
     endif()
 endfunction()
