@@ -27,20 +27,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${DEPEND_INSTALL_DIR})
 endif()
 
-find_package(absl REQUIRED)
-find_package(gflags REQUIRED)
-find_package(glog REQUIRED)
-find_package(Protobuf CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-
-if(ES2K_TARGET)
-    find_package(OpenSSL REQUIRED)
-endif()
-
-if(absl_VERSION VERSION_GREATER_EQUAL "20230125")
-  add_compile_definitions(ABSL_LEGACY_THREAD_ANNOTATIONS)
-endif()
-
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
@@ -119,7 +105,7 @@ endfunction()
 
 # OpenSSL libraries
 function(add_stratum_openssl_libs _TGT)
-    if(ES2K_TARGET)
+    if(WITH_OPENSSL)
         target_link_libraries(${_TGT} PUBLIC OpenSSL::Crypto)
     endif()
 endfunction()
