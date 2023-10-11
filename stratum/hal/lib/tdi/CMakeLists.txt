@@ -64,6 +64,11 @@ set_source_files_properties(
     PROPERTIES COMPILE_OPTIONS "-Wno-deprecated-declarations"
 )
 
+if(ES2K_TARGET)
+  # For tdi_fixed_function_manager.
+  target_link_libraries(stratum_tdi_common_o PUBLIC OpenSSL::Crypto)
+endif()
+
 target_include_directories(stratum_tdi_common_o PRIVATE
     ${STRATUM_INCLUDES}
     ${SDE_INSTALL_DIR}/include
