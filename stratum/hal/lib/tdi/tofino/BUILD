@@ -35,7 +35,7 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:macros",
+        "//stratum/hal/lib/tdi:tdi_bf_status",
         "//stratum/hal/lib/tdi:tdi_port_manager",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
         "//stratum/lib:utils",

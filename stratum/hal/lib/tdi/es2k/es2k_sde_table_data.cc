@@ -64,7 +64,6 @@ using namespace stratum::hal::tdi::helpers;
 
 ::util::Status TableData::GetPktModMeterConfig(
     TdiPktModMeterConfig& cfg) const {
-
   // Condition checks for Indirect PacketModMeter
   if (cfg.isPktModMeter) {
     RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, &cfg.cir));

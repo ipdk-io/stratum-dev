@@ -78,7 +78,7 @@ stratum_cc_library(
     hdrs = ["tdi_sde_wrapper.h"],
     defines = target_defines,
     deps = [
-        ":macros",
+        ":tdi_bf_status",
         ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
@@ -102,9 +102,9 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "macros",
-    hdrs = ["macros.h"],
-    # macros.h depends on bf_types
+    name = "tdi_bf_status",
+    hdrs = ["tdi_bf_status.h"],
+    # tdi_bf_status.h depends on bf_types
     defines = target_defines,
     deps = [
         "//stratum/lib:macros",
@@ -128,7 +128,7 @@ stratum_cc_library(
     ],
     defines = target_defines,
     deps = [
-        ":macros",
+        ":tdi_bf_status",
         ":tdi_constants",
         ":tdi_id_mapper",
         ":tdi_sde_headers",
@@ -343,7 +343,7 @@ stratum_cc_library(
     ],
     defines = target_defines,
     deps = [
-        ":macros",
+        ":tdi_bf_status",
         ":tdi_cc_proto",
         ":tdi_constants",
         ":tdi_sde_interface",
