@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
@@ -23,11 +22,6 @@
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
-
-#ifdef TOFINO_TARGET
-// FIXME: Target-specific code in a target-agnostic file.
-#include "pkt_mgr/pkt_mgr_intf.h"
-#endif
 
 namespace stratum {
 namespace hal {
@@ -107,8 +101,8 @@ class TableData : public TdiSdeInterface::TableDataInterface {
   TableData() {}
 };
 
-// The "TdiSdeWrapper" is an implementation of TdiSdeInterface which is used
-// on real hardware to talk to the Tofino ASIC.
+// "TdiSdeWrapper" is a target-neutral implementation of TdiSdeInterface that
+// provides access to the P4 SDE for the target.
 class TdiSdeWrapper : public TdiSdeInterface {
  public:
   // Wrapper around the TDI session object.
@@ -152,24 +146,27 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // TdiSdeInterface public methods.
   ::util::Status InitializeSde(const std::string& sde_install_path,
                                const std::string& sde_config_file,
-                               bool run_in_background) override;
+                               bool run_in_background) override = 0;
   ::util::Status AddDevice(int device,
-                           const TdiDeviceConfig& device_config) override;
+                           const TdiDeviceConfig& device_config) override = 0;
   ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
   CreateSession() override;
   ::util::StatusOr<std::unique_ptr<TableKeyInterface>> CreateTableKey(
       uint32 table_id) override;
   ::util::StatusOr<std::unique_ptr<TableDataInterface>> CreateTableData(
       uint32 table_id, uint32 action_id) override;
-  ::util::StatusOr<bool> IsSoftwareModel(int device) override;
-  std::string GetChipType(int device) const override;
-  std::string GetSdeVersion() const override;
+
+  ::util::StatusOr<bool> IsSoftwareModel(int device) override = 0;
+  std::string GetChipType(int device) const override = 0;
+  std::string GetSdeVersion() const override = 0;
+
   ::util::Status TxPacket(int device, const std::string& packet) override;
   ::util::Status StartPacketIo(int device) override;
   ::util::Status StopPacketIo(int device) override;
   ::util::Status RegisterPacketReceiveWriter(
       int device, std::unique_ptr<ChannelWriter<std::string>> writer) override;
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
+
   ::util::StatusOr<uint32> CreateMulticastNode(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       int mc_replication_id, const std::vector<uint32>& mc_lag_ids,
@@ -344,25 +341,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
       const std::string& table_name, notification_table_callback_t callback,
       void* cookie) const override LOCKS_EXCLUDED(data_lock_);
 
-  // Creates the singleton instance. Expected to be called once to initialize
-  // the instance.
-  static TdiSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
-
-  // The following public functions are specific to this class. They are to be
-  // called by SDE callbacks only.
-
-  // Return the singleton instance to be used in the SDE callbacks.
-  static TdiSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
-
-#ifdef TOFINO_TARGET
-  // FIXME: Target-specific code in a target-agnostic class.
-  // Writes a received packet to the registered Rx writer. Called from the SDE
-  // callback function.
-  ::util::Status HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
-                                bf_pkt_rx_ring_t rx_ring)
-      LOCKS_EXCLUDED(packet_rx_callback_lock_);
-#endif
-
   // TdiSdeWrapper is neither copyable nor movable.
   TdiSdeWrapper(const TdiSdeWrapper&) = delete;
   TdiSdeWrapper& operator=(const TdiSdeWrapper&) = delete;
@@ -370,38 +348,22 @@ class TdiSdeWrapper : public TdiSdeInterface {
   TdiSdeWrapper& operator=(TdiSdeWrapper&&) = delete;
 
  protected:
-  // RW mutex lock for protecting the singleton instance initialization and
-  // reading it back from other threads. Unlike other singleton classes, we
-  // use RW lock as we need the pointer to class to be returned.
-  static absl::Mutex init_lock_;
-
-  // The singleton instance.
-  static TdiSdeWrapper* singleton_ GUARDED_BY(init_lock_);
-
- private:
-  // Private constructor, use CreateSingleton and GetSingleton().
+  // Protected constructor; use CreateSingleton and GetSingleton().
   TdiSdeWrapper();
-
-  // RM Mutex to protect the port status writer.
-  mutable absl::Mutex port_status_event_writer_lock_;
-
-  // Mutex protecting the packet rx writer map.
-  mutable absl::Mutex packet_rx_callback_lock_;
 
   // RW mutex lock for protecting the pipeline state.
   mutable absl::Mutex data_lock_;
 
-#ifdef TOFINO_TARGET
-  // Callback registed with the SDE for Tx notifications.
-  static bf_status_t BfPktTxNotifyCallback(bf_dev_id_t device,
-                                           bf_pkt_tx_ring_t tx_ring,
-                                           uint64 tx_cookie, uint32 status);
+  // TODO(max): make the following maps to handle multiple devices.
+  // Pointer to the ID mapper. Not owned by this class.
+  std::unique_ptr<TdiIdMapper> tdi_id_mapper_ GUARDED_BY(data_lock_);
 
-  // Callback registed with the SDE for Rx notifications.
-  static bf_status_t BfPktRxNotifyCallback(bf_dev_id_t device, bf_pkt* pkt,
-                                           void* cookie,
-                                           bf_pkt_rx_ring_t rx_ring);
-#endif
+  // Pointer to the current BfRt info object. Not owned by this class.
+  const ::tdi::TdiInfo* tdi_info_ GUARDED_BY(data_lock_);
+
+ private:
+  // RM Mutex to protect the port status writer.
+  mutable absl::Mutex port_status_event_writer_lock_;
 
   // Common code for multicast group handling.
   ::util::Status WriteMulticastGroup(
@@ -459,17 +421,6 @@ class TdiSdeWrapper : public TdiSdeInterface {
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<TdiPortManager::PortStatusEvent>>
       port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
-
-  // Map from device ID to packet receive writer.
-  absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
-      device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
-
-  // TODO(max): make the following maps to handle multiple devices.
-  // Pointer to the ID mapper. Not owned by this class.
-  std::unique_ptr<TdiIdMapper> tdi_id_mapper_ GUARDED_BY(data_lock_);
-
-  // Pointer to the current BfR info object. Not owned by this class.
-  const ::tdi::TdiInfo* tdi_info_ GUARDED_BY(data_lock_);
 };
 
 }  // namespace tdi

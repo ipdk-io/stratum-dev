@@ -21,6 +21,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_hal.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_node.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
@@ -28,7 +29,6 @@
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
@@ -98,9 +98,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   const bool initialized = false;
   const bool es2k_infrap4d_background = true;
 
-  auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
-
-  auto es2k_port_manager = Es2kPortManager::CreateSingleton();
+  auto sde_wrapper = Es2kSdeWrapper::CreateSingleton();
 
   RETURN_IF_ERROR(sde_wrapper->InitializeSde(FLAGS_es2k_sde_install,
                                              FLAGS_es2k_infrap4d_cfg,
@@ -139,8 +137,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto port_manager = Es2kPortManager::CreateSingleton();
 
-  auto chassis_manager =
-      Es2kChassisManager::CreateInstance(mode, es2k_port_manager);
+  auto chassis_manager = Es2kChassisManager::CreateInstance(mode, port_manager);
 
   auto ipsec_manager = TdiIpsecManager::CreateInstance(
       sde_wrapper, fixed_function_manager.get());

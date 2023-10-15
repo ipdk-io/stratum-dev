@@ -130,8 +130,9 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "dpdk_sde_target",
-    srcs = ["dpdk_sde_target.cc"],
+    name = "dpdk_sde_wrapper",
+    srcs = ["dpdk_sde_wrapper.cc"],
+    hdrs = ["dpdk_sde_wrapper.h"],
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -142,7 +143,6 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@local_dpdk_bin//:dpdk_sde",
     ],
 )
