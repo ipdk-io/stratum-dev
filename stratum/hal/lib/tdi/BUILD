@@ -92,6 +92,15 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_sde_flags",
+    srcs = ["tdi_sde_flags.cc"],
+    hdrs = ["tdi_sde_flags.h"],
+    deps = [
+        "@com_github_gflags_gflags//:gflags",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_sde_mock",
     testonly = 1,
     hdrs = ["tdi_sde_mock.h"],
@@ -131,6 +140,7 @@ stratum_cc_library(
         ":tdi_bf_status",
         ":tdi_constants",
         ":tdi_id_mapper",
+        ":tdi_sde_flags",
         ":tdi_sde_headers",
         ":tdi_sde_wrapper_interface",
         ":utils",
@@ -504,6 +514,7 @@ stratum_cc_library(
     hdrs = ["tdi_packetio_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_sde_flags",
         ":tdi_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
