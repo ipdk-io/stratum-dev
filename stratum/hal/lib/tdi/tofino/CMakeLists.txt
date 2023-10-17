@@ -15,8 +15,8 @@ target_sources(stratum_tdi_target_o PRIVATE
     tofino_hal.h
     tofino_port_manager.cc
     tofino_port_manager.h
-    tofino_sde_target.cc
     tofino_sde_utils.cc
+    tofino_sde_wrapper.cc
     tofino_switch.cc
     tofino_switch.h
 )

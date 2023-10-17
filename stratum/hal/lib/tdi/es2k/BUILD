@@ -78,11 +78,12 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "es2k_sde_target",
+    name = "es2k_sde_wrapper",
     srcs = [
         "es2k_sde_table_data.cc",
-        "es2k_sde_target.cc",
+        "es2k_sde_wrapper.cc",
     ],
+    hdrs = ["es2k_sde_wrapper.h"],
     deps = [
         ":es2k_port_manager",
         "//stratum/glue:integral_types",

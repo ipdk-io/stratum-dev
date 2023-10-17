@@ -19,10 +19,6 @@ package(
     default_visibility = STRATUM_INTERNAL,
 )
 
-target_defines = [
-    "TOFINO_TARGET",
-]
-
 # tofino_port_manager
 
 stratum_cc_library(
@@ -119,9 +115,9 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tofino_sde_target",
-    srcs = ["tofino_sde_target.cc"],
-    defines = ["TOFINO_TARGET"],
+    name = "tofino_sde_wrapper",
+    srcs = ["tofino_sde_wrapper.cc"],
+    hdrs = ["tofino_sde_wrapper.h"],
     deps = [
         ":tofino_port_manager",
         "//stratum/glue:integral_types",

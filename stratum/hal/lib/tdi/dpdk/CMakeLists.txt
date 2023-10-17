@@ -17,8 +17,8 @@ target_sources(stratum_tdi_target_o PRIVATE
     dpdk_port_config.h
     dpdk_port_manager.cc
     dpdk_port_manager.h
-    dpdk_sde_target.cc
     dpdk_sde_utils.cc
+    dpdk_sde_wrapper.cc
     dpdk_switch.cc
     dpdk_switch.h
 )

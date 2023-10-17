@@ -20,13 +20,13 @@
 #include "stratum/hal/lib/tdi/dpdk/dpdk_chassis_manager.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_hal.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
+#include "stratum/hal/lib/tdi/dpdk/dpdk_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_switch.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
@@ -93,7 +93,7 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   const int device_id = 0;
   const bool dpdk_shell_background = true;
 
-  auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
+  auto sde_wrapper = DpdkSdeWrapper::CreateSingleton();
 
   RETURN_IF_ERROR(sde_wrapper->InitializeSde(
       FLAGS_dpdk_sde_install, FLAGS_dpdk_infrap4d_cfg, dpdk_shell_background));

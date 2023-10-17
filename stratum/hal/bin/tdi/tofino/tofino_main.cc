@@ -12,11 +12,11 @@
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_hal.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
+#include "stratum/hal/lib/tdi/tofino/tofino_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_switch.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
@@ -42,7 +42,7 @@ namespace tdi {
   // components with "device_id" instead of "node_id".
   const int device_id = 0;
 
-  auto sde_wrapper = TdiSdeWrapper::CreateSingleton();
+  auto sde_wrapper = TofinoSdeWrapper::CreateSingleton();
 
   auto tofino_port_manager = TofinoPortManager::CreateSingleton();
 

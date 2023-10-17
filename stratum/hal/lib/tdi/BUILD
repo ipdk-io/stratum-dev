@@ -42,11 +42,6 @@ config_setting(
     },
 )
 
-target_defines = select({
-    ":tofino_target": ["TOFINO_TARGET"],
-    "//conditions:default": [],
-})
-
 target_sdk_headers = select({
     ":dpdk_target": ["@local_dpdk_bin//:dpdk_hdrs"],
     ":es2k_target": ["@local_es2k_bin//:es2k_hdrs"],
@@ -60,7 +55,6 @@ stratum_cc_library(
         "tdi_pkt_mod_meter_config.h",
         "tdi_sde_interface.h",
     ],
-    defines = target_defines,
     deps = [
         ":tdi_cc_proto",
         "//stratum/glue:integral_types",
@@ -76,7 +70,6 @@ stratum_cc_library(
 stratum_cc_library(
     name = "tdi_sde_wrapper_interface",
     hdrs = ["tdi_sde_wrapper.h"],
-    defines = target_defines,
     deps = [
         ":tdi_bf_status",
         ":tdi_sde_interface",
@@ -105,7 +98,6 @@ stratum_cc_library(
     name = "tdi_bf_status",
     hdrs = ["tdi_bf_status.h"],
     # tdi_bf_status.h depends on bf_types
-    defines = target_defines,
     deps = [
         "//stratum/lib:macros",
     ] + target_sdk_headers,
@@ -126,7 +118,6 @@ stratum_cc_library(
         "tdi_sde_table_key.cc",
         "tdi_sde_wrapper.cc",
     ],
-    defines = target_defines,
     deps = [
         ":tdi_bf_status",
         ":tdi_constants",
@@ -341,7 +332,6 @@ stratum_cc_library(
         "tdi_id_mapper.h",
         "tdi_sde_utils.h",
     ],
-    defines = target_defines,
     deps = [
         ":tdi_bf_status",
         ":tdi_cc_proto",

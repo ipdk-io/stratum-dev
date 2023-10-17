@@ -2,7 +2,9 @@
 // Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Tofino-specific SDE wrapper methods.
+// Tofino-specific SDE wrapper.
+
+#include "stratum/hal/lib/tdi/tofino/tofino_sde_wrapper.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,12 +27,11 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
-#include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/utils.h"
 
@@ -53,14 +54,34 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-::util::StatusOr<bool> TdiSdeWrapper::IsSoftwareModel(int device) {
-  bool is_sw_model = true;
-  auto bf_status = bf_pal_pltfm_type_get(device, &is_sw_model);
-  RET_CHECK(bf_status == BF_SUCCESS) << "Error getting software model status.";
-  return is_sw_model;
+TofinoSdeWrapper* TofinoSdeWrapper::singleton_ = nullptr;
+ABSL_CONST_INIT absl::Mutex TofinoSdeWrapper::init_lock_(absl::kConstInit);
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+TofinoSdeWrapper::TofinoSdeWrapper() : device_to_packet_rx_writer_() {}
+
+//------------------------------------------------------------------------------
+// CreateSingleton
+//------------------------------------------------------------------------------
+TofinoSdeWrapper* TofinoSdeWrapper::CreateSingleton() {
+  absl::WriterMutexLock l(&init_lock_);
+  if (!singleton_) {
+    singleton_ = new TofinoSdeWrapper();
+  }
+
+  return singleton_;
 }
 
-// Helper functions around reading the switch SKU.
+TofinoSdeWrapper* TofinoSdeWrapper::GetSingleton() {
+  absl::ReaderMutexLock l(&init_lock_);
+  return singleton_;
+}
+
+//------------------------------------------------------------------------------
+// Identification
+//------------------------------------------------------------------------------
 namespace {
 
 std::string GetBfChipFamilyAndType(int device) {
@@ -90,17 +111,27 @@ std::string GetBfChipId(int device) {
 
 }  // namespace
 
-std::string TdiSdeWrapper::GetChipType(int device) const {
+::util::StatusOr<bool> TofinoSdeWrapper::IsSoftwareModel(int device) {
+  bool is_sw_model = true;
+  auto bf_status = bf_pal_pltfm_type_get(device, &is_sw_model);
+  RET_CHECK(bf_status == BF_SUCCESS) << "Error getting software model status.";
+  return is_sw_model;
+}
+
+std::string TofinoSdeWrapper::GetChipType(int device) const {
   return absl::StrCat(GetBfChipFamilyAndType(device), ", revision ",
                       GetBfChipRevision(device), ", chip_id ",
                       GetBfChipId(device));
 }
 
-std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
+std::string TofinoSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
 
-::util::Status TdiSdeWrapper::InitializeSde(const std::string& sde_install_path,
-                                            const std::string& sde_config_file,
-                                            bool run_in_background) {
+//------------------------------------------------------------------------------
+// InitializeSde
+//------------------------------------------------------------------------------
+::util::Status TofinoSdeWrapper::InitializeSde(
+    const std::string& sde_install_path, const std::string& sde_config_file,
+    bool run_in_background) {
   RET_CHECK(sde_install_path != "") << "sde_install_path is required";
   RET_CHECK(sde_config_file != "") << "sde_config_file is required";
 
@@ -138,8 +169,11 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::AddDevice(int dev_id,
-                                        const TdiDeviceConfig& device_config) {
+//------------------------------------------------------------------------------
+// AddDevice
+//------------------------------------------------------------------------------
+::util::Status TofinoSdeWrapper::AddDevice(
+    int dev_id, const TdiDeviceConfig& device_config) {
   const ::tdi::Device* device = nullptr;
   absl::WriterMutexLock l(&data_lock_);
 
@@ -239,9 +273,11 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   return ::util::OkStatus();
 }
 
-//  Packetio
-
-::util::Status TdiSdeWrapper::TxPacket(int device, const std::string& buffer) {
+//------------------------------------------------------------------------------
+// Packet i/o
+//------------------------------------------------------------------------------
+::util::Status TofinoSdeWrapper::TxPacket(int device,
+                                          const std::string& buffer) {
   bf_pkt* pkt = nullptr;
   RETURN_IF_TDI_ERROR(
       bf_pkt_alloc(device, &pkt, buffer.size(), BF_DMA_CPU_PKT_TRANSMIT_0));
@@ -255,7 +291,7 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::StartPacketIo(int device) {
+::util::Status TofinoSdeWrapper::StartPacketIo(int device) {
   if (!bf_pkt_is_inited(device)) {
     RETURN_IF_TDI_ERROR(bf_pkt_init());
   }
@@ -264,21 +300,21 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   for (int tx_ring = BF_PKT_TX_RING_0; tx_ring < BF_PKT_TX_RING_MAX;
        ++tx_ring) {
     RETURN_IF_TDI_ERROR(bf_pkt_tx_done_notif_register(
-        device, TdiSdeWrapper::BfPktTxNotifyCallback,
+        device, TofinoSdeWrapper::PacketTxNotifyCallback,
         static_cast<bf_pkt_tx_ring_t>(tx_ring)));
   }
 
   for (int rx_ring = BF_PKT_RX_RING_0; rx_ring < BF_PKT_RX_RING_MAX;
        ++rx_ring) {
     RETURN_IF_TDI_ERROR(
-        bf_pkt_rx_register(device, TdiSdeWrapper::BfPktRxNotifyCallback,
+        bf_pkt_rx_register(device, TofinoSdeWrapper::PacketRxNotifyCallback,
                            static_cast<bf_pkt_rx_ring_t>(rx_ring), nullptr));
   }
   VLOG(1) << "Registered packetio callbacks on device " << device << ".";
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::StopPacketIo(int device) {
+::util::Status TofinoSdeWrapper::StopPacketIo(int device) {
   for (int tx_ring = BF_PKT_TX_RING_0; tx_ring < BF_PKT_TX_RING_MAX;
        ++tx_ring) {
     RETURN_IF_TDI_ERROR(bf_pkt_tx_done_notif_deregister(
@@ -294,8 +330,21 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
-                                             bf_pkt_rx_ring_t rx_ring) {
+::util::Status TofinoSdeWrapper::RegisterPacketReceiveWriter(
+    int device, std::unique_ptr<ChannelWriter<std::string>> writer) {
+  absl::WriterMutexLock l(&packet_rx_callback_lock_);
+  device_to_packet_rx_writer_[device] = std::move(writer);
+  return ::util::OkStatus();
+}
+
+::util::Status TofinoSdeWrapper::UnregisterPacketReceiveWriter(int device) {
+  absl::WriterMutexLock l(&packet_rx_callback_lock_);
+  device_to_packet_rx_writer_.erase(device);
+  return ::util::OkStatus();
+}
+
+::util::Status TofinoSdeWrapper::HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
+                                                bf_pkt_rx_ring_t rx_ring) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
   auto rx_writer = gtl::FindOrNull(device_to_packet_rx_writer_, device);
   RET_CHECK(rx_writer) << "No Rx callback registered for device id " << device
@@ -311,10 +360,10 @@ std::string TdiSdeWrapper::GetSdeVersion() const { return "9.11.0"; }
   return ::util::OkStatus();
 }
 
-bf_status_t TdiSdeWrapper::BfPktTxNotifyCallback(bf_dev_id_t device,
-                                                 bf_pkt_tx_ring_t tx_ring,
-                                                 uint64 tx_cookie,
-                                                 uint32 status) {
+bf_status_t TofinoSdeWrapper::PacketTxNotifyCallback(bf_dev_id_t device,
+                                                     bf_pkt_tx_ring_t tx_ring,
+                                                     uint64 tx_cookie,
+                                                     uint32 status) {
   VLOG(1) << "Tx done notification for device: " << device
           << " tx ring: " << tx_ring << " tx cookie: " << tx_cookie
           << " status: " << status;
@@ -323,26 +372,18 @@ bf_status_t TdiSdeWrapper::BfPktTxNotifyCallback(bf_dev_id_t device,
   return bf_pkt_free(device, pkt);
 }
 
-bf_status_t TdiSdeWrapper::BfPktRxNotifyCallback(bf_dev_id_t device,
-                                                 bf_pkt* pkt, void* cookie,
-                                                 bf_pkt_rx_ring_t rx_ring) {
-  TdiSdeWrapper* tdi_sde_wrapper = TdiSdeWrapper::GetSingleton();
+bf_status_t TofinoSdeWrapper::PacketRxNotifyCallback(bf_dev_id_t device,
+                                                     bf_pkt* pkt, void* cookie,
+                                                     bf_pkt_rx_ring_t rx_ring) {
+  TofinoSdeWrapper* tdi_sde_wrapper = TofinoSdeWrapper::GetSingleton();
   // TODO(max): Handle error
   tdi_sde_wrapper->HandlePacketRx(device, pkt, rx_ring);
   return bf_pkt_free(device, pkt);
 }
 
-// IPsec notification
-
-::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
-    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string& table_name, notification_table_callback_t callback,
-    void* cookie) const LOCKS_EXCLUDED(data_lock_) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-         << "Notification Table not supported";
-}
-
+//------------------------------------------------------------------------------
 // PacketModMeter
+//------------------------------------------------------------------------------
 ::util::Status TableData::SetPktModMeterConfig(
     const TdiPktModMeterConfig& cfg) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketModMeter not supported";

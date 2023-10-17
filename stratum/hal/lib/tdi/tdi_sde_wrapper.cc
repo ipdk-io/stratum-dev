@@ -36,13 +36,8 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-TdiSdeWrapper* TdiSdeWrapper::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex TdiSdeWrapper::init_lock_(absl::kConstInit);
-
 TdiSdeWrapper::TdiSdeWrapper()
-    : port_status_event_writer_(nullptr),
-      device_to_packet_rx_writer_(),
-      tdi_info_(nullptr) {}
+    : tdi_info_(nullptr), port_status_event_writer_(nullptr) {}
 
 // Create and start an new session.
 ::util::StatusOr<std::shared_ptr<TdiSdeInterface::SessionInterface>>
@@ -60,19 +55,6 @@ TdiSdeWrapper::CreateTableKey(uint32 table_id) {
 TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   return TableData::CreateTableData(tdi_info_, table_id, action_id);
-}
-
-::util::Status TdiSdeWrapper::RegisterPacketReceiveWriter(
-    int device, std::unique_ptr<ChannelWriter<std::string>> writer) {
-  absl::WriterMutexLock l(&packet_rx_callback_lock_);
-  device_to_packet_rx_writer_[device] = std::move(writer);
-  return ::util::OkStatus();
-}
-
-::util::Status TdiSdeWrapper::UnregisterPacketReceiveWriter(int device) {
-  absl::WriterMutexLock l(&packet_rx_callback_lock_);
-  device_to_packet_rx_writer_.erase(device);
-  return ::util::OkStatus();
 }
 
 ::util::StatusOr<uint32> TdiSdeWrapper::GetTdiRtId(uint32 p4info_id) const {
@@ -97,20 +79,6 @@ TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
   return tdi_id_mapper_->GetActionProfileTdiRtId(action_selector_id);
 }
 
-TdiSdeWrapper* TdiSdeWrapper::CreateSingleton() {
-  absl::WriterMutexLock l(&init_lock_);
-  if (!singleton_) {
-    singleton_ = new TdiSdeWrapper();
-  }
-
-  return singleton_;
-}
-
-TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
-  absl::ReaderMutexLock l(&init_lock_);
-  return singleton_;
-}
-
 ::util::StatusOr<uint32> TdiSdeWrapper::GetTableId(
     std::string& table_name) const {
   const ::tdi::Table* table;
@@ -119,7 +87,43 @@ TdiSdeWrapper* TdiSdeWrapper::GetSingleton() {
     return (table->tableInfoGet()->idGet());
   }
 
-  return MAKE_ERROR(ERR_INTERNAL) << "Error retreiving information from TDI";
+  return MAKE_ERROR(ERR_INTERNAL) << "Error retrieving information from TDI";
+}
+
+//------------------------------------------------------------------------------
+// Packet i/o
+// Return ERR_OPER_NOT_SUPPORTED?
+//------------------------------------------------------------------------------
+::util::Status TdiSdeWrapper::TxPacket(int device, const std::string& buffer) {
+  return ::util::OkStatus();
+}
+
+::util::Status TdiSdeWrapper::StartPacketIo(int device) {
+  return ::util::OkStatus();
+}
+
+::util::Status TdiSdeWrapper::StopPacketIo(int device) {
+  return ::util::OkStatus();
+}
+
+::util::Status TdiSdeWrapper::RegisterPacketReceiveWriter(
+    int device, std::unique_ptr<ChannelWriter<std::string>> writer) {
+  return ::util::OkStatus();
+}
+
+::util::Status TdiSdeWrapper::UnregisterPacketReceiveWriter(int device) {
+  return ::util::OkStatus();
+}
+
+//------------------------------------------------------------------------------
+// IPsec Notification
+//------------------------------------------------------------------------------
+::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
+    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const std::string& table_name, notification_table_callback_t callback,
+    void* cookie) const LOCKS_EXCLUDED(data_lock_) {
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "Notification Table not supported";
 }
 
 }  // namespace tdi

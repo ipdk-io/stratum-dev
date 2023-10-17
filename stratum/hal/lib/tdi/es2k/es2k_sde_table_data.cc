@@ -1,7 +1,7 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Target-agnostic SDE wrapper Table Data methods.
+// ES2K-specific PktModMeterConfig methods.
 
 #include <string>
 
