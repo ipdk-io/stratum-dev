@@ -202,14 +202,14 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
 #if 0
   RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  // RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
-  //           0);
-  // RET_CHECK(
-  //     bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  // if (VLOG_IS_ON(2)) {
-  //   RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
-  //                                  BF_LOG_WARN) == 0);
-  // }
+  RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
+            0);
+  RET_CHECK(
+      bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
+  if (VLOG_IS_ON(2)) {
+    RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
+                                   BF_LOG_WARN) == 0);
+  }
 #endif
 
   std::cout <<"after log setting" << std::endl;
