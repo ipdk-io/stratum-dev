@@ -318,6 +318,7 @@ class BitBuffer {
       rx_writer_->Write(packet_in);
     }
     VLOG(1) << "Handled PacketIn: " << packet_in.ShortDebugString();
+    std::cout  << "Handled PacketIn: " << StringToHex(packet_in.payload()) << std::endl;
   }
 
   return ::util::OkStatus();

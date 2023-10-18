@@ -476,7 +476,9 @@ class TdiSdeInterface {
       const std::string& table_name, notification_table_callback_t callback,
       void* cookie) const = 0;
 
- protected:
+  virtual ::util::Status SetPacketIoConfig(
+      const PacketIoConfig& pktio_config) = 0;
+
   // Default constructor. To be called by the Mock class instance only.
   TdiSdeInterface() {}
 };

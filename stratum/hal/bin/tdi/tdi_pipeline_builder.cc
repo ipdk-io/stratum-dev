@@ -109,7 +109,24 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
         << "Stratum only supports single devices.";
     // Only support single devices for now.
     const auto& device = conf["p4_devices"][0];
-    RET_CHECK(device["p4_programs"].size() == 1)
+
+    // parse pktio_args
+    if (device.contains("pktio-args")) {
+      std::cout << "[satish]: pktio-args present" << std::endl;
+      auto pktio_args = device["pktio-args"];
+      PacketIoConfig pktio_config;
+      for (const auto& port : pktio_args["ports"]) {
+        pktio_config.add_ports(port);
+      }
+      pktio_config.set_nb_rxqs(pktio_args["nb_rxqs"]);
+      pktio_config.set_nb_txqs(pktio_args["nb_txqs"]);
+
+      *bf_config.mutable_packet_io_config() = pktio_config;
+      std::cout << "[satish] rxqs: " << bf_config.packet_io_config().nb_rxqs()
+                << std::endl;
+    }
+
+   RET_CHECK(device["p4_programs"].size() == 1)
         << "BfPipelineConfig only supports single P4 programs.";
     const auto& program = device["p4_programs"][0];
     bf_config.set_p4_name(program["program-name"].get<std::string>());

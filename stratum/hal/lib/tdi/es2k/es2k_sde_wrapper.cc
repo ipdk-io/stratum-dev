@@ -48,7 +48,7 @@ ABSL_CONST_INIT absl::Mutex Es2kSdeWrapper::init_lock_(absl::kConstInit);
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-Es2kSdeWrapper::Es2kSdeWrapper() {}
+Es2kSdeWrapper::Es2kSdeWrapper() : device_to_packet_rx_writer_() {}
 
 //------------------------------------------------------------------------------
 // CreateSingleton
@@ -197,16 +197,22 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   // Set SDE log levels for modules of interest.
   // TODO(max): create story around SDE logs. How to get them into glog? What
   // levels to enable for which modules?
+
+// satish: TODO: THis code is getting stuck
+#if 0
   RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
-            0);
-  RET_CHECK(
-      bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  if (VLOG_IS_ON(2)) {
-    RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
-                                   BF_LOG_WARN) == 0);
-  }
+  // RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
+  //           0);
+  // RET_CHECK(
+  //     bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
+  // if (VLOG_IS_ON(2)) {
+  //   RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
+  //                                  BF_LOG_WARN) == 0);
+  // }
+#endif
+
+  std::cout <<"after log setting" << std::endl;
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   RETURN_IF_TDI_ERROR(

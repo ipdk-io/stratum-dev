@@ -31,13 +31,18 @@ using ::google::protobuf::util::MessageDifferencer;
 
 ::util::Status WriteProtoToBinFile(const ::google::protobuf::Message& message,
                                    const std::string& filename) {
+  return WriteProtoToBinFile(message, filename, false);
+}
+
+::util::Status WriteProtoToBinFile(const ::google::protobuf::Message& message,
+                                   const std::string& filename, bool append) {
   std::string buffer;
   if (!message.SerializeToString(&buffer)) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "Failed to convert proto to bin string buffer: "
            << message.ShortDebugString();
   }
-  RETURN_IF_ERROR(WriteStringToFile(buffer, filename));
+  RETURN_IF_ERROR(WriteStringToFile(buffer, filename, append));
 
   return ::util::OkStatus();
 }

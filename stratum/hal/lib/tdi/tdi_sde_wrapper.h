@@ -22,6 +22,7 @@
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
+#include "tdi/common/tdi_notifications.hpp"
 
 namespace stratum {
 namespace hal {
@@ -340,6 +341,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
       void* cookie) const override LOCKS_EXCLUDED(data_lock_);
+
+  ::util::Status SetPacketIoConfig(const PacketIoConfig& pktio_config) override = 0;
 
   // TdiSdeWrapper is neither copyable nor movable.
   TdiSdeWrapper(const TdiSdeWrapper&) = delete;
