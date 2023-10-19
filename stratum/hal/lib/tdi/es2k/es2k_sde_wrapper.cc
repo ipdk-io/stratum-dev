@@ -212,7 +212,7 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   }
 #endif
 
-  std::cout <<"after log setting" << std::endl;
+  std::cout << "after log setting" << std::endl;
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   RETURN_IF_TDI_ERROR(

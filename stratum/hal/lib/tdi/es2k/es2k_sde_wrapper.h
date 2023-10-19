@@ -47,9 +47,9 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
       int device, std::unique_ptr<ChannelWriter<std::string>> writer) override;
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
 
-
-  ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data, const uint64_t pkt_len);
-      LOCKS_EXCLUDED(packet_rx_callback_lock_);
+  ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
+                                const uint64_t pkt_len);
+  LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
   // Es2kSdeWrapper is neither copyable nor movable.
   Es2kSdeWrapper(const Es2kSdeWrapper&) = delete;
@@ -84,12 +84,9 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
                               std::unique_ptr<::tdi::NotificationParams> params,
                               void* cookie);
 
-
-
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
       device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
-
 };
 
 }  // namespace tdi

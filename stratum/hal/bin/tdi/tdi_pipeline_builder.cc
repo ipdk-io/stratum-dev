@@ -126,7 +126,7 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
                 << std::endl;
     }
 
-   RET_CHECK(device["p4_programs"].size() == 1)
+    RET_CHECK(device["p4_programs"].size() == 1)
         << "BfPipelineConfig only supports single P4 programs.";
     const auto& program = device["p4_programs"][0];
     bf_config.set_p4_name(program["program-name"].get<std::string>());
@@ -136,7 +136,8 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
     bf_config.set_bfruntime_info(tdi_content);
     for (const auto& pipeline : program["p4_pipelines"]) {
       auto profile = bf_config.add_profiles();
-      profile->set_profile_name(pipeline["p4_pipeline_name"].get<std::string>());
+      profile->set_profile_name(
+          pipeline["p4_pipeline_name"].get<std::string>());
       LOG(INFO) << "\tFound pipeline: " << profile->profile_name();
       for (const auto& scope : pipeline["pipe_scope"]) {
         profile->add_pipe_scope(scope);

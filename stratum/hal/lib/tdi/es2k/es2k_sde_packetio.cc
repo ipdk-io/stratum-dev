@@ -45,10 +45,7 @@ enum PktIoField {
   BURST_SZ = 6
 };
 
-enum NotificationId {
-  RX = 1,
-  TX = 2
-};
+enum NotificationId { RX = 1, TX = 2 };
 
 namespace stratum {
 namespace hal {
@@ -129,9 +126,10 @@ void Es2kSdeWrapper::PktIoTxCallback(
 
   // freeing the buffers allocated when transmitting
   for (uint64_t i = 0; i < nb_pkts; i++) {
-    std::cout << "[satish] pkt_buf received" << reinterpret_cast<uint8_t *>(pkt_data[i]) << std::endl;
-    printf("Freeing: %p\n", reinterpret_cast<uint8_t *>(pkt_data[i]));
-    delete[] reinterpret_cast<uint8_t *>(pkt_data[i]);
+    std::cout << "[satish] pkt_buf received"
+              << reinterpret_cast<uint8_t*>(pkt_data[i]) << std::endl;
+    printf("Freeing: %p\n", reinterpret_cast<uint8_t*>(pkt_data[i]));
+    delete[] reinterpret_cast<uint8_t*>(pkt_data[i]);
   }
 }
 
@@ -139,11 +137,13 @@ void Es2kSdeWrapper::PktIoTxCallback(
 // 1. Allocate operations of type transmit_pkt
 // 2. Fill operations object with packet's data
 // 3. Transmit the packet by calling OperationExecute
-// ::util::Status TdiSdeWrapper::TxPacket(int dev_id, const std::string& buffer, const PacketIoConfig &pktio_config) {
+// ::util::Status TdiSdeWrapper::TxPacket(int dev_id, const std::string& buffer,
+// const PacketIoConfig &pktio_config) {
 ::util::Status Es2kSdeWrapper::TxPacket(int dev_id, const std::string& buffer) {
   if (pktio_config_.ports_size() == 0) {
     LOG(INFO) << "pktio not configured, can't transmit packet";
-    std::cout << "[satish] pktio not configured, can't transmit packet" << std::endl;
+    std::cout << "[satish] pktio not configured, can't transmit packet"
+              << std::endl;
     return ::util::OkStatus();
   }
 
@@ -159,7 +159,8 @@ void Es2kSdeWrapper::PktIoTxCallback(
 
   // 1. allocate operations
   std::unique_ptr<::tdi::TableOperations> ops;
-  auto status = table->operationsAllocate(static_cast<tdi_operations_type_e>(132), &ops);
+  auto status =
+      table->operationsAllocate(static_cast<tdi_operations_type_e>(132), &ops);
   if (status != BF_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "operation allocation failed";
@@ -174,7 +175,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   // pkt_buf to be freed in the tx callback function
   auto pkt_buf = new uint8_t[buffer.size()];
   std::cout << "[satish] pkt_buf allocated" << pkt_buf << std::endl;
-  printf("Allocated: %p\n", reinterpret_cast<uint8_t *>(pkt_buf));
+  printf("Allocated: %p\n", reinterpret_cast<uint8_t*>(pkt_buf));
 
   std::memcpy(pkt_buf, buffer.c_str(), buffer.size());
 
@@ -183,7 +184,8 @@ void Es2kSdeWrapper::PktIoTxCallback(
   dump_pkt(raw_data);
   pkts_info.pkt_len[0] = buffer.size();
   pkts_info.pkt_data[0] = pkt_buf;
-  ops->setValue(static_cast<const tdi_operations_field_type_e>(0), reinterpret_cast<uint64_t>(&pkts_info));
+  ops->setValue(static_cast<const tdi_operations_field_type_e>(0),
+                reinterpret_cast<uint64_t>(&pkts_info));
 
   // 3. Transmit the pkt
   status = table->operationsExecute(*dev_tgt, *ops);
@@ -198,8 +200,8 @@ void Es2kSdeWrapper::PktIoTxCallback(
 }
 
 ::util::Status Es2kSdeWrapper::HandlePacketRx(bf_dev_id_t device,
-                                             const char* pkt_data,
-                                             const uint64_t pkt_len) {
+                                              const char* pkt_data,
+                                              const uint64_t pkt_len) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
   auto rx_writer = gtl::FindOrNull(device_to_packet_rx_writer_, device);
   RET_CHECK(rx_writer) << "No Rx callback registered for device id " << device

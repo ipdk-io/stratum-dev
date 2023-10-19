@@ -112,7 +112,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   RETURN_IF_ERROR(ExtractBfPipelineConfig(config, &bf_config));
   VLOG(2) << bf_config.DebugString();
 
- // Create internal TdiDeviceConfig.
+  // Create internal TdiDeviceConfig.
   TdiDeviceConfig tdi_config;
   auto program = tdi_config.add_programs();
   program->set_name(bf_config.p4_name());
@@ -152,7 +152,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   // Push pipeline config to the managers.
   RETURN_IF_ERROR(
       tdi_packetio_manager_->PushForwardingPipelineConfig(tdi_config_));
-      // tdi_packetio_manager_->PushForwardingPipelineConfig(tdi_config_, pktio_config_));
+  // tdi_packetio_manager_->PushForwardingPipelineConfig(tdi_config_,
+  // pktio_config_));
   RETURN_IF_ERROR(
       tdi_table_manager_->PushForwardingPipelineConfig(tdi_config_));
   RETURN_IF_ERROR(

@@ -94,10 +94,6 @@ inline std::string PrintVector(const std::vector<T>& vec,
   return PrintArray<T>(vec.data(), vec.size(), sep);
 }
 
-
-::util::Status WriteProtoToBinFile(const ::google::protobuf::Message& message,
-                                   const std::string& filename, bool append);
-
 // Writes a proto message in binary format to the given file path.
 ::util::Status WriteProtoToBinFile(const ::google::protobuf::Message& message,
                                    const std::string& filename);
