@@ -31,6 +31,8 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_clone_session.cc
     tdi_sde_common.h
     tdi_sde_counter.cc
+    tdi_sde_flags.cc
+    tdi_sde_flags.h
     tdi_sde_helpers.cc
     tdi_sde_helpers.h
     tdi_sde_interface.h

@@ -17,6 +17,7 @@
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/hal/lib/common/constants.h"
 #include "stratum/hal/lib/p4/utils.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/lib/utils.h"
 
 namespace stratum {
@@ -260,8 +261,10 @@ class BitBuffer {
     auto metadata = packet->add_metadata();
     metadata->set_metadata_id(p.first);
     metadata->set_value(bit_buf.PopField(p.second));
-    *metadata->mutable_value() =
-        ByteStringToP4RuntimeByteString(metadata->value());
+    if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
+      *metadata->mutable_value() =
+          ByteStringToP4RuntimeByteString(metadata->value());
+    }
     VLOG(1) << "Encoded PacketIn metadata field with id " << p.first
             << " bitwidth " << p.second << " value 0x"
             << StringToHex(metadata->value());

@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
+#include "stratum/hal/lib/tdi/tdi_sde_flags.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/utils.h"
@@ -159,7 +160,9 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(
       table_key_->getValue(static_cast<tdi_id_t>(id), &exactKey));
 
-  *value = ByteStringToP4RuntimeByteString(*value);
+  if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
+    *value = ByteStringToP4RuntimeByteString(*value);
+  }
 
   return ::util::OkStatus();
 }
@@ -190,8 +193,10 @@ using namespace stratum::hal::tdi::helpers;
   RETURN_IF_TDI_ERROR(
       table_key_->getValue(static_cast<tdi_id_t>(id), &ternaryKey));
 
-  *value = ByteStringToP4RuntimeByteString(*value);
-  *mask = ByteStringToP4RuntimeByteString(*mask);
+  if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
+    *value = ByteStringToP4RuntimeByteString(*value);
+    *mask = ByteStringToP4RuntimeByteString(*mask);
+  }
 
   return ::util::OkStatus();
 }
@@ -217,7 +222,9 @@ using namespace stratum::hal::tdi::helpers;
 
   RETURN_IF_TDI_ERROR(table_key_->getValue(static_cast<tdi_id_t>(id), &lpmKey));
 
-  *prefix = ByteStringToP4RuntimeByteString(*prefix);
+  if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
+    *prefix = ByteStringToP4RuntimeByteString(*prefix);
+  }
   *prefix_length = lpmKey.prefix_len_;
 
   return ::util::OkStatus();
@@ -247,8 +254,10 @@ using namespace stratum::hal::tdi::helpers;
 
   RETURN_IF_TDI_ERROR(
       table_key_->getValue(static_cast<tdi_id_t>(id), &rangeKey));
-  *low = ByteStringToP4RuntimeByteString(*low);
-  *high = ByteStringToP4RuntimeByteString(*high);
+  if (!FLAGS_incompatible_enable_tdi_legacy_bytestring_responses) {
+    *low = ByteStringToP4RuntimeByteString(*low);
+    *high = ByteStringToP4RuntimeByteString(*high);
+  }
   return ::util::OkStatus();
 }
 
