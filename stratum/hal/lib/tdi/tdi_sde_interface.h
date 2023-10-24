@@ -479,6 +479,7 @@ class TdiSdeInterface {
   virtual ::util::Status SetPacketIoConfig(
       const PacketIoConfig& pktio_config) = 0;
 
+ protected:
   // Default constructor. To be called by the Mock class instance only.
   TdiSdeInterface() {}
 };

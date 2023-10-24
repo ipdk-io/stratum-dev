@@ -128,13 +128,7 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   tdi_config_ = tdi_config;
   VLOG(2) << tdi_config_.DebugString();
 
-  // PacketIoConfig pktio_config;
   tdi_sde_interface_->SetPacketIoConfig(bf_config.packet_io_config());
-  // pktio_config_.CopyFrom(bf_config.packet_io_config());
-
-  // pktio_config_ = pktio_config;
-  // VLOG(2) << pktio_config_.DebugString();
-  // std::cout << "satish: " << pktio_config_.DebugString() << std::endl;
 
   return ::util::OkStatus();
 }
@@ -152,8 +146,6 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   // Push pipeline config to the managers.
   RETURN_IF_ERROR(
       tdi_packetio_manager_->PushForwardingPipelineConfig(tdi_config_));
-  // tdi_packetio_manager_->PushForwardingPipelineConfig(tdi_config_,
-  // pktio_config_));
   RETURN_IF_ERROR(
       tdi_table_manager_->PushForwardingPipelineConfig(tdi_config_));
   RETURN_IF_ERROR(

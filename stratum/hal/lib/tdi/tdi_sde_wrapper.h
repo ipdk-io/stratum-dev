@@ -22,7 +22,6 @@
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/lib/channel/channel.h"
-#include "tdi/common/tdi_notifications.hpp"
 
 namespace stratum {
 namespace hal {
