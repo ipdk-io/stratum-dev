@@ -198,8 +198,6 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   // TODO(max): create story around SDE logs. How to get them into glog? What
   // levels to enable for which modules?
 
-// satish: TODO: THis code is getting stuck
-#if 0
   RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
   RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
@@ -210,9 +208,6 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
     RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
                                    BF_LOG_WARN) == 0);
   }
-#endif
-
-  std::cout << "after log setting" << std::endl;
 
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   RETURN_IF_TDI_ERROR(

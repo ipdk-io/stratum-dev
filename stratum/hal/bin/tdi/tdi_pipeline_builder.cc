@@ -112,7 +112,6 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
 
     // parse pktio_args
     if (device.contains("pktio-args")) {
-      std::cout << "[satish]: pktio-args present" << std::endl;
       auto pktio_args = device["pktio-args"];
       PacketIoConfig pktio_config;
       for (const auto& port : pktio_args["ports"]) {
@@ -122,8 +121,6 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
       pktio_config.set_nb_txqs(pktio_args["nb_txqs"]);
 
       *bf_config.mutable_packet_io_config() = pktio_config;
-      std::cout << "[satish] rxqs: " << bf_config.packet_io_config().nb_rxqs()
-                << std::endl;
     }
 
     RET_CHECK(device["p4_programs"].size() == 1)
