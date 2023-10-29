@@ -48,8 +48,8 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
 
   ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
-                                const uint64_t pkt_len);
-  LOCKS_EXCLUDED(packet_rx_callback_lock_);
+                                const uint64_t pkt_len)
+      LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
   // Es2kSdeWrapper is neither copyable nor movable.
   Es2kSdeWrapper(const Es2kSdeWrapper&) = delete;
@@ -69,20 +69,24 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
  private:
   // Private constructor; use CreateSingleton and GetSingleton().
   Es2kSdeWrapper();
-  // Mutex protecting the packet rx writer map.
-  mutable absl::Mutex packet_rx_callback_lock_;
 
-  PacketIoConfig pktio_config_;
-
+  // Callback registed with the SDE for Rx notifications.
   static void PktIoRxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,
                               std::unique_ptr<::tdi::NotificationParams> params,
                               void* cookie);
 
+  // Callback registed with the SDE for Tx notifications.
   static void PktIoTxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,
                               std::unique_ptr<::tdi::NotificationParams> params,
                               void* cookie);
+
+  // Mutex protecting the packet rx writer map.
+  mutable absl::Mutex packet_rx_callback_lock_;
+
+  // packetIo config
+  PacketIoConfig pktio_config_;
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>

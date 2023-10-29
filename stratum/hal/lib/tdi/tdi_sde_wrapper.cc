@@ -126,6 +126,11 @@ TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
          << "Notification Table not supported";
 }
 
+::util::Status TdiSdeWrapper::SetPacketIoConfig(
+    const PacketIoConfig& pktio_config) {
+  return ::util::OkStatus();
+}
+
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

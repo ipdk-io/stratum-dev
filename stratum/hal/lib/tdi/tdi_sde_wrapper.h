@@ -342,7 +342,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
       void* cookie) const override LOCKS_EXCLUDED(data_lock_);
 
   ::util::Status SetPacketIoConfig(
-      const PacketIoConfig& pktio_config) override = 0;
+      const PacketIoConfig& pktio_config) override;
 
   // TdiSdeWrapper is neither copyable nor movable.
   TdiSdeWrapper(const TdiSdeWrapper&) = delete;

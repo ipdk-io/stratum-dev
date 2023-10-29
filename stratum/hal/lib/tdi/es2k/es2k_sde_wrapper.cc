@@ -197,7 +197,6 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   // Set SDE log levels for modules of interest.
   // TODO(max): create story around SDE logs. How to get them into glog? What
   // levels to enable for which modules?
-
   RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
   RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
