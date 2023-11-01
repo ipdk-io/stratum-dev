@@ -80,9 +80,9 @@ stratum_cc_library(
 stratum_cc_library(
     name = "es2k_sde_wrapper",
     srcs = [
+        "es2k_sde_packetio.cc",
         "es2k_sde_table_data.cc",
         "es2k_sde_wrapper.cc",
-        "es2k_sde_packetio.cc",
     ],
     hdrs = ["es2k_sde_wrapper.h"],
     deps = [
