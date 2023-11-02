@@ -1,13 +1,6 @@
 // Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
 #include <algorithm>
 #include <memory>
 #include <ostream>
@@ -33,6 +26,17 @@
 #include "tdi_rt/tdi_rt_defs.h"
 #include "tdi_rt/tdi_rt_operations.hpp"
 
+#ifdef PKTIO_DUMP_PKT
+#include <arpa/inet.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#endif
+
+// The below macros and enum values are derived from
+// $SDE_INSTALL/share/bf_rt_shared/tdi_pktio.json
 #define PKTIO_TABLE_NAME "pktio.packetio"
 #define RX_BURST_FIELD_ID 3
 
@@ -53,7 +57,7 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-// satish: Only for testing. Remove after testing
+#ifdef PKTIO_DUMP_PKT
 void dump_pkt(const char* raw_data) {
   struct ip* ip_hdr;
   char src_ip_str[INET_ADDRSTRLEN];
@@ -82,6 +86,7 @@ void dump_pkt(const char* raw_data) {
   printf("pktio: Src IP: %s\n", src_ip_str);
   printf("pktio: Dst IP: %s\n", dst_ip_str);
 }
+#endif
 
 ::util::Status Es2kSdeWrapper::RegisterPacketReceiveWriter(
     int device, std::unique_ptr<ChannelWriter<std::string>> writer) {
@@ -102,32 +107,19 @@ void dump_pkt(const char* raw_data) {
   return ::util::OkStatus();
 }
 
-// TxCallback that is called by sde for Tx done.
+// Callback function called by the driver after transmitting the packet.
+// Free the buffers now that transmission is complete
 void Es2kSdeWrapper::PktIoTxCallback(
     std::unique_ptr<::tdi::TableKey> key,
     std::unique_ptr<::tdi::TableData> data,
     std::unique_ptr<::tdi::NotificationParams> pkts_info_recv, void* cookie) {
-  uint64_t port_id;
-  uint64_t queue_id;
   uint64_t nb_pkts;
-  std::vector<uint64_t> pkt_len;  /* len of pkts */
   std::vector<uint64_t> pkt_data; /* pointers to pkts data */
 
-  // parse callback params
-  pkts_info_recv->getValue(PORT_ID, &port_id);
-  pkts_info_recv->getValue(QUEUE_ID, &queue_id);
   pkts_info_recv->getValue(NB_PKTS, &nb_pkts);
-  pkts_info_recv->getValue(PKT_LEN, &pkt_len);
   pkts_info_recv->getValue(PKT_DATA, &pkt_data);
 
-  printf(
-      "[satish] pktio: callbacks received for %lu pkts sent on port_id: %lu, "
-      "queue_id: %lu\n",
-      nb_pkts, port_id, queue_id);
-
-  // freeing the buffers that were allocated during Tx
   for (uint64_t i = 0; i < nb_pkts; i++) {
-    printf("[satish] Freeing: %p\n", reinterpret_cast<uint8_t*>(pkt_data[i]));
     delete[] reinterpret_cast<uint8_t*>(pkt_data[i]);
   }
 }
@@ -138,19 +130,21 @@ void Es2kSdeWrapper::PktIoTxCallback(
 // 3. Transmit the packet by calling OperationExecute
 ::util::Status Es2kSdeWrapper::TxPacket(int dev_id, const std::string& buffer) {
   if (pktio_config_.ports_size() == 0) {
-    LOG(INFO) << "pktio not configured, can't transmit packet";
-    std::cout << "[satish] pktio not configured, can't transmit packet"
-              << std::endl;
-    return ::util::OkStatus();
+    return MAKE_ERROR(::util::error::Code::UNAVAILABLE)
+           << "packetIo not configured, can't transmit packet";
   }
 
-  // create Target
+  // create Target object for the device
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
+  if (dev_tgt == nullptr) {
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
+           << "Failed to create target ";
+  }
 
-  // get table
+  // Get pointer to packet i/o table.
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(PKTIO_TABLE_NAME, &table));
 
@@ -159,7 +153,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   auto status =
       table->operationsAllocate(static_cast<tdi_operations_type_e>(TDI_RT_OPERATIONS_TYPE_TRANSMIT_PKTS), &ops);
   if (status != BF_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "operation allocation failed";
   }
 
@@ -169,15 +163,15 @@ void Es2kSdeWrapper::PktIoTxCallback(
   pkts_info.port_id = pktio_config_.ports(0);
   pkts_info.queue_id = 0;
   pkts_info.burst_sz = 1;
+
   // pkt_buf to be freed in the tx callback function
   auto pkt_buf = new uint8_t[buffer.size()];
-  printf("[satish]Allocated: %p\n", reinterpret_cast<uint8_t*>(pkt_buf));
-
   std::memcpy(pkt_buf, buffer.c_str(), buffer.size());
 
-  // [satish] only for testing
+#ifdef PKTIO_DUMP_PKT
   auto raw_data = reinterpret_cast<const char*>(pkt_buf);
   dump_pkt(raw_data);
+#endif
 
   pkts_info.pkt_len[0] = buffer.size();
   pkts_info.pkt_data[0] = pkt_buf;
@@ -214,62 +208,56 @@ void Es2kSdeWrapper::PktIoTxCallback(
   return ::util::OkStatus();
 }
 
+// Callback function called by the driver when packets are received.
+// NotificationParams contains the packets data and lengths
 void Es2kSdeWrapper::PktIoRxCallback(
     std::unique_ptr<::tdi::TableKey> key,
     std::unique_ptr<::tdi::TableData> data,
     std::unique_ptr<::tdi::NotificationParams> pkts_info_recv, void* cookie) {
-  std::cout << "[Satish] PktIoRxCallback called" << std::endl;
-
-  uint64_t port_id;
-  uint64_t queue_id;
   uint64_t nb_pkts;
   std::vector<uint64_t> pkt_len;  /* len of pkts */
   std::vector<uint64_t> pkt_data; /* pointers to pkts data */
 
-  // parse callback params
-  pkts_info_recv->getValue(PORT_ID, &port_id);
-  pkts_info_recv->getValue(QUEUE_ID, &queue_id);
   pkts_info_recv->getValue(NB_PKTS, &nb_pkts);
   pkts_info_recv->getValue(PKT_LEN, &pkt_len);
   pkts_info_recv->getValue(PKT_DATA, &pkt_data);
-
-  printf("[satish] pktio: %lu pkts received on port_id: %lu, queue_id: %lu\n",
-         nb_pkts, port_id, queue_id);
 
   Es2kSdeWrapper* tdi_sde_wrapper = Es2kSdeWrapper::GetSingleton();
 
   const char* raw_data;
   for (uint64_t i = 0; i < nb_pkts; i++) {
-    printf("pktio: pkt_len: %lu\n", pkt_len[i]);
     raw_data = reinterpret_cast<const char*>(pkt_data[i]);
-
-    // satish: Only for testing: dump the pkt headers
-    printf("[satish] pktio: pkt received:\n");
+#ifdef PKTIO_DUMP_PKT
     dump_pkt(raw_data);
-
-    // satish: TODO: Need to find a way to get device_id
+#endif
+    // TODO: Need to find a way to get device_id
     tdi_sde_wrapper->HandlePacketRx(0, raw_data, pkt_len[i]);
   }
 }
 
-// StartPacketIo registers callbacks for all the ports and queues in specified
-// in PacketIoConfig
+// StartPacketIo initializes callback registration for all the ports and queues defined
+// in PacketIoConfig.
+// For Rx operations, the driver code continuously polls packets on the configured ports
+// and queues, invoking the registered callbacks with packet details.
+// As for Tx operations, packets are transmitted via the first available port and queue
+// from the configuration.
 ::util::Status Es2kSdeWrapper::StartPacketIo(int dev_id) {
   if (pktio_config_.ports_size() == 0) {
-    LOG(INFO) << "pktio not configured";
-    std::cout << "[satish] pktio not configured" << std::endl;
+    LOG(INFO) << "packetIo not configured";
     return ::util::OkStatus();
   }
 
-  std::cout << "[satish] pktio configured" << std::endl;
-
-  // create Target
+  // create Target object for the device
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
+  if (dev_tgt == nullptr) {
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
+           << "Failed to create target ";
+  }
 
-  // get table
+  // Get pointer to packet i/o table.
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(PKTIO_TABLE_NAME, &table));
 
@@ -278,7 +266,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   tdi_status_t status = table->notificationRegistrationParamsAllocate(
       RX, &rx_notification_params);
   if (status != BF_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "rx_notification allocation fail ";
   }
 
@@ -286,7 +274,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   std::unique_ptr<::tdi::NotificationParams> tx_notification_params;
   table->notificationRegistrationParamsAllocate(TX, &tx_notification_params);
   if (status != BF_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "tx_notification allocation fail ";
   }
 
@@ -299,7 +287,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
       rx_notification_params->setValue(PORT_ID, port_id);
       rx_notification_params->setValue(QUEUE_ID, queue_id);
       rx_notification_params->setValue(RX_BURST_FIELD_ID,
-                                       1);  // burst_sz set to 1
+                                       1);
 
       // register rx callback
       status = table->notificationRegister(*dev_tgt, RX,
@@ -334,27 +322,29 @@ void Es2kSdeWrapper::PktIoRxCallback(
       }
     }
   }
-
-  std::cout << "[satish] PacketIO started" << std::endl;
   return ::util::OkStatus();
 }
 
+// Deregisters callbacks for the configured ports and queues.
+// After this, ports and queues will no longer be polled, and packet transmission will fail.
+// This operation is currently invoked only during the exit of infrap4d.
 ::util::Status Es2kSdeWrapper::StopPacketIo(int dev_id) {
   if (pktio_config_.ports_size() == 0) {
-    LOG(INFO) << "pktio not configured";
-    std::cout << "[satish] pktio not configured" << std::endl;
+    LOG(INFO) << "packetIo not configured";
     return ::util::OkStatus();
   }
 
-  std::cout << "[satish] pktio configured" << std::endl;
-
-  // create Target
+  // create Target object for the device
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
+  if (dev_tgt == nullptr) {
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
+           << "Failed to create target ";
+  }
 
-  // get table
+  // Get pointer to packet i/o table.
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(PKTIO_TABLE_NAME, &table));
 
@@ -363,7 +353,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   tdi_status_t status = table->notificationRegistrationParamsAllocate(
       RX, &rx_notification_params);
   if (status != BF_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "rx_notification allocation fail ";
   }
 
@@ -371,7 +361,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   std::unique_ptr<::tdi::NotificationParams> tx_notification_params;
   table->notificationRegistrationParamsAllocate(TX, &tx_notification_params);
   if (status != BF_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "tx_notification allocation fail ";
   }
 
@@ -417,8 +407,6 @@ void Es2kSdeWrapper::PktIoRxCallback(
       }
     }
   }
-
-  std::cout << "[satish] PacketIO stopped" << std::endl;
 
   return ::util::OkStatus();
 }
