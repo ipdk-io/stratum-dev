@@ -110,6 +110,10 @@ class P4InfoManager {
   FindDirectPktModMeterByID(uint32 meter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
   FindDirectPktModMeterByName(const std::string& meter_name) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+  FindPktModMeterByID(uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+  FindPktModMeterByName(const std::string& meter_name) const;
 
   // GetSwitchStackAnnotations attempts to parse any @switchstack annotations
   // in the input object's P4Info Preamble.  If the P4 object has multiple
@@ -285,6 +289,7 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::Register> register_map_;
   P4ResourceMap<::p4::config::v1::DirectPacketModMeter>
       direct_pkt_mod_meter_map_;
+  P4ResourceMap<::p4::config::v1::PacketModMeter> pkt_mod_meter_map_;
   // These containers verify that all P4 names and IDs are unique across all
   // types of resources that have an embedded Preamble.
   absl::flat_hash_set<uint32> all_resource_ids_;
@@ -293,6 +298,8 @@ class P4InfoManager {
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
   google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter>
       direct_meter_objects;
+  google::protobuf::RepeatedPtrField<p4::config::v1::PacketModMeter>
+      meter_objects;
 };
 
 }  // namespace hal

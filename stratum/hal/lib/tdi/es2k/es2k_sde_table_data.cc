@@ -26,6 +26,8 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterPeakBurstPackets, cfg.pburst));
   } else {
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterProfileIdKbps,
+                             cfg.meter_prof_id));
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kEs2kMeterCirKbpsUnit, cfg.cir_unit));
     RETURN_IF_ERROR(SetField(
@@ -76,6 +78,8 @@ using namespace stratum::hal::tdi::helpers;
 
   // Condition checks for Direct PacketModMeter
   else {
+    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterProfileIdKbps,
+                             &cfg.meter_prof_id));
     RETURN_IF_ERROR(
         GetField(*(table_data_.get()), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
     RETURN_IF_ERROR(GetField(*(table_data_.get()),

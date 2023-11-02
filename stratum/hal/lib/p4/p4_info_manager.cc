@@ -39,6 +39,7 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       value_set_map_("ValueSet"),
       register_map_("Register"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      pkt_mod_meter_map_("PacketModMeter"),
       all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
@@ -52,6 +53,7 @@ P4InfoManager::P4InfoManager()
       value_set_map_("ValueSet"),
       register_map_("Register"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      pkt_mod_meter_map_("PacketModMeter"),
       all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
@@ -108,6 +110,24 @@ P4InfoManager::~P4InfoManager() {}
           direct_meter_objects.Add(std::move(direct_pkt_mod_meter));
         }
         direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects, preamble_cb);
+      }
+      if (p4extern.extern_type_id() ==
+          stratum::hal::tdi::kEs2kExternPacketModMeter) {
+        const auto& extern_instances_pktMod = p4extern.instances();
+        PreambleCallback preamble_cb_pktMod =
+            std::bind(&P4InfoManager::ProcessPreamble, this,
+                      std::placeholders::_1, std::placeholders::_2);
+        for (const auto& extern_instance_pktMod : extern_instances_pktMod) {
+          p4::config::v1::PacketModMeter pkt_mod_meter;
+          *pkt_mod_meter.mutable_preamble() = extern_instance_pktMod.preamble();
+          p4::config::v1::MeterSpec meter_spec_pktMod;
+          meter_spec_pktMod.set_unit(p4::config::v1::MeterSpec::PACKETS);
+          pkt_mod_meter.set_size(1024);
+          pkt_mod_meter.set_index_width(20);
+          *pkt_mod_meter.mutable_spec() = meter_spec_pktMod;
+          meter_objects.Add(std::move(pkt_mod_meter));
+        }
+        pkt_mod_meter_map_.BuildMaps(meter_objects, preamble_cb_pktMod);
       }
     }
   }
@@ -216,6 +236,16 @@ P4InfoManager::FindDirectPktModMeterByID(uint32 meter_id) const {
 P4InfoManager::FindDirectPktModMeterByName(
     const std::string& meter_name) const {
   return direct_pkt_mod_meter_map_.FindByName(meter_name);
+}
+
+::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+P4InfoManager::FindPktModMeterByID(uint32 meter_id) const {
+  return pkt_mod_meter_map_.FindByID(meter_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+P4InfoManager::FindPktModMeterByName(const std::string& meter_name) const {
+  return pkt_mod_meter_map_.FindByName(meter_name);
 }
 
 ::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(

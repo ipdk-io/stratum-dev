@@ -17,6 +17,7 @@ target_sources(stratum_tdi_target_o PRIVATE
     es2k_node.h
     es2k_port_manager.cc
     es2k_port_manager.h
+    es2k_sde_meter.cc
     es2k_sde_table_data.cc
     es2k_sde_utils.cc
     es2k_sde_wrapper.cc

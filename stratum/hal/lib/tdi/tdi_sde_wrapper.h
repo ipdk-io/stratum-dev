@@ -247,6 +247,16 @@ class TdiSdeWrapper : public TdiSdeInterface {
       std::vector<uint64>* cbursts, std::vector<uint64>* pirs,
       std::vector<uint64>* pbursts, std::vector<bool>* in_pps) override
       LOCKS_EXCLUDED(data_lock_);
+  ::util::Status WritePktModMeter(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::optional<uint32> meter_index,
+      TdiPktModMeterConfig& cfg) override LOCKS_EXCLUDED(data_lock_);
+  ::util::Status ReadPktModMeters(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::optional<uint32> meter_index,
+      std::vector<uint32>* meter_indices,
+      std::vector<TdiPktModMeterConfig>& cfg) override
+      LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,

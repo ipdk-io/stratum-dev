@@ -98,6 +98,18 @@ constexpr char kEs2kMeterYellowCounterPackets[] =
     "$POLICER_METER_SPEC_YPKT_CNTR";
 constexpr char kEs2kMeterRedCounterBytes[] = "$POLICER_METER_SPEC_RBYTE_CNTR";
 constexpr char kEs2kMeterRedCounterPackets[] = "$POLICER_METER_SPEC_RPKT_CNTR";
+constexpr char kEs2kMeterProfileIdKPps[] = "$POLICER_METER_SPEC_PROF_ID";
+constexpr char kEs2kMeterIndex[] = "$METER_INDEX";
+constexpr char kEs2kMeterCirPps[] = "$POLICER_METER_SPEC_CIR";
+constexpr char kEs2kMeterCommitedBurstPackets[] = "$POLICER_METER_SPEC_CBS";
+constexpr char kEs2kMeterPirPps[] = "$POLICER_METER_SPEC_EIR";
+constexpr char kEs2kMeterPeakBurstPackets[] = "$POLICER_METER_SPEC_EBS";
+constexpr char kEs2kMeterCirKPpsUnit[] = "$POLICER_METER_SPEC_CIR_UNIT";
+constexpr char kEs2kMeterCommitedBurstPacketsUnit[] =
+    "$POLICER_METER_SPEC_CBS_UNIT";
+constexpr char kEs2kMeterPirPpsUnit[] = "$POLICER_METER_SPEC_EIR_UNIT";
+constexpr char kEs2kMeterPeakBurstPacketsUnit[] =
+    "$POLICER_METER_SPEC_EBS_UNIT";
 
 }  // namespace tdi
 }  // namespace hal
