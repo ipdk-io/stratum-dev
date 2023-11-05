@@ -47,6 +47,8 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
       int device, std::unique_ptr<ChannelWriter<std::string>> writer) override;
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
 
+  // Writes a received packet to the registered Rx writer. Called from the SDE
+  // callback function.
   ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
                                 const uint64_t pkt_len)
       LOCKS_EXCLUDED(packet_rx_callback_lock_);
@@ -70,13 +72,15 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   // Private constructor; use CreateSingleton and GetSingleton().
   Es2kSdeWrapper();
 
-  // Callback registed with the SDE for Rx notifications.
+  // Callback registered with the SDE, called when packet is received
+  // NotificationParams contains the packet data.
   static void PktIoRxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,
                               std::unique_ptr<::tdi::NotificationParams> params,
                               void* cookie);
 
-  // Callback registed with the SDE for Tx notifications.
+  // Callback registered with the SDE, called when packet is transmitted
+  // NotificationParams contains the packet data.
   static void PktIoTxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,
                               std::unique_ptr<::tdi::NotificationParams> params,

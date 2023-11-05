@@ -141,7 +141,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   device->createTarget(&dev_tgt);
   if (dev_tgt == nullptr) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
-           << "Failed to create target ";
+           << "Error allocating target object";
   }
 
   // Get pointer to packet i/o table.
@@ -154,10 +154,11 @@ void Es2kSdeWrapper::PktIoTxCallback(
       table->operationsAllocate(static_cast<tdi_operations_type_e>(TDI_RT_OPERATIONS_TYPE_TRANSMIT_PKTS), &ops);
   if (status != BF_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
-           << "operation allocation failed";
+           << "Error allocating TableOperations object";
   }
 
-  // 2. Fill pkts_info
+  // 2. Create TxPktsInfo object to provide information about the packet
+  // to be transmitted.
   ::tdi::pna::rt::TxPktsInfo pkts_info;
   // Packet is transmitted on the first port in the ports list and queue 0
   pkts_info.port_id = pktio_config_.ports(0);
@@ -175,7 +176,9 @@ void Es2kSdeWrapper::PktIoTxCallback(
 
   pkts_info.pkt_len[0] = buffer.size();
   pkts_info.pkt_data[0] = pkt_buf;
-  ops->setValue(static_cast<const tdi_operations_field_type_e>(0),
+
+  ops->setValue(static_cast<const tdi_operations_field_type_e>(
+                    TDI_RT_OPERATIONS_TX_PKT_FIELD_TYPE_PKTS_INFO),
                 reinterpret_cast<uint64_t>(&pkts_info));
 
   // 3. Transmit the pkt
@@ -254,7 +257,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   device->createTarget(&dev_tgt);
   if (dev_tgt == nullptr) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
-           << "Failed to create target ";
+           << "Error allocating target object";
   }
 
   // Get pointer to packet i/o table.
@@ -279,7 +282,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   }
 
   // Register rx and tx callbacks for all the ports and queues
-  int port_id;
+  int port_id = 0;
   for (int port_idx = 0; port_idx < pktio_config_.ports_size(); port_idx++) {
     port_id = pktio_config_.ports(port_idx);
     for (int queue_id = 0; queue_id < pktio_config_.nb_rxqs(); queue_id++) {
@@ -295,7 +298,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
                                            *rx_notification_params, nullptr);
 
       if (status != BF_SUCCESS) {
-        // deallocate notification_params and return
+        // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = rx_notification_params.release();
         delete rawPtr;
         return MAKE_ERROR(::util::error::Code::INTERNAL)
@@ -314,7 +317,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
                                            *tx_notification_params, nullptr);
 
       if (status != BF_SUCCESS) {
-        // deallocate notification_params and return
+        // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = tx_notification_params.release();
         delete rawPtr;
         return MAKE_ERROR(::util::error::Code::INTERNAL)
@@ -341,7 +344,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   device->createTarget(&dev_tgt);
   if (dev_tgt == nullptr) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
-           << "Failed to create target ";
+           << "Error allocating target object";
   }
 
   // Get pointer to packet i/o table.
@@ -366,7 +369,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   }
 
   // Deregister rx and tx callbacks for all the ports and queues
-  int port_id;
+  int port_id = 0;
   for (int port_idx = 0; port_idx < pktio_config_.ports_size(); port_idx++) {
     port_id = pktio_config_.ports(port_idx);
     for (int queue_id = 0; queue_id < pktio_config_.nb_rxqs(); queue_id++) {
@@ -374,14 +377,14 @@ void Es2kSdeWrapper::PktIoRxCallback(
       rx_notification_params->setValue(PORT_ID, port_id);
       rx_notification_params->setValue(QUEUE_ID, queue_id);
       rx_notification_params->setValue(RX_BURST_FIELD_ID,
-                                       1);  // burst_sz set to 1
+                                       1);
 
       // deregister rx callback
       status =
           table->notificationDeregister(*dev_tgt, RX, *rx_notification_params);
 
       if (status != BF_SUCCESS) {
-        // deallocate notification_params and return
+        // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = rx_notification_params.release();
         delete rawPtr;
         return MAKE_ERROR(::util::error::Code::INTERNAL)
@@ -399,7 +402,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
           table->notificationDeregister(*dev_tgt, TX, *tx_notification_params);
 
       if (status != BF_SUCCESS) {
-        // deallocate notification_params and return
+        // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = tx_notification_params.release();
         delete rawPtr;
         return MAKE_ERROR(::util::error::Code::INTERNAL)
