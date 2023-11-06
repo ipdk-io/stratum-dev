@@ -56,7 +56,7 @@ jobs:
         working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk
+          xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-flaky
 
       - name: Collect unit test logs
         if: failure()

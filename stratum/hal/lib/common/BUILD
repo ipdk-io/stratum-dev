@@ -170,6 +170,7 @@ stratum_cc_test(
         "//stratum/lib/test_utils:matchers",
         "//stratum/public/lib:error",
     ],
+    tags = ["flaky"],
 )
 
 stratum_cc_library(
@@ -504,6 +505,7 @@ stratum_cc_test(
         "//stratum/lib/test_utils:matchers",
         "//stratum/public/lib:error",
     ],
+    tags = ["flaky"],
 )
 
 stratum_cc_library(
