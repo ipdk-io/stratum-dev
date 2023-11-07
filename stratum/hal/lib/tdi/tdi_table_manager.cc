@@ -1181,173 +1181,172 @@ TdiTableManager::ReadDirectMeterEntry(
     }
   }
 
-  if (resource_type == "PacketModMeter") {
+  else if (resource_type == "PacketModMeter") {
     {
       absl::ReaderMutexLock l(&lock_);
-      ASSIGN_OR_RETURN(auto meter, p4_info_manager_->FindPktModMeterByID(
-                                       meter_entry.meter_id()));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
+      bool pkt_mod_meter_units_in_packets;
+      p4::config::v1::PacketModMeter meter;
+      absl::ReaderMutexLock l(&lock_);
+      ASSIGN_OR_RETURN(
+          meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
+      RETURN_IF_ERROR(
+          GetPktModMeterUnitsInPackets(meter, &pkt_mod_meter_units_in_packets));
+
+      // Index 0 is a valid value and not a wildcard.
+      absl::optional<uint32> optional_meter_index;
+      if (meter_entry.has_index()) {
+        optional_meter_index = meter_entry.index().index();
+      }
+
+      std::vector<uint32> meter_indices;
+      std::vector<TdiPktModMeterConfig> cfg;
+      size_t num_elements = cfg.size();
+      cfg.resize(num_elements);
+
+      RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
+          device_, session, table_id, optional_meter_index, &meter_indices,
+          cfg));
+
+      ::p4::v1::ReadResponse resp;
+      for (size_t i = 0; i < meter_indices.size(); ++i) {
+        ::p4::v1::MeterEntry result;
+        result.set_meter_id(meter_entry.meter_id());
+        result.mutable_index()->set_index(meter_indices[i]);
+
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_meter_prof_id(
+                static_cast<int64>(cfg[i].meter_prof_id));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_cir_unit(static_cast<int64>(cfg[i].cir_unit));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_cbs_unit(static_cast<int64>(cfg[i].cburst_unit));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_eir_unit(static_cast<int64>(cfg[i].pir_unit));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_ebs_unit(static_cast<int64>(cfg[i].pburst_unit));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_cir(static_cast<int64>(cfg[i].cir));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_cbs(static_cast<int64>(cfg[i].cburst));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_eir(static_cast<int64>(cfg[i].pir));
+        result.mutable_config()
+            ->mutable_policer_meter_config()
+            ->set_policer_spec_ebs(static_cast<int64>(cfg[i].pburst));
+        result.mutable_counter_data()->mutable_green()->set_byte_count(
+            static_cast<int64>(cfg[i].greenBytes));
+        result.mutable_counter_data()->mutable_green()->set_packet_count(
+            static_cast<int64>(cfg[i].greenPackets));
+        result.mutable_counter_data()->mutable_yellow()->set_byte_count(
+            static_cast<int64>(cfg[i].yellowBytes));
+        result.mutable_counter_data()->mutable_yellow()->set_packet_count(
+            static_cast<int64>(cfg[i].yellowPackets));
+        result.mutable_counter_data()->mutable_red()->set_byte_count(
+            static_cast<int64>(cfg[i].redBytes));
+        result.mutable_counter_data()->mutable_red()->set_packet_count(
+            static_cast<int64>(cfg[i].redPackets));
+
+        *resp.add_entities()->mutable_meter_entry() = result;
+      }
+
+      VLOG(1) << "ReadMeterEntry resp " << resp.DebugString();
+      if (!writer->Write(resp)) {
+        return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
       }
     }
-    // Index 0 is a valid value and not a wildcard.
-    absl::optional<uint32> optional_meter_index;
-    if (meter_entry.has_index()) {
-      optional_meter_index = meter_entry.index().index();
-    }
 
-    std::vector<uint32> meter_indices;
-    std::vector<TdiPktModMeterConfig> cfg;
-    size_t num_elements = cfg.size();
-    cfg.resize(num_elements);
-
-    RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
-        device_, session, table_id, optional_meter_index, &meter_indices, cfg));
-
-    ::p4::v1::ReadResponse resp;
-    for (size_t i = 0; i < meter_indices.size(); ++i) {
-      ::p4::v1::MeterEntry result;
-      result.set_meter_id(meter_entry.meter_id());
-      result.mutable_index()->set_index(meter_indices[i]);
-
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_meter_prof_id(static_cast<int64>(cfg[i].meter_prof_id));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir_unit(static_cast<int64>(cfg[i].cir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs_unit(static_cast<int64>(cfg[i].cburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir_unit(static_cast<int64>(cfg[i].pir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs_unit(static_cast<int64>(cfg[i].pburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir(static_cast<int64>(cfg[i].cir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs(static_cast<int64>(cfg[i].cburst));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir(static_cast<int64>(cfg[i].pir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs(static_cast<int64>(cfg[i].pburst));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
-          static_cast<int64>(cfg[i].greenBytes));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
-          static_cast<int64>(cfg[i].greenPackets));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
-          static_cast<int64>(cfg[i].yellowBytes));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
-          static_cast<int64>(cfg[i].yellowPackets));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
-          static_cast<int64>(cfg[i].redBytes));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
-          static_cast<int64>(cfg[i].redPackets));
-
-      *resp.add_entities()->mutable_meter_entry() = result;
-    }
-
-    VLOG(1) << "ReadMeterEntry resp " << resp.DebugString();
-    if (!writer->Write(resp)) {
-      return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
-    }
+    return ::util::OkStatus();
   }
 
-  return ::util::OkStatus();
-}
+  ::util::Status TdiTableManager::WriteMeterEntry(
+      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const ::p4::v1::Update::Type type,
+      const ::p4::v1::MeterEntry& meter_entry) {
+    RET_CHECK(type == ::p4::v1::Update::MODIFY)
+        << "Update type of RegisterEntry " << meter_entry.ShortDebugString()
+        << " must be MODIFY.";
+    RET_CHECK(meter_entry.meter_id() != 0)
+        << "Missing meter id in MeterEntry " << meter_entry.ShortDebugString()
+        << ".";
 
-::util::Status TdiTableManager::WriteMeterEntry(
-    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const ::p4::v1::Update::Type type,
-    const ::p4::v1::MeterEntry& meter_entry) {
-  RET_CHECK(type == ::p4::v1::Update::MODIFY)
-      << "Update type of RegisterEntry " << meter_entry.ShortDebugString()
-      << " must be MODIFY.";
-  RET_CHECK(meter_entry.meter_id() != 0)
-      << "Missing meter id in MeterEntry " << meter_entry.ShortDebugString()
-      << ".";
+    ASSIGN_OR_RETURN(uint32 meter_id,
+                     tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
-  ASSIGN_OR_RETURN(uint32 meter_id,
-                   tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
+    ASSIGN_OR_RETURN(auto resource_type,
+                     p4_info_manager_->FindResourceTypeByID(meter_id));
 
-  ASSIGN_OR_RETURN(auto resource_type,
-                   p4_info_manager_->FindResourceTypeByID(meter_id));
-
-  if (resource_type == "Meter" && meter_entry.has_config()) {
-    bool meter_units_in_packets;  // or bytes
-    {
-      absl::ReaderMutexLock l(&lock_);
-      ASSIGN_OR_RETURN(auto meter,
-                       p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
+    if (resource_type == "Meter" && meter_entry.has_config()) {
+      bool meter_units_in_packets;  // or bytes
+      {
+        absl::ReaderMutexLock l(&lock_);
+        ASSIGN_OR_RETURN(auto meter, p4_info_manager_->FindMeterByID(
+                                         meter_entry.meter_id()));
+        switch (meter.spec().unit()) {
+          case ::p4::config::v1::MeterSpec::BYTES:
+            meter_units_in_packets = false;
+            break;
+          case ::p4::config::v1::MeterSpec::PACKETS:
+            meter_units_in_packets = true;
+            break;
+          default:
+            return MAKE_ERROR(ERR_INVALID_PARAM)
+                   << "Unsupported meter spec on meter "
+                   << meter.ShortDebugString() << ".";
+        }
       }
+
+      absl::optional<uint32> meter_index;
+      if (meter_entry.has_index()) {
+        meter_index = meter_entry.index().index();
+      } else {
+        return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
+      }
+
+      RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
+          device_, session, meter_id, meter_index, meter_units_in_packets,
+          meter_entry.config().cir(), meter_entry.config().cburst(),
+          meter_entry.config().pir(), meter_entry.config().pburst()));
     }
 
-    absl::optional<uint32> meter_index;
-    if (meter_entry.has_index()) {
-      meter_index = meter_entry.index().index();
-    } else {
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
+    if (resource_type == "PacketModMeter" && meter_entry.has_config()) {
+      bool pkt_mod_meter_units_in_packets;
+      {
+        absl::ReaderMutexLock l(&lock_);
+        p4::config::v1::PacketModMeter meter;
+        ASSIGN_OR_RETURN(meter, p4_info_manager_->FindPktModMeterByID(
+                                    meter_entry.meter_id()));
+        RETURN_IF_ERROR(GetPktModMeterUnitsInPackets(
+            meter, &pkt_mod_meter_units_in_packets));
+      }
+
+      absl::optional<uint32> meter_index;
+      if (meter_entry.has_index()) {
+        meter_index = meter_entry.index().index();
+      } else {
+        return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
+      }
+
+      TdiPktModMeterConfig config;
+      RETURN_IF_ERROR(SetPktModMeterConfig(config, meter_entry));
+      config.isPktModMeter = pkt_mod_meter_units_in_packets;
+
+      RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
+          device_, session, meter_id, meter_index, config));
     }
 
-    RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
-        device_, session, meter_id, meter_index, meter_units_in_packets,
-        meter_entry.config().cir(), meter_entry.config().cburst(),
-        meter_entry.config().pir(), meter_entry.config().pburst()));
+    return ::util::OkStatus();
   }
 
-  if (resource_type == "PacketModMeter" && meter_entry.has_config()) {
-    bool pkt_mod_meter_units_in_packets;
-    {
-      absl::ReaderMutexLock l(&lock_);
-      ASSIGN_OR_RETURN(auto meter, p4_info_manager_->FindPktModMeterByID(
-                                       meter_entry.meter_id()));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          pkt_mod_meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          pkt_mod_meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
-    }
-
-    absl::optional<uint32> meter_index;
-    if (meter_entry.has_index()) {
-      meter_index = meter_entry.index().index();
-    } else {
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
-    }
-
-    TdiPktModMeterConfig config;
-    memset(&config, 0, sizeof(config));
-    config.isPktModMeter = pkt_mod_meter_units_in_packets;
+  util::Status SetPktModMeterConfig(TdiPktModMeterConfig config,
+                                    const ::p4::v1::MeterEntry& meter_entry) {
     config.meter_prof_id =
         meter_entry.config().policer_meter_config().policer_meter_prof_id();
     config.cir_unit =
@@ -1371,12 +1370,8 @@ TdiTableManager::ReadDirectMeterEntry(
     config.redBytes = meter_entry.counter_data().red().byte_count();
     config.redPackets = meter_entry.counter_data().red().packet_count();
 
-    RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-        device_, session, meter_id, meter_index, config));
+    return ::util::OkStatus();
   }
-
-  return ::util::OkStatus();
-}
 
 }  // namespace tdi
 }  // namespace hal

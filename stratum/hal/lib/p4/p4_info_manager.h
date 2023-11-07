@@ -267,6 +267,9 @@ class P4InfoManager {
   // Verifies cross-references from Tables to Actions and Header Fields.
   ::util::Status VerifyTableXrefs();
 
+  void InitializeDirectMeters(const p4::config::v1::Extern& p4extern);
+  void InitializeMeters(const p4::config::v1::Extern& p4extern);
+
   // Functions to validate name and ID presence in message preamble.
   static ::util::Status VerifyID(const ::p4::config::v1::Preamble& preamble,
                                  const std::string& resource_type);
@@ -297,9 +300,9 @@ class P4InfoManager {
       all_resource_names_;
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
   google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter>
-      direct_meter_objects;
+      direct_meter_objects_;
   google::protobuf::RepeatedPtrField<p4::config::v1::PacketModMeter>
-      meter_objects;
+      all_meter_objects_;
 };
 
 }  // namespace hal

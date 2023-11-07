@@ -250,13 +250,19 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status WritePktModMeter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
-      TdiPktModMeterConfig& cfg) override LOCKS_EXCLUDED(data_lock_);
+      TdiPktModMeterConfig& cfg) override LOCKS_EXCLUDED(data_lock_) {
+    return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+           << "WritePktModMeter not supported";
+  }
   ::util::Status ReadPktModMeters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
       std::vector<uint32>* meter_indices,
       std::vector<TdiPktModMeterConfig>& cfg) override
-      LOCKS_EXCLUDED(data_lock_);
+      LOCKS_EXCLUDED(data_lock_) {
+    return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+           << "ReadPktModMeter not supported";
+  }
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,

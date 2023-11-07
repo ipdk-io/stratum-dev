@@ -93,48 +93,59 @@ P4InfoManager::~P4InfoManager() {}
 
   // This code depends on a proposed change to the P4Runtime specification,
   // and is provisional.
-  if (!p4_info_.externs().empty()) {
-    for (const auto& p4extern : p4_info_.externs()) {
-      if (p4extern.extern_type_id() ==
-          stratum::hal::tdi::kEs2kExternDirectPacketModMeter) {
-        const auto& extern_instances = p4extern.instances();
-        PreambleCallback preamble_cb =
-            std::bind(&P4InfoManager::ProcessPreamble, this,
-                      std::placeholders::_1, std::placeholders::_2);
-        for (const auto& extern_instance : extern_instances) {
-          p4::config::v1::DirectPacketModMeter direct_pkt_mod_meter;
-          *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
-          p4::config::v1::MeterSpec meter_spec;
-          meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
-          *direct_pkt_mod_meter.mutable_spec() = meter_spec;
-          direct_meter_objects.Add(std::move(direct_pkt_mod_meter));
-        }
-        direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects, preamble_cb);
-      }
-      if (p4extern.extern_type_id() ==
-          stratum::hal::tdi::kEs2kExternPacketModMeter) {
-        const auto& extern_instances_pktMod = p4extern.instances();
-        PreambleCallback preamble_cb_pktMod =
-            std::bind(&P4InfoManager::ProcessPreamble, this,
-                      std::placeholders::_1, std::placeholders::_2);
-        for (const auto& extern_instance_pktMod : extern_instances_pktMod) {
-          p4::config::v1::PacketModMeter pkt_mod_meter;
-          *pkt_mod_meter.mutable_preamble() = extern_instance_pktMod.preamble();
-          p4::config::v1::MeterSpec meter_spec_pktMod;
-          meter_spec_pktMod.set_unit(p4::config::v1::MeterSpec::PACKETS);
-          pkt_mod_meter.set_size(1024);
-          pkt_mod_meter.set_index_width(20);
-          *pkt_mod_meter.mutable_spec() = meter_spec_pktMod;
-          meter_objects.Add(std::move(pkt_mod_meter));
-        }
-        pkt_mod_meter_map_.BuildMaps(meter_objects, preamble_cb_pktMod);
-      }
-    }
+  switch (p4extern.extern_type_id()) {
+    case stratum::hal::tdi::kEs2kExternDirectPacketModMeter:
+      InitializeDirectMeters(p4extern);
+      break;
+    case stratum::hal::tdi::kEs2kExternPacketModMeter:
+      InitializeMeters(p4extern);
+      break;
+    default:
+      LOG(INFO) << "Unrecognized p4_info extern type: "
+                << p4extern.extern_type_id() << " (ignored)";
+      break;
   }
+}
+}
 
-  APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
+APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
 
-  return status;
+return status;
+}
+
+void P4InfoManager::InitializeDirectMeters(
+    const p4::config::v1::Extern& p4extern) {
+  const auto& extern_instances = p4extern.instances();
+  PreambleCallback preamble_cb =
+      std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                std::placeholders::_2);
+  for (const auto& extern_instance : extern_instances) {
+    p4::config::v1::DirectPacketModMeter direct_pkt_mod_meter;
+    *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+    p4::config::v1::MeterSpec meter_spec;
+    meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
+    *direct_pkt_mod_meter.mutable_spec() = meter_spec;
+    direct_meter_objects_.Add(std::move(direct_pkt_mod_meter));
+  }
+  direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);
+}
+
+void P4InfoManager::InitializeMeters(const p4::config::v1::Extern& p4extern) {
+  const auto& extern_instances = p4extern.instances();
+  PreambleCallback preamble_cb =
+      std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                std::placeholders::_2);
+  for (const auto& extern_instance : extern_instances) {
+    p4::config::v1::PacketModMeter pkt_mod_meter;
+    *pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+    p4::config::v1::MeterSpec meter_spec;
+    meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
+    pkt_mod_meter.set_size(1024);
+    pkt_mod_meter.set_index_width(20);
+    *pkt_mod_meter.mutable_spec() = meter_spec;
+    all_meter_objects_.Add(std::move(pkt_mod_meter));
+  }
+  pkt_mod_meter_map_.BuildMaps(all_meter_objects_, preamble_cb);
 }
 
 ::util::StatusOr<const ::p4::config::v1::Table> P4InfoManager::FindTableByID(
