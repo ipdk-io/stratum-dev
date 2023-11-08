@@ -32,7 +32,7 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-::util::Status TdiSdeWrapper::WritePktModMeter(
+::util::Status Es2kSdeWrapper::WritePktModMeter(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 table_id, absl::optional<uint32> meter_index,
     TdiPktModMeterConfig& cfg) {
@@ -183,7 +183,7 @@ util::Status GetMeterField(TdiPktModMeterConfig& cfg, std::string field_name,
   return ::util::OkStatus();
 }
 
-::util::Status TdiSdeWrapper::ReadPktModMeters(
+::util::Status Es2kSdeWrapper::ReadPktModMeters(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 table_id, absl::optional<uint32> meter_index,
     std::vector<uint32>* meter_indices,

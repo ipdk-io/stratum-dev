@@ -1120,6 +1120,22 @@ TdiTableManager::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
+::util::Status GetPktModMeterUnitsInPackets(const ::p4::config::v1::PacketModMeter& meter, bool& result) {
+    switch (meter.spec().unit()) {
+      case ::p4::config::v1::MeterSpec::BYTES:
+        result = false;
+        break;
+      case ::p4::config::v1::MeterSpec::PACKETS:
+        result = true;
+        break;
+      default:
+        return MAKE_ERROR(ERR_INVALID_PARAM)
+               << "Unsupported meter spec on meter " << meter.ShortDebugString()
+               << ".";
+    }
+    return ::util::OkStatus();
+}
+
 ::util::Status TdiTableManager::ReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
@@ -1182,15 +1198,15 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   else if (resource_type == "PacketModMeter") {
-    {
-      absl::ReaderMutexLock l(&lock_);
       bool pkt_mod_meter_units_in_packets;
-      p4::config::v1::PacketModMeter meter;
-      absl::ReaderMutexLock l(&lock_);
-      ASSIGN_OR_RETURN(
-          meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
-      RETURN_IF_ERROR(
-          GetPktModMeterUnitsInPackets(meter, &pkt_mod_meter_units_in_packets));
+      {
+         absl::ReaderMutexLock l(&lock_);
+         p4::config::v1::PacketModMeter meter;
+         ASSIGN_OR_RETURN(meter, p4_info_manager_->FindPktModMeterByID(
+                          meter_entry.meter_id()));
+         RETURN_IF_ERROR(GetPktModMeterUnitsInPackets(
+                         meter, pkt_mod_meter_units_in_packets));
+      }
 
       // Index 0 is a valid value and not a wildcard.
       absl::optional<uint32> optional_meter_index;
@@ -1266,6 +1282,34 @@ TdiTableManager::ReadDirectMeterEntry(
     return ::util::OkStatus();
   }
 
+  ::util::Status SetPktModMeterConfig(TdiPktModMeterConfig config,
+                                    const ::p4::v1::MeterEntry& meter_entry) {
+    config.meter_prof_id =
+        meter_entry.config().policer_meter_config().policer_meter_prof_id();
+    config.cir_unit =
+        meter_entry.config().policer_meter_config().policer_spec_cir_unit();
+    config.cburst_unit =
+        meter_entry.config().policer_meter_config().policer_spec_cbs_unit();
+    config.pir_unit =
+        meter_entry.config().policer_meter_config().policer_spec_eir_unit();
+    config.pburst_unit =
+        meter_entry.config().policer_meter_config().policer_spec_ebs_unit();
+    config.cir = meter_entry.config().policer_meter_config().policer_spec_cir();
+    config.cburst =
+        meter_entry.config().policer_meter_config().policer_spec_cbs();
+    config.pir = meter_entry.config().policer_meter_config().policer_spec_eir();
+    config.pburst =
+        meter_entry.config().policer_meter_config().policer_spec_ebs();
+    config.greenBytes = meter_entry.counter_data().green().byte_count();
+    config.greenPackets = meter_entry.counter_data().green().packet_count();
+    config.yellowBytes = meter_entry.counter_data().yellow().byte_count();
+    config.yellowPackets = meter_entry.counter_data().yellow().packet_count();
+    config.redBytes = meter_entry.counter_data().red().byte_count();
+    config.redPackets = meter_entry.counter_data().red().packet_count();
+
+    return ::util::OkStatus();
+  }
+
   ::util::Status TdiTableManager::WriteMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
@@ -1324,7 +1368,7 @@ TdiTableManager::ReadDirectMeterEntry(
         ASSIGN_OR_RETURN(meter, p4_info_manager_->FindPktModMeterByID(
                                     meter_entry.meter_id()));
         RETURN_IF_ERROR(GetPktModMeterUnitsInPackets(
-            meter, &pkt_mod_meter_units_in_packets));
+            meter, pkt_mod_meter_units_in_packets));
       }
 
       absl::optional<uint32> meter_index;
@@ -1341,34 +1385,6 @@ TdiTableManager::ReadDirectMeterEntry(
       RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
           device_, session, meter_id, meter_index, config));
     }
-
-    return ::util::OkStatus();
-  }
-
-  util::Status SetPktModMeterConfig(TdiPktModMeterConfig config,
-                                    const ::p4::v1::MeterEntry& meter_entry) {
-    config.meter_prof_id =
-        meter_entry.config().policer_meter_config().policer_meter_prof_id();
-    config.cir_unit =
-        meter_entry.config().policer_meter_config().policer_spec_cir_unit();
-    config.cburst_unit =
-        meter_entry.config().policer_meter_config().policer_spec_cbs_unit();
-    config.pir_unit =
-        meter_entry.config().policer_meter_config().policer_spec_eir_unit();
-    config.pburst_unit =
-        meter_entry.config().policer_meter_config().policer_spec_ebs_unit();
-    config.cir = meter_entry.config().policer_meter_config().policer_spec_cir();
-    config.cburst =
-        meter_entry.config().policer_meter_config().policer_spec_cbs();
-    config.pir = meter_entry.config().policer_meter_config().policer_spec_eir();
-    config.pburst =
-        meter_entry.config().policer_meter_config().policer_spec_ebs();
-    config.greenBytes = meter_entry.counter_data().green().byte_count();
-    config.greenPackets = meter_entry.counter_data().green().packet_count();
-    config.yellowBytes = meter_entry.counter_data().yellow().byte_count();
-    config.yellowPackets = meter_entry.counter_data().yellow().packet_count();
-    config.redBytes = meter_entry.counter_data().red().byte_count();
-    config.redPackets = meter_entry.counter_data().red().packet_count();
 
     return ::util::OkStatus();
   }

@@ -394,23 +394,6 @@ bf_status_t TofinoSdeWrapper::PacketRxNotifyCallback(bf_dev_id_t device,
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketModMeter not supported";
 }
 
-::util::Status TdiSdeWrapper::WritePktModMeter(
-    int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    uint32 table_id, absl::optional<uint32> meter_index,
-    TdiPktModMeterConfig& cfg) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-         << "WritePacketModMeter not supported";
-}
-
-::util::Status TdiSdeWrapper::ReadPktModMeters(
-    int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    uint32 table_id, absl::optional<uint32> meter_index,
-    std::vector<uint32>* meter_indices,
-    std::vector<TdiPktModMeterConfig>& cfg) {
-  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-         << "ReadPacketModMeter not supported";
-}
-
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum
