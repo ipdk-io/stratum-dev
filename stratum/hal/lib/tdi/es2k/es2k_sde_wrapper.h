@@ -72,14 +72,14 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   // Private constructor; use CreateSingleton and GetSingleton().
   Es2kSdeWrapper();
 
-  // Callback registered with the SDE, called when packet is received
+  // Callback registered with the SDE, called when packet is received.
   // NotificationParams contains the packet data.
   static void PktIoRxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,
                               std::unique_ptr<::tdi::NotificationParams> params,
                               void* cookie);
 
-  // Callback registered with the SDE, called when packet is transmitted
+  // Callback registered with the SDE, called when packet is transmitted.
   // NotificationParams contains the packet data.
   static void PktIoTxCallback(std::unique_ptr<::tdi::TableKey> key,
                               std::unique_ptr<::tdi::TableData> data,

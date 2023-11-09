@@ -128,7 +128,7 @@ TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
 
 ::util::Status TdiSdeWrapper::SetPacketIoConfig(
     const PacketIoConfig& pktio_config) {
-  return ::util::OkStatus();
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketIO not supported";
 }
 
 }  // namespace tdi
