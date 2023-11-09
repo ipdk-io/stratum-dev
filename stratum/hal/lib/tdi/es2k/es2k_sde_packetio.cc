@@ -150,8 +150,9 @@ void Es2kSdeWrapper::PktIoTxCallback(
 
   // 1. allocate operations
   std::unique_ptr<::tdi::TableOperations> ops;
-  auto status =
-      table->operationsAllocate(static_cast<tdi_operations_type_e>(TDI_RT_OPERATIONS_TYPE_TRANSMIT_PKTS), &ops);
+  auto status = table->operationsAllocate(
+      static_cast<tdi_operations_type_e>(TDI_RT_OPERATIONS_TYPE_TRANSMIT_PKTS),
+      &ops);
   if (status != BF_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "Error allocating TableOperations object";
@@ -238,12 +239,11 @@ void Es2kSdeWrapper::PktIoRxCallback(
   }
 }
 
-// StartPacketIo initializes callback registration for all the ports and queues defined
-// in PacketIoConfig.
-// For Rx operations, the driver code continuously polls packets on the configured ports
-// and queues, invoking the registered callbacks with packet details.
-// As for Tx operations, packets are transmitted via the first available port and queue
-// from the configuration.
+// StartPacketIo initializes callback registration for all the ports and queues
+// defined in PacketIoConfig. For Rx operations, the driver code continuously
+// polls packets on the configured ports and queues, invoking the registered
+// callbacks with packet details. As for Tx operations, packets are transmitted
+// via the first available port and queue from the configuration.
 ::util::Status Es2kSdeWrapper::StartPacketIo(int dev_id) {
   if (pktio_config_.ports_size() == 0) {
     LOG(INFO) << "packetIo not configured";
@@ -289,8 +289,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
       // set values
       rx_notification_params->setValue(PORT_ID, port_id);
       rx_notification_params->setValue(QUEUE_ID, queue_id);
-      rx_notification_params->setValue(RX_BURST_FIELD_ID,
-                                       1);
+      rx_notification_params->setValue(RX_BURST_FIELD_ID, 1);
 
       // register rx callback
       status = table->notificationRegister(*dev_tgt, RX,
@@ -329,8 +328,9 @@ void Es2kSdeWrapper::PktIoRxCallback(
 }
 
 // Deregisters callbacks for the configured ports and queues.
-// After this, ports and queues will no longer be polled, and packet transmission will fail.
-// This operation is currently invoked only during the exit of infrap4d.
+// After this, ports and queues will no longer be polled, and packet
+// transmission will fail. This operation is currently invoked only during the
+// exit of infrap4d.
 ::util::Status Es2kSdeWrapper::StopPacketIo(int dev_id) {
   if (pktio_config_.ports_size() == 0) {
     LOG(INFO) << "packetIo not configured";
@@ -376,8 +376,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
       // set values
       rx_notification_params->setValue(PORT_ID, port_id);
       rx_notification_params->setValue(QUEUE_ID, queue_id);
-      rx_notification_params->setValue(RX_BURST_FIELD_ID,
-                                       1);
+      rx_notification_params->setValue(RX_BURST_FIELD_ID, 1);
 
       // deregister rx callback
       status =
