@@ -342,6 +342,21 @@ class TdiSdeInterface {
       std::vector<uint64>* cbursts, std::vector<uint64>* pirs,
       std::vector<uint64>* pbursts, std::vector<bool>* in_pps) = 0;
 
+  // Updates PacketModMeter at the given index. The table ID must be a
+  // TDI table ID, not P4Runtime.
+  virtual ::util::Status WritePktModMeter(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::optional<uint32> meter_index,
+      TdiPktModMeterConfig& cfg) = 0;
+
+  // Reads the data from PacketModMeter.
+  // The table ID must be a TDI table ID, not P4Runtime.
+  virtual ::util::Status ReadPktModMeters(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::optional<uint32> meter_index,
+      std::vector<uint32>* meter_indices,
+      std::vector<TdiPktModMeterConfig>& cfg) = 0;
+
   // Inserts an action profile member. The table ID must be a TDI table, not
   // P4Runtime.
   virtual ::util::Status InsertActionProfileMember(

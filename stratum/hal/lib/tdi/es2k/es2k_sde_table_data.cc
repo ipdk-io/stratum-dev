@@ -26,6 +26,8 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kMeterPeakBurstPackets, cfg.pburst));
   } else {
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterProfileIdKbps,
+                             cfg.meter_prof_id));
     RETURN_IF_ERROR(
         SetField(table_data_.get(), kEs2kMeterCirKbpsUnit, cfg.cir_unit));
     RETURN_IF_ERROR(SetField(
@@ -66,45 +68,44 @@ using namespace stratum::hal::tdi::helpers;
     TdiPktModMeterConfig& cfg) const {
   // Condition checks for Indirect PacketModMeter
   if (cfg.isPktModMeter) {
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCirPps, &cfg.cir));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterCommitedBurstPackets,
-                             &cfg.cburst));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kMeterPirPps, &cfg.pir));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kMeterCirPps, &cfg.cir));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kMeterPeakBurstPackets, &cfg.pburst));
+        GetField(*table_data_.get(), kMeterCommitedBurstPackets, &cfg.cburst));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kMeterPirPps, &cfg.pir));
+    RETURN_IF_ERROR(
+        GetField(*table_data_.get(), kMeterPeakBurstPackets, &cfg.pburst));
   }
 
   // Condition checks for Direct PacketModMeter
   else {
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterProfileIdKbps,
+                             &cfg.meter_prof_id));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()),
+        GetField(*table_data_.get(), kEs2kMeterCirKbpsUnit, &cfg.cir_unit));
+    RETURN_IF_ERROR(GetField(*table_data_.get(),
                              kEs2kMeterCommitedBurstKbitsUnit,
                              &cfg.cburst_unit));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterPirKbpsUnit, &cfg.pir_unit));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterPeakBurstKbitsUnit,
+        GetField(*table_data_.get(), kEs2kMeterPirKbpsUnit, &cfg.pir_unit));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterPeakBurstKbitsUnit,
                              &cfg.pburst_unit));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterCirKbps, &cfg.cir));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterCommitedBurstKbits,
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterCirKbps, &cfg.cir));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterCommitedBurstKbits,
                              &cfg.cburst));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterPirKbps, &cfg.pir));
     RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterPirKbps, &cfg.pir));
-    RETURN_IF_ERROR(
-        GetField(*(table_data_.get()), kEs2kMeterPeakBurstKbits, &cfg.pburst));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterGreenCounterBytes,
+        GetField(*table_data_.get(), kEs2kMeterPeakBurstKbits, &cfg.pburst));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterGreenCounterBytes,
                              &cfg.greenBytes));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()),
-                             kEs2kMeterGreenCounterPackets, &cfg.greenPackets));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterYellowCounterBytes,
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterGreenCounterPackets,
+                             &cfg.greenPackets));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterYellowCounterBytes,
                              &cfg.yellowBytes));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()),
-                             kEs2kMeterYellowCounterPackets,
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterYellowCounterPackets,
                              &cfg.yellowPackets));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterRedCounterBytes,
-                             &cfg.redBytes));
-    RETURN_IF_ERROR(GetField(*(table_data_.get()), kEs2kMeterRedCounterPackets,
+    RETURN_IF_ERROR(
+        GetField(*table_data_.get(), kEs2kMeterRedCounterBytes, &cfg.redBytes));
+    RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterRedCounterPackets,
                              &cfg.redPackets));
 
     cfg.cir_unit = KbitsToBytesPerSecond(cfg.cir_unit);
