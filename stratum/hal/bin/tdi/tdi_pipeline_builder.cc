@@ -109,6 +109,20 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
         << "Stratum only supports single devices.";
     // Only support single devices for now.
     const auto& device = conf["p4_devices"][0];
+
+    // parse pktio_args
+    if (device.contains("pktio-args")) {
+      auto pktio_args = device["pktio-args"];
+      PacketIoConfig pktio_config;
+      for (const auto& port : pktio_args["ports"]) {
+        pktio_config.add_ports(port);
+      }
+      pktio_config.set_nb_rxqs(pktio_args["nb_rxqs"]);
+      pktio_config.set_nb_txqs(pktio_args["nb_txqs"]);
+
+      *bf_config.mutable_packet_io_config() = pktio_config;
+    }
+
     RET_CHECK(device["p4_programs"].size() == 1)
         << "BfPipelineConfig only supports single P4 programs.";
     const auto& program = device["p4_programs"][0];
@@ -119,7 +133,8 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
     bf_config.set_bfruntime_info(tdi_content);
     for (const auto& pipeline : program["p4_pipelines"]) {
       auto profile = bf_config.add_profiles();
-      profile->set_profile_name(pipeline["p4_pipeline_name"].get<std::string>());
+      profile->set_profile_name(
+          pipeline["p4_pipeline_name"].get<std::string>());
       LOG(INFO) << "\tFound pipeline: " << profile->profile_name();
       for (const auto& scope : pipeline["pipe_scope"]) {
         profile->add_pipe_scope(scope);

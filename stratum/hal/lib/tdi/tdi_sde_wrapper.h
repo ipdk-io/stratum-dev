@@ -357,6 +357,8 @@ class TdiSdeWrapper : public TdiSdeInterface {
       const std::string& table_name, notification_table_callback_t callback,
       void* cookie) const override LOCKS_EXCLUDED(data_lock_);
 
+  ::util::Status SetPacketIoConfig(const PacketIoConfig& pktio_config) override;
+
   // TdiSdeWrapper is neither copyable nor movable.
   TdiSdeWrapper(const TdiSdeWrapper&) = delete;
   TdiSdeWrapper& operator=(const TdiSdeWrapper&) = delete;

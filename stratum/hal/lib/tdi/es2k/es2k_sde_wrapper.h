@@ -49,6 +49,20 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   // Return the singleton instance to be used in the SDE callbacks.
   static Es2kSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
 
+  ::util::Status SetPacketIoConfig(const PacketIoConfig& pktio_config) override;
+  ::util::Status TxPacket(int device, const std::string& packet) override;
+  ::util::Status StartPacketIo(int device) override;
+  ::util::Status StopPacketIo(int device) override;
+  ::util::Status RegisterPacketReceiveWriter(
+      int device, std::unique_ptr<ChannelWriter<std::string>> writer) override;
+  ::util::Status UnregisterPacketReceiveWriter(int device) override;
+
+  // Writes a received packet to the registered Rx writer. Called from the SDE
+  // callback function.
+  ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
+                                const uint64_t pkt_len)
+      LOCKS_EXCLUDED(packet_rx_callback_lock_);
+
   // Es2kSdeWrapper is neither copyable nor movable.
   Es2kSdeWrapper(const Es2kSdeWrapper&) = delete;
   Es2kSdeWrapper& operator=(const Es2kSdeWrapper&) = delete;
@@ -67,6 +81,30 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
  private:
   // Private constructor; use CreateSingleton and GetSingleton().
   Es2kSdeWrapper();
+
+  // Callback registered with the SDE, called when packet is received.
+  // NotificationParams contains the packet data.
+  static void PktIoRxCallback(std::unique_ptr<::tdi::TableKey> key,
+                              std::unique_ptr<::tdi::TableData> data,
+                              std::unique_ptr<::tdi::NotificationParams> params,
+                              void* cookie);
+
+  // Callback registered with the SDE, called when packet is transmitted.
+  // NotificationParams contains the packet data.
+  static void PktIoTxCallback(std::unique_ptr<::tdi::TableKey> key,
+                              std::unique_ptr<::tdi::TableData> data,
+                              std::unique_ptr<::tdi::NotificationParams> params,
+                              void* cookie);
+
+  // Mutex protecting the packet rx writer map.
+  mutable absl::Mutex packet_rx_callback_lock_;
+
+  // packetIo config
+  PacketIoConfig pktio_config_;
+
+  // Map from device ID to packet receive writer.
+  absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
+      device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
 };
 
 }  // namespace tdi

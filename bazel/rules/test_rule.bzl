@@ -17,6 +17,7 @@ def stratum_cc_test(
         defines = None,
         linkopts = [],
         size = "small",
+        tags = None,
         visibility = None):
     cc_test(
         name = name,
@@ -27,5 +28,6 @@ def stratum_cc_test(
         defines = defines,
         linkopts = STRATUM_DEFAULT_LINKOPTS + linkopts,
         size = size,
+        tags = tags,
         visibility = visibility,
     )
