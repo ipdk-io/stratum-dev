@@ -348,6 +348,9 @@ class TdiSdeMock : public TdiSdeInterface {
                const std::string& table_name,
                notification_table_callback_t callback, void* cookie),
               (const));
+
+  MOCK_METHOD(::util::Status, SetPacketIoConfig,
+              (const PacketIoConfig& pktio_config));
 };
 
 }  // namespace tdi

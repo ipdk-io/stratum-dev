@@ -128,6 +128,8 @@ std::unique_ptr<TdiNode> TdiNode::CreateInstance(
   tdi_config_ = tdi_config;
   VLOG(2) << tdi_config_.DebugString();
 
+  tdi_sde_interface_->SetPacketIoConfig(bf_config.packet_io_config());
+
   return ::util::OkStatus();
 }
 

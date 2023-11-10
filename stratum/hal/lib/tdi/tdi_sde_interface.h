@@ -471,10 +471,15 @@ class TdiSdeInterface {
   virtual ::util::StatusOr<uint32> GetTableId(
       std::string& table_name) const = 0;
 
+  // Initializes and sets callback for notifications.
   virtual ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
       void* cookie) const = 0;
+
+  // Sets the PacketIo configuration.
+  virtual ::util::Status SetPacketIoConfig(
+      const PacketIoConfig& pktio_config) = 0;
 
  protected:
   // Default constructor. To be called by the Mock class instance only.

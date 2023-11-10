@@ -48,7 +48,7 @@ ABSL_CONST_INIT absl::Mutex Es2kSdeWrapper::init_lock_(absl::kConstInit);
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-Es2kSdeWrapper::Es2kSdeWrapper() {}
+Es2kSdeWrapper::Es2kSdeWrapper() : device_to_packet_rx_writer_() {}
 
 //------------------------------------------------------------------------------
 // CreateSingleton
