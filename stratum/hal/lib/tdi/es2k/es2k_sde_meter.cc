@@ -109,9 +109,10 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-util::Status GetMeterField(TdiPktModMeterConfig& cfg, std::string field_name,
-                           const std::unique_ptr<::tdi::TableData>& table_data,
-                           tdi_id_t field_id) {
+::util::Status GetMeterField(TdiPktModMeterConfig& cfg,
+    const std::string field_name,
+    const std::unique_ptr<::tdi::TableData>& table_data,
+    tdi_id_t field_id) {
   if (field_name == kEs2kMeterProfileIdKPps) {
     uint64 prof_id;
     RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &prof_id));
@@ -234,14 +235,16 @@ util::Status GetMeterField(TdiPktModMeterConfig& cfg, std::string field_name,
     // Data: $METER_SPEC_*
     std::vector<tdi_id_t> data_field_ids;
     data_field_ids = table->tableInfoGet()->dataFieldIdListGet();
+    TdiPktModMeterConfig config;
     for (const auto& field_id : data_field_ids) {
       std::string field_name;
       const ::tdi::DataFieldInfo* dataFieldInfo;
       dataFieldInfo = table->tableInfoGet()->dataFieldGet(field_id);
       RETURN_IF_NULL(dataFieldInfo);
       field_name = dataFieldInfo->nameGet();
-      RETURN_IF_ERROR(GetMeterField(cfg[i], field_name, table_data, field_id));
+      RETURN_IF_ERROR(GetMeterField(config, field_name, table_data, field_id));
     }
+    cfg.push_back(config);
   }
   CHECK_EQ(meter_indices->size(), keys.size());
   CHECK_EQ(cfg.size(), keys.size());

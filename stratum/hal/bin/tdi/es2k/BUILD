@@ -40,6 +40,7 @@ stratum_cc_binary(
         "//stratum/hal/lib/tdi/es2k:es2k_hal",
         "//stratum/hal/lib/tdi/es2k:es2k_node",
         "//stratum/hal/lib/tdi/es2k:es2k_port_manager",
+	"//stratum/hal/lib/tdi/es2k:es2k_sde_meter",
         "//stratum/hal/lib/tdi/es2k:es2k_sde_utils",
         "//stratum/hal/lib/tdi/es2k:es2k_sde_wrapper",
         "//stratum/hal/lib/tdi/es2k:es2k_switch",
