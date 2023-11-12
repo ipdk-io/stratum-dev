@@ -50,7 +50,7 @@ jobs:
         working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          bazel build //stratum/hal/bin/tdi/dpdk:stratum_dpdk --define target=dpdk
+          bazel build //stratum/hal/bin/tdi/dpdk:stratum_dpdk --sandbox_debug --define target=dpdk
 
       - name: Run DPDK unit tests
         working-directory: stratum
