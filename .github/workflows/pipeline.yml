@@ -45,12 +45,23 @@ jobs:
         run: |
           sudo tar -xzf $SDE_FILENAME -C /
           rm $SDE_FILENAME
-
+          
+      - name: Mount bazel cache
+        uses: actions/cache@v2
+        with:
+          # See https://docs.bazel.build/versions/master/output_directories.html
+          path: "~/.cache/bazel"
+          # Create a new cache entry whenever Bazel files change.
+          # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows
+          key: bazel-${{ runner.os }}-build-${{ hashFiles('**/*.bzl', '**/WORKFLOW', '**/BUILD*') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-build-
+          
       - name: Build DPDK Stratum
         working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          bazel build //stratum/hal/bin/tdi/dpdk:stratum_dpdk --sandbox_debug --define target=dpdk
+          bazel build //stratum/hal/bin/tdi/dpdk:stratum_dpdk --define target=dpdk
 
       - name: Run DPDK unit tests
         working-directory: stratum
