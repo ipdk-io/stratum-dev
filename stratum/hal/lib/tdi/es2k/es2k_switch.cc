@@ -171,7 +171,16 @@ Es2kSwitch::~Es2kSwitch() {}
 
 ::util::Status Es2kSwitch::RegisterEventNotifyWriter(
     std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) {
-  return chassis_manager_->RegisterEventNotifyWriter(writer);
+  // Gnmi Publisher calls only the switch interface's RegisterEventNotifyWriter
+  // and has no visibility to IPsec Manager. Registering both Chassis Manager
+  // & IPsecManager's gNMI event writers & returning combined status
+  auto rc1 = chassis_manager_->RegisterEventNotifyWriter(writer);
+  auto rc2 = ipsec_manager_->RegisterEventNotifyWriter(writer);
+  if (rc1 == ::util::OkStatus() && rc2 == ::util::OkStatus()) {
+    return ::util::OkStatus();
+  } else {
+    return MAKE_ERROR(ERR_INTERNAL) << " Cannot register gNMI event writers";
+  }
 }
 
 ::util::Status Es2kSwitch::UnregisterEventNotifyWriter() {
