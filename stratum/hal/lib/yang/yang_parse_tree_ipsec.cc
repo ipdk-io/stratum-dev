@@ -201,7 +201,7 @@ void YangParseTreePaths::AddSubtreeIPsec(YangParseTree* tree) {
   node = tree->AddNode(GetPath("ipsec-offload")("sad")("sad-entry")("state")());
   SetUpIPsecSADEntryState(node, tree);
   node =
-      tree->AddNode(GetPath("ipsec-offload")());  // IPsec notification support
+      tree->AddNode(GetPath("ipsec-offload")("sadb-expire")());  // IPsec notification support
   SetUpIPsecNotification(node, tree);
 }
 
