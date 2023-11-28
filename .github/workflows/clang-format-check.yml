@@ -1,0 +1,38 @@
+name: "clang-format check"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  # If workflow for PR or push is already running, stop it and start a new one.
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  #---------------------------------------------------------------------
+  # clang-format-check
+  #---------------------------------------------------------------------
+  clang-format-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out stratum repository
+        uses: actions/checkout@v3
+
+      - name: Get list of changed Files
+        id: changes
+        uses: tj-actions/changed-files@v40
+        with:
+          files: |
+            **.c
+            **.h
+            **.cc
+
+      - name: Check for formatting errors
+        run: |
+          for file in ${{ steps.changes.outputs.all_changed_files }}; do
+            clang-format --dry-run -Werror $file
+          done
