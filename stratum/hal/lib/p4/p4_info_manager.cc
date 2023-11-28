@@ -98,8 +98,10 @@ P4InfoManager::~P4InfoManager() {}
       switch (p4extern.extern_type_id()) {
         case stratum::hal::tdi::kEs2kExternDirectPacketModMeter:
           InitializeDirectMeters(p4extern);
+          break;
         case stratum::hal::tdi::kEs2kExternPacketModMeter:
           InitializeMeters(p4extern);
+          break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
                     << p4extern.extern_type_id() << " (ignored)";
@@ -108,9 +110,9 @@ P4InfoManager::~P4InfoManager() {}
     }
   }
 
-APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
+  APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());
 
-return status;
+  return status;
 }
 
 void P4InfoManager::InitializeDirectMeters(
