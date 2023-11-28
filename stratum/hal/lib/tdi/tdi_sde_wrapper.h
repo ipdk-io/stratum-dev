@@ -261,7 +261,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
       std::vector<TdiPktModMeterConfig>& cfg) override
       LOCKS_EXCLUDED(data_lock_) {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-           << "ReadPktModMeter not supported";
+           << "ReadPktModMeters not supported";
   }
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
