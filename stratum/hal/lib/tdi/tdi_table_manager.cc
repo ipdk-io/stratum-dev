@@ -343,7 +343,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << meter.ShortDebugString() << ".";
       }
       TdiPktModMeterConfig config;
-      memset(&config, 0, sizeof(config));
       config.isPktModMeter = meter_units_in_packets;
       config.meter_prof_id = table_entry.meter_config()
                                  .policer_meter_config()
@@ -991,7 +990,6 @@ TdiTableManager::ReadDirectMeterEntry(
         table_entry.has_meter_config()) {
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
-      memset(&cfg, 0, sizeof(cfg));
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
 
       result.mutable_config()
@@ -1120,7 +1118,7 @@ TdiTableManager::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-::util::Status GetPktModMeterUnitsInPackets(
+static ::util::Status GetPktModMeterUnitsInPackets(
     const ::p4::config::v1::PacketModMeter& meter, bool& result) {
   switch (meter.spec().unit()) {
     case ::p4::config::v1::MeterSpec::BYTES:
@@ -1280,8 +1278,8 @@ TdiTableManager::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-::util::Status SetPktModMeterConfig(TdiPktModMeterConfig& config,
-                                    const ::p4::v1::MeterEntry& meter_entry) {
+static ::util::Status SetPktModMeterConfig(
+    TdiPktModMeterConfig& config, const ::p4::v1::MeterEntry& meter_entry) {
   config.meter_prof_id =
       meter_entry.config().policer_meter_config().policer_meter_prof_id();
   config.cir_unit =
