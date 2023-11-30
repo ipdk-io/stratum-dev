@@ -236,20 +236,6 @@ class TdiSdeMock : public TdiSdeInterface {
                      std::vector<TdiPktModMeterConfig>& cfg));
 
   MOCK_METHOD5(
-      WritePktModMeter,
-      ::util::Status(int device,
-                     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-                     uint32 table_id, absl::optional<uint32> meter_index,
-                     TdiPktModMeterConfig& cfg));
-  MOCK_METHOD6(
-      ReadPktModMeters,
-      ::util::Status(int device,
-                     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-                     uint32 table_id, absl::optional<uint32> meter_index,
-                     std::vector<uint32>* meter_indices,
-                     std::vector<TdiPktModMeterConfig>& cfg));
-
-  MOCK_METHOD5(
       InsertActionProfileMember,
       ::util::Status(int device,
                      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
