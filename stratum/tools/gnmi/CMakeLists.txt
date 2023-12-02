@@ -1,4 +1,4 @@
-# Build file for //stratum/tools
+# Build file for //stratum/tools/gnmi
 #
 # Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
@@ -8,7 +8,7 @@
 # gnmi_cli #
 ############
 
-add_executable(gnmi_cli gnmi/gnmi_cli.cc)
+add_executable(gnmi_cli gnmi_cli.cc)
 
 set_install_rpath(gnmi_cli ${EXEC_ELEMENT} ${DEP_ELEMENT})
 
