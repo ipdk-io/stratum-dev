@@ -223,7 +223,7 @@ using namespace stratum::hal::tdi::helpers;
   }
 
   meter_indices->resize(0);
-  cfg.resize(keys.size());
+  cfg.resize(0);
   for (size_t i = 0; i < keys.size(); ++i) {
     const std::unique_ptr<::tdi::TableData>& table_data = datums[i];
     const std::unique_ptr<::tdi::TableKey>& table_key = keys[i];
