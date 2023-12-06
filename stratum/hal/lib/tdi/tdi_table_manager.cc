@@ -1214,8 +1214,6 @@ static ::util::Status GetPktModMeterUnitsInPackets(
 
     std::vector<uint32> meter_indices;
     std::vector<TdiPktModMeterConfig> cfg;
-    size_t num_elements = cfg.size();
-    cfg.resize(num_elements);
 
     RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
         device_, session, table_id, optional_meter_index, &meter_indices, cfg));
