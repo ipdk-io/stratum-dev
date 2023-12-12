@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -29,6 +30,7 @@ SDE_DEFINES = select(
         "@local_barefoot_bin//:sde_version_9.3.2": ["SDE_9_3_2"],
         "@local_barefoot_bin//:sde_version_9.4.0": ["SDE_9_4_0"],
         "@local_barefoot_bin//:sde_version_9.5.0": ["SDE_9_5_0"],
+        "@local_barefoot_bin//:sde_version_9.11.0": ["SDE_9_11_0"],
     },
     no_match_error = "Unsupported SDE version",
 )
@@ -185,7 +187,6 @@ stratum_cc_library(
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/gtl:stl_util",
         "//stratum/glue/status",
@@ -196,6 +197,7 @@ stratum_cc_library(
         "//stratum/lib:utils",
         "//stratum/lib/channel",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
         "@local_barefoot_bin//:bfsde",
     ],
@@ -209,7 +211,6 @@ stratum_cc_library(
         ":bf_cc_proto",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/lib:macros",
@@ -218,6 +219,7 @@ stratum_cc_library(
         "@com_github_gflags_gflags//:gflags",
         "@com_github_nlohmann_json//:json",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -431,7 +433,6 @@ stratum_cc_library(
         ":bf_sde_interface",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
-        "//stratum/glue/gtl:cleanup",
         "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",

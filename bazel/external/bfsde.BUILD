@@ -1,4 +1,5 @@
 # Copyright 2020-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
@@ -17,8 +18,11 @@ cc_library(
         "barefoot-bin/lib/libbfsys.so*",
         "barefoot-bin/lib/libbfutils.so*",
         "barefoot-bin/lib/libdriver.so*",
-        "barefoot-bin/lib/libpython3.4m.so*",
-    ]) + ["barefoot-bin/lib/libbf_switchd_lib.a"],
+        "barefoot-bin/lib/libpython3*",
+        "barefoot-bin/lib/libtarget_sys.so*",
+        "barefoot-bin/lib/libtarget_utils.so*",
+        "barefoot-bin/lib/libbf_switchd_lib.a*",
+    ]),
     hdrs = glob([
         "barefoot-bin/include/bf_rt/*.h",
         "barefoot-bin/include/bf_rt/*.hpp",
@@ -32,6 +36,8 @@ cc_library(
         "barefoot-bin/include/pipe_mgr/*.h",
         "barefoot-bin/include/pkt_mgr/*.h",
         "barefoot-bin/include/port_mgr/*.h",
+        "barefoot-bin/include/target-sys/**/*.h",
+        "barefoot-bin/include/target-utils/**/*.h",
         "barefoot-bin/include/tofino/bf_pal/*.h",
         "barefoot-bin/include/tofino/pdfixed/*.h",
     ]),
@@ -134,5 +140,12 @@ config_setting(
     name = "sde_version_9.5.0",
     flag_values = {
         ":sde_version_setting": "9.5.0",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.11.0",
+    flag_values = {
+        ":sde_version_setting": "9.11.0",
     },
 )

@@ -1,4 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
+// Copyright 2013 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_sde_wrapper.h"
@@ -7,13 +8,13 @@
 #include <set>
 #include <utility>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "bf_rt/bf_rt_table_operations.hpp"
 #include "lld/lld_sku.h"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/gtl/stl_util.h"
 #include "stratum/glue/integral_types.h"
@@ -488,7 +489,7 @@ template <typename T>
   if (table_type == bfrt::BfRtTable::TableType::METER ||
       table_type == bfrt::BfRtTable::TableType::COUNTER) {
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(
         table->tableSizeGet(*bfrt_session, bf_dev_target, &table_size));
 #else
@@ -1230,32 +1231,42 @@ std::string GetBfChipFamilyAndType(int device) {
       return "TOFINO_32Q";
     case BF_DEV_BFNT10032D:
       return "TOFINO_32D";
+#ifdef BF_DEV_BFNT10024D
     case BF_DEV_BFNT10024D:
       return "TOFINO_24D";
+#endif
+#ifdef BF_DEV_BFNT10018Q
     case BF_DEV_BFNT10018Q:
       return "TOFINO_18Q";
+#endif
+#ifdef BF_DEV_BFNT10018D
     case BF_DEV_BFNT10018D:
       return "TOFINO_18D";
+#endif
+#ifdef BF_DEV_BFNT10017D
     case BF_DEV_BFNT10017D:
       return "TOFINO_17D";
+#endif
     case BF_DEV_BFNT20128Q:
       return "TOFINO2_128Q";
 #ifdef BF_DEV_BFNT20128QM
     case BF_DEV_BFNT20128QM:  // added in 9.3.0
       return "TOFINO2_128QM";
-#endif  // BF_DEV_BFNT20128QM
+#endif
 #ifdef BF_DEV_BFNT20128QH
     case BF_DEV_BFNT20128QH:  // added in 9.3.0
       return "TOFINO2_128QH";
-#endif  // BF_DEV_BFNT20128QH
+#endif
+#ifdef BF_DEV_BFNT20096T
     case BF_DEV_BFNT20096T:
       return "TOFINO2_96T";
+#endif
     case BF_DEV_BFNT20080T:
       return "TOFINO2_80T";
 #ifdef BF_DEV_BFNT20080TM
     case BF_DEV_BFNT20080TM:  // added in 9.3.0
       return "TOFINO2_80TM";
-#endif  // BF_DEV_BFNT20080TM
+#endif
     case BF_DEV_BFNT20064Q:
       return "TOFINO2_64Q";
     case BF_DEV_BFNT20064D:
@@ -1263,25 +1274,27 @@ std::string GetBfChipFamilyAndType(int device) {
 #ifdef BF_DEV_BFNT20032D
     case BF_DEV_BFNT20032D:  // removed in 9.3.0
       return "TOFINO2_32D";
-#endif  // BF_DEV_BFNT20032D
+#endif
 #ifdef BF_DEV_BFNT20032S
     case BF_DEV_BFNT20032S:  // removed in 9.3.0
       return "TOFINO2_32S";
-#endif  // BF_DEV_BFNT20032S
+#endif
+#ifdef BF_DEV_BFNT20048D
     case BF_DEV_BFNT20048D:
       return "TOFINO2_48D";
+#endif
 #ifdef BF_DEV_BFNT20036D
     case BF_DEV_BFNT20036D:  // removed in 9.3.0
       return "TOFINO2_36D";
-#endif  // BF_DEV_BFNT20036D
+#endif
 #ifdef BF_DEV_BFNT20032E
     case BF_DEV_BFNT20032E:  // removed in 9.3.0
       return "TOFINO2_32E";
-#endif  // BF_DEV_BFNT20032E
+#endif
 #ifdef BF_DEV_BFNT20064E
     case BF_DEV_BFNT20064E:  // removed in 9.3.0
       return "TOFINO2_64E";
-#endif  // BF_DEV_BFNT20064E
+#endif
     default:
       return "UNKNOWN";
   }
@@ -1328,6 +1341,8 @@ std::string BfSdeWrapper::GetSdeVersion() const {
   return "9.4.0";
 #elif defined(SDE_9_5_0)
   return "9.5.0";
+#elif defined(SDE_9_11_0)
+  return "9.11.0";
 #else
 #error Unsupported SDE version
 #endif
@@ -1554,11 +1569,11 @@ BfSdeWrapper::CreateTableData(int table_id, int action_id) {
   RETURN_IF_BFRT_ERROR(
       bf_pkt_alloc(device, &pkt, buffer.size(), BF_DMA_CPU_PKT_TRANSMIT_0));
   auto pkt_cleaner =
-      gtl::MakeCleanup([pkt, device]() { bf_pkt_free(device, pkt); });
+      absl::MakeCleanup([pkt, device]() { bf_pkt_free(device, pkt); });
   RETURN_IF_BFRT_ERROR(bf_pkt_data_copy(
       pkt, reinterpret_cast<const uint8*>(buffer.data()), buffer.size()));
   RETURN_IF_BFRT_ERROR(bf_pkt_tx(device, pkt, BF_PKT_TX_RING_0, pkt));
-  pkt_cleaner.release();
+  std::move(pkt_cleaner).Cancel();
 
   return ::util::OkStatus();
 }
@@ -1767,7 +1782,7 @@ namespace {
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromNameGet(kPreNodeTable, &table));
   size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_11_0)
   RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                            bf_dev_tgt, &table_size));
 #else
@@ -2425,7 +2440,7 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
 #else
@@ -2562,7 +2577,7 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
 #else
