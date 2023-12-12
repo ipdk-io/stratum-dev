@@ -1,4 +1,5 @@
 # Copyright 2018-present Barefoot Networks, Inc.
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -47,6 +48,7 @@ alias(
             "@local_barefoot_bin//:sde_version_9.3.2": "@com_github_p4lang_PI_bf_9_3_2//proto/frontend:pifeproto",
             "@local_barefoot_bin//:sde_version_9.4.0": "@com_github_p4lang_PI_bf_9_4_0//proto/frontend:pifeproto",
             "@local_barefoot_bin//:sde_version_9.5.0": "@com_github_p4lang_PI_bf_9_5_0//proto/frontend:pifeproto",
+            "@local_barefoot_bin//:sde_version_9.11.0": "@com_github_p4lang_PI_bf_9_11_0//proto/frontend:pifeproto",
         },
         no_match_error = "Unsupported SDE version",
     ),

@@ -1,4 +1,5 @@
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 """Load dependencies needed for Stratum."""
@@ -26,6 +27,7 @@ BF_SDE_PI_VER = {
     "9_3_2": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
     "9_4_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
     "9_5_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
+    "9_11_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
 }
 GNOI_COMMIT = "437c62e630389aa4547b4f0521d0bca3fb2bf811"
 GNOI_SHA = "77d8c271adc22f94a18a5261c28f209370e87a5e615801a4e7e0d09f06da531f"

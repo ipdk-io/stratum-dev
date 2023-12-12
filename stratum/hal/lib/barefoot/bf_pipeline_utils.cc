@@ -1,4 +1,5 @@
 // Copyright 2012-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_pipeline_utils.h"
@@ -7,10 +8,10 @@
 
 #include <string>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/strip.h"
 #include "gflags/gflags.h"
 #include "nlohmann/json.hpp"
-#include "stratum/glue/gtl/cleanup.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
