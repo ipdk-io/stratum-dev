@@ -138,14 +138,6 @@ namespace {
   LOG(INFO) << "P4-based forwarding pipeline config pushed successfully to "
             << "node with ID " << node_id << ".";
 
-  ASSIGN_OR_RETURN(const auto& node_id_to_device,
-                   bf_chassis_manager_->GetNodeIdToDeviceMap());
-
-  CHECK_RETURN_IF_FALSE(gtl::ContainsKey(node_id_to_device, node_id))
-      << "Unable to find device number for node " << node_id;
-  int device = gtl::FindOrDie(node_id_to_device, node_id);
-  ASSIGN_OR_RETURN(auto cpu_port, bf_sde_interface_->GetPcieCpuPort(device));
-  RETURN_IF_ERROR(bf_sde_interface_->SetTmCpuPort(device, cpu_port));
   return ::util::OkStatus();
 }
 
@@ -322,7 +314,8 @@ std::unique_ptr<BfSwitch> BfSwitch::CreateInstance(
 ::util::StatusOr<PINode*> BfSwitch::GetPINodeFromDevice(int device) const {
   PINode* pi_node = gtl::FindPtrOrNull(device_to_pi_node_, device);
   if (pi_node == nullptr) {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Device " << device << " is unknown.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Device " << device << " is unknown.";
   }
   return pi_node;
 }
