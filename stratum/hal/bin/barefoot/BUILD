@@ -15,7 +15,6 @@ stratum_bf_common_deps = [
     "//stratum/glue:init_google",
     "//stratum/glue:logging",
     "//stratum/hal/lib/common:hal",
-    "//stratum/hal/lib/phal:phal_sim",
     "//stratum/hal/lib/phal",
     "//stratum/lib/security:auth_policy_checker",
     "//stratum/lib/security:credentials_manager",
@@ -128,8 +127,6 @@ pkg_tar(
 pkg_tar(
     name = "stratum_configs",
     srcs = [
-        "deb/stratum.flags",
-        "deb/stratum_bf.env",
         "//stratum/hal/lib/common:gnmi_caps.pb.txt",
     ],
     mode = "0644",
