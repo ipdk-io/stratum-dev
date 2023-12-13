@@ -40,6 +40,7 @@ cc_library(
         "barefoot-bin/include/target-utils/**/*.h",
         "barefoot-bin/include/tofino/bf_pal/*.h",
         "barefoot-bin/include/tofino/pdfixed/*.h",
+        "barefoot-bin/include/traffic_mgr/*.h",
     ]),
     linkopts = [
         "-lpthread",

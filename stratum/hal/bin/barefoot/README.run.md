@@ -116,6 +116,7 @@ For more details on additional options that can be passed to
 
 ```bash
 CHASSIS_CONFIG    # Override the default chassis config file.
+FLAG_FILE         # Override the default flag file.
 LOG_DIR           # The directory for logging, default: `/var/log/`.
 SDE_VERSION       # The SDE version
 DOCKER_IMAGE      # The container image name, default: stratumproject/stratum-bf
@@ -206,6 +207,7 @@ In another terminal window, run Stratum in its own container:
 ```bash
 PLATFORM=barefoot-tofino-model \
 stratum/hal/bin/barefoot/docker/start-stratum-container.sh \
+  -bf_sim \
   -bf_switchd_background=false \
   -enable_onlp=false
 ```
@@ -537,12 +539,13 @@ vendor_config {
 ### Running with BSP or on Tofino model
 
 ```bash
-start-stratum.sh -enable_onlp=false
+start-stratum.sh -bf_sim -enable_onlp=false
 ```
 
-The `-enable_onlp=false` flag tells Stratum not to use the ONLP PHAL plugin. Use
-this flag when you are using a vendor-provided BSP or running Stratum with the
-Tofino software model.
+The `-bf_sim` flag tells Stratum not to use the Phal ONLP implementation, but
+`PhalSim`, a "fake" Phal implementation, instead. Use this flag when you are
+using a vendor-provided BSP or running Stratum with the Tofino software model.
+Additionally, the ONLP plugin has to be disabled with `-enable_onlp=false`.
 
 ### Running the binary in BSP-less mode
 
