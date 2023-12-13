@@ -37,29 +37,29 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbitsUnit,
                              cfg.pburst_unit));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCirKbps,
-                             BytesPerSecondToKbits(cfg.cir)));
+                             cfg.cir));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCommitedBurstKbits,
-                             BytesPerSecondToKbits(cfg.cburst)));
+                             cfg.cburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPirKbps,
-                             BytesPerSecondToKbits(cfg.pir)));
+                             cfg.pir));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             BytesPerSecondToKbits(cfg.pburst)));
+                             cfg.pburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             BytesPerSecondToKbits(cfg.pburst)));
+                             cfg.pburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             BytesPerSecondToKbits(cfg.pburst)));
+                             cfg.pburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterGreenCounterBytes,
-                             BytesPerSecondToKbits(cfg.greenBytes)));
+                             cfg.greenBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterGreenCounterPackets,
-                             BytesPerSecondToKbits(cfg.greenPackets)));
+                             cfg.greenPackets));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterYellowCounterBytes,
-                             BytesPerSecondToKbits(cfg.yellowBytes)));
+                             cfg.yellowBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterYellowCounterPackets,
-                             BytesPerSecondToKbits(cfg.yellowPackets)));
+                             cfg.yellowPackets));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterRedCounterBytes,
-                             BytesPerSecondToKbits(cfg.redBytes)));
+                             cfg.redBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterRedCounterPackets,
-                             BytesPerSecondToKbits(cfg.redPackets)));
+                             cfg.redPackets));
   }
   return ::util::OkStatus();
 }
@@ -108,20 +108,20 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_ERROR(GetField(*table_data_.get(), kEs2kMeterRedCounterPackets,
                              &cfg.redPackets));
 
-    cfg.cir_unit = KbitsToBytesPerSecond(cfg.cir_unit);
-    cfg.cburst_unit = KbitsToBytesPerSecond(cfg.cburst_unit);
-    cfg.pir_unit = KbitsToBytesPerSecond(cfg.pir_unit);
-    cfg.pburst_unit = KbitsToBytesPerSecond(cfg.pburst_unit);
-    cfg.cir = KbitsToBytesPerSecond(cfg.cir);
-    cfg.cburst = KbitsToBytesPerSecond(cfg.cburst);
-    cfg.pir = KbitsToBytesPerSecond(cfg.pir);
-    cfg.pburst = KbitsToBytesPerSecond(cfg.pburst);
-    cfg.greenBytes = KbitsToBytesPerSecond(cfg.greenBytes);
-    cfg.greenPackets = KbitsToBytesPerSecond(cfg.greenPackets);
-    cfg.yellowBytes = KbitsToBytesPerSecond(cfg.yellowBytes);
-    cfg.yellowPackets = KbitsToBytesPerSecond(cfg.yellowPackets);
-    cfg.redBytes = KbitsToBytesPerSecond(cfg.redBytes);
-    cfg.redPackets = KbitsToBytesPerSecond(cfg.redPackets);
+    cfg.cir_unit = cfg.cir_unit;
+    cfg.cburst_unit = cfg.cburst_unit;
+    cfg.pir_unit = cfg.pir_unit;
+    cfg.pburst_unit = cfg.pburst_unit;
+    cfg.cir = cfg.cir;
+    cfg.cburst = cfg.cburst;
+    cfg.pir = cfg.pir;
+    cfg.pburst = cfg.pburst;
+    cfg.greenBytes = cfg.greenBytes;
+    cfg.greenPackets = cfg.greenPackets;
+    cfg.yellowBytes = cfg.yellowBytes;
+    cfg.yellowPackets = cfg.yellowPackets;
+    cfg.redBytes = cfg.redBytes;
+    cfg.redPackets = cfg.redPackets;
   }
   return ::util::OkStatus();
 }
