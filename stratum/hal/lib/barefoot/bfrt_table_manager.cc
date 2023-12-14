@@ -1101,6 +1101,12 @@ BfrtTableManager::ReadDirectCounterEntry(
         member.watch_kind_case() ==
         ::p4::v1::ActionProfileGroup::Member::WATCH_KIND_NOT_SET)
         << "Watch ports are not supported.";
+    CHECK_RETURN_IF_FALSE(member.weight() != 0)
+        << "Zero member weights are not allowed.";
+    if (member.weight() != 1) {
+      return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+          << "Member weights greater than 1 are not supported.";
+    }
     member_ids.push_back(member.member_id());
     member_status.push_back(true);  // Activate the member.
   }
