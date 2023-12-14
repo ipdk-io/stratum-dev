@@ -58,8 +58,8 @@ class CredentialsManager {
   // Updated to take a 'secure_only' parameter. If the parameter is true,
   // CredentialsManager will only attempt to initiate using TLS certificates.
   // The default value is false, for backward compatibility.
-  static ::util::StatusOr<std::unique_ptr<CredentialsManager>>
-    CreateInstance(bool secure_only=false);
+  static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance(
+      bool secure_only = false);
 
   // CredentialsManager is neither copyable nor movable.
   CredentialsManager(const CredentialsManager&) = delete;
@@ -74,13 +74,16 @@ class CredentialsManager {
   static constexpr unsigned int kFileRefreshIntervalSeconds = 1;
 
   const std::map<std::string, grpc_ssl_client_certificate_request_type>
-    client_cert_verification_map_ = {
-      {"NO_REQUEST_CLIENT_CERT", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
-      {"REQUEST_CLIENT_CERT_NO_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-      {"REQUEST_CLIENT_CERT_AND_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
-      {"REQUIRE_CLIENT_CERT_NO_VERIFY", GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-      {"REQUIRE_CLIENT_CERT_AND_VERIFY", GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}
-    };
+      client_cert_verification_map_ = {
+          {"NO_REQUEST_CLIENT_CERT", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
+          {"REQUEST_CLIENT_CERT_NO_VERIFY",
+           GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+          {"REQUEST_CLIENT_CERT_AND_VERIFY",
+           GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
+          {"REQUIRE_CLIENT_CERT_NO_VERIFY",
+           GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+          {"REQUIRE_CLIENT_CERT_AND_VERIFY",
+           GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}};
 
   // Function to initialize the credentials manager.
   ::util::Status Initialize(bool secure_only);
