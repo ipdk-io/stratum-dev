@@ -94,6 +94,7 @@ def stratum_deps():
             name = "com_github_p4lang_PI",
             remote = "https://github.com/p4lang/PI.git",
             commit = "a5fd855d4b3293e23816ef6154e83dc6621aed6a",
+            sha256 = "7df38438f94d64c5005b890210d3f1b40e2402870295e21d44cceac67ebd1a1b",
         )
 
     for sde_ver in BF_SDE_PI_VER:
