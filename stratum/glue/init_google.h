@@ -7,6 +7,7 @@
 
 #include "gflags/gflags.h"
 #include "stratum/glue/logging.h"
+#include "stratum/glue/stamping.h"
 
 inline void InitGoogle(const char* usage, int* argc, char*** argv,
                        bool remove_flags) {
@@ -25,6 +26,7 @@ inline void InitGoogle(const char* usage, int* argc, char*** argv,
   CHECK(!::gflags::SetCommandLineOptionWithMode("minloglevel", "0",
                                                 ::gflags::SET_FLAGS_DEFAULT)
              .empty());
+  ::gflags::SetVersionString(stratum::kBuildScmRevision);
   ::gflags::ParseCommandLineFlags(argc, argv, remove_flags);
 }
 
