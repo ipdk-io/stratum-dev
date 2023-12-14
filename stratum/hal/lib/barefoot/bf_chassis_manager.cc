@@ -699,10 +699,31 @@ BfChassisManager::~BfChassisManager() = default;
       CHECK_RETURN_IF_FALSE(device != nullptr)
           << "Node " << node_id << " not found.";
       for (const auto& queue_config : qos_config.queue_configs()) {
+        uint32 sdk_port_id;
+        switch (queue_config.port_type_case()) {
+          case TofinoConfig::TofinoQosConfig::QueueConfig::kSdkPort:
+            sdk_port_id = queue_config.sdk_port();
+            break;
+          case TofinoConfig::TofinoQosConfig::QueueConfig::kPort: {
+            CHECK_RETURN_IF_FALSE(
+                node_id_to_port_id_to_sdk_port_id[node_id].count(
+                    queue_config.port()))
+                << "Invalid singleton port " << queue_config.port()
+                << " in queue config " << queue_config.ShortDebugString()
+                << ".";
+            sdk_port_id =
+                node_id_to_port_id_to_sdk_port_id[node_id][queue_config.port()];
+            break;
+          }
+          default:
+            return MAKE_ERROR(ERR_INVALID_PARAM)
+                   << "Unsupported port type in QueueConfig "
+                   << queue_config.ShortDebugString() << ".";
+        }
         CHECK_RETURN_IF_FALSE(
             gtl::FindOrNull(node_id_to_sdk_port_id_to_port_id[node_id],
-                            queue_config.sdk_port()) != nullptr)
-            << "Invalid port " << queue_config.sdk_port() << " in queue config "
+                            sdk_port_id) != nullptr)
+            << "Invalid port " << sdk_port_id << " in queue config "
             << queue_config.ShortDebugString() << ".";
         CHECK_RETURN_IF_FALSE(queue_config.queue_mapping_size() <=
                               kMaxQueuesPerPort);
@@ -723,16 +744,17 @@ BfChassisManager::~BfChassisManager() = default;
     if (node_id_to_port_id_to_singleton_port_key !=
         node_id_to_port_id_to_singleton_port_key_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in the port layout. The stack "
-          << "needs to be rebooted to finish config push.";
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in the port layout. The stack "
+             << "needs to be rebooted to finish config push.";
     }
 
     if (node_id_to_device != node_id_to_device_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
-          << "The switch is already initialized, but we detected the newly "
-          << "pushed config requires a change in node_id_to_device. The stack "
-          << "needs to be rebooted to finish config push.";
+             << "The switch is already initialized, but we detected the newly "
+             << "pushed config requires a change in node_id_to_device. The "
+                "stack "
+             << "needs to be rebooted to finish config push.";
     }
   }
 
