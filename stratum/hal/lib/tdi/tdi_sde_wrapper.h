@@ -263,6 +263,14 @@ class TdiSdeWrapper : public TdiSdeInterface {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
            << "ReadPktModMeters not supported";
   }
+  ::util::Status DeletePktModMeterConfig(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id,
+      absl::optional<uint32> meter_index) override
+      LOCKS_EXCLUDED(data_lock_) {
+    return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+           << "DeletePktModMeters not supported";
+  }
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,

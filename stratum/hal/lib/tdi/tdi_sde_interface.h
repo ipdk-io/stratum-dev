@@ -357,6 +357,13 @@ class TdiSdeInterface {
       std::vector<uint32>* meter_indices,
       std::vector<TdiPktModMeterConfig>& cfg) = 0;
 
+  // Deletes the PacketModMeter config
+  // The table ID must be a TDI table ID, not P4Runtime.
+  virtual ::util::Status DeletePktModMeterConfig(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id,
+      absl::optional<uint32> meter_index) = 0;
+
   // Inserts an action profile member. The table ID must be a TDI table, not
   // P4Runtime.
   virtual ::util::Status InsertActionProfileMember(
