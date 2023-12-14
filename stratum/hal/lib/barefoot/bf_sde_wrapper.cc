@@ -1372,9 +1372,12 @@ namespace {
   // Configure the queues.
   for (const auto& queue_config : qos_config.queue_configs()) {
     for (const auto& queue_mapping : queue_config.queue_mapping()) {
-      RETURN_IF_BFRT_ERROR(bf_tm_q_guaranteed_min_limit_set(
-          device, queue_config.sdk_port(), queue_mapping.queue_id(),
-          queue_mapping.minimum_guaranteed_cells()));
+      // Set gmin only when > 0, as it would otherwise disable the queue.
+      if (queue_mapping.minimum_guaranteed_cells()) {
+        RETURN_IF_BFRT_ERROR(bf_tm_q_guaranteed_min_limit_set(
+            device, queue_config.sdk_port(), queue_mapping.queue_id(),
+            queue_mapping.minimum_guaranteed_cells()));
+      }
       ASSIGN_OR_RETURN(bf_tm_app_pool_t pool,
                        ApplicationPoolToTofinoPool(queue_mapping.pool()));
       ASSIGN_OR_RETURN(bf_tm_queue_baf_t baf,
@@ -1452,6 +1455,25 @@ namespace {
               << "Invalid queue guaranteed minimum rate config in QueueMapping "
               << queue_mapping.ShortDebugString() << ".";
       }
+      if (queue_mapping.enable_color_drop()) {
+        RETURN_IF_BFRT_ERROR(
+            bf_tm_q_color_drop_enable(device, queue_mapping.queue_id(), pool));
+      } else {
+        RETURN_IF_BFRT_ERROR(
+            bf_tm_q_color_drop_disable(device, queue_mapping.queue_id(), pool));
+      }
+      ASSIGN_OR_RETURN(bf_tm_queue_color_limit_t yellow_limit,
+                       ColorLimitToTofinoQueueColorLimit(
+                           queue_mapping.color_drop_limit_yellow()));
+      ASSIGN_OR_RETURN(bf_tm_queue_color_limit_t red_limit,
+                       ColorLimitToTofinoQueueColorLimit(
+                           queue_mapping.color_drop_limit_red()));
+      RETURN_IF_BFRT_ERROR(bf_tm_q_color_limit_set(
+          device, queue_config.sdk_port(), queue_mapping.queue_id(),
+          BF_TM_COLOR_YELLOW, yellow_limit));
+      RETURN_IF_BFRT_ERROR(bf_tm_q_color_limit_set(
+          device, queue_config.sdk_port(), queue_mapping.queue_id(),
+          BF_TM_COLOR_RED, red_limit));
     }
     RETURN_IF_BFRT_ERROR(bf_tm_port_q_mapping_set(
         device, queue_config.sdk_port(), queue_config.queue_mapping_size(),
