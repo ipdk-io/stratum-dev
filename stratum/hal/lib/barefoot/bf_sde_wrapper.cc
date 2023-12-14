@@ -1352,12 +1352,7 @@ namespace {
       case TofinoConfig::TofinoQosConfig::PpgConfig::kSdkPort:
         sdk_port = ppg_config.sdk_port();
         break;
-      case TofinoConfig::TofinoQosConfig::PpgConfig::kPort: {
-        ASSIGN_OR_RETURN(
-            sdk_port,
-            GetPortIdFromPortKey(device, PortKey(0, ppg_config.port(), 0)));
-        break;
-      }
+      case TofinoConfig::TofinoQosConfig::PpgConfig::kPort:
       default:
         return MAKE_ERROR(ERR_INVALID_PARAM)
                << "Unsupported port type in PpgConfig "
@@ -1391,12 +1386,7 @@ namespace {
       case TofinoConfig::TofinoQosConfig::QueueConfig::kSdkPort:
         sdk_port = queue_config.sdk_port();
         break;
-      case TofinoConfig::TofinoQosConfig::QueueConfig::kPort: {
-        ASSIGN_OR_RETURN(
-            sdk_port,
-            GetPortIdFromPortKey(device, PortKey(0, queue_config.port(), 0)));
-        break;
-      }
+      case TofinoConfig::TofinoQosConfig::QueueConfig::kPort:
       default:
         return MAKE_ERROR(ERR_INVALID_PARAM)
                << "Unsupported port type in QueueConfig "
