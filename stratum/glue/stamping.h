@@ -11,6 +11,7 @@ extern const char kBuildScmRevision[];
 extern const char kBuildScmStatus[];
 extern const char kBuildUser[];
 extern const int kBuildTimestamp;
+extern const bool kStampingEnabled;
 }  // namespace stratum
 
 #endif  // STRATUM_GLUE_STAMPING_H_

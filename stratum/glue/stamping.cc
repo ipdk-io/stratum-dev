@@ -1,4 +1,5 @@
 // Copyright 2021-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This file contains variables that will be populated by Bazel via the
@@ -10,10 +11,22 @@
 
 #include "stratum/glue/stamping.h"
 
+#if !defined(BUILD_TIMESTAMP)
+#define BUILD_HOST "None"
+#define BUILD_SCM_REVISION "0"
+#define BUILD_SCM_STATUS "None"
+#define BUILD_USER "None"
+#define BUILD_TIMESTAMP 0
+#define STAMPING_ENABLED false
+#else
+#define STAMPING_ENABLED true
+#endif
+
 namespace stratum {
 const char kBuildHost[] = BUILD_HOST;
 const char kBuildScmRevision[] = BUILD_SCM_REVISION;
 const char kBuildScmStatus[] = BUILD_SCM_STATUS;
 const char kBuildUser[] = BUILD_USER;
 const int kBuildTimestamp = BUILD_TIMESTAMP;
+const bool kStampingEnabled = STAMPING_ENABLED;
 }  // namespace stratum
