@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/glue/logging.h"
@@ -60,12 +61,15 @@ void InitStratumLogging() {
     LogToStderr();
   }
 
-  LOG(INFO) << "Stratum version "
-            << kBuildScmRevision
-            // TODO(max): enable once CI does not modify the source tree anymore
-            // << " (" << kBuildScmStatus << ")"
-            << " built at " << absl::FromTimeT(kBuildTimestamp) << " on host "
-            << kBuildHost << " by user " << kBuildUser << ".";
+  if (kStampingEnabled) {
+    LOG(INFO) << "Stratum version "
+              << kBuildScmRevision
+              // TODO(max): enable once CI does not modify the source tree
+              // any more
+              // << " (" << kBuildScmStatus << ")"
+              << " built at " << absl::FromTimeT(kBuildTimestamp) << " on host "
+              << kBuildHost << " by user " << kBuildUser << ".";
+  }
 }
 
 LoggingConfig GetCurrentLogLevel() {

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_GLUE_INIT_GOOGLE_H_
@@ -26,7 +27,9 @@ inline void InitGoogle(const char* usage, int* argc, char*** argv,
   CHECK(!::gflags::SetCommandLineOptionWithMode("minloglevel", "0",
                                                 ::gflags::SET_FLAGS_DEFAULT)
              .empty());
-  ::gflags::SetVersionString(stratum::kBuildScmRevision);
+  if (stratum::kStampingEnabled) {
+    ::gflags::SetVersionString(stratum::kBuildScmRevision);
+  }
   ::gflags::ParseCommandLineFlags(argc, argv, remove_flags);
 }
 

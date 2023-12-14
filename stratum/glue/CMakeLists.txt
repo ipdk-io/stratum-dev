@@ -13,6 +13,8 @@ add_library(stratum_glue_o OBJECT
     integral_types.h
     logging.cc
     logging.h
+    stamping.cc
+    stamping.h
 )
 
 target_include_directories(stratum_glue_o PRIVATE
