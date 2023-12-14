@@ -356,8 +356,8 @@ TEST_F(DpdkChassisManagerTest, ReplayPorts) {
             key: 12345
             value {
               byte_shaping {
-                max_rate_bps: 10000000000
-                max_burst_bytes: 16384
+                rate_bps: 10000000000
+                burst_bytes: 16384
               }
             }
           }

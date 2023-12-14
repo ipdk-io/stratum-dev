@@ -354,8 +354,8 @@ TEST_F(TofinoChassisManagerTest, ApplyPortShaping) {
             key: 12345
             value {
               byte_shaping {
-                max_rate_bps: 10000000000 # 10G
-                max_burst_bytes: 16384 # 2x jumbo frame
+                rate_bps: 10000000000 # 10G
+                burst_bytes: 16384 # 2x jumbo frame
               }
             }
           }
@@ -445,8 +445,8 @@ TEST_F(TofinoChassisManagerTest, ReplayPorts) {
             key: 12345
             value {
               byte_shaping {
-                max_rate_bps: 10000000000
-                max_burst_bytes: 16384
+                rate_bps: 10000000000
+                burst_bytes: 16384
               }
             }
           }
