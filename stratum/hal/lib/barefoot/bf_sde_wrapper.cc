@@ -1280,6 +1280,33 @@ namespace {
   }
 }
 
+::util::StatusOr<bf_tm_queue_color_limit_t> ColorLimitToTofinoQueueColorLimit(
+    TofinoConfig::TofinoQosConfig::QueueColorLimit color_limit) {
+  switch (color_limit) {
+    case TofinoConfig::TofinoQosConfig::LIMIT_12_POINT_5_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_12_POINT_5_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_25_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_25_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_37_POINT_5_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_37_POINT_5_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_50_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_50_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_62_POINT_5_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_62_POINT_5_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_75_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_75_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_87_POINT_5_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_87_POINT_5_PERCENT;
+    case TofinoConfig::TofinoQosConfig::LIMIT_100_PERCENT:
+      return BF_TM_Q_COLOR_LIMIT_100_PERCENT;
+    // Default value when field unset.
+    case TofinoConfig::TofinoQosConfig::UNKNOWN_LIMIT:
+      return BF_TM_Q_COLOR_LIMIT_75_PERCENT;
+    default:
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid color limit " << color_limit;
+  }
+}
+
 }  // namespace
 
 ::util::Status BfSdeWrapper::ConfigureQos(
