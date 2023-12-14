@@ -217,7 +217,7 @@ DummyBox* DummyBox::GetSingleton() {
 
 DummyBox::~DummyBox() {}
 DummyBox::DummyBox()
-    : initialized_(false), xcvr_writer_id_(0), external_server_tid_() {}
+    : initialized_(false), xcvr_writer_id_(0), external_server_tid_(0) {}
 
 }  // namespace dummy_switch
 }  // namespace hal
