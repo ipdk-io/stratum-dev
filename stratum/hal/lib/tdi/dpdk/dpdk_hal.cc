@@ -102,7 +102,7 @@ DpdkHal::DpdkHal(OperationMode mode, SwitchInterface* switch_interface,
       p4_service_(nullptr),
       external_server_(nullptr),
       old_signal_handlers_(),
-      signal_waiter_tid_(0),
+      signal_waiter_tid_(),
       ready_sync_(ready_sync),
       done_sync_(done_sync) {
   if (target_options) {

@@ -92,7 +92,7 @@ TofinoHal::TofinoHal(OperationMode mode, SwitchInterface* switch_interface,
       p4_service_(nullptr),
       external_server_(nullptr),
       old_signal_handlers_(),
-      signal_waiter_tid_(0) {}
+      signal_waiter_tid_() {}
 
 TofinoHal::~TofinoHal() {
   // TODO(unknown): Handle this error?

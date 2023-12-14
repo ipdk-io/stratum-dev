@@ -33,7 +33,7 @@ TdiPacketioManager::TdiPacketioManager(TdiSdeInterface* tdi_sde_interface,
       packetin_header_size_(),
       packetout_header_size_(),
       packet_receive_channel_(nullptr),
-      sde_rx_thread_id_(0),
+      sde_rx_thread_id_(),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       device_(device) {}
 
