@@ -284,17 +284,16 @@ class AttributeGroupInternal : public AttributeGroup,
 // macro can *only* be used in AddAttribute, since it pulls in variables
 // not explicitly declared as macro parameters (all of the variables captured by
 // the lambda). See usage below for context.
-#define ATTRIBUTE_SETTER_FUNCTION(proto_setter_function, type)                \
-  AttributeSetterFunction(                                                    \
-      [this, field](Attribute value) -> ::util::Status {                      \
-        auto typed_value = absl::get_if<type>(&value);                        \
-        RET_CHECK(typed_value)                                                \
-            << "Found mismatched types for an attribute database field. "     \
-            << "This indicates serious attribute database corruption.";       \
-        reflection_->proto_setter_function(this->node_, field, *typed_value); \
-        /* Lambda returns success. */                                         \
-        return ::util::OkStatus();                                            \
-      })
+#define ATTRIBUTE_SETTER_FUNCTION(proto_setter_function, type)               \
+  AttributeSetterFunction([this, field](Attribute value) -> ::util::Status { \
+    auto typed_value = absl::get_if<type>(&value);                           \
+    RET_CHECK(typed_value)                                                   \
+        << "Found mismatched types for an attribute database field. "        \
+        << "This indicates serious attribute database corruption.";          \
+    reflection_->proto_setter_function(this->node_, field, *typed_value);    \
+    /* Lambda returns success. */                                            \
+    return ::util::OkStatus();                                               \
+  })
 
 ::util::StatusOr<AttributeSetterFunction> AttributeGroupQueryNode::AddAttribute(
     const std::string& name) {
