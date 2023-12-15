@@ -517,8 +517,8 @@ BfChassisManager::~BfChassisManager() = default;
           }
           default:
             return MAKE_ERROR(ERR_INVALID_PARAM)
-                << "Unsupported port type in PpgConfig "
-                << ppg_config.ShortDebugString() << ".";
+                   << "Unsupported port type in PpgConfig "
+                   << ppg_config.ShortDebugString() << ".";
         }
       }
       for (auto& queue_config : *qos_config.mutable_queue_configs()) {
@@ -540,8 +540,8 @@ BfChassisManager::~BfChassisManager() = default;
           }
           default:
             return MAKE_ERROR(ERR_INVALID_PARAM)
-                << "Unsupported port type in QueueConfig "
-                << queue_config.ShortDebugString() << ".";
+                   << "Unsupported port type in QueueConfig "
+                   << queue_config.ShortDebugString() << ".";
         }
       }
       const int device = node_id_to_device[node_id];
