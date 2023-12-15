@@ -319,7 +319,7 @@ std::unique_ptr<BfrtTableManager> BfrtTableManager::CreateInstance(
 
   if (table_entry.has_meter_config()) {
     return MAKE_ERROR(ERR_UNIMPLEMENTED)
-        << "Meter configs on TableEntries are not supported.";
+           << "Meter configs on TableEntries are not supported.";
   }
 
   return ::util::OkStatus();
@@ -1017,7 +1017,8 @@ BfrtTableManager::ReadDirectCounterEntry(
       break;
     }
     default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();
@@ -1105,7 +1106,7 @@ BfrtTableManager::ReadDirectCounterEntry(
         << "Zero member weights are not allowed.";
     if (member.weight() != 1) {
       return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
-          << "Member weights greater than 1 are not supported.";
+             << "Member weights greater than 1 are not supported.";
     }
     member_ids.push_back(member.member_id());
     member_status.push_back(true);  // Activate the member.
@@ -1133,7 +1134,8 @@ BfrtTableManager::ReadDirectCounterEntry(
       break;
     }
     default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported update type: " << type;
+      return MAKE_ERROR(ERR_INVALID_PARAM)
+             << "Unsupported update type: " << type;
   }
 
   return ::util::OkStatus();
