@@ -150,6 +150,7 @@ stratum_cc_test(
     srcs = [
         "certificate_management_service_test.cc",
     ],
+    tags = ["flaky"],
     deps = [
         ":certificate_management_service",
         ":error_buffer",
@@ -170,7 +171,6 @@ stratum_cc_test(
         "//stratum/lib/test_utils:matchers",
         "//stratum/public/lib:error",
     ],
-    tags = ["flaky"],
 )
 
 stratum_cc_library(
@@ -485,6 +485,7 @@ stratum_cc_test(
     srcs = [
         "file_service_test.cc",
     ],
+    tags = ["flaky"],
     deps = [
         ":error_buffer",
         ":file_service",
@@ -505,7 +506,6 @@ stratum_cc_test(
         "//stratum/lib/test_utils:matchers",
         "//stratum/public/lib:error",
     ],
-    tags = ["flaky"],
 )
 
 stratum_cc_library(
