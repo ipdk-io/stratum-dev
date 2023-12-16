@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Interface setup functions for YangParseTreePaths. Used by the
@@ -115,6 +115,19 @@ void SetUpInterfacesInterfaceStateName(const std::string& name,
                                 GnmiSubscribeStream* stream) {
         return SendResponse(GetResponse(path, name), stream);
       })
+      ->SetOnChangeHandler(on_change_functor);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// /interfaces/interface[name=<name>]/state/id
+void SetUpInterfacesInterfaceStateId(uint32 id, TreeNode* node) {
+  auto on_change_functor = UnsupportedFunc();
+  auto on_poll_functor = [id](const GnmiEvent& event, const ::gnmi::Path& path,
+                              GnmiSubscribeStream* stream) {
+    return SendResponse(GetResponse(path, id), stream);
+  };
+  node->SetOnTimerHandler(on_poll_functor)
+      ->SetOnPollHandler(on_poll_functor)
       ->SetOnChangeHandler(on_change_functor);
 }
 

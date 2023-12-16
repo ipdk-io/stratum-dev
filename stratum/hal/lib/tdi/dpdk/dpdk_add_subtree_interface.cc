@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Implements the DPDK-specific YangParseTreePaths::AddSubtreeInterface()
@@ -29,7 +29,7 @@ using namespace ::stratum::hal::yang::interface;
 TreeNode* YangParseTreePaths::AddSubtreeInterface(
     const std::string& name, uint64 node_id, uint32 port_id,
     const NodeConfigParams& node_config, YangParseTree* tree) {
-  // No need to lock the mutex - it is locked by method calling this one.
+  // No need to lock the mutex - it is locked by the method calling this one.
   uint64 mac_address = kDummyMacAddress;
 
   TreeNode* node = tree->AddNode(
@@ -39,6 +39,10 @@ TreeNode* YangParseTreePaths::AddSubtreeInterface(
   node = tree->AddNode(
       GetPath("interfaces")("virtual-interface", name)("state")("name")());
   SetUpInterfacesInterfaceStateName(name, node);
+
+  node =
+      tree->AddNode(GetPath("interfaces")("interface", name)("state")("id")());
+  SetUpInterfacesInterfaceStateId(port_id, node);
 
   node = tree->AddNode(GetPath("interfaces")("virtual-interface",
                                              name)("state")("admin-status")());

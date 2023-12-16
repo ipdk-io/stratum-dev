@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_INTERFACE_H_
@@ -34,6 +34,8 @@ void SetUpInterfacesInterfaceStateIfindex(uint32 node_id, uint32 port_id,
                                           TreeNode* node, YangParseTree* tree);
 
 void SetUpInterfacesInterfaceStateName(const std::string& name, TreeNode* node);
+
+void SetUpInterfacesInterfaceStateId(uint32 id, TreeNode* node);
 
 void SetUpInterfacesInterfaceStateOperStatus(uint64 node_id, uint32 port_id,
                                              TreeNode* node,
