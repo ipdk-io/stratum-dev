@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2022-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "absl/synchronization/mutex.h"
@@ -192,7 +193,8 @@ class YangParseTreeTest : public ::testing::Test {
                                  const OnEventAction& action,
                                  const GnmiEvent& event,
                                  ::gnmi::SubscribeResponse* resp) {
-    // After tree creation only two leaves are defined:
+    // After tree creation, only three leaves are defined:
+    // /interfaces/interface[name=*]/state/id
     // /interfaces/interface[name=*]/state/ifindex
     // /interfaces/interface[name=*]/state/name
 
@@ -376,7 +378,8 @@ class YangParseTreeTest : public ::testing::Test {
                               const OnSetAction& action,
                               const ::google::protobuf::Message& val,
                               SetRequest* req, GnmiEventPtr* notification) {
-    // After tree creation only two leaves are defined:
+    // After tree creation, only three leaves are defined:
+    // /interfaces/interface[name=*]/state/id
     // /interfaces/interface[name=*]/state/ifindex
     // /interfaces/interface[name=*]/state/name
 
@@ -649,7 +652,8 @@ TEST_F(YangParseTreeTest, FindRoot) {
 }
 
 TEST_F(YangParseTreeTest, PerformActionForAllNodesNonePresent) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -672,7 +676,8 @@ TEST_F(YangParseTreeTest, PerformActionForAllNodesNonePresent) {
 
 // Check if the action is executed for all qualified leaves.
 TEST_F(YangParseTreeTest, PerformActionForAllNodesOnePresent) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -756,7 +761,7 @@ class GnmiEventWriterMock : public WriterInterface<GnmiEventPtr> {
   MOCK_METHOD1(Write, bool(const GnmiEventPtr& resp));
 };
 
-// Check if the notification message is send correctly.
+// Check if the notification message is sent correctly.
 TEST_F(YangParseTreeTest, SendNotificationPass) {
   // Always forward SendNotifications to YangParseTree::SendNotification().
   EXPECT_CALL(parse_tree_, SendNotification(_))
@@ -804,7 +809,8 @@ TEST_F(YangParseTreeTest, SendNotificationPass) {
 
 // Check if the action is executed for all qualified leaves.
 TEST_F(YangParseTreeTest, GetDataFromSwitchInterfaceDataConvertedCorrectly) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -833,7 +839,7 @@ TEST_F(YangParseTreeTest, GetDataFromSwitchInterfaceDataConvertedCorrectly) {
                     [&resp](const ::gnmi::SubscribeResponse& r) { resp = r; })),
                 Return(true)));
 
-  // Find the 'oper-state' leaf.
+  // Find the 'oper-status' leaf.
   auto* node = GetRoot().FindNodeOrNull(GetPath("interfaces")(
       "interface", "interface-1")("state")("oper-status")());
   ASSERT_NE(node, nullptr);
@@ -974,7 +980,8 @@ TEST_F(YangParseTreeTest, InterfacesInterfaceStateAdminStatusOnChangeSuccess) {
 
 // Check if the action is executed correctly.
 TEST_F(YangParseTreeTest, InterfacesInterfaceStateNameOnPollSuccess) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -1003,6 +1010,40 @@ TEST_F(YangParseTreeTest, InterfacesInterfaceStateNameOnPollSuccess) {
   // Check that the result of the call is what is expected.
   ASSERT_EQ(resp.update().update_size(), 1);
   EXPECT_EQ(resp.update().update(0).val().string_val(), "interface-1");
+}
+
+// Check if the action is executed correctly.
+TEST_F(YangParseTreeTest, InterfacesInterfaceStateIdOnPollSuccess) {
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
+  // /interfaces/interface[name=*]/state/ifindex
+  // /interfaces/interface[name=*]/state/name
+
+  // The test requires one interface branch to be added.
+  AddSubtreeInterface("interface-1");
+
+  // Mock gRPC stream that copies parameter of Write() to 'resp'. The contents
+  // of the 'resp' variable is then checked.
+  SubscribeReaderWriterMock stream;
+  ::gnmi::SubscribeResponse resp;
+  EXPECT_CALL(stream, Write(_, _))
+      .WillOnce(
+          DoAll(WithArgs<0>(Invoke(
+                    [&resp](const ::gnmi::SubscribeResponse& r) { resp = r; })),
+                Return(true)));
+
+  // Find the 'name' leaf.
+  auto* node = GetRoot().FindNodeOrNull(
+      GetPath("interfaces")("interface", "interface-1")("state")("id")());
+  ASSERT_NE(node, nullptr);
+
+  // Get its OnPoll() handler and call it.
+  const auto& handler = node->GetOnPollHandler();
+  EXPECT_OK(handler(PollEvent(), &stream));
+
+  // Check that the result of the call is what is expected.
+  ASSERT_EQ(resp.update().update_size(), 1);
+  EXPECT_EQ(resp.update().update(0).val().uint_val(), kInterface1PortId);
 }
 
 // Check if the 'state/ifindex' OnPoll action works correctly.
@@ -2995,7 +3036,8 @@ TEST_F(YangParseTreeTest,
 // Check if all expected handlers are registered
 TEST_F(YangParseTreeTest,
        ExpectedRegistrationsTakePlaceInterfacesInterfaceElipsis) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
@@ -3057,7 +3099,8 @@ TEST_F(YangParseTreeTest,
 // Check if all expected handlers are registered
 TEST_F(YangParseTreeTest,
        ExpectedRegistrationsTakePlaceComponentsComponetChassisAlarms) {
-  // After tree creation only two leaves are defined:
+  // After tree creation, only three leaves are defined:
+  // /interfaces/interface[name=*]/state/id
   // /interfaces/interface[name=*]/state/ifindex
   // /interfaces/interface[name=*]/state/name
 
