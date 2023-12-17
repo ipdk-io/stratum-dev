@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 workspace(name = "com_github_stratum_stratum")
@@ -43,6 +44,9 @@ git_repository(
 
 load("//bazel/rules:build_tools.bzl", "build_tools_deps")
 build_tools_deps()
+
+load("//bazel/rules:go_deps.bzl", "golang_dependencies")
+golang_dependencies()
 
 load("//bazel/rules:proto_gen.bzl", "proto_gen_deps")
 proto_gen_deps()
