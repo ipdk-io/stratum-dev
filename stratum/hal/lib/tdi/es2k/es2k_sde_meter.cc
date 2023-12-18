@@ -184,6 +184,49 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
+::util::Status Es2kSdeWrapper::DeletePktModMeterConfig(
+    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    uint32 table_id, absl::optional<uint32> meter_index) {
+  ::absl::ReaderMutexLock l(&data_lock_);
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+
+  const ::tdi::Table* table;
+  RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
+
+  std::unique_ptr<::tdi::TableKey> table_key;
+  std::unique_ptr<::tdi::TableData> table_data;
+  RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
+  RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
+  const ::tdi::Device* device = nullptr;
+  ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
+  std::unique_ptr<::tdi::Target> dev_tgt;
+  device->createTarget(&dev_tgt);
+
+  const auto flags = ::tdi::Flags(0);
+  RETURN_IF_ERROR(
+      SetFieldExact(table_key.get(), kMeterIndex, meter_index.value()));
+
+  auto dump_args = [&]() -> std::string {
+    return absl::StrCat(
+        DumpTableMetadata(table).ValueOr("<error reading table>"), ", ",
+        DumpTableKey(table_key.get())
+            .ValueOr("<error parsing key>"));
+  };
+
+  tdi_status_t status = table->entryDel(*real_session->tdi_session_, *dev_tgt,
+                                        flags, *table_key);
+  if (status == BF_OBJECT_NOT_FOUND) {
+    return MAKE_ERROR(::util::error::Code::NOT_FOUND)
+           << "No matching table entry with " << dump_args();
+  } else if (status != BF_SUCCESS) {
+    return MAKE_ERROR(::util::error::Code::INTERNAL)
+           << "Error deleting table entry with " << dump_args();
+  }
+
+  return ::util::OkStatus();
+}
+
 ::util::Status Es2kSdeWrapper::ReadPktModMeters(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     uint32 table_id, absl::optional<uint32> meter_index,

@@ -1308,9 +1308,9 @@ static ::util::Status SetPktModMeterConfig(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type,
     const ::p4::v1::MeterEntry& meter_entry) {
-  RET_CHECK(type == ::p4::v1::Update::MODIFY)
+  RET_CHECK(type == ::p4::v1::Update::MODIFY || type == ::p4::v1::Update::DELETE)
       << "Update type of RegisterEntry " << meter_entry.ShortDebugString()
-      << " must be MODIFY.";
+      << " must be MODIFY or DELETE.";
   RET_CHECK(meter_entry.meter_id() != 0)
       << "Missing meter id in MeterEntry " << meter_entry.ShortDebugString()
       << ".";
@@ -1354,7 +1354,7 @@ static ::util::Status SetPktModMeterConfig(
         meter_entry.config().pir(), meter_entry.config().pburst()));
   }
 
-  if (resource_type == "PacketModMeter" && meter_entry.has_config()) {
+  if (resource_type == "PacketModMeter") {
     bool pkt_mod_meter_units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
@@ -1372,12 +1372,19 @@ static ::util::Status SetPktModMeterConfig(
       return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
     }
 
-    TdiPktModMeterConfig config;
-    RETURN_IF_ERROR(SetPktModMeterConfig(config, meter_entry));
-    config.isPktModMeter = pkt_mod_meter_units_in_packets;
+    if (meter_entry.has_config()) {
+      TdiPktModMeterConfig config;
+      RETURN_IF_ERROR(SetPktModMeterConfig(config, meter_entry));
+      config.isPktModMeter = pkt_mod_meter_units_in_packets;
 
-    RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-        device_, session, meter_id, meter_index, config));
+      RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
+          device_, session, meter_id, meter_index, config));
+    }
+
+    if (type == ::p4::v1::Update::DELETE) {
+      RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
+            device_, session, meter_id, meter_index));
+    }
   }
 
   return ::util::OkStatus();

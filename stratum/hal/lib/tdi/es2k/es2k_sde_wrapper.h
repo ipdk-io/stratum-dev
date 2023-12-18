@@ -37,6 +37,10 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
       std::vector<uint32>* meter_indices,
       std::vector<TdiPktModMeterConfig>& cfg) override
       LOCKS_EXCLUDED(data_lock_);
+  ::util::Status DeletePktModMeterConfig(
+      int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      uint32 table_id,
+      absl::optional<uint32> meter_index) override LOCKS_EXCLUDED(data_lock_);
   ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
