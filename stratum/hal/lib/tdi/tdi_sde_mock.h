@@ -238,9 +238,8 @@ class TdiSdeMock : public TdiSdeInterface {
   MOCK_METHOD4(
       DeletePktModMeterConfig,
       ::util::Status(int device,
-                    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-                    uint32 table_id,
-                    absl::optional<uint32> meter_index));
+                     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+                     uint32 table_id, absl::optional<uint32> meter_index));
 
   MOCK_METHOD5(
       InsertActionProfileMember,

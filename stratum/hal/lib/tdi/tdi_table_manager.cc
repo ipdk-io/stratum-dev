@@ -1308,7 +1308,8 @@ static ::util::Status SetPktModMeterConfig(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type,
     const ::p4::v1::MeterEntry& meter_entry) {
-  RET_CHECK(type == ::p4::v1::Update::MODIFY || type == ::p4::v1::Update::DELETE)
+  RET_CHECK(type == ::p4::v1::Update::MODIFY ||
+            type == ::p4::v1::Update::DELETE)
       << "Update type of RegisterEntry " << meter_entry.ShortDebugString()
       << " must be MODIFY or DELETE.";
   RET_CHECK(meter_entry.meter_id() != 0)
@@ -1383,7 +1384,7 @@ static ::util::Status SetPktModMeterConfig(
 
     if (type == ::p4::v1::Update::DELETE) {
       RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
-            device_, session, meter_id, meter_index));
+          device_, session, meter_id, meter_index));
     }
   }
 

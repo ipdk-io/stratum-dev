@@ -265,8 +265,7 @@ class TdiSdeWrapper : public TdiSdeInterface {
   }
   ::util::Status DeletePktModMeterConfig(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 table_id,
-      absl::optional<uint32> meter_index) override
+      uint32 table_id, absl::optional<uint32> meter_index) override
       LOCKS_EXCLUDED(data_lock_) {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
            << "DeletePktModMeters not supported";
