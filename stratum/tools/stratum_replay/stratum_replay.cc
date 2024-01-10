@@ -115,8 +115,8 @@ using ClientStreamChannelReaderWriter =
       stub->StreamChannel(&context);
   if (!stream->Write(stream_req)) {
     return MAKE_ERROR(ERR_INTERNAL)
-        << "Failed to send request '" << stream_req.ShortDebugString()
-        << "' to switch.";
+           << "Failed to send request '" << stream_req.ShortDebugString()
+           << "' to switch.";
   }
 
   // Push the given pipeline config.
