@@ -14,7 +14,7 @@ namespace hal {
 namespace dummy_switch {
 
 // Entry point of Dummy Switch
-::util::Status Main(int argc, char* argv[]) {
+static ::util::Status Main(int argc, char* argv[]) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 
