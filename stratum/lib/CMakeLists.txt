@@ -14,6 +14,8 @@ add_library(stratum_lib_o OBJECT
     channel/channel.h
     channel/channel_internal.h
     macros.h
+    p4runtime/p4runtime_session.cc
+    p4runtime/p4runtime_session.h
     security/auth_policy_checker.cc
     security/auth_policy_checker.h
     security/credentials_manager.cc
