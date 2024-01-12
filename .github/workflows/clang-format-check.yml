@@ -8,7 +8,7 @@ on:
 
 concurrency:
   # If workflow for PR or push is already running, stop it and start a new one.
-  group: build-${{ github.ref }}
+  group: clang-format-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
