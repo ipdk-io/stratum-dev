@@ -98,7 +98,6 @@ switched_rules_by_language(
     name = "com_google_googleapis_imports",
     grpc = True,
     cc = True,
-    python = True,
 )
 
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
@@ -118,7 +117,7 @@ load("@io_bazel_rules_go//tests:grpc_repos.bzl", "grpc_dependencies")
 grpc_dependencies()
 
 # ---------------------------------------------------------------------------
-#       Overiride net, text, and sys Go modules to patch new Go update
+#       Override net, text, and sys Go modules to patch new Go update
 # ---------------------------------------------------------------------------
 
 go_repository(
