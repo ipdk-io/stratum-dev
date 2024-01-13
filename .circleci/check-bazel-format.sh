@@ -71,6 +71,7 @@ stratum/pipelines/ptf/ptf_exec.bzl
 stratum/pipelines/ptf/scapy_exec.bzl
 stratum/portage/BUILD
 stratum/portage/build_defs.bzl
+stratum/procmon/BUILD
 stratum/public/lib/BUILD
 stratum/public/model/BUILD
 stratum/public/proto/BUILD
