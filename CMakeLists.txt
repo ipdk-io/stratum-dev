@@ -32,24 +32,25 @@ add_compile_options(-Wno-attributes)
 
 add_subdirectory(stratum)
 
-#######################
-# add_stratum_objects #
-#######################
+###########################
+# add_stratum_object_libs #
+###########################
 
-function(add_stratum_objects _TGT)
+function(add_stratum_object_libs _TGT)
     target_sources(${_TGT} PRIVATE
         $<TARGET_OBJECTS:stratum_glue_o>
         $<TARGET_OBJECTS:stratum_hal_lib_common_o>
         $<TARGET_OBJECTS:stratum_hal_lib_p4_o>
         $<TARGET_OBJECTS:stratum_hal_lib_phal_o>
         $<TARGET_OBJECTS:stratum_lib_o>
+        $<TARGET_OBJECTS:stratum_lib_security_o>
         $<TARGET_OBJECTS:stratum_main_o>
         $<TARGET_OBJECTS:stratum_public_o>
         $<TARGET_OBJECTS:stratum_tdi_common_o>
         $<TARGET_OBJECTS:stratum_tdi_target_o>
         $<TARGET_OBJECTS:stratum_yang_parse_tree_o>
     )
-endfunction(add_stratum_objects)
+endfunction(add_stratum_object_libs)
 
 #########################
 # add_stratum_libraries #
@@ -126,7 +127,7 @@ endfunction()
 #####################
 
 add_library(stratum_static STATIC)
-add_stratum_objects(stratum_static)
+add_stratum_object_libs(stratum_static)
 add_stratum_libraries(stratum_static)
 
 #####################
@@ -134,5 +135,5 @@ add_stratum_libraries(stratum_static)
 #####################
 
 add_library(stratum_shared SHARED)
-add_stratum_objects(stratum_shared)
+add_stratum_object_libs(stratum_shared)
 add_stratum_libraries(stratum_shared)
