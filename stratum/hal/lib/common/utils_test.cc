@@ -435,7 +435,7 @@ TEST(DecimalUtilTest, TestFromDoubleToDecimal64) {
           .status());
 }
 
-void DecimalToDoubleTest(int64 digits, uint32 precision, double to) {
+static void DecimalToDoubleTest(int64 digits, uint32 precision, double to) {
   ::gnmi::Decimal64 from;
   from.set_digits(digits);
   from.set_precision(precision);

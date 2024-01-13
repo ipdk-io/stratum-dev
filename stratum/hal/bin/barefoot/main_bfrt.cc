@@ -1,5 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "gflags/gflags.h"
@@ -28,7 +29,7 @@ namespace stratum {
 namespace hal {
 namespace barefoot {
 
-::util::Status Main(int argc, char* argv[]) {
+static ::util::Status Main(int argc, char* argv[]) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 
