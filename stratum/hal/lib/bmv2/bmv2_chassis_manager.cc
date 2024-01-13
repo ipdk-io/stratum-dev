@@ -69,8 +69,8 @@ namespace {
       iface_name, static_cast<bm::PortMonitorIface::port_t>(port_id), {});
   if (bm_status != bm::DevMgrIface::ReturnCode::SUCCESS) {
     return MAKE_ERROR(ERR_INTERNAL)
-        << "Error when binding port " << port_id << " to interface "
-        << iface_name << " in node " << node_id << ".";
+           << "Error when binding port " << port_id << " to interface "
+           << iface_name << " in node " << node_id << ".";
   }
   return ::util::OkStatus();
 }
@@ -83,7 +83,7 @@ namespace {
       dev_mgr->port_remove(static_cast<bm::PortMonitorIface::port_t>(port_id));
   if (bm_status != bm::DevMgrIface::ReturnCode::SUCCESS) {
     return MAKE_ERROR(ERR_INTERNAL) << "Error when removing port " << port_id
-                               << " from node " << node_id << ".";
+                                    << " from node " << node_id << ".";
   }
   return ::util::OkStatus();
 }

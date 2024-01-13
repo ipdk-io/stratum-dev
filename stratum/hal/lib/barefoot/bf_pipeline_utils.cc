@@ -8,7 +8,6 @@
 
 #include <string>
 
-#include "absl/cleanup/cleanup.h"
 #include "absl/strings/strip.h"
 #include "gflags/gflags.h"
 #include "nlohmann/json.hpp"

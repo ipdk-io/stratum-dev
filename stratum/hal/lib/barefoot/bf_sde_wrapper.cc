@@ -490,7 +490,8 @@ template <typename T>
   if (table_type == bfrt::BfRtTable::TableType::METER ||
       table_type == bfrt::BfRtTable::TableType::COUNTER) {
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || \
+    defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(
         table->tableSizeGet(*bfrt_session, bf_dev_target, &table_size));
 #else
@@ -1473,8 +1474,7 @@ namespace {
         default:
           return MAKE_ERROR(ERR_INVALID_PARAM)
                  << "Invalid queue guaranteed minimum rate config in "
-                    "QueueMapping "
-                 << queue_mapping.ShortDebugString() << ".";
+                 << "QueueMapping " << queue_mapping.ShortDebugString() << ".";
       }
       if (queue_mapping.enable_color_drop()) {
         RETURN_IF_BFRT_ERROR(
@@ -2107,7 +2107,8 @@ namespace {
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromNameGet(kPreNodeTable, &table));
   size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || \
+    defined(SDE_9_11_0)
   RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                            bf_dev_tgt, &table_size));
 #else
@@ -2771,7 +2772,8 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || \
+    defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
 #else
@@ -2908,7 +2910,8 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
+#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || \
+    defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
 #else
