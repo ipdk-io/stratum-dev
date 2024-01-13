@@ -65,27 +65,22 @@ using ClientStreamChannelReaderWriter =
   }
 
   // Initialize the gRPC channel and P4Runtime service stub
-  auto channel_credentials = ::grpc::InsecureChannelCredentials();
+  std::shared_ptr<::grpc::ChannelCredentials> channel_credentials;
   if (!FLAGS_ca_cert.empty()) {
-    ::grpc::string pem_root_certs;
-    ::grpc::experimental::TlsKeyMaterialsConfig::PemKeyCertPair
-        pem_key_cert_pair;
-    auto key_materials_config =
-        std::make_shared<::grpc::experimental::TlsKeyMaterialsConfig>();
-    RETURN_IF_ERROR(ReadFileToString(FLAGS_ca_cert, &pem_root_certs));
-    key_materials_config->set_pem_root_certs(pem_root_certs);
-
+    auto cert_provider =
+        std::make_shared<::grpc::experimental::FileWatcherCertificateProvider>(
+            FLAGS_client_key, FLAGS_client_cert, FLAGS_ca_cert, 1);
+    auto tls_opts =
+        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>(
+            cert_provider);
+    tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
+    tls_opts->watch_root_certs();
     if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
-      RETURN_IF_ERROR(::stratum::ReadFileToString(
-          FLAGS_client_cert, &pem_key_cert_pair.cert_chain));
-      RETURN_IF_ERROR(::stratum::ReadFileToString(
-          FLAGS_client_key, &pem_key_cert_pair.private_key));
-      key_materials_config->add_pem_key_cert_pair(pem_key_cert_pair);
+      tls_opts->watch_identity_key_cert_pairs();
     }
-    auto cred_opts = ::grpc::experimental::TlsCredentialsOptions(
-        GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE, GRPC_TLS_SERVER_VERIFICATION,
-        key_materials_config, nullptr, nullptr);
-    channel_credentials = grpc::experimental::TlsCredentials(cred_opts);
+    channel_credentials = ::grpc::experimental::TlsCredentials(*tls_opts);
+  } else {
+    channel_credentials = ::grpc::InsecureChannelCredentials();
   }
   auto channel = ::grpc::CreateChannel(FLAGS_grpc_addr, channel_credentials);
   auto stub = ::p4::v1::P4Runtime::NewStub(channel);
@@ -94,12 +89,12 @@ using ClientStreamChannelReaderWriter =
   ::p4::v1::StreamMessageRequest stream_req;
   std::vector<std::string> election_ids =
       absl::StrSplit(FLAGS_election_id, ",");
-  CHECK_RETURN_IF_FALSE(election_ids.size() == 2) << "Invalid election ID.";
+  RET_CHECK(election_ids.size() == 2) << "Invalid election ID.";
   uint64 election_id_high;
   uint64 election_id_low;
-  CHECK_RETURN_IF_FALSE(absl::SimpleAtoi(election_ids[0], &election_id_high))
+  RET_CHECK(absl::SimpleAtoi(election_ids[0], &election_id_high))
       << "Unable to parse string " << election_ids[0] << " to uint64";
-  CHECK_RETURN_IF_FALSE(absl::SimpleAtoi(election_ids[1], &election_id_low))
+  RET_CHECK(absl::SimpleAtoi(election_ids[1], &election_id_low))
       << "Unable to parse string " << election_ids[1] << " to uint64";
   absl::uint128 election_id =
       absl::MakeUint128(election_id_high, election_id_low);
@@ -134,7 +129,7 @@ using ClientStreamChannelReaderWriter =
   RETURN_IF_ERROR(ReadProtoFromTextFile(FLAGS_pipeline_cfg, &pipeline_cfg));
   const ::p4::v1::ForwardingPipelineConfig* fwd_pipe_cfg =
       gtl::FindOrNull(pipeline_cfg.node_id_to_config(), FLAGS_device_id);
-  CHECK_RETURN_IF_FALSE(fwd_pipe_cfg);
+  RET_CHECK(fwd_pipe_cfg);
   fwd_pipe_cfg_req.mutable_config()->CopyFrom(*fwd_pipe_cfg);
 
   ::grpc::Status status;
@@ -142,7 +137,7 @@ using ClientStreamChannelReaderWriter =
     ::grpc::ClientContext context;
     status = stub->SetForwardingPipelineConfig(&context, fwd_pipe_cfg_req,
                                                &fwd_pipe_cfg_resp);
-    CHECK_RETURN_IF_FALSE(status.ok())
+    RET_CHECK(status.ok())
         << "Failed to push forwarding pipeline config: "
         << ::stratum::hal::P4RuntimeGrpcStatusToString(status);
   }
@@ -192,11 +187,11 @@ using ClientStreamChannelReaderWriter =
                      << "Request: " << write_req.ShortDebugString();
       } else {
         ::google::rpc::Status details;
-        CHECK_RETURN_IF_FALSE(details.ParseFromString(status.error_details()))
+        RET_CHECK(details.ParseFromString(status.error_details()))
             << "Failed to parse error details from gRPC status.";
         if (details.details_size() != 0) {
           ::p4::v1::Error detail;
-          CHECK_RETURN_IF_FALSE(details.details(0).UnpackTo(&detail))
+          RET_CHECK(details.details(0).UnpackTo(&detail))
               << "Failed to parse the P4Runtime error from detail message.";
           if (detail.message() != error_msg) {
             LOG(WARNING) << "The expected error message is different "
@@ -207,7 +202,7 @@ using ClientStreamChannelReaderWriter =
         }
       }
     } else {
-      CHECK_RETURN_IF_FALSE(status.ok())
+      RET_CHECK(status.ok())
           << "Failed to send P4Runtime write request: "
           << write_req.ShortDebugString() << "\n"
           << ::stratum::hal::P4RuntimeGrpcStatusToString(status);
