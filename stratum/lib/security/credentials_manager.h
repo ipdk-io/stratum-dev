@@ -16,9 +16,6 @@
 #include "stratum/glue/status/statusor.h"
 
 namespace stratum {
-using ::grpc::experimental::FileWatcherCertificateProvider;
-using ::grpc::experimental::TlsServerCredentials;
-using ::grpc::experimental::TlsServerCredentialsOptions;
 
 // CredentialsManager manages the server credentials for (external facing) gRPC
 // servers. It handles starting and shutting down TSI as well as generating the
@@ -28,23 +25,22 @@ class CredentialsManager {
  public:
   virtual ~CredentialsManager();
 
-  // Generates server credentials for an external facing gRPC
-  // server.
+  // Generates server credentials for an external facing gRPC server.
   virtual std::shared_ptr<::grpc::ServerCredentials>
   GenerateExternalFacingServerCredentials() const;
 
-  // Factory functions for creating the instance of the class.
+  // Loads new credentials.
+  virtual ::util::Status LoadNewCredential(const std::string& ca_cert,
+                                           const std::string& cert,
+                                           const std::string& key);
+
+  // Factory function for creating the instance of the class.
   static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance(
       bool secure_only = false);
 
   // CredentialsManager is neither copyable nor movable.
   CredentialsManager(const CredentialsManager&) = delete;
   CredentialsManager& operator=(const CredentialsManager&) = delete;
-
-  // Loads new credentials
-  ::util::Status LoadNewCredential(const std::string ca_cert,
-                                   const std::string cert,
-                                   const std::string key);
 
  protected:
   // Default constructor. To be called by the Mock class instance as well as
@@ -55,8 +51,9 @@ class CredentialsManager {
   // Function to initialize the credentials manager.
   ::util::Status Initialize();
   std::shared_ptr<::grpc::ServerCredentials> server_credentials_;
-  std::shared_ptr<TlsServerCredentialsOptions> tls_opts_;
-  std::shared_ptr<FileWatcherCertificateProvider> certificate_provider_;
+  std::shared_ptr<::grpc::experimental::TlsServerCredentialsOptions> tls_opts_;
+  std::shared_ptr<::grpc::experimental::FileWatcherCertificateProvider>
+      certificate_provider_;
 };
 
 }  // namespace stratum
