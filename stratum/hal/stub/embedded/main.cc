@@ -700,7 +700,7 @@ class HalServiceClient {
 
 ABSL_CONST_INIT absl::Mutex HalServiceClient::lock_(absl::kConstInit);
 
-::util::Status Main(int argc, char** argv) {
+static ::util::Status Main(int argc, char** argv) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
   HalServiceClient client(FLAGS_url);

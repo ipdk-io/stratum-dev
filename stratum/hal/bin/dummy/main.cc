@@ -1,4 +1,5 @@
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/glue/init_google.h"
