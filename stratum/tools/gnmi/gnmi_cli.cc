@@ -13,6 +13,7 @@
 #include "gnmi/gnmi.grpc.pb.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/security/credentials.h"
+#include "grpcpp/security/tls_certificate_provider.h"
 #include "grpcpp/security/tls_credentials_options.h"
 #include "re2/re2.h"
 #include "stratum/glue/init_google.h"
@@ -227,7 +228,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   stratum::InitStratumLogging();
   if (argc < 2) {
     std::cout << kUsage << std::endl;
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Invalid number of arguments.";
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid number of arguments.";
   }
 
   ::grpc::ClientContext ctx;
@@ -237,10 +238,10 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     RETURN_IF_ERROR(
         CreatePipeForSignalHandling(&pipe_read_fd_, &pipe_write_fd_));
   }
-  CHECK_RETURN_IF_FALSE(std::signal(SIGINT, HandleSignal) != SIG_ERR);
+  RET_CHECK(std::signal(SIGINT, HandleSignal) != SIG_ERR);
   pthread_t context_cancel_tid;
-  CHECK_RETURN_IF_FALSE(pthread_create(&context_cancel_tid, nullptr,
-                                       ContextCancelThreadFunc, nullptr) == 0);
+  RET_CHECK(pthread_create(&context_cancel_tid, nullptr,
+                           ContextCancelThreadFunc, nullptr) == 0);
   auto cleaner = absl::MakeCleanup([&context_cancel_tid, &ctx] {
     int signal = SIGINT;
     write(pipe_write_fd_, &signal, sizeof(signal));
@@ -259,8 +260,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
         std::make_shared<::grpc::experimental::FileWatcherCertificateProvider>(
             FLAGS_client_key, FLAGS_client_cert, FLAGS_ca_cert, 1);
     auto tls_opts =
-        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>(
-            cert_provider);
+        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>();
+    tls_opts->set_certificate_provider(cert_provider);
     tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
     tls_opts->watch_root_certs();
     if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
@@ -284,8 +285,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   }
 
   if (argc < 3) {
-    RETURN_ERROR(ERR_INVALID_PARAM)
-        << "Missing path for " << cmd << " request.";
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "Missing path for " << cmd << " request.";
   }
   std::string path = std::string(argv[2]);
 
@@ -311,8 +312,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     auto stream_reader_writer = stub->Subscribe(&ctx);
     ::gnmi::SubscribeRequest req = BuildGnmiSubOnchangeRequest(path);
     PRINT_MSG(req, "REQUEST");
-    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req))
-        << "Can not write request.";
+    RET_CHECK(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");
@@ -323,15 +323,14 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     ::gnmi::SubscribeRequest req =
         BuildGnmiSubSampleRequest(path, FLAGS_interval);
     PRINT_MSG(req, "REQUEST");
-    CHECK_RETURN_IF_FALSE(stream_reader_writer->Write(req))
-        << "Can not write request.";
+    RET_CHECK(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");
     }
     RETURN_IF_GRPC_ERROR(stream_reader_writer->Finish());
   } else {
-    RETURN_ERROR(ERR_INVALID_PARAM) << "Unknown command: " << cmd;
+    return MAKE_ERROR(ERR_INVALID_PARAM) << "Unknown command: " << cmd;
   }
   LOG(INFO) << "Done.";
 

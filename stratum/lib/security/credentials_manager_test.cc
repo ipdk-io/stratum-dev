@@ -1,5 +1,7 @@
 // Copyright 2021-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+
 #include "stratum/lib/security/credentials_manager.h"
 
 #include <fstream>
@@ -17,7 +19,7 @@
 #include "stratum/glue/net_util/ports.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/status_test_util.h"
-#include "stratum/lib/security/cert_utils.h"
+#include "stratum/lib/security/certificate.h"
 #include "stratum/lib/security/test.grpc.pb.h"
 #include "stratum/lib/utils.h"
 
@@ -45,13 +47,15 @@ constexpr char cert_common_name[] = "stratum.local";
 
 util::Status GenerateCerts(std::string* ca_crt, std::string* server_crt,
                            std::string* server_key) {
+  absl::Time valid_after = absl::Now();
+  absl::Time valid_until = valid_after + absl::Hours(24);
   Certificate ca("Stratum CA", 1);
   EXPECT_OK(ca.GenerateKeyPair(1024));
-  EXPECT_OK(ca.SignCertificate(ca, 30));
+  EXPECT_OK(ca.SignCertificate(ca, valid_after, valid_until));
 
   Certificate stratum(cert_common_name, 1);
   EXPECT_OK(stratum.GenerateKeyPair(1024));
-  EXPECT_OK(stratum.SignCertificate(ca, 30));
+  EXPECT_OK(stratum.SignCertificate(ca, valid_after, valid_until));
 
   ASSIGN_OR_RETURN(*ca_crt, ca.GetCertificate());
   ASSIGN_OR_RETURN(*server_crt, stratum.GetCertificate());
@@ -97,8 +101,8 @@ class CredentialsManagerTest : public ::testing::Test {
         std::make_shared<::grpc::experimental::StaticDataCertificateProvider>(
             ca_crt);
     auto tls_opts =
-        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>(
-            cert_provider);
+        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>();
+    tls_opts->set_certificate_provider(cert_provider);
     tls_opts->watch_root_certs();
     auto channel_creds = ::grpc::experimental::TlsCredentials(*tls_opts);
 

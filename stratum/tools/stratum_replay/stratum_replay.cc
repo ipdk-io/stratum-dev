@@ -1,4 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #include <iostream>
 #include <memory>
@@ -71,8 +72,8 @@ using ClientStreamChannelReaderWriter =
         std::make_shared<::grpc::experimental::FileWatcherCertificateProvider>(
             FLAGS_client_key, FLAGS_client_cert, FLAGS_ca_cert, 1);
     auto tls_opts =
-        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>(
-            cert_provider);
+        std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>();
+    tls_opts->set_certificate_provider(cert_provider);
     tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
     tls_opts->watch_root_certs();
     if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
@@ -110,8 +111,8 @@ using ClientStreamChannelReaderWriter =
       stub->StreamChannel(&context);
   if (!stream->Write(stream_req)) {
     return MAKE_ERROR(ERR_INTERNAL)
-        << "Failed to send request '" << stream_req.ShortDebugString()
-        << "' to switch.";
+           << "Failed to send request '" << stream_req.ShortDebugString()
+           << "' to switch.";
   }
 
   // Push the given pipeline config.
@@ -137,9 +138,9 @@ using ClientStreamChannelReaderWriter =
     ::grpc::ClientContext context;
     status = stub->SetForwardingPipelineConfig(&context, fwd_pipe_cfg_req,
                                                &fwd_pipe_cfg_resp);
-    RET_CHECK(status.ok())
-        << "Failed to push forwarding pipeline config: "
-        << ::stratum::hal::P4RuntimeGrpcStatusToString(status);
+    RET_CHECK(status.ok()) << "Failed to push forwarding pipeline config: "
+                           << ::stratum::hal::P4RuntimeGrpcStatusToString(
+                                  status);
   }
 
   // Parse the P4Runtime write log file and send write requests to the
