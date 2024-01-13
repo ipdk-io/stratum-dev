@@ -262,7 +262,6 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     auto tls_opts =
         std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>();
     tls_opts->set_certificate_provider(cert_provider);
-    tls_opts->set_server_verification_option(GRPC_TLS_SERVER_VERIFICATION);
     tls_opts->watch_root_certs();
     if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
       tls_opts->watch_identity_key_cert_pairs();
