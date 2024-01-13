@@ -414,8 +414,8 @@ BfChassisManager::~BfChassisManager() = default;
       // was added and the speed_bps was set.
       if (!old_port_config->speed_bps) {
         return MAKE_ERROR(ERR_INTERNAL)
-               << "Invalid internal state in BfChassisManager, "
-               << "speed_bps field should contain a value";
+               << "Invalid internal state in BfChassisManager, speed_bps field "
+                  "should contain a value";
       }
 
       // if anything fails, port_config.admin_state will be set to
@@ -800,15 +800,15 @@ BfChassisManager::~BfChassisManager() = default;
         node_id_to_port_id_to_singleton_port_key_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
              << "The switch is already initialized, but we detected the newly "
-             << "pushed config requires a change in the port layout. The stack "
-             << "needs to be rebooted to finish config push.";
+                "pushed config requires a change in the port layout. The stack "
+                "needs to be rebooted to finish config push.";
     }
 
     if (node_id_to_device != node_id_to_device_) {
       return MAKE_ERROR(ERR_REBOOT_REQUIRED)
              << "The switch is already initialized, but we detected the newly "
-             << "pushed config requires a change in node_id_to_device. The "
-             << "stack needs to be rebooted to finish config push.";
+                "pushed config requires a change in node_id_to_device. The "
+                "stack needs to be rebooted to finish config push.";
     }
   }
 
@@ -1076,13 +1076,13 @@ BfChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
 
     if (!config.speed_bps) {
       return MAKE_ERROR(ERR_INTERNAL)
-             << "Invalid internal state in BfChassisManager, "
-             << "speed_bps field should contain a value";
+             << "Invalid internal state in BfChassisManager, speed_bps field "
+                "should contain a value";
     }
     if (!config.fec_mode) {
       return MAKE_ERROR(ERR_INTERNAL)
-             << "Invalid internal state in BfChassisManager, "
-             << "fec_mode field should contain a value";
+             << "Invalid internal state in BfChassisManager, fec_mode field "
+                "should contain a value";
     }
 
     ASSIGN_OR_RETURN(auto sdk_port_id, GetSdkPortId(node_id, port_id));

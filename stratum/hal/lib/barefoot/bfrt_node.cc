@@ -426,8 +426,8 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
                                                           act_prof_group);
     }
     default:
-      return MAKE_ERROR() << "Unsupported extern entry: "
-                          << entry.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
   }
 }
 
