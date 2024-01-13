@@ -1,4 +1,5 @@
 // Copyright 2019-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <csignal>
@@ -34,9 +35,9 @@ DEFINE_string(bytes_val_file, "", "A file to be sent as bytes value");
 DEFINE_uint64(interval, 5000, "Subscribe poll interval in ms");
 DEFINE_bool(replace, false, "Use replace instead of update");
 DEFINE_string(get_type, "ALL", "The gNMI get request type");
-DEFINE_string(ca_cert, "", "CA certificate");
-DEFINE_string(client_cert, "", "Client certificate");
-DEFINE_string(client_key, "", "Client key");
+DEFINE_string(ca_cert_file, "", "Path to CA certificate file");
+DEFINE_string(client_cert_file, "", "Path to client certificate file");
+DEFINE_string(client_key_file, "", "Path to client key file");
 
 #define PRINT_MSG(msg, prompt)                   \
   do {                                           \
@@ -74,9 +75,6 @@ positional arguments:
 optional arguments:
   --help                   show help message and exit
   --grpc_addr GRPC_ADDR    gNMI server address
-  --ca-cert CERT           CA certificate
-  --client-cert CERT       gRPC Client certificate
-  --client-key KEY         gRPC Client key
 
 SetRequest only:
   --bool_val BOOL_VAL      Set boolean value
@@ -262,15 +260,16 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   });
 
   std::shared_ptr<::grpc::ChannelCredentials> channel_credentials;
-  if (!FLAGS_ca_cert.empty()) {
+  if (!FLAGS_ca_cert_file.empty()) {
     auto cert_provider =
         std::make_shared<::grpc::experimental::FileWatcherCertificateProvider>(
-            FLAGS_client_key, FLAGS_client_cert, FLAGS_ca_cert, 1);
+            FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
+            1);
     auto tls_opts =
         std::make_shared<::grpc::experimental::TlsChannelCredentialsOptions>();
     tls_opts->set_certificate_provider(cert_provider);
     tls_opts->watch_root_certs();
-    if (!FLAGS_client_cert.empty() && !FLAGS_client_key.empty()) {
+    if (!FLAGS_client_cert_file.empty() && !FLAGS_client_key_file.empty()) {
       tls_opts->watch_identity_key_cert_pairs();
     }
     channel_credentials = ::grpc::experimental::TlsCredentials(*tls_opts);
