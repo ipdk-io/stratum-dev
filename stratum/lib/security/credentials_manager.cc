@@ -29,7 +29,7 @@ CredentialsManager::GenerateExternalFacingServerCredentials() const {
 }
 
 ::util::StatusOr<std::unique_ptr<CredentialsManager>>
-CredentialsManager::CreateInstance() {
+CredentialsManager::CreateInstance(bool secure_only) {
   auto instance_ = absl::WrapUnique(new CredentialsManager());
   RETURN_IF_ERROR(instance_->Initialize());
   return std::move(instance_);

@@ -21,8 +21,8 @@ using ::grpc::experimental::TlsServerCredentialsOptions;
 
 // CredentialsManager manages the server credentials for (external facing) gRPC
 // servers. It handles starting and shutting down TSI as well as generating the
-// server credentials. This class is supposed to be created
-// once for each binary.
+// server credentials. This class is supposed to be created once for each
+// binary.
 class CredentialsManager {
  public:
   virtual ~CredentialsManager();
@@ -33,7 +33,8 @@ class CredentialsManager {
   GenerateExternalFacingServerCredentials() const;
 
   // Factory functions for creating the instance of the class.
-  static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance();
+  static ::util::StatusOr<std::unique_ptr<CredentialsManager>> CreateInstance(
+      bool secure_only = false);
 
   // CredentialsManager is neither copyable nor movable.
   CredentialsManager(const CredentialsManager&) = delete;
