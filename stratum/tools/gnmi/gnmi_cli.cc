@@ -72,20 +72,27 @@ positional arguments:
   path                                              gNMI path
 
 optional arguments:
-  --help            show this help message and exit
+  --help                   show help message and exit
   --grpc_addr GRPC_ADDR    gNMI server address
-  --bool_val BOOL_VAL      [SetRequest only] Set boolean value
-  --int_val INT_VAL        [SetRequest only] Set int value (64-bit)
-  --uint_val UINT_VAL      [SetRequest only] Set uint value (64-bit)
-  --string_val STRING_VAL  [SetRequest only] Set string value
-  --float_val FLOAT_VAL    [SetRequest only] Set float value
-  --bytes_val_file FILE    [SetRequest only] A file to be sent as bytes value
-  --interval INTERVAL      [Sample subscribe only] Sample subscribe poll interval in ms
-  --replace                [SetRequest only] Use replace instead of update
-  --get-type               [GetRequest only] Use specific data type for get request (ALL,CONFIG,STATE,OPERATIONAL)
-  --ca-cert                CA certificate
-  --client-cert            gRPC Client certificate
-  --client-key             gRPC Client key
+  --ca-cert CERT           CA certificate
+  --client-cert CERT       gRPC Client certificate
+  --client-key KEY         gRPC Client key
+
+SetRequest only:
+  --bool_val BOOL_VAL      Set boolean value
+  --int_val INT_VAL        Set int value (64-bit)
+  --uint_val UINT_VAL      Set uint value (64-bit)
+  --string_val STRING_VAL  Set string value
+  --float_val FLOAT_VAL    Set float value
+  --bytes_val_file FILE    Send file as bytes value
+  --replace                Use replace instead of update
+
+GetRequest only:
+  --get-type DATA_TYPE     Use specific data type for request (ALL,CONFIG,STATE,OPERATIONAL)
+
+Sample subscribe only:
+  --interval INTERVAL      Sample subscribe poll interval in ms
+
 )USAGE";
 
 // Pipe file descriptors used to transfer signals from the handler to the cancel
