@@ -61,7 +61,7 @@ void InitStratumLogging() {
     LogToStderr();
   }
 
-  if (kStampingEnabled) {
+  if (kBuildTimestamp > 0 && kStampingEnabled) {
     LOG(INFO) << "Stratum version "
               << kBuildScmRevision
               // TODO(max): enable once CI does not modify the source tree
