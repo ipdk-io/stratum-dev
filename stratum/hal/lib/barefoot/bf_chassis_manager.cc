@@ -1,4 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_chassis_manager.h"
@@ -691,6 +692,9 @@ BfChassisManager::~BfChassisManager() = default;
     CHECK_RETURN_IF_FALSE(singleton_port.id() != kCpuPortId)
         << "SingletonPort " << PrintSingletonPort(singleton_port)
         << " has the reserved CPU port ID (" << kCpuPortId << ").";
+    CHECK_RETURN_IF_FALSE(singleton_port.id() != kSdnCpuPortId)
+        << "SingletonPort " << PrintSingletonPort(singleton_port)
+        << " has the reserved CPU port ID (" << kSdnCpuPortId << ").";
     CHECK_RETURN_IF_FALSE(singleton_port.slot() > 0)
         << "No valid slot in " << singleton_port.ShortDebugString() << ".";
     CHECK_RETURN_IF_FALSE(singleton_port.port() > 0)

@@ -1,5 +1,4 @@
 // Copyright 2012-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_pipeline_utils.h"
