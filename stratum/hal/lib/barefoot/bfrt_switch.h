@@ -1,4 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_BAREFOOT_BFRT_SWITCH_H_
