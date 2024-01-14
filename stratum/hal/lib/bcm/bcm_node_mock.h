@@ -5,6 +5,7 @@
 #ifndef STRATUM_HAL_LIB_BCM_BCM_NODE_MOCK_H_
 #define STRATUM_HAL_LIB_BCM_BCM_NODE_MOCK_H_
 
+#include <memory>
 #include <vector>
 
 #include "gmock/gmock.h"
