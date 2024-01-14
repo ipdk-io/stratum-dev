@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_TABLE_MANAGER_H_
@@ -20,7 +20,6 @@
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/lib/timer_daemon.h"
 
 namespace stratum {
 namespace hal {
@@ -150,9 +149,6 @@ class TdiTableManager {
       const TdiSdeInterface::TableDataInterface* table_data)
       SHARED_LOCKS_REQUIRED(lock_);
 
-  ::util::Status SetupRegisterReset(const ::p4::config::v1::P4Info& p4_info)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
-
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
   // therefore needs to do all the SDK initialization itself.
@@ -165,9 +161,6 @@ class TdiTableManager {
 
   // Reader-writer lock used to protect access to pipeline state.
   mutable absl::Mutex lock_;
-
-  std::vector<TimerDaemon::DescriptorPtr> register_timer_descriptors_
-      GUARDED_BY(lock_);
 
   // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.
   TdiSdeInterface* tdi_sde_interface_ = nullptr;  // not owned by this class.
