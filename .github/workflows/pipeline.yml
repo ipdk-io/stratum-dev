@@ -58,15 +58,15 @@ jobs:
           export SDE_INSTALL=$SDE_INSTALL_DIR
           xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-broken,-flaky
 
-      - name: Collect unit test logs
-        if: failure()
-        working-directory: stratum
-        run: |
-          cd bazel-testlogs
-          tar czf $GITHUB_WORKSPACE/$DPDK_TESTLOGS stratum/
+  cdlang_tests:
+    runs-on: ubuntu-20.04
 
-      - name: Upload unit test logs
-        if: failure()
-        uses: actions/upload-artifact@v4
+    steps:
+      - name: Clone stratum repository
+        uses: actions/checkout@v4
         with:
-          path: $DPDK_TESTLOGS
+          path: stratum
+
+      - name: Run cdlang tests
+        run: |
+          bazel test //stratum/testing/cdlang/... --javabase=@bazel_tools//tools/jdk:remote_jdk11
