@@ -30,7 +30,7 @@ static ::util::Status Main(int argc, char** argv) {
   InitStratumLogging();
 
   // Read the procmon config.
-  CHECK_RETURN_IF_FALSE(!FLAGS_procmon_config_file.empty())
+  RET_CHECK(!FLAGS_procmon_config_file.empty())
       << "Flag procmon_config_file must be specified.";
   ProcmonConfig config;
   RETURN_IF_ERROR(ReadProtoFromTextFile(FLAGS_procmon_config_file, &config));

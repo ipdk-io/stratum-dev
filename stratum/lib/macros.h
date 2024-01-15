@@ -7,21 +7,12 @@
 
 #include <string>
 
-/* START GOOGLE ONLY
-#include "stratum/glue/status/status_builder.h"
-   END GOOGLE ONLY */
 #include "stratum/glue/logging.h"
+#include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/public/lib/error.h"
 
 namespace stratum {
-
-// A macro for simplify checking and logging a condition. The error code
-// return here is the one that matches the most of the uses.
-#define CHECK_RETURN_IF_FALSE(cond) \
-  if (ABSL_PREDICT_TRUE(cond)) {    \
-  } else /* NOLINT */               \
-    return MAKE_ERROR(ERR_INVALID_PARAM) << "'" << #cond << "' is false. "
 
 // A simple class to explicitly cast the return value of an ::util::Status
 // to bool.
