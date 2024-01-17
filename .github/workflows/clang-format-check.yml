@@ -2,9 +2,13 @@ name: "clang-format check"
 
 on:
   push:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
   pull_request:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
 
 concurrency:
   # If workflow for PR or push is already running, stop it and start a new one.
