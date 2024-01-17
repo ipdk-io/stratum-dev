@@ -3,6 +3,7 @@
 // Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "absl/container/flat_hash_map.h"
 #include "gflags/gflags.h"
 #include "stratum/glue/init_google.h"
 #include "stratum/glue/logging.h"
@@ -66,7 +67,7 @@ static ::util::Status Main(int argc, char* argv[]) {
       bfrt_pre_manager.get(), bfrt_counter_manager.get(),
       bfrt_p4runtime_translator.get(), bf_sde_wrapper, device_id);
   PhalInterface* phal = phal::Phal::CreateSingleton();
-  std::map<int, BfrtNode*> device_id_to_bfrt_node = {
+  absl::flat_hash_map<int, BfrtNode*> device_id_to_bfrt_node = {
       {device_id, bfrt_node.get()},
   };
   auto bf_chassis_manager =
