@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2013 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_sde_wrapper.h"
@@ -1659,9 +1659,7 @@ std::string BfSdeWrapper::GetBfChipType(int device) const {
 }
 
 std::string BfSdeWrapper::GetSdeVersion() const {
-#if defined(SDE_9_3_1)
-  return "9.3.1";
-#elif defined(SDE_9_5_0)
+#if defined(SDE_9_5_0)
   return "9.5.0";
 #elif defined(SDE_9_5_2)
   return "9.5.2";
