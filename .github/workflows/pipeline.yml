@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - split-arch
-      - stratum-updates
+#     - stratum-updates
   pull_request:
     branches:
       - split-arch
@@ -29,6 +29,9 @@ env:
   DPDK_TESTLOGS: dpdk-bazel-testlogs.tar.gz
 
 jobs:
+  #---------------------------------------------------------------------
+  # check_stratum_dpdk
+  #---------------------------------------------------------------------
   check_stratum_dpdk:
     runs-on: ubuntu-20.04
 
@@ -50,7 +53,7 @@ jobs:
           sudo tar -xzf $SDE_FILENAME -C /
           rm $SDE_FILENAME
 
-      - name: Build DPDK Stratum
+      - name: Build Stratum DPDK
         working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
@@ -62,6 +65,30 @@ jobs:
           export SDE_INSTALL=$SDE_INSTALL_DIR
           xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-broken,-flaky
 
+  #---------------------------------------------------------------------
+  # bcm_unit_tests
+  #---------------------------------------------------------------------
+  bcm_unit_tests:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Clone stratum repository
+        uses: actions/checkout@v4
+        with:
+          path: stratum
+
+      - name: Install prerequisites
+        run: |
+          sudo apt install libelf-dev
+
+      - name: Run unit tests
+        working-directory: stratum
+        run: |
+          bazel test //stratum/hal/lib/bcm/...
+
+  #---------------------------------------------------------------------
+  # cdlang_tests
+  #---------------------------------------------------------------------
   cdlang_tests:
     runs-on: ubuntu-20.04
 

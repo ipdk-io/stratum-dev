@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - split-arch
-      - stratum-updates
+#     - stratum-updates
   pull_request:
     branches:
       - split-arch
