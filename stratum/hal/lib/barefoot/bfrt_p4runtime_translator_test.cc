@@ -136,7 +136,7 @@ class BfrtP4RuntimeTranslatorTest : public ::testing::Test {
   static constexpr uint32 kSdkPort2Id = 301;
   static constexpr int32 kPort2 = 2;
 
-  static constexpr char kChassisConfig[] = R"PROTO(
+  static constexpr char kChassisConfig[] = R"pb(
     nodes {
       id: 1
     }
@@ -152,9 +152,9 @@ class BfrtP4RuntimeTranslatorTest : public ::testing::Test {
       port: 2
       channel: 1
     }
-  )PROTO";
+  )pb";
 
-  static constexpr char kP4InfoString[] = R"PROTO(
+  static constexpr char kP4InfoString[] = R"pb(
     pkg_info {
       arch: "tna"
     }
@@ -349,9 +349,9 @@ class BfrtP4RuntimeTranslatorTest : public ::testing::Test {
         }
       }
     }
-  )PROTO";
+  )pb";
 
-  static constexpr char kNoTranslationP4InfoString[] = R"PROTO(
+  static constexpr char kNoTranslationP4InfoString[] = R"pb(
     pkg_info {
       arch: "tna"
     }
@@ -502,7 +502,7 @@ class BfrtP4RuntimeTranslatorTest : public ::testing::Test {
         bitwidth: 9
       }
     }
-  )PROTO";
+  )pb";
 };
 
 constexpr int BfrtP4RuntimeTranslatorTest::kDeviceId;
@@ -605,7 +605,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslateP4Info) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 1
@@ -638,8 +638,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry) {
         params { param_id: 2 value: "\x01" }
       }
     }
-  )PROTO";
-  constexpr char expected_table_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 1
@@ -672,7 +672,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry) {
         params { param_id: 2 value: "\x01" }
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(table_entry_str, expected_table_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateTableEntry);
@@ -681,7 +681,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_ActionProfileActionSet) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     action {
       action_profile_action_set {
@@ -694,8 +694,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_ActionProfileActionSet) {
         }
       }
     }
-  )PROTO";
-  constexpr char expected_table_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_table_entry_str[] = R"pb(
     table_id: 33583783
     action {
       action_profile_action_set {
@@ -708,7 +708,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_ActionProfileActionSet) {
         }
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(table_entry_str, expected_table_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateTableEntry);
@@ -717,7 +717,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_ActionProfileActionSet) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 1
@@ -751,8 +751,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry) {
       }
     }
 
-  )PROTO";
-  constexpr char expected_table_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 1
@@ -785,7 +785,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry) {
         params { param_id: 2 value: "\x01" }
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(table_entry_str, expected_table_entry_str, false,
                        &BfrtP4RuntimeTranslator::TranslateTableEntry);
@@ -794,7 +794,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry_ActionProfileActionSet) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     action {
       action_profile_action_set {
@@ -807,8 +807,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry_ActionProfileActionSet) {
         }
       }
     }
-  )PROTO";
-  constexpr char expected_table_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_table_entry_str[] = R"pb(
     table_id: 33583783
     action {
       action_profile_action_set {
@@ -821,7 +821,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadTableEntry_ActionProfileActionSet) {
         }
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(table_entry_str, expected_table_entry_str, false,
                        &BfrtP4RuntimeTranslator::TranslateTableEntry);
@@ -831,13 +831,13 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_InvalidTernary) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
   // mask must be all-one.
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 2
       ternary { value: "\x01" mask: "\xff\xff" }
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::TableEntry table_entry;
   EXPECT_OK(ParseProtoFromString(table_entry_str, &table_entry));
@@ -853,13 +853,13 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_InvalidRange) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
   // low and high must be the same value.
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 3
       range { low: "foo" high: "bar" }
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::TableEntry table_entry;
   EXPECT_OK(ParseProtoFromString(table_entry_str, &table_entry));
@@ -875,13 +875,13 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_InvalidLpm) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
   // prefix must be the same value as bitwidth of the field
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 4
       lpm { value: "\x01" prefix_len: 10 }
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::TableEntry table_entry;
   EXPECT_OK(ParseProtoFromString(table_entry_str, &table_entry));
@@ -897,7 +897,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteTableEntry_InvalidLpm) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteActionProfileMember) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char action_profile_member_str[] = R"PROTO(
+  constexpr char action_profile_member_str[] = R"pb(
     action_profile_id: 1
     member_id: 1
     action {
@@ -905,8 +905,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteActionProfileMember) {
       params { param_id: 1 value: "\x01" }
       params { param_id: 2 value: "\x01" }
     }
-  )PROTO";
-  constexpr char expected_action_profile_member_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_action_profile_member_str[] = R"pb(
     action_profile_id: 1
     member_id: 1
     action {
@@ -914,7 +914,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteActionProfileMember) {
       params { param_id: 1 value: "\x01\x2C" }
       params { param_id: 2 value: "\x01" }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(action_profile_member_str,
                        expected_action_profile_member_str, true,
@@ -924,7 +924,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteActionProfileMember) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadActionProfileMember) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char action_profile_member_str[] = R"PROTO(
+  constexpr char action_profile_member_str[] = R"pb(
     action_profile_id: 1
     member_id: 1
     action {
@@ -932,8 +932,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadActionProfileMember) {
       params { param_id: 1 value: "\x01\x2C" }
       params { param_id: 2 value: "\x01" }
     }
-  )PROTO";
-  constexpr char expected_action_profile_member_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_action_profile_member_str[] = R"pb(
     action_profile_id: 1
     member_id: 1
     action {
@@ -941,7 +941,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadActionProfileMember) {
       params { param_id: 1 value: "\x01" }
       params { param_id: 2 value: "\x01" }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(action_profile_member_str,
                        expected_action_profile_member_str, false,
@@ -952,7 +952,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadActionProfileMember) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_MulticastGroup) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -964,8 +964,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_MulticastGroup) {
         instance: 1
       }
     }
-  )PROTO";
-  constexpr char expected_pre_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -977,7 +977,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_MulticastGroup) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(
       pre_entry_str, expected_pre_entry_str, true,
@@ -987,7 +987,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_MulticastGroup) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_MulticastGroup) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -999,8 +999,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_MulticastGroup) {
         instance: 1
       }
     }
-  )PROTO";
-  constexpr char expected_pre_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -1012,7 +1012,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_MulticastGroup) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(
       pre_entry_str, expected_pre_entry_str, false,
@@ -1022,7 +1022,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_MulticastGroup) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_CloneSession) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     clone_session_entry {
       session_id: 1
       replicas {
@@ -1054,8 +1054,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_CloneSession) {
         instance: 1
       }
     }
-  )PROTO";
-  constexpr char expected_pre_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_pre_entry_str[] = R"pb(
     clone_session_entry {
       session_id: 1
       replicas {
@@ -1087,7 +1087,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_CloneSession) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(
       pre_entry_str, expected_pre_entry_str, true,
@@ -1097,7 +1097,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_CloneSession) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_CloneSession) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     clone_session_entry {
       session_id: 1
       replicas {
@@ -1129,8 +1129,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_CloneSession) {
         instance: 1
       }
     }
-  )PROTO";
-  constexpr char expected_pre_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_pre_entry_str[] = R"pb(
     clone_session_entry {
       session_id: 1
       replicas {
@@ -1162,7 +1162,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_CloneSession) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(
       pre_entry_str, expected_pre_entry_str, false,
@@ -1172,7 +1172,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadPRE_CloneSession) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_InvalidPort) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -1180,7 +1180,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_InvalidPort) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
 
   ::p4::v1::PacketReplicationEngineEntry pre_entry;
   EXPECT_OK(ParseProtoFromString(pre_entry_str, &pre_entry));
@@ -1197,7 +1197,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WritePRE_InvalidPort) {
 TEST_F(BfrtP4RuntimeTranslatorTest, PacketOut) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  char packet_out_str[] = R"PROTO(
+  char packet_out_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1207,8 +1207,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketOut) {
       metadata_id: 2
       value: "\x01" # egress port
     }
-  )PROTO";
-  char expected_packet_out_str[] = R"PROTO(
+  )pb";
+  char expected_packet_out_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1218,7 +1218,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketOut) {
       metadata_id: 2
       value: "\x01\x2C" # egress port
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(packet_out_str, expected_packet_out_str,
                        &BfrtP4RuntimeTranslator::TranslatePacketOut);
@@ -1227,7 +1227,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketOut) {
 TEST_F(BfrtP4RuntimeTranslatorTest, PacketIn) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  char packet_in_str[] = R"PROTO(
+  char packet_in_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1237,8 +1237,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketIn) {
       metadata_id: 2
       value: "\x00" # padding
     }
-  )PROTO";
-  char expected_packet_in_str[] = R"PROTO(
+  )pb";
+  char expected_packet_in_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1248,7 +1248,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketIn) {
       metadata_id: 2
       value: "\x00" # padding
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(packet_in_str, expected_packet_in_str,
                        &BfrtP4RuntimeTranslator::TranslatePacketIn);
@@ -1258,7 +1258,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, PacketIn) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteCounterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char counter_entry_str[] = R"PROTO(
+  constexpr char counter_entry_str[] = R"pb(
     counter_id: 318814845
     index {
       index: 1
@@ -1267,8 +1267,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
-  constexpr char expected_counter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_counter_entry_str[] = R"pb(
     counter_id: 318814845
     index {
       index: 300
@@ -1277,7 +1277,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(counter_entry_str, expected_counter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateCounterEntry);
@@ -1286,7 +1286,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteCounterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadCounterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char counter_entry_str[] = R"PROTO(
+  constexpr char counter_entry_str[] = R"pb(
     counter_id: 318814845
     index {
       index: 300
@@ -1295,8 +1295,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
-  constexpr char expected_counter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_counter_entry_str[] = R"pb(
     counter_id: 318814845
     index {
       index: 1
@@ -1305,7 +1305,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(counter_entry_str, expected_counter_entry_str, false,
                        &BfrtP4RuntimeTranslator::TranslateCounterEntry);
 }
@@ -1314,7 +1314,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadCounterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectCounterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char direct_counter_entry_str[] = R"PROTO(
+  constexpr char direct_counter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1353,8 +1353,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
-  constexpr char expected_direct_counter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_direct_counter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1393,7 +1393,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(direct_counter_entry_str,
                        expected_direct_counter_entry_str, true,
@@ -1403,7 +1403,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectCounterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectCounterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char direct_counter_entry_str[] = R"PROTO(
+  constexpr char direct_counter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1442,8 +1442,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
-  constexpr char expected_direct_counter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_direct_counter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1482,7 +1482,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectCounterEntry) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(direct_counter_entry_str,
                        expected_direct_counter_entry_str, false,
@@ -1493,7 +1493,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectCounterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteMeterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char meter_entry_str[] = R"PROTO(
+  constexpr char meter_entry_str[] = R"pb(
     meter_id: 55555
     index {
       index: 1
@@ -1502,8 +1502,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
-  constexpr char expected_meter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_meter_entry_str[] = R"pb(
     meter_id: 55555
     index {
       index: 300
@@ -1512,7 +1512,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(meter_entry_str, expected_meter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateMeterEntry);
@@ -1521,7 +1521,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteMeterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadMeterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char meter_entry_str[] = R"PROTO(
+  constexpr char meter_entry_str[] = R"pb(
     meter_id: 55555
     index {
       index: 300
@@ -1530,8 +1530,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
-  constexpr char expected_meter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_meter_entry_str[] = R"pb(
     meter_id: 55555
     index {
       index: 1
@@ -1540,7 +1540,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(meter_entry_str, expected_meter_entry_str, false,
                        &BfrtP4RuntimeTranslator::TranslateMeterEntry);
@@ -1550,7 +1550,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadMeterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectMeterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char direct_meter_entry_str[] = R"PROTO(
+  constexpr char direct_meter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1589,8 +1589,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
-  constexpr char expected_direct_meter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_direct_meter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1629,7 +1629,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(direct_meter_entry_str, expected_direct_meter_entry_str,
                        true,
@@ -1639,7 +1639,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteDirectMeterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectMeterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char direct_meter_entry_str[] = R"PROTO(
+  constexpr char direct_meter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1678,8 +1678,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
-  constexpr char expected_direct_meter_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_direct_meter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1718,7 +1718,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectMeterEntry) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(direct_meter_entry_str, expected_direct_meter_entry_str,
                        false,
@@ -1729,7 +1729,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadDirectMeterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, WriteRegisterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char register_entry_str[] = R"PROTO(
+  constexpr char register_entry_str[] = R"pb(
     register_id: 66666
     index {
       index: 1
@@ -1737,8 +1737,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteRegisterEntry) {
     data {
       bitstring: "\x00"
     }
-  )PROTO";
-  constexpr char expected_register_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_register_entry_str[] = R"pb(
     register_id: 66666
     index {
       index: 300
@@ -1746,7 +1746,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteRegisterEntry) {
     data {
       bitstring: "\x00"
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(register_entry_str, expected_register_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateRegisterEntry);
@@ -1755,7 +1755,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, WriteRegisterEntry) {
 TEST_F(BfrtP4RuntimeTranslatorTest, ReadRegisterEntry) {
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char register_entry_str[] = R"PROTO(
+  constexpr char register_entry_str[] = R"pb(
     register_id: 66666
     index {
       index: 300
@@ -1763,8 +1763,8 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadRegisterEntry) {
     data {
       bitstring: "\x00"
     }
-  )PROTO";
-  constexpr char expected_register_entry_str[] = R"PROTO(
+  )pb";
+  constexpr char expected_register_entry_str[] = R"pb(
     register_id: 66666
     index {
       index: 1
@@ -1772,7 +1772,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, ReadRegisterEntry) {
     data {
       bitstring: "\x00"
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(register_entry_str, expected_register_entry_str, false,
                        &BfrtP4RuntimeTranslator::TranslateRegisterEntry);
@@ -1784,7 +1784,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       /*translation_enabled=*/false, bf_sde_mock_.get(), kDeviceId);
   EXPECT_OK(PushChassisConfig());
   EXPECT_OK(PushForwardingPipelineConfig());
-  constexpr char table_entry_str[] = R"PROTO(
+  constexpr char table_entry_str[] = R"pb(
     table_id: 33583783
     match {
       field_id: 1
@@ -1796,12 +1796,12 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
         params { param_id: 1 value: "\x01" }
       }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(table_entry_str, table_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateTableEntry);
 
-  constexpr char action_profile_member_str[] = R"PROTO(
+  constexpr char action_profile_member_str[] = R"pb(
     action_profile_id: 1
     member_id: 1
     action {
@@ -1809,13 +1809,13 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       params { param_id: 1 value: "\x01" }
       params { param_id: 2 value: "\x01" }
     }
-  )PROTO";
+  )pb";
 
   TestEntryTranslation(action_profile_member_str, action_profile_member_str,
                        true,
                        &BfrtP4RuntimeTranslator::TranslateActionProfileMember);
 
-  constexpr char direct_meter_entry_str[] = R"PROTO(
+  constexpr char direct_meter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1854,11 +1854,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(direct_meter_entry_str, direct_meter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateDirectMeterEntry);
 
-  constexpr char meter_entry_str[] = R"PROTO(
+  constexpr char meter_entry_str[] = R"pb(
     meter_id: 55555
     index {
       index: 1
@@ -1867,11 +1867,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       cir: 1
       pir: 1
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(meter_entry_str, meter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateMeterEntry);
 
-  constexpr char counter_entry_str[] = R"PROTO(
+  constexpr char counter_entry_str[] = R"pb(
     counter_id: 318814845
     index {
       index: 1
@@ -1880,11 +1880,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(counter_entry_str, counter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateCounterEntry);
 
-  constexpr char direct_counter_entry_str[] = R"PROTO(
+  constexpr char direct_counter_entry_str[] = R"pb(
     table_entry {
       table_id: 33583783
       match {
@@ -1923,11 +1923,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       byte_count: 1
       packet_count: 1
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(direct_counter_entry_str, direct_counter_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateDirectCounterEntry);
 
-  constexpr char pre_entry_str[] = R"PROTO(
+  constexpr char pre_entry_str[] = R"pb(
     multicast_group_entry {
       multicast_group_id: 1
       replicas {
@@ -1939,12 +1939,12 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
         instance: 1
       }
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(
       pre_entry_str, pre_entry_str, true,
       &BfrtP4RuntimeTranslator::TranslatePacketReplicationEngineEntry);
 
-  char packet_out_str[] = R"PROTO(
+  char packet_out_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1954,11 +1954,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       metadata_id: 2
       value: "\x01" # egress port
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(packet_out_str, packet_out_str,
                        &BfrtP4RuntimeTranslator::TranslatePacketOut);
 
-  char packet_in_str[] = R"PROTO(
+  char packet_in_str[] = R"pb(
     payload: "<raw packet>"
     metadata {
       metadata_id: 1
@@ -1968,11 +1968,11 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
       metadata_id: 2
       value: "\x00" # padding
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(packet_in_str, packet_in_str,
                        &BfrtP4RuntimeTranslator::TranslatePacketIn);
 
-  constexpr char register_entry_str[] = R"PROTO(
+  constexpr char register_entry_str[] = R"pb(
     register_id: 66666
     index {
       index: 300
@@ -1980,7 +1980,7 @@ TEST_F(BfrtP4RuntimeTranslatorTest, TranslationDisabled) {
     data {
       bitstring: "\x00"
     }
-  )PROTO";
+  )pb";
   TestEntryTranslation(register_entry_str, register_entry_str, true,
                        &BfrtP4RuntimeTranslator::TranslateRegisterEntry);
 
