@@ -22,4 +22,5 @@ target_include_directories(stratum_lib_o PRIVATE ${STRATUM_INCLUDES})
 
 add_dependencies(stratum_lib_o stratum_proto gnmi_proto)
 
+add_subdirectory(p4runtime)
 add_subdirectory(security)

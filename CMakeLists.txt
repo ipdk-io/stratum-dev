@@ -43,6 +43,7 @@ function(add_stratum_object_libs _TGT)
         $<TARGET_OBJECTS:stratum_hal_lib_p4_o>
         $<TARGET_OBJECTS:stratum_hal_lib_phal_o>
         $<TARGET_OBJECTS:stratum_lib_o>
+        $<TARGET_OBJECTS:stratum_lib_p4runtime_o>
         $<TARGET_OBJECTS:stratum_lib_security_o>
         $<TARGET_OBJECTS:stratum_main_o>
         $<TARGET_OBJECTS:stratum_public_o>
