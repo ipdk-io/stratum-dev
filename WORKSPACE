@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 workspace(name = "com_github_stratum_stratum")
@@ -34,6 +35,8 @@ git_repository(
     remote = "https://github.com/ipdk-io/p4runtime-dev.git",
     # strip_prefix = "proto",  # https://github.com/bazelbuild/bazel/issues/10062
     patch_cmds = ["mv proto/* ."],  # Workaround since strip_prefix is broken.
+    # tag: 2023.11.0 (3-Oct-2023)
+    # descended from v1.4.0-rc.5 (23-Mar-2020)
     commit = "40e36a3fdef7781f090436e6c5739768b7be05f8",
 )
 
@@ -140,8 +143,6 @@ go_repository(
     sum = "h1:eG7RXZHdqOJ1i+0lgLgCpSXAp6M3LYlAo6osgSi0xOM=",
     version = "v0.5.0",
 )
-
-
 
 # ---------------------------------------------------------------------------
 #       Load CDLang dependencies.
