@@ -2,9 +2,13 @@ name: "Stratum CI Pipeline"
 
 on:
   push:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
   pull_request:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
 
   workflow_dispatch:
 
