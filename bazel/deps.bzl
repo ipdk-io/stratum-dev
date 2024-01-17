@@ -21,7 +21,6 @@ TAI_COMMIT = "9a673b7310b29c97237b3066a96ea2e43e236cf3"
 TAI_SHA = "6c3562906be3a3608f2e0e26c407d6ba4cbc4b587f87b99d811c8530e74edfca"
 
 BF_SDE_PI_VER = {
-    "9_3_1": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
     "9_5_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
     "9_5_2": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
     "9_7_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
@@ -56,7 +55,8 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_p4c",
             remote = "https://github.com/p4lang/p4c",
-            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a",
+#           commit = "43568b75796d68a6424ad22eebeee62f46ccd3fe", # 10-Jul-2019
+            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a", # 19-Dec-2019
             build_file = "@//bazel:external/p4c.BUILD",
             sha256 = "541ab66df80465dac9702779b6446b80234210410e6f5948d995a978475b64c2",
         )
