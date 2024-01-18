@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
@@ -31,29 +32,6 @@ SDE_DEFINES = select(
         "@local_barefoot_bin//:sde_version_9.11.0": ["SDE_9_11_0"],
     },
     no_match_error = "Unsupported SDE version",
-)
-
-stratum_cc_library(
-    name = "bf_switch",
-    srcs = ["bf_switch.cc"],
-    hdrs = ["bf_switch.h"],
-    deps = [
-        ":bf_cc_proto",
-        ":bf_chassis_manager",
-        ":bf_pipeline_utils",
-        ":bf_sde_interface",
-        "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
-        "//stratum/glue/gtl:map_util",
-        "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/common:phal_interface",
-        "//stratum/hal/lib/common:switch_interface",
-        "//stratum/hal/lib/pi:pi_node_bf",
-        "//stratum/lib:constants",
-        "//stratum/lib:macros",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_googleapis//google/rpc:status_cc_proto",
-    ],
 )
 
 stratum_cc_library(

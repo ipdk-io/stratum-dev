@@ -1,5 +1,4 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_chassis_manager.h"

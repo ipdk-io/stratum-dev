@@ -1,5 +1,5 @@
 # Copyright 2020-present Open Networking Foundation
-# Copyright 2023 Intel Corporation
+# Copyright 2023-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
@@ -24,7 +24,6 @@ cc_library(
         "barefoot-bin/lib/libpython3*",
         "barefoot-bin/lib/libtarget_sys.so*",
         "barefoot-bin/lib/libtarget_utils.so*",
-        "barefoot-bin/lib/libbf_switchd_lib.a*",
     ]),
     hdrs = glob([
         "barefoot-bin/include/bf_rt/*.h",
@@ -51,12 +50,6 @@ cc_library(
         "-ldl",
     ],
     strip_include_prefix = "barefoot-bin/include",
-    deps = [
-        # TODO(bocon): PI needed when linking libdriver.so if/when pi is
-        # enabled when building bf-drivers. This shouldn't hurt, but can
-        # be excluded if/when PI is removed from the SDE build options.
-        "@com_github_p4lang_PI_bf//proto/frontend:pifeproto",
-    ],
 )
 
 pkg_tar_with_symlinks(
