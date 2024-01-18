@@ -515,6 +515,7 @@ stratum_cc_library(
         ":p4_service",
         ":switch_interface",
         "//stratum/glue:logging",
+        "//stratum/glue:platform",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
