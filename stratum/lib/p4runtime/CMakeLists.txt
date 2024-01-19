@@ -16,3 +16,16 @@ add_library(stratum_lib_p4runtime_o OBJECT
 target_include_directories(stratum_lib_p4runtime_o PRIVATE
     ${STRATUM_INCLUDES}
 )
+
+#######################
+# p4runtime_session_o #
+#######################
+
+add_library(p4runtime_session_o OBJECT
+    p4runtime_session.cc
+    p4runtime_session.h
+)
+
+target_include_directories(p4runtime_session_o PRIVATE
+    ${STRATUM_INCLUDES}
+)
