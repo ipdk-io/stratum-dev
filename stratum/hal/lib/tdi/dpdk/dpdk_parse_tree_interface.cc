@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // DPDK-specific setup functions for YangParseTreePaths. Used by the
@@ -1092,11 +1092,9 @@ void SetUpInterfacesInterfaceConfigQemuVmMacAddress(uint64 node_id,
       return MAKE_ERROR(ERR_INVALID_PARAM) << "not a TypedValue message!";
     }
     std::string mac_address_string = typed_val->string_val();
-    if (!IsMacAddressValid(mac_address_string)) {
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "wrong value!";
-    }
+    ASSIGN_OR_RETURN(uint64 mac_address,
+                     YangStringToMacAddress(mac_address_string));
 
-    uint64 mac_address = YangStringToMacAddress(mac_address_string);
     // Set the value.
     SetRequest req;
     auto* request = req.add_requests()->mutable_port();
