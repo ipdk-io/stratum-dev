@@ -161,6 +161,13 @@ config_setting(
 )
 
 config_setting(
+    name = "sde_version_9.10.0",
+    flag_values = {
+        ":sde_version_setting": "9.10.0",
+    },
+)
+
+config_setting(
     name = "sde_version_9.11.0",
     flag_values = {
         ":sde_version_setting": "9.11.0",
