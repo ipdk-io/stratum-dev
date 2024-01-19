@@ -28,4 +28,7 @@ add_library(p4runtime_session_o OBJECT
 
 target_include_directories(p4runtime_session_o PRIVATE
     ${STRATUM_INCLUDES}
+    ${PB_OUT_DIR}
 )
+
+target_link_libraries(p4runtime_session_o PUBLIC p4_role_config)
