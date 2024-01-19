@@ -24,4 +24,6 @@ target_include_directories(p4_pipeline_pusher PRIVATE
     ${PB_OUT_DIR}
 )
 
+target_link_libraries(p4_pipeline_pusher PUBLIC p4_role_config)
+
 install(TARGETS p4_pipeline_pusher RUNTIME)
