@@ -186,6 +186,20 @@ P4Service::~P4Service() {}
 
 namespace {
 
+// Run a command that returns a ::grpc::Status.  If the called code returns an
+// error status, return that status up out of this method too.
+//
+// Example:
+//   RETURN_IF_GRPC_ERROR(DoGrpcThings(4));
+#define RETURN_IF_GRPC_ERROR(expr)                                           \
+  do {                                                                       \
+    /* Using _status below to avoid capture problems if expr is "status". */ \
+    const ::grpc::Status _status = (expr);                                   \
+    if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
+      return _status;                                                        \
+    }                                                                        \
+  } while (0)
+
 // TODO(unknown): This needs to be changed later per p4 runtime error
 // reporting scheme.
 ::grpc::Status ToGrpcStatus(const ::util::Status& status,
@@ -329,10 +343,7 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   }
 
   // Verify the request comes from the primary connection.
-  if (!IsWritePermitted(node_id, *req)) {
-    return ::grpc::Status(::grpc::StatusCode::PERMISSION_DENIED,
-                          "Write from non-master is not permitted.");
-  }
+  RETURN_IF_GRPC_ERROR(IsWritePermitted(req->device_id(), *req));
 
   std::vector<::util::Status> results = {};
   absl::Time timestamp = absl::Now();
@@ -384,10 +395,7 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   }
 
   // Verify the request only contains entities allowed by the role config.
-  if (!IsReadPermitted(req->device_id(), *req)) {
-    return ::grpc::Status(::grpc::StatusCode::PERMISSION_DENIED,
-                          "Read is not permitted.");
-  }
+  RETURN_IF_GRPC_ERROR(IsReadPermitted(req->device_id(), *req));
 
   ServerWriterWrapper<::p4::v1::ReadResponse> wrapper(writer);
   std::vector<::util::Status> details = {};
@@ -432,22 +440,7 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   // election_id and the role of the client matches those of the master.
   // According to the P4Runtime specification, only master can perform
   // SetForwardingPipelineConfig RPC.
-  if (!IsWritePermitted(node_id, *req)) {
-    return ::grpc::Status(
-        ::grpc::StatusCode::PERMISSION_DENIED,
-        absl::StrCat("SetForwardingPipelineConfig from non-master is not "
-                     "permitted for node ",
-                     node_id, "."));
-  }
-
-  if (!target_options_.allowPipelineOverwrite) {
-    if (forwarding_pipeline_configs_ != nullptr &&
-        forwarding_pipeline_configs_->node_id_to_config_size() != 0) {
-      return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION,
-                            "Only a single forwarding pipeline can be pushed "
-                            "for any node so far.");
-    }
-  }
+  RETURN_IF_GRPC_ERROR(IsWritePermitted(req->device_id(), *req));
 
   ::util::Status status = ::util::OkStatus();
   switch (req->action()) {
@@ -769,7 +762,8 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
            << " controllers for node (aka device) with ID " << node_id << ".";
   }
 
-  grpc::Status status = it->second.HandleArbitrationUpdate(update, controller);
+  ::grpc::Status status =
+      it->second.HandleArbitrationUpdate(update, controller);
   if (!status.ok()) {
     return ::util::Status(static_cast<::util::error::Code>(status.error_code()),
                           status.error_message());
@@ -787,29 +781,37 @@ void P4Service::RemoveController(uint64 node_id,
   it->second.Disconnect(connection);
 }
 
-bool P4Service::IsWritePermitted(uint64 node_id,
-                                 const ::p4::v1::WriteRequest& req) const {
+::grpc::Status P4Service::IsWritePermitted(
+    uint64 node_id, const ::p4::v1::WriteRequest& req) const {
   absl::ReaderMutexLock l(&controller_lock_);
   auto it = node_id_to_controller_manager_.find(node_id);
-  if (it == node_id_to_controller_manager_.end()) return false;
-  return it->second.AllowRequest(req).ok();
+  if (it == node_id_to_controller_manager_.end())
+    return ::grpc::Status(
+        grpc::StatusCode::PERMISSION_DENIED,
+        absl::StrCat("Write from non-master is not permitted for node ",
+                     node_id, "."));
+  return it->second.AllowRequest(req);
 }
 
-bool P4Service::IsWritePermitted(
+::grpc::Status P4Service::IsWritePermitted(
     uint64 node_id,
     const ::p4::v1::SetForwardingPipelineConfigRequest& req) const {
   absl::ReaderMutexLock l(&controller_lock_);
   auto it = node_id_to_controller_manager_.find(node_id);
-  if (it == node_id_to_controller_manager_.end()) return false;
-  return it->second.AllowRequest(req).ok();
+  if (it == node_id_to_controller_manager_.end())
+    return ::grpc::Status(
+        grpc::StatusCode::PERMISSION_DENIED,
+        absl::StrCat("Write from non-master is not permitted for node ",
+                     node_id, "."));
+  return it->second.AllowRequest(req);
 }
 
-bool P4Service::IsReadPermitted(uint64 node_id,
-                                const p4::v1::ReadRequest& req) const {
+::grpc::Status P4Service::IsReadPermitted(
+    uint64 node_id, const p4::v1::ReadRequest& req) const {
   absl::ReaderMutexLock l(&controller_lock_);
   auto it = node_id_to_controller_manager_.find(node_id);
-  if (it == node_id_to_controller_manager_.end()) return true;
-  return it->second.AllowRequest(req).ok();
+  if (it == node_id_to_controller_manager_.end()) return ::grpc::Status::OK;
+  return it->second.AllowRequest(req);
 }
 
 bool P4Service::IsMasterController(
