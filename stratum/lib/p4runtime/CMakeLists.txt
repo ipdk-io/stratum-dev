@@ -15,7 +15,10 @@ add_library(stratum_lib_p4runtime_o OBJECT
 
 target_include_directories(stratum_lib_p4runtime_o PRIVATE
     ${STRATUM_INCLUDES}
+    ${PB_OUT_DIR}
 )
+
+target_link_libraries(stratum_lib_p4runtime_o PRIVATE stratum_proto)
 
 #######################
 # p4runtime_session_o #
@@ -31,4 +34,4 @@ target_include_directories(p4runtime_session_o PRIVATE
     ${PB_OUT_DIR}
 )
 
-target_link_libraries(p4runtime_session_o PUBLIC p4_role_config)
+target_link_libraries(p4runtime_session_o PUBLIC stratum_proto p4_role_config)
