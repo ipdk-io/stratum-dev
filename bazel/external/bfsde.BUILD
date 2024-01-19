@@ -22,6 +22,7 @@ cc_library(
         "barefoot-bin/lib/libclish.so*",
         "barefoot-bin/lib/libdriver.so*",
         "barefoot-bin/lib/libpython3*",
+        # target libraries from p4lang (was libbfsys and libbfutils before 9.9.0)
         "barefoot-bin/lib/libtarget_sys.so*",
         "barefoot-bin/lib/libtarget_utils.so*",
     ]),
@@ -101,6 +102,16 @@ pkg_tar_with_symlinks(
 pkg_tar(
     name = "kernel_module",
     srcs = glob(["barefoot-bin/lib/modules/**/*.ko"]),
+    mode = "0644",
+    package_dir = "/usr",
+    strip_prefix = "barefoot-bin",
+)
+
+pkg_tar(
+    name = "bf_binary_files",
+    srcs = [
+        "barefoot-bin/bin/credo_firmware.bin",  # firmware for retimers in the 65x
+    ],
     mode = "0644",
     package_dir = "/usr",
     strip_prefix = "barefoot-bin",
