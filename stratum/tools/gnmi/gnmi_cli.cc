@@ -1,5 +1,5 @@
 // Copyright 2019-present Open Networking Foundation
-// Copyright 2024 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <csignal>
@@ -7,6 +7,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#define STRIP_FLAG_HELP 1  // remove additional flag help text from gflags
 
 #include "absl/cleanup/cleanup.h"
 #include "gflags/gflags.h"
@@ -29,6 +31,7 @@ DEFINE_string(int_val, "", "Integer value to be set (64-bit)");
 DEFINE_string(uint_val, "", "Unsigned integer value to be set (64-bit)");
 DEFINE_string(string_val, "", "String value to be set");
 DEFINE_string(float_val, "", "Floating point value to be set");
+DEFINE_string(proto_bytes, "", "Protobuf value to be set");
 DEFINE_string(bytes_val_file, "", "A file to be sent as bytes value");
 
 DEFINE_uint64(interval, 5000, "Subscribe poll interval in ms");
@@ -69,7 +72,8 @@ positional arguments:
   path                                              gNMI path
 
 optional arguments:
-  --help                   show help message and exit
+  --helpshort              show help message and exit
+  --help                   show help on all flags and exit
   --grpc_addr GRPC_ADDR    gNMI server address
 
 SetRequest only:
@@ -78,6 +82,7 @@ SetRequest only:
   --uint_val UINT_VAL      Set uint value (64-bit)
   --string_val STRING_VAL  Set string value
   --float_val FLOAT_VAL    Set float value
+  --proto_bytes PROTO_VAL  Set protobuf bytes value
   --bytes_val_file FILE    Send file as bytes value
   --replace                Use replace instead of update
 
@@ -180,6 +185,8 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     update->mutable_val()->set_uint_val(stoull(FLAGS_uint_val));
   } else if (!FLAGS_float_val.empty()) {
     update->mutable_val()->set_float_val(stof(FLAGS_float_val));
+  } else if (!FLAGS_proto_bytes.empty()) {
+    update->mutable_val()->set_proto_bytes(FLAGS_proto_bytes);
   } else if (!FLAGS_string_val.empty()) {
     update->mutable_val()->set_string_val(FLAGS_string_val);
   } else if (!FLAGS_bytes_val_file.empty()) {
