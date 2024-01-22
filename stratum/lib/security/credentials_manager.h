@@ -54,7 +54,7 @@ class CredentialsManager {
  protected:
   // Default constructor. To be called by the Mock class instance as well as
   // CreateInstance().
-  CredentialsManager();
+  explicit CredentialsManager(bool secure_only = false);
 
  private:
   static constexpr unsigned int kFileRefreshIntervalSeconds = 1;
@@ -67,6 +67,9 @@ class CredentialsManager {
 
   std::shared_ptr<::grpc::ServerCredentials> server_credentials_;
   std::shared_ptr<::grpc::ChannelCredentials> client_credentials_;
+
+  // Whether connections must be secure.
+  bool secure_only_;
 
   friend class CredentialsManagerTest;
 };

@@ -65,13 +65,14 @@ GetCertRequestType() {
 
 }  // namespace
 
-CredentialsManager::CredentialsManager() {}
+CredentialsManager::CredentialsManager(bool secure_only)
+    : secure_only_(secure_only) {}
 
 CredentialsManager::~CredentialsManager() {}
 
 ::util::StatusOr<std::unique_ptr<CredentialsManager>>
 CredentialsManager::CreateInstance(bool secure_only) {
-  auto instance = absl::WrapUnique(new CredentialsManager());
+  auto instance = absl::WrapUnique(new CredentialsManager(secure_only));
   RETURN_IF_ERROR(instance->Initialize());
   return std::move(instance);
 }
@@ -102,9 +103,9 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
-
     auto tls_opts =
         std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
+
     auto request_type = GetCertRequestType();
     if (!request_type.ok()) return request_type.status();
     tls_opts->set_cert_request_type(request_type.ValueOrDie());
@@ -127,8 +128,8 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
-
     auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
+
     tls_opts->set_certificate_provider(certificate_provider);
     tls_opts->watch_root_certs();
     if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
