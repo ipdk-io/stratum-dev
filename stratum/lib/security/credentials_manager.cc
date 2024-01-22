@@ -5,6 +5,7 @@
 
 #include "stratum/lib/security/credentials_manager.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -13,7 +14,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "gflags/gflags.h"
+#include "stratum/glue/gtl/map_util.h"
 #include "stratum/glue/logging.h"
+#include "stratum/glue/status/statusor.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
@@ -22,6 +25,8 @@ DEFINE_string(server_key_file, "", "Path to gRPC server private key file");
 DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
 DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
+DEFINE_string(client_cert_req_type, "NO_REQUEST",
+              "Client certificate request type");
 
 namespace stratum {
 
@@ -31,6 +36,34 @@ using ::grpc::experimental::TlsServerCredentials;
 using ::grpc::experimental::TlsServerCredentialsOptions;
 
 constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
+
+namespace {
+
+// Maps --client_cert_req_type value to SSL certificate request type.
+const std::map<std::string, grpc_ssl_client_certificate_request_type>
+    client_cert_req_type_map = {
+        {"NO_REQUEST", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
+        {"REQUEST_NO_VERIFY",
+         GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+        {"REQUEST_AND_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
+        {"REQUIRE_NO_VERIFY",
+         GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
+        {"REQUIRE_AND_VERIFY",
+         GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}};
+
+::util::StatusOr<grpc_ssl_client_certificate_request_type>
+GetCertRequestType() {
+  auto option =
+      gtl::FindOrNull(client_cert_req_type_map, FLAGS_client_cert_req_type);
+  if (option == nullptr) {
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "client_cert_req_type '" << FLAGS_client_cert_req_type
+           << "' is invalid";
+  }
+  return *option;
+}
+
+}  // namespace
 
 CredentialsManager::CredentialsManager() {}
 
@@ -54,12 +87,12 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
 }
 
 ::util::Status CredentialsManager::Initialize() {
-  InitializeServerCredentials();
-  InitializeClientCredentials();
+  RETURN_IF_ERROR(InitializeServerCredentials());
+  RETURN_IF_ERROR(InitializeClientCredentials());
   return ::util::OkStatus();
 }
 
-void CredentialsManager::InitializeServerCredentials() {
+::util::Status CredentialsManager::InitializeServerCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
       FLAGS_server_cert_file.empty()) {
     LOG(WARNING) << "No key files provided, using insecure server credentials!";
@@ -72,15 +105,19 @@ void CredentialsManager::InitializeServerCredentials() {
 
     auto tls_opts =
         std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
-    tls_opts->set_cert_request_type(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
+    auto request_type = GetCertRequestType();
+    if (!request_type.ok()) return request_type.status();
+    tls_opts->set_cert_request_type(request_type.ValueOrDie());
+
     tls_opts->watch_root_certs();
     tls_opts->watch_identity_key_cert_pairs();
 
     server_credentials_ = TlsServerCredentials(*tls_opts);
   }
+  return ::util::OkStatus();
 }
 
-void CredentialsManager::InitializeClientCredentials() {
+::util::Status CredentialsManager::InitializeClientCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
       FLAGS_client_cert_file.empty()) {
     LOG(WARNING) << "No key files provided, using insecure client credentials!";
@@ -100,6 +137,7 @@ void CredentialsManager::InitializeClientCredentials() {
 
     client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
   }
+  return ::util::OkStatus();
 }
 
 ::util::Status CredentialsManager::LoadNewServerCredentials(
