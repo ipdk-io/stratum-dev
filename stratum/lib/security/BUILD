@@ -126,6 +126,7 @@ stratum_cc_library(
     hdrs = ["credentials_manager.h"],
     deps = [
         "//stratum/glue:logging",
+        "//stratum/glue/gtl:map_util",
         "//stratum/glue/status:statusor",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
