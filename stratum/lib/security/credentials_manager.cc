@@ -54,7 +54,12 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
 }
 
 ::util::Status CredentialsManager::Initialize() {
-  // Server credentials.
+  InitializeServerCredentials();
+  InitializeClientCredentials();
+  return ::util::OkStatus();
+}
+
+void CredentialsManager::InitializeServerCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
       FLAGS_server_cert_file.empty()) {
     LOG(WARNING) << "No key files provided, using insecure server credentials!";
@@ -64,34 +69,37 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
+
     auto tls_opts =
         std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
     tls_opts->set_cert_request_type(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
     tls_opts->watch_root_certs();
     tls_opts->watch_identity_key_cert_pairs();
+
     server_credentials_ = TlsServerCredentials(*tls_opts);
   }
+}
 
-  // Client credentials.
+void CredentialsManager::InitializeClientCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
       FLAGS_client_cert_file.empty()) {
-    client_credentials_ = ::grpc::InsecureChannelCredentials();
     LOG(WARNING) << "No key files provided, using insecure client credentials!";
+    client_credentials_ = ::grpc::InsecureChannelCredentials();
   } else {
     auto certificate_provider =
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
+
     auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
     tls_opts->set_certificate_provider(certificate_provider);
     tls_opts->watch_root_certs();
     if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
       tls_opts->watch_identity_key_cert_pairs();
     }
+
     client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
   }
-
-  return ::util::OkStatus();
 }
 
 ::util::Status CredentialsManager::LoadNewServerCredentials(

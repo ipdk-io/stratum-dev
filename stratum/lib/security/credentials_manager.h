@@ -61,6 +61,10 @@ class CredentialsManager {
 
   // Function to initialize the credentials manager.
   ::util::Status Initialize();
+
+  void InitializeServerCredentials();
+  void InitializeClientCredentials();
+
   std::shared_ptr<::grpc::ServerCredentials> server_credentials_;
   std::shared_ptr<::grpc::ChannelCredentials> client_credentials_;
 
