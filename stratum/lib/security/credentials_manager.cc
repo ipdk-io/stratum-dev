@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2024 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/lib/security/credentials_manager.h"
@@ -39,7 +39,6 @@ constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
 
 namespace {
 
-// Maps --client_cert_req_type value to SSL certificate request type.
 const std::map<std::string, grpc_ssl_client_certificate_request_type>
     client_cert_req_type_map = {
         {"NO_REQUEST", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
@@ -51,16 +50,31 @@ const std::map<std::string, grpc_ssl_client_certificate_request_type>
         {"REQUIRE_AND_VERIFY",
          GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}};
 
+// Returns the value of the client_cert_req_type command-line flag.
 ::util::StatusOr<grpc_ssl_client_certificate_request_type>
 GetCertRequestType() {
   auto option =
       gtl::FindOrNull(client_cert_req_type_map, FLAGS_client_cert_req_type);
   if (option == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
-           << "client_cert_req_type '" << FLAGS_client_cert_req_type
+           << "--client_cert_req_type '" << FLAGS_client_cert_req_type
            << "' is invalid";
   }
   return *option;
+}
+
+// Client files exist and are regular (non-symlink) files.
+bool ClientFilesOk() {
+  return (IsRegularFile(FLAGS_ca_cert_file) &&
+          IsRegularFile(FLAGS_client_cert_file) &&
+          IsRegularFile(FLAGS_client_key_file));
+}
+
+// Server files exist and are regular (non-symlink) files.
+bool ServerFilesOk() {
+  return (IsRegularFile(FLAGS_ca_cert_file) &&
+          IsRegularFile(FLAGS_server_cert_file) &&
+          IsRegularFile(FLAGS_server_key_file));
 }
 
 }  // namespace
@@ -89,30 +103,37 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
 
 ::util::Status CredentialsManager::Initialize() {
   RETURN_IF_ERROR(InitializeServerCredentials());
-  RETURN_IF_ERROR(InitializeClientCredentials());
-  return ::util::OkStatus();
+  return InitializeClientCredentials();
 }
 
 ::util::Status CredentialsManager::InitializeServerCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_server_key_file.empty() &&
       FLAGS_server_cert_file.empty()) {
-    LOG(WARNING) << "No key files provided, using insecure server credentials!";
-    server_credentials_ = ::grpc::InsecureServerCredentials();
+    // No server credentials files
+    if (secure_only_) {
+      LOG(WARNING) << "No key/certificate files specified; "
+                      "cannot initialize server credentials.";
+    } else {
+      LOG(WARNING) << "No key/certificate files specified; "
+                      "using insecure server credentials!";
+      server_credentials_ = ::grpc::InsecureServerCredentials();
+    }
+  } else if (secure_only_ && !ServerFilesOk()) {
+    LOG(ERROR) << "Unable to access certificate/key files; "
+                  "cannot initialize server credentials.";
   } else {
+    // Initialize the server credentials
     auto certificate_provider =
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_server_key_file, FLAGS_server_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
     auto tls_opts =
         std::make_shared<TlsServerCredentialsOptions>(certificate_provider);
-
     auto request_type = GetCertRequestType();
     if (!request_type.ok()) return request_type.status();
     tls_opts->set_cert_request_type(request_type.ValueOrDie());
-
     tls_opts->watch_root_certs();
     tls_opts->watch_identity_key_cert_pairs();
-
     server_credentials_ = TlsServerCredentials(*tls_opts);
   }
   return ::util::OkStatus();
@@ -121,21 +142,30 @@ CredentialsManager::GenerateExternalFacingClientCredentials() const {
 ::util::Status CredentialsManager::InitializeClientCredentials() {
   if (FLAGS_ca_cert_file.empty() && FLAGS_client_key_file.empty() &&
       FLAGS_client_cert_file.empty()) {
-    LOG(WARNING) << "No key files provided, using insecure client credentials!";
-    client_credentials_ = ::grpc::InsecureChannelCredentials();
+    // No client credentials files
+    if (secure_only_) {
+      LOG(WARNING) << "No key/certificate files specified; "
+                      "cannot initialize client credentials.";
+    } else {
+      LOG(WARNING) << "No key/certificate files specified; "
+                      "using insecure client credentials!";
+      client_credentials_ = ::grpc::InsecureChannelCredentials();
+    }
+  } else if (secure_only_ && !ClientFilesOk()) {
+    LOG(ERROR) << "Unable to access certificate/key files; "
+                  "cannot initialize client credentials.";
   } else {
+    // Initialize the client credentials
     auto certificate_provider =
         std::make_shared<FileWatcherCertificateProvider>(
             FLAGS_client_key_file, FLAGS_client_cert_file, FLAGS_ca_cert_file,
             kFileRefreshIntervalSeconds);
     auto tls_opts = std::make_shared<TlsChannelCredentialsOptions>();
-
     tls_opts->set_certificate_provider(certificate_provider);
     tls_opts->watch_root_certs();
     if (!FLAGS_ca_cert_file.empty() && !FLAGS_client_key_file.empty()) {
       tls_opts->watch_identity_key_cert_pairs();
     }
-
     client_credentials_ = ::grpc::experimental::TlsCredentials(*tls_opts);
   }
   return ::util::OkStatus();
