@@ -1,6 +1,6 @@
 # Build file for //stratum/tools/gnmi
 #
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -27,11 +27,6 @@ target_link_libraries(gnmi_cli PUBLIC
 if(HAVE_POSIX_AIO)
     target_link_libraries(gnmi_cli PUBLIC rt)
 endif()
-
-target_include_directories(gnmi_cli PRIVATE
-    ${STRATUM_SOURCE_DIR}
-    ${PB_OUT_DIR}
-)
 
 if(NOT DPDK_TARGET)
     install(TARGETS gnmi_cli RUNTIME)

@@ -29,7 +29,7 @@ add_library(p4runtime_session_o OBJECT
     p4runtime_session.h
 )
 
-target_include_directories(p4runtime_session_o PRIVATE
+target_include_directories(p4runtime_session_o PUBLIC
     ${STRATUM_INCLUDES}
     ${PB_OUT_DIR}
 )

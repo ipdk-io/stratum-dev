@@ -131,6 +131,8 @@ add_library(stratum_static STATIC)
 add_stratum_object_libs(stratum_static)
 add_stratum_libraries(stratum_static)
 
+target_include_directories(stratum_static PUBLIC ${STRATUM_INCLUDES})
+
 #####################
 # libstratum_shared #
 #####################
@@ -138,3 +140,5 @@ add_stratum_libraries(stratum_static)
 add_library(stratum_shared SHARED)
 add_stratum_object_libs(stratum_shared)
 add_stratum_libraries(stratum_shared)
+
+target_include_directories(stratum_shared PUBLIC ${STRATUM_INCLUDES})

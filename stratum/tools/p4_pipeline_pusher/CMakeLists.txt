@@ -19,11 +19,6 @@ target_link_libraries(p4_pipeline_pusher PUBLIC
     $<TARGET_OBJECTS:p4runtime_session_o>
 )
 
-target_include_directories(p4_pipeline_pusher PRIVATE
-    ${STRATUM_SOURCE_DIR}
-    ${PB_OUT_DIR}
-)
-
 target_link_libraries(p4_pipeline_pusher PUBLIC p4_role_config)
 
 install(TARGETS p4_pipeline_pusher RUNTIME)
