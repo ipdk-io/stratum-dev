@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/lib/utils.h"
@@ -218,8 +218,8 @@ std::string BaseName(const std::string& path) {
 
 // TODO(unknown): At the moment this function will not work well for
 // complex messages with repeated fields or maps. Find a better way.
-bool ProtoLess(const google::protobuf::Message& m1,
-               const google::protobuf::Message& m2) {
+static bool ProtoLess(const google::protobuf::Message& m1,
+                      const google::protobuf::Message& m2) {
   return m1.SerializeAsString() < m2.SerializeAsString();
 }
 
@@ -234,7 +234,7 @@ google::protobuf::Message& m2) { MessageDifferencer differencer;
 
 // TODO(unknown): At the moment this function will not work well for
 // complex messages with repeated fields or maps. Find a better way.
-size_t ProtoHash(const google::protobuf::Message& m) {
+static size_t ProtoHash(const google::protobuf::Message& m) {
   std::hash<std::string> string_hasher;
   std::string s;
   m.SerializeToString(&s);

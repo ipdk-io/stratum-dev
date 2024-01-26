@@ -76,16 +76,26 @@ namespace dummy_switch {
 ::util::Status DummySwitch::SaveForwardingPipelineConfig(
     uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) {
   absl::ReaderMutexLock l(&chassis_lock);
+#if 0
   DummyNode* node = nullptr;
   ASSIGN_OR_RETURN(node, GetDummyNode(node_id));
+#else
+  auto node = GetDummyNode(node_id);
+  if (!node.ok()) return node.status();
+#endif
   return MAKE_ERROR(ERR_UNIMPLEMENTED)
          << "SaveForwardingPipelineConfig not implemented for this target";
 }
 
 ::util::Status DummySwitch::CommitForwardingPipelineConfig(uint64 node_id) {
   absl::ReaderMutexLock l(&chassis_lock);
+#if 0
   DummyNode* node = nullptr;
   ASSIGN_OR_RETURN(node, GetDummyNode(node_id));
+#else
+  auto node = GetDummyNode(node_id);
+  if (!node.ok()) return node.status();
+#endif
   return MAKE_ERROR(ERR_UNIMPLEMENTED)
          << "CommitForwardingPipelineConfig not implemented for this target";
 }

@@ -1,4 +1,5 @@
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/dummy/dummy_box.h"
@@ -32,7 +33,7 @@ namespace dummy_switch {
 
 std::unique_ptr<::grpc::Server> external_server_;
 
-void* ExternalServerWaitingFunc(void* arg) {
+static void* ExternalServerWaitingFunc(void* arg) {
   if (external_server_ == nullptr) {
     LOG(ERROR) << "gRPC server does not initialized";
     return nullptr;
