@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This file contains the code for a version of Stratum stub intended to be

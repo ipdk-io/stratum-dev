@@ -63,12 +63,12 @@ stratum_cc_library(
 )
 
 cc_library(
-    name = "platform",
-    hdrs = ["platform.h"],
-)
-
-cc_library(
     name = "stamping",
     hdrs = ["stamping.h"],
     linkstamp = "stamping.cc",
+)
+
+cc_library(
+    name = "platform",
+    hdrs = ["platform.h"],
 )

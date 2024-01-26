@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#define STRIP_FLAG_HELP 1  // remove additional flag help text from gflags
-
 #include "absl/cleanup/cleanup.h"
 #include "gflags/gflags.h"
 #include "gnmi/gnmi.grpc.pb.h"

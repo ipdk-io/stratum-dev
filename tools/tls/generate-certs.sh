@@ -55,4 +55,3 @@ openssl x509 -sha512 -req -in "$THIS_DIR/certs/client.csr" -CA "$THIS_DIR/certs/
 
 # Cleanup
 rm "$SERVER_CONF_FILE"
-
