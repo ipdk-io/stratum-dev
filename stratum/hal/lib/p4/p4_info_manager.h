@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // The P4InfoManager provides convenient functions for accessing data in a
@@ -65,7 +65,7 @@ class P4InfoManager {
   // to validly defined P4 resources.
   virtual ::util::Status InitializeAndVerify();
 
-  // These methods lookup P4 resource information that corresponds to the input
+  // These methods look up P4 resource information that corresponds to the input
   // ID or name.  A successful lookup returns a copy of the resource data
   // from the P4Info.  The lookup fails and returns an error if the requested
   // resource does not exist.
@@ -73,48 +73,59 @@ class P4InfoManager {
       uint32 table_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Table> FindTableByName(
       const std::string& table_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::Action> FindActionByID(
       uint32 action_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Action> FindActionByName(
       const std::string& action_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::ActionProfile>
   FindActionProfileByID(uint32 profile_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::ActionProfile>
   FindActionProfileByName(const std::string& profile_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::Counter> FindCounterByID(
       uint32 counter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Counter> FindCounterByName(
       const std::string& counter_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::DirectCounter>
   FindDirectCounterByID(uint32 counter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::DirectCounter>
   FindDirectCounterByName(const std::string& counter_name) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
-  FindDirectMeterByID(uint32 meter_id) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
-  FindDirectMeterByName(const std::string& meter_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::Meter> FindMeterByID(
       uint32 meter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::Meter> FindMeterByName(
       const std::string& meter_name) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::ValueSet> FindValueSetByID(
-      uint32 value_set_id) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::ValueSet> FindValueSetByName(
-      const std::string& value_set_name) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByID(
-      uint32 register_id) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByName(
-      const std::string& register_name) const;
-  virtual ::util::StatusOr<const std::string> FindResourceTypeByID(
-      uint32 id_key) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
-  FindDirectPktModMeterByID(uint32 meter_id) const;
-  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
-  FindDirectPktModMeterByName(const std::string& meter_name) const;
+
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
+  FindDirectMeterByID(uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
+  FindDirectMeterByName(const std::string& meter_name) const;
+
   virtual ::util::StatusOr<const ::p4::config::v1::PacketModMeter>
   FindPktModMeterByID(uint32 meter_id) const;
   virtual ::util::StatusOr<const ::p4::config::v1::PacketModMeter>
   FindPktModMeterByName(const std::string& meter_name) const;
+
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+  FindDirectPktModMeterByID(uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+  FindDirectPktModMeterByName(const std::string& meter_name) const;
+
+  virtual ::util::StatusOr<const ::p4::config::v1::ValueSet> FindValueSetByID(
+      uint32 value_set_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::ValueSet> FindValueSetByName(
+      const std::string& value_set_name) const;
+
+  virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByID(
+      uint32 register_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByName(
+      const std::string& register_name) const;
+
+  virtual ::util::StatusOr<const std::string> FindResourceTypeByID(
+      uint32 id_key) const;
 
   // GetSwitchStackAnnotations attempts to parse any @switchstack annotations
   // in the input object's P4Info Preamble.  If the P4 object has multiple
@@ -255,6 +266,7 @@ class P4InfoManager {
     }
 
     const std::string resource_type_;  // String used in errors and logs.
+
     // These maps facilitate lookups from P4 name/ID to resource type T.
     absl::flat_hash_map<uint32, const T*> id_to_resource_map_;
     absl::flat_hash_map<std::string, const T*> name_to_resource_map_;
@@ -287,23 +299,25 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::ActionProfile> action_profile_map_;
   P4ResourceMap<::p4::config::v1::Counter> counter_map_;
   P4ResourceMap<::p4::config::v1::DirectCounter> direct_counter_map_;
-  P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
   P4ResourceMap<::p4::config::v1::Meter> meter_map_;
+  P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
   P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
   P4ResourceMap<::p4::config::v1::Register> register_map_;
+
+  P4ResourceMap<::p4::config::v1::PacketModMeter> pkt_mod_meter_map_;
   P4ResourceMap<::p4::config::v1::DirectPacketModMeter>
       direct_pkt_mod_meter_map_;
-  P4ResourceMap<::p4::config::v1::PacketModMeter> pkt_mod_meter_map_;
+
   // These containers verify that all P4 names and IDs are unique across all
   // types of resources that have an embedded Preamble.
   absl::flat_hash_set<uint32> all_resource_ids_;
   absl::flat_hash_map<std::string, const ::p4::config::v1::Preamble*>
       all_resource_names_;
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
-  google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter>
-      direct_meter_objects_;
   google::protobuf::RepeatedPtrField<p4::config::v1::PacketModMeter>
       all_meter_objects_;
+  google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter>
+      direct_meter_objects_;
 };
 
 }  // namespace hal
