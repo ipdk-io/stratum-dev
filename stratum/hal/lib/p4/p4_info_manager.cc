@@ -37,10 +37,11 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       direct_counter_map_("Direct-Counter"),
       meter_map_("Meter"),
       direct_meter_map_("Direct-Meter"),
-      value_set_map_("ValueSet"),
-      register_map_("Register"),
       pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      value_set_map_("ValueSet"),
+      register_map_("Register"),
+      digest_map_("Digest"),
       all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
@@ -51,10 +52,11 @@ P4InfoManager::P4InfoManager()
       direct_counter_map_("Direct-Counter"),
       meter_map_("Meter"),
       direct_meter_map_("Direct-Meter"),
-      value_set_map_("ValueSet"),
-      register_map_("Register"),
       pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      value_set_map_("ValueSet"),
+      register_map_("Register"),
+      digest_map_("Digest"),
       all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
@@ -90,6 +92,8 @@ P4InfoManager::~P4InfoManager() {}
       status, value_set_map_.BuildMaps(p4_info_.value_sets(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
+  APPEND_STATUS_IF_ERROR(
+      status, digest_map_.BuildMaps(p4_info_.digests(), preamble_cb));
 
   // This code depends on a proposed change to the P4Runtime specification,
   // and is provisional.
@@ -273,6 +277,17 @@ P4InfoManager::FindRegisterByName(const std::string& register_name) const {
   return register_map_.FindByName(register_name);
 }
 
+// FindDigest
+::util::StatusOr<const ::p4::config::v1::Digest> P4InfoManager::FindDigestByID(
+    uint32 digest_id) const {
+  return digest_map_.FindByID(digest_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::Digest>
+P4InfoManager::FindDigestByName(const std::string& digest_name) const {
+  return digest_map_.FindByName(digest_name);
+}
+
 // FindResourceType
 ::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(
     uint32 id_key) const {
@@ -396,6 +411,7 @@ void P4InfoManager::DumpNamesToIDs() const {
   direct_meter_map_.DumpNamesToIDs();
   value_set_map_.DumpNamesToIDs();
   register_map_.DumpNamesToIDs();
+  digest_map_.DumpNamesToIDs();
 }
 
 ::util::Status P4InfoManager::VerifyRequiredObjects() {
