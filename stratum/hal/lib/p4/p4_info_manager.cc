@@ -13,8 +13,8 @@
 #include "absl/strings/strip.h"
 #include "absl/strings/substitute.h"
 #include "gflags/gflags.h"
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/gtl/map_util.h"
-#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
@@ -96,11 +96,11 @@ P4InfoManager::~P4InfoManager() {}
   if (!p4_info_.externs().empty()) {
     for (const auto& p4extern : p4_info_.externs()) {
       switch (p4extern.extern_type_id()) {
-        case stratum::hal::tdi::kEs2kExternDirectPacketModMeter:
-          InitializeDirectMeters(p4extern);
+        case ::p4::config::v1::P4Ids_Prefix_PACKET_MOD_METER:
+          InitDirectPacketModMeters(p4extern);
           break;
-        case stratum::hal::tdi::kEs2kExternPacketModMeter:
-          InitializeMeters(p4extern);
+        case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
+          InitPacketModMeters(p4extern);
           break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
@@ -115,7 +115,7 @@ P4InfoManager::~P4InfoManager() {}
   return status;
 }
 
-void P4InfoManager::InitializeDirectMeters(
+void P4InfoManager::InitDirectPacketModMeters(
     const p4::config::v1::Extern& p4extern) {
   const auto& extern_instances = p4extern.instances();
   PreambleCallback preamble_cb =
@@ -132,7 +132,8 @@ void P4InfoManager::InitializeDirectMeters(
   direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);
 }
 
-void P4InfoManager::InitializeMeters(const p4::config::v1::Extern& p4extern) {
+void P4InfoManager::InitPacketModMeters(
+    const p4::config::v1::Extern& p4extern) {
   const auto& extern_instances = p4extern.instances();
   PreambleCallback preamble_cb =
       std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
