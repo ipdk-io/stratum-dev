@@ -41,6 +41,7 @@ stratum_cc_library(
     hdrs = ["bfrt_switch.h"],
     deps = [
         ":bf_chassis_manager",
+        ":bf_global_vars",
         ":bf_sde_interface",
         ":bfrt_node",
         "//stratum/glue:integral_types",
@@ -77,11 +78,21 @@ stratum_cc_test(
 )
 
 stratum_cc_library(
+    name = "bf_global_vars",
+    srcs = ["bf_global_vars.cc"],
+    hdrs = ["bf_global_vars.h"],
+    deps = [
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "bf_chassis_manager",
     srcs = ["bf_chassis_manager.cc"],
     hdrs = ["bf_chassis_manager.h"],
     copts = ["-Wno-thread-safety-analysis"],  # TODO(antonin)
     deps = [
+        ":bf_global_vars",
         ":bf_sde_interface",
         ":bfrt_constants",
         "//stratum/glue:integral_types",
@@ -266,6 +277,7 @@ stratum_cc_library(
     hdrs = ["bfrt_node.h"],
     deps = [
         ":bf_cc_proto",
+        ":bf_global_vars",
         ":bf_pipeline_utils",
         ":bfrt_counter_manager",
         ":bfrt_p4runtime_translator",
@@ -336,6 +348,7 @@ stratum_cc_library(
     hdrs = ["bfrt_table_manager.h"],
     deps = [
         ":bf_cc_proto",
+        ":bf_global_vars",
         ":bf_sde_interface",
         ":bfrt_p4runtime_translator",
         ":utils",
@@ -445,6 +458,7 @@ stratum_cc_library(
     hdrs = ["bfrt_packetio_manager.h"],
     deps = [
         ":bf_cc_proto",
+        ":bf_global_vars",
         ":bf_sde_interface",
         ":bfrt_p4runtime_translator",
         "//stratum/glue:integral_types",
