@@ -1,6 +1,5 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -144,7 +143,6 @@ stratum_cc_library(
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/tdi:tdi_constants",  # fix this
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/public/proto:p4_annotation_cc_proto",
