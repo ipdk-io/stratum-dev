@@ -15,6 +15,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/barefoot/bf.pb.h"
+#include "stratum/hal/lib/barefoot/bf_global_vars.h"
 #include "stratum/hal/lib/barefoot/bf_sde_interface.h"
 #include "stratum/hal/lib/barefoot/bfrt_p4runtime_translator.h"
 #include "stratum/hal/lib/common/common.pb.h"
@@ -204,7 +205,7 @@ class BfrtTableManager {
   // Handles received digest lists, converts them to P4Runtime and hands them
   // over the registered receive writer.
   ::util::Status HandleDigestList()
-      LOCKS_EXCLUDED(lock_, digest_list_writer_lock_);
+      LOCKS_EXCLUDED(lock_, digest_list_writer_lock_, chassis_lock);
 
   // Digest list handle thread function.
   static void* DigestListThreadFunc(void* arg);
@@ -244,8 +245,8 @@ class BfrtTableManager {
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   BfSdeInterface* bf_sde_interface_ = nullptr;  // not owned by this class.
 
-  // Pointer to a BfrtTranslator implementation that translates P4Runtime
-  // entities. Not owned by this class.
+  // Pointer to a BfrtTranslator implementation that translate P4Runtime
+  // entities, not owned by this class.
   BfrtP4RuntimeTranslator* bfrt_p4runtime_translator_ = nullptr;
 
   // Helper class to validate the P4Info and requests against it.
