@@ -314,6 +314,7 @@ class P4InfoManager {
   absl::flat_hash_map<std::string, const ::p4::config::v1::Preamble*>
       all_resource_names_;
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
+
   google::protobuf::RepeatedPtrField<p4::config::v1::PacketModMeter>
       all_meter_objects_;
   google::protobuf::RepeatedPtrField<p4::config::v1::DirectPacketModMeter>
