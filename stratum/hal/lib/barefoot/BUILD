@@ -217,7 +217,6 @@ stratum_cc_library(
         "@com_github_gflags_gflags//:gflags",
         "@com_github_nlohmann_json//:json",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
-        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings",
     ],
 )
