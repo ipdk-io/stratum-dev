@@ -124,6 +124,11 @@ class P4InfoManager {
   virtual ::util::StatusOr<const ::p4::config::v1::Register> FindRegisterByName(
       const std::string& register_name) const;
 
+  virtual ::util::StatusOr<const ::p4::config::v1::Digest> FindDigestByID(
+      uint32 digest_id) const;
+  virtual ::util::StatusOr<const ::p4::config::v1::Digest> FindDigestByName(
+      const std::string& digest_name) const;
+
   virtual ::util::StatusOr<const std::string> FindResourceTypeByID(
       uint32 id_key) const;
 
@@ -301,12 +306,12 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::DirectCounter> direct_counter_map_;
   P4ResourceMap<::p4::config::v1::Meter> meter_map_;
   P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
-  P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
-  P4ResourceMap<::p4::config::v1::Register> register_map_;
-
   P4ResourceMap<::p4::config::v1::PacketModMeter> pkt_mod_meter_map_;
   P4ResourceMap<::p4::config::v1::DirectPacketModMeter>
       direct_pkt_mod_meter_map_;
+  P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
+  P4ResourceMap<::p4::config::v1::Register> register_map_;
+  P4ResourceMap<::p4::config::v1::Digest> digest_map_;
 
   // These containers verify that all P4 names and IDs are unique across all
   // types of resources that have an embedded Preamble.
