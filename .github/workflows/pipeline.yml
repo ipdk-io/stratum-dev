@@ -39,7 +39,7 @@ jobs:
           path: stratum
 
       - name: Fetch DPDK SDE
-        uses: robinraju/release-downloader@v1.8
+        uses: robinraju/release-downloader@v1.9
         with:
           repository: ${{ env.SDE_REPOSITORY }}
           tag: ${{ env.SDE_TAG }}
