@@ -216,10 +216,10 @@ using namespace stratum::hal::tdi::helpers;
 
   tdi_status_t status = table->entryDel(*real_session->tdi_session_, *dev_tgt,
                                         flags, *table_key);
-  if (status == BF_OBJECT_NOT_FOUND) {
+  if (status == TDI_OBJECT_NOT_FOUND) {
     return MAKE_ERROR(::util::error::Code::NOT_FOUND)
            << "No matching table entry with " << dump_args();
-  } else if (status != BF_SUCCESS) {
+  } else if (status != TDI_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "Error deleting table entry with " << dump_args();
   }

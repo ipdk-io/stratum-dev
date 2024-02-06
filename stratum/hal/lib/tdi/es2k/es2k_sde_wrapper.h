@@ -63,7 +63,7 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
 
   // Writes a received packet to the registered Rx writer. Called from the SDE
   // callback function.
-  ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
+  ::util::Status HandlePacketRx(tdi_dev_id_t device, const char* pkt_data,
                                 const uint64_t pkt_len)
       LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
