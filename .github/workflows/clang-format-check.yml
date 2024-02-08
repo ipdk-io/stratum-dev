@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - split-arch
-#     - stratum-updates
   pull_request:
     branches:
       - split-arch
@@ -28,7 +27,7 @@ jobs:
 
       - name: Get list of changed Files
         id: changes
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v42
         with:
           files_yaml: |
             src:
