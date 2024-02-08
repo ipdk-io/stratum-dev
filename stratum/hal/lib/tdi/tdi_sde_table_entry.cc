@@ -71,7 +71,7 @@ using namespace stratum::hal::tdi::helpers;
            << "Duplicate table entry with " << dump_args();
   } else if (status == BF_NO_SPACE) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
-           << "Table is full with " << dump_args();
+           << "Table is already full. No space for " << dump_args();
   } else if (status != BF_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "Error adding table entry with " << dump_args();
