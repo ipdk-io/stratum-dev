@@ -7,9 +7,9 @@
 
 extern "C" {
 #ifdef ES2K_TARGET
-    #include "tdi_types/tdi_types.h"
+#include "tdi_types/tdi_types.h"
 #else
-    #include "bf_types/bf_types.h"
+#include "bf_types/bf_types.h"
 #endif
 }
 

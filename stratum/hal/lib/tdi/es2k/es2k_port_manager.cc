@@ -62,8 +62,9 @@ namespace {
 }
 
 // A callback function executed in SDE port state change thread context.
-tdi_status_t sde_port_status_callback(tdi_dev_id_t device, tdi_dev_port_t dev_port,
-                                     bool up, void* cookie) {
+tdi_status_t sde_port_status_callback(tdi_dev_id_t device,
+                                      tdi_dev_port_t dev_port, bool up,
+                                      void* cookie) {
   absl::Time timestamp = absl::Now();
   Es2kPortManager* es2k_port_manager = Es2kPortManager::GetSingleton();
   if (!es2k_port_manager) {
@@ -149,14 +150,14 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
                                         FecMode fec_mode) {
   auto port_attrs = absl::make_unique<port_attributes_t>();
   RETURN_IF_TDI_ERROR(ipu_pal_port_add(static_cast<tdi_dev_id_t>(device),
-                                      static_cast<tdi_dev_port_t>(port),
-                                      port_attrs.get()));
+                                       static_cast<tdi_dev_port_t>(port),
+                                       port_attrs.get()));
   return ::util::OkStatus();
 }
 
 ::util::Status Es2kPortManager::DeletePort(int device, int port) {
   RETURN_IF_TDI_ERROR(ipu_pal_port_del(static_cast<tdi_dev_id_t>(device),
-                                      static_cast<tdi_dev_port_t>(port)));
+                                       static_cast<tdi_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 

@@ -109,10 +109,9 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::Status GetMeterField(TdiPktModMeterConfig& cfg,
-    const std::string field_name,
-    const std::unique_ptr<::tdi::TableData>& table_data,
-    tdi_id_t field_id) {
+::util::Status GetMeterField(
+    TdiPktModMeterConfig& cfg, const std::string field_name,
+    const std::unique_ptr<::tdi::TableData>& table_data, tdi_id_t field_id) {
   if (field_name == kEs2kMeterProfileIdKPps) {
     uint64 prof_id;
     RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &prof_id));
@@ -210,12 +209,11 @@ using namespace stratum::hal::tdi::helpers;
   auto dump_args = [&]() -> std::string {
     return absl::StrCat(
         DumpTableMetadata(table).ValueOr("<error reading table>"), ", ",
-        DumpTableKey(table_key.get())
-            .ValueOr("<error parsing key>"));
+        DumpTableKey(table_key.get()).ValueOr("<error parsing key>"));
   };
 
-  tdi_status_t status = table->entryDel(*real_session->tdi_session_, *dev_tgt,
-                                        flags, *table_key);
+  tdi_status_t status =
+      table->entryDel(*real_session->tdi_session_, *dev_tgt, flags, *table_key);
   if (status == TDI_OBJECT_NOT_FOUND) {
     return MAKE_ERROR(::util::error::Code::NOT_FOUND)
            << "No matching table entry with " << dump_args();

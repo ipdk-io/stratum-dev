@@ -32,8 +32,8 @@
 #include "tdi_rt/tdi_rt_defs.h"
 
 extern "C" {
-#include "ipu_pal/dev_intf.h"
 #include "ipu_p4d/lib/ipu_p4d_lib_init.h"
+#include "ipu_pal/dev_intf.h"
 }
 
 namespace stratum {
@@ -135,9 +135,9 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
 
   tdi_id_mapper_.reset();
 
-  RETURN_IF_TDI_ERROR(ipu_pal_device_warm_init_begin(dev_id,
-                                                    TDI_DEV_WARM_INIT_FAST_RECFG,
-                                                    /* upgrade_agents */ true));
+  RETURN_IF_TDI_ERROR(
+      ipu_pal_device_warm_init_begin(dev_id, TDI_DEV_WARM_INIT_FAST_RECFG,
+                                     /* upgrade_agents */ true));
   tdi_device_profile_t device_profile = {};
 
   // Commit new files to disk and build device profile for SDE to load.
