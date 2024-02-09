@@ -1,4 +1,6 @@
 // Copyright 2019 Dell EMC
+// Copyright 2024 Intel Corporation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <fstream>
@@ -108,7 +110,7 @@ class OnlpCli {
   OnlpInterface* onlp_interface_;
 };
 
-::util::Status Main(int argc, char** argv) {
+static ::util::Status Main(int argc, char** argv) {
   InitGoogle("onlp_cli", &argc, &argv, true);
 
   OnlpCli cli;

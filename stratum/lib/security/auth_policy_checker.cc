@@ -6,9 +6,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/epoll.h>
-#include <sys/inotify.h>
-#include <sys/types.h>
 
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
@@ -59,77 +56,6 @@ void ReadProtoIfValidFileExists(const std::string& path,
   }
 }
 
-// Helpers for adding and removing watch for a file/dir.
-::util::StatusOr<int> AddWatchHelper(int fd, const std::string& path,
-                                     uint32 mask) {
-  int wd = inotify_add_watch(fd, path.c_str(), mask);
-  if (wd <= 0) {
-    return MAKE_ERROR(ERR_INTERNAL)
-           << "inotify_add_watch() failed for path '" << path << "', and mask '"
-           << mask << "'. errno: " << errno << ".";
-  }
-
-  return wd;
-}
-
-::util::Status RemoveWatchHelper(int fd, int wd) {
-  RET_CHECK(fd > 0) << "Invalid fd: " << fd << ".";
-  if (wd > 0) inotify_rm_watch(fd, wd);
-
-  return ::util::OkStatus();
-}
-
-// This method creates watch descritor for watching change in the directory
-// containing the file whose path is given as input. We add watch for the
-// directory so that we can detect the file creation/deletion/move as well as
-// modify.
-::util::StatusOr<int> AddWatchForFileChange(int ifd, const std::string& path) {
-  std::string dir = DirName(path);
-  RET_CHECK(PathExists(dir)) << "Dir '" << dir << "' not found.";
-  RET_CHECK(IsDir(dir)) << "'" << dir << "' is not a directory.";
-  ASSIGN_OR_RETURN(
-      int wd,
-      AddWatchHelper(ifd, dir, IN_CREATE | IN_DELETE | IN_MOVE | IN_MODIFY));
-
-  return wd;
-}
-
-// This method create an epoll file descriptor which will later be used to check
-// for the file/dir change in a non blocking mannger. The FD created by
-// inotify_init() is passed to this method.
-::util::StatusOr<int> AddPollForFileChange(int ifd) {
-  struct epoll_event event;
-  int efd = epoll_create1(0);
-  if (efd <= 0) {
-    return MAKE_ERROR(ERR_INTERNAL)
-           << "epoll_create1() failed. errno: " << errno << ".";
-  }
-
-  event.data.fd = ifd;  // not even used.
-  event.events = EPOLLIN;
-  if (epoll_ctl(efd, EPOLL_CTL_ADD, ifd, &event) != 0) {
-    return MAKE_ERROR(ERR_INTERNAL)
-           << "epoll_ctl() failed. errno: " << errno << ".";
-  }
-
-  return efd;
-}
-
-// Pretty prints the filed event on a specific file.
-void PrintFileEvent(const std::string& path, uint32 mask) {
-  if (mask & IN_CREATE) {
-    LOG(INFO) << "File '" << path << "' created!";
-  } else if (mask & IN_MODIFY) {
-    LOG(INFO) << "File '" << path << "' modified!";
-  } else if (mask & IN_MOVE) {
-    LOG(INFO) << "File '" << path << "' moved!";
-  } else if (mask & IN_DELETE) {
-    LOG(INFO) << "File '" << path << "' deleted!";
-  } else {
-    LOG(WARNING) << "Unknown event on file '" << path << "'!";
-  }
-}
-
 }  // namespace
 
 AuthPolicyChecker::AuthPolicyChecker()
@@ -153,7 +79,19 @@ AuthPolicyChecker::~AuthPolicyChecker() {}
   return ::util::OkStatus();
 }
 
-::util::Status AuthPolicyChecker::Shutdown() { return ::util::OkStatus(); }
+::util::Status AuthPolicyChecker::Shutdown() {
+  {
+    absl::WriterMutexLock l(&shutdown_lock_);
+    if (shutdown_) return ::util::OkStatus();
+    shutdown_ = true;
+  }
+  if (watcher_thread_id_ && pthread_join(watcher_thread_id_, nullptr) != 0) {
+    return MAKE_ERROR(ERR_INTERNAL) << "Failed to join file watcher thread.";
+  }
+  watcher_thread_id_ = pthread_t{};
+
+  return ::util::OkStatus();
+}
 
 std::unique_ptr<AuthPolicyChecker> AuthPolicyChecker::CreateInstance() {
   auto instance = absl::WrapUnique(new AuthPolicyChecker());
@@ -167,7 +105,16 @@ std::unique_ptr<AuthPolicyChecker> AuthPolicyChecker::CreateInstance() {
   return instance;
 }
 
-::util::Status AuthPolicyChecker::Initialize() { return ::util::OkStatus(); }
+::util::Status AuthPolicyChecker::Initialize() {
+  int ret =
+      pthread_create(&watcher_thread_id_, nullptr, WatcherThreadFunc, nullptr);
+  if (ret) {
+    return MAKE_ERROR(ERR_INTERNAL)
+           << "Failed to create file watcher thread with error " << ret << ".";
+  }
+
+  return ::util::OkStatus();
+}
 
 ::util::Status AuthPolicyChecker::AuthorizeUser(
     const std::string& service_name, const std::string& rpc_name,

@@ -1,4 +1,5 @@
 // Copyright 2021-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_GLUE_STAMPING_H_

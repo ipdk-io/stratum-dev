@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // This file contains the code for a version of Stratum stub intended to be
@@ -496,6 +497,8 @@ class HalServiceClient {
         case ::p4::v1::StreamMessageResponse::kDigest:
         case ::p4::v1::StreamMessageResponse::kIdleTimeoutNotification:
         case ::p4::v1::StreamMessageResponse::UPDATE_NOT_SET:
+        case ::p4::v1::StreamMessageResponse::kOther:
+        case ::p4::v1::StreamMessageResponse::kError:
           // TODO(stratum-dev): Handle kDigest and kIdleTimeoutNotification.
           LOG(ERROR) << "Invalid message received from the switch: "
                      << resp.ShortDebugString();
@@ -700,7 +703,7 @@ class HalServiceClient {
 
 ABSL_CONST_INIT absl::Mutex HalServiceClient::lock_(absl::kConstInit);
 
-::util::Status Main(int argc, char** argv) {
+static ::util::Status Main(int argc, char** argv) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
   HalServiceClient client(FLAGS_url);

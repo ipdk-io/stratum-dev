@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // P4InfoManager unit tests.
@@ -38,6 +39,7 @@ class P4InfoManagerTest : public testing::Test {
   static const int kFirstRegisterID = 40000000;
   static const int kFirstDirectCounterID = 50000000;
   static const int kFirstDirectMeterID = 60000000;
+  static const int kFirstDigestID = 70000000;
 
   // The default constructor creates p4_test_manager_ with empty p4_test_info_.
   P4InfoManagerTest() : p4_test_manager_(new P4InfoManager(p4_test_info_)) {}
@@ -81,9 +83,11 @@ class P4InfoManagerTest : public testing::Test {
     SetUpTestP4ActionProfiles();
     SetUpTestP4Counters();
     SetUpTestP4Meters();
-    SetUpTestP4DirectMeters();
     SetUpTestP4ValueSets();
     SetUpTestP4Registers();
+    SetUpTestP4DirectCounters();
+    SetUpTestP4DirectMeters();
+    SetUpTestP4Digests();
   }
 
   void SetUpTestP4Tables(bool need_actions = true) {
@@ -175,9 +179,19 @@ class P4InfoManagerTest : public testing::Test {
   }
 
   void SetUpTestP4DirectMeters() {
+    // TODO(unknown): Tests get only one basic direct meter preamble at
+    // present.
     auto new_meter = p4_test_info_.add_direct_meters();
     new_meter->mutable_preamble()->set_id(kFirstDirectMeterID);
     new_meter->mutable_preamble()->set_name("Direct-Meter-1");
+    SetUpNewP4Info();
+  }
+
+  void SetUpTestP4Digests() {
+    // TODO(unknown): Tests get only one basic digest preamble at present.
+    auto new_digest = p4_test_info_.add_digests();
+    new_digest->mutable_preamble()->set_id(kFirstDigestID);
+    new_digest->mutable_preamble()->set_name("Digest-1");
     SetUpNewP4Info();
   }
 
@@ -579,7 +593,7 @@ TEST_F(P4InfoManagerTest, TestFindCounterUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown counter name.
+// Verifies lookup failure with an unknown counter name.
 TEST_F(P4InfoManagerTest, TestFindCounterUnknownName) {
   SetUpTestP4Counters();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -618,49 +632,9 @@ TEST_F(P4InfoManagerTest, TestFindMeterUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown meter name.
+// Verifies lookup failure with an unknown meter name.
 TEST_F(P4InfoManagerTest, TestFindMeterUnknownName) {
   SetUpTestP4Meters();
-  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
-  auto status = p4_test_manager_->FindMeterByName("unknown-meter");
-  EXPECT_FALSE(status.ok());
-  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
-  EXPECT_FALSE(status.status().error_message().empty());
-  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
-}
-
-// All valid direct meters in p4_test_info_ should have successful name/ID
-// lookups, and the returned data should match the direct meter's original
-// p4_test_info_ entry.
-TEST_F(P4InfoManagerTest, TestFindDirectMeter) {
-  SetUpTestP4DirectMeters();
-  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
-  for (const auto& meter : p4_test_info_.direct_meters()) {
-    auto id_status =
-        p4_test_manager_->FindDirectMeterByID(meter.preamble().id());
-    EXPECT_TRUE(id_status.ok());
-    EXPECT_TRUE(ProtoEqual(meter, id_status.ValueOrDie()));
-    auto name_status =
-        p4_test_manager_->FindDirectMeterByName(meter.preamble().name());
-    EXPECT_TRUE(name_status.ok());
-    EXPECT_TRUE(ProtoEqual(meter, name_status.ValueOrDie()));
-  }
-}
-
-// Verifies lookup failure with an unknown direct meter ID.
-TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownID) {
-  SetUpTestP4DirectMeters();
-  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
-  auto status = p4_test_manager_->FindDirectMeterByID(0xfedcba);
-  EXPECT_FALSE(status.ok());
-  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
-  EXPECT_FALSE(status.status().error_message().empty());
-  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
-}
-
-// Verifies lookup failure with an unknown direct meter name.
-TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownName) {
-  SetUpTestP4DirectMeters();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
   auto status = p4_test_manager_->FindMeterByName("unknown-meter");
   EXPECT_FALSE(status.ok());
@@ -698,7 +672,7 @@ TEST_F(P4InfoManagerTest, TestFindValueSetUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown meter name.
+// Verifies lookup failure with an unknown value set name.
 TEST_F(P4InfoManagerTest, TestFindValueSetUnknownName) {
   SetUpTestP4ValueSets();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -709,7 +683,7 @@ TEST_F(P4InfoManagerTest, TestFindValueSetUnknownName) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// All valid value sets in p4_test_info_ should have successful name/ID
+// All valid registers in p4_test_info_ should have successful name/ID
 // lookups, and the returned data should match the value set's original
 // p4_test_info_ entry.
 TEST_F(P4InfoManagerTest, TestFindRegister) {
@@ -727,7 +701,7 @@ TEST_F(P4InfoManagerTest, TestFindRegister) {
   }
 }
 
-// Verifies lookup failure with an unknown value set ID.
+// Verifies lookup failure with an unknown register ID.
 TEST_F(P4InfoManagerTest, TestFindRegisterUnknownID) {
   SetUpTestP4Registers();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -738,7 +712,7 @@ TEST_F(P4InfoManagerTest, TestFindRegisterUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown meter name.
+// Verifies lookup failure with an unknown register name.
 TEST_F(P4InfoManagerTest, TestFindRegisterUnknownName) {
   SetUpTestP4Registers();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -778,11 +752,90 @@ TEST_F(P4InfoManagerTest, TestFindDirectCounterUnknownID) {
   EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
 }
 
-// Verifies lookup failure with an unknown unknown direct counter name.
+// Verifies lookup failure with an unknown direct counter name.
 TEST_F(P4InfoManagerTest, TestFindDirectCounterUnknownName) {
   SetUpTestP4DirectCounters();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
   auto status = p4_test_manager_->FindDirectCounterByName("unknown-counter");
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
+  EXPECT_FALSE(status.status().error_message().empty());
+  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
+}
+
+// All valid direct meters in p4_test_info_ should have successful name/ID
+// lookups, and the returned data should match the direct meter's original
+// p4_test_info_ entry.
+TEST_F(P4InfoManagerTest, TestFindDirectMeter) {
+  SetUpTestP4DirectMeters();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  for (const auto& meter : p4_test_info_.direct_meters()) {
+    auto id_status =
+        p4_test_manager_->FindDirectMeterByID(meter.preamble().id());
+    EXPECT_TRUE(id_status.ok());
+    EXPECT_TRUE(ProtoEqual(meter, id_status.ValueOrDie()));
+    auto name_status =
+        p4_test_manager_->FindDirectMeterByName(meter.preamble().name());
+    EXPECT_TRUE(name_status.ok());
+    EXPECT_TRUE(ProtoEqual(meter, name_status.ValueOrDie()));
+  }
+}
+
+// Verifies lookup failure with an unknown direct meter ID.
+TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownID) {
+  SetUpTestP4DirectMeters();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  auto status = p4_test_manager_->FindDirectMeterByID(0x9abcd);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
+  EXPECT_FALSE(status.status().error_message().empty());
+  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
+}
+
+// Verifies lookup failure with an unknown direct meter name.
+TEST_F(P4InfoManagerTest, TestFindDirectMeterUnknownName) {
+  SetUpTestP4DirectMeters();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  auto status = p4_test_manager_->FindDirectMeterByName("unknown-meter");
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
+  EXPECT_FALSE(status.status().error_message().empty());
+  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
+}
+
+// All valid digests in p4_test_info_ should have successful name/ID
+// lookups, and the returned data should match the digest's original
+// p4_test_info_ entry.
+TEST_F(P4InfoManagerTest, TestFindDigest) {
+  SetUpTestP4Digests();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  for (const auto& digest : p4_test_info_.digests()) {
+    auto id_status = p4_test_manager_->FindDigestByID(digest.preamble().id());
+    EXPECT_TRUE(id_status.ok());
+    EXPECT_TRUE(ProtoEqual(digest, id_status.ValueOrDie()));
+    auto name_status =
+        p4_test_manager_->FindDigestByName(digest.preamble().name());
+    EXPECT_TRUE(name_status.ok());
+    EXPECT_TRUE(ProtoEqual(digest, name_status.ValueOrDie()));
+  }
+}
+
+// Verifies lookup failure with an unknown digest ID.
+TEST_F(P4InfoManagerTest, TestFindDigestUnknownID) {
+  SetUpTestP4Digests();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  auto status = p4_test_manager_->FindDigestByID(0x9abcd);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
+  EXPECT_FALSE(status.status().error_message().empty());
+  EXPECT_THAT(status.status().error_message(), HasSubstr("not found"));
+}
+
+// Verifies lookup failure with an unknown digest name.
+TEST_F(P4InfoManagerTest, TestFindDigestUnknownName) {
+  SetUpTestP4Digests();
+  ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
+  auto status = p4_test_manager_->FindDigestByName("unknown-digest");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(ERR_INVALID_P4_INFO, status.status().error_code());
   EXPECT_FALSE(status.status().error_message().empty());

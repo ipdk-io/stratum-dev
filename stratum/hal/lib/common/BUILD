@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022 Intel Corporation
+# Copyright 2022-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -12,7 +12,6 @@ load(
     "stratum_cc_test",
 )
 load("//bazel:deps.bzl", "P4RUNTIME_VER")
-load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 
 licenses(["notice"])  # Apache v2
 
@@ -192,13 +191,6 @@ proto_library(
 cc_proto_library(
     name = "common_cc_proto",
     deps = [":common_proto"],
-)
-
-py_proto_library(
-    name = "common_py_proto",
-    deps = [
-        ":common_proto",
-    ],
 )
 
 stratum_cc_library(
@@ -523,6 +515,7 @@ stratum_cc_library(
         ":p4_service",
         ":switch_interface",
         "//stratum/glue:logging",
+        "//stratum/glue:platform",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",
@@ -583,6 +576,7 @@ stratum_cc_library(
         "//stratum/lib:macros",
         "//stratum/lib:utils",
         "//stratum/lib/channel",
+        "//stratum/lib/p4runtime:sdn_controller_manager",
         "//stratum/lib/security:auth_policy_checker",
         "//stratum/public/lib:error",
         "@com_github_google_glog//:glog",
@@ -591,6 +585,7 @@ stratum_cc_library(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/numeric:int128",
         "@com_google_absl//absl/strings",
@@ -618,6 +613,7 @@ stratum_cc_test(
         "//stratum/glue/net_util:ports",
         "//stratum/glue/status:status_test_util",
         "//stratum/lib:utils",
+        "//stratum/lib/p4runtime:stream_message_reader_writer_mock",
         "//stratum/lib/security:auth_policy_checker_mock",
         "//stratum/lib/test_utils:matchers",
         "//stratum/public/lib:error",
@@ -754,6 +750,7 @@ stratum_cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_googlesource_code_re2//:re2",
     ],
 )
 

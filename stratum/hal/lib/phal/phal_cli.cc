@@ -1,5 +1,6 @@
 // Copyright 2019-present Open Networking Foundation
 // Copyright 2019 Dell EMC
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <fstream>
@@ -280,7 +281,7 @@ class PhalCli {
   std::unique_ptr<PhalDb::Stub> phaldb_svc_;
 };
 
-::util::Status Main(int argc, char** argv) {
+static ::util::Status Main(int argc, char** argv) {
   ::gflags::SetUsageMessage(kUsage);
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();

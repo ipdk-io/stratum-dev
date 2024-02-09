@@ -1,4 +1,5 @@
 // Copyright 2019-present Open Networking Foundation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <csignal>
@@ -22,16 +23,14 @@
 #include "stratum/lib/security/credentials_manager.h"
 #include "stratum/lib/utils.h"
 
-#define DEFAULT_CERTS_DIR "/usr/share/stratum/certs/"
-
 DEFINE_string(grpc_addr, stratum::kLocalStratumUrl, "gNMI server address");
 DEFINE_string(bool_val, "", "Boolean value to be set");
 DEFINE_string(int_val, "", "Integer value to be set (64-bit)");
 DEFINE_string(uint_val, "", "Unsigned integer value to be set (64-bit)");
 DEFINE_string(string_val, "", "String value to be set");
 DEFINE_string(float_val, "", "Floating point value to be set");
+DEFINE_string(proto_bytes, "", "Protobuf value to be set");
 DEFINE_string(bytes_val_file, "", "A file to be sent as bytes value");
-DEFINE_string(proto_bytes, "", "Protobuf binary encoded bytes");
 
 DEFINE_uint64(interval, 5000, "Subscribe poll interval in ms");
 DEFINE_bool(replace, false, "Use replace instead of update");
@@ -71,16 +70,26 @@ positional arguments:
   path                                              gNMI path
 
 optional arguments:
+  --helpshort              show help message and exit
+  --help                   show help on all flags and exit
   --grpc_addr GRPC_ADDR    gNMI server address
-  --bool_val BOOL_VAL      [SetRequest only] Set boolean value
-  --int_val INT_VAL        [SetRequest only] Set int value (64-bit)
-  --uint_val UINT_VAL      [SetRequest only] Set uint value (64-bit)
-  --string_val STRING_VAL  [SetRequest only] Set string value
-  --float_val FLOAT_VAL    [SetRequest only] Set float value
-  --bytes_val_file FILE    [SetRequest only] A file to be sent as bytes value
-  --interval INTERVAL      [Sample subscribe only] Sample subscribe poll interval in ms
-  --replace                [SetRequest only] Use replace instead of update
-  --get-type               [GetRequest only] Use specific data type for get request (ALL,CONFIG,STATE,OPERATIONAL)
+
+SetRequest only:
+  --bool_val BOOL_VAL      Set boolean value
+  --int_val INT_VAL        Set int value (64-bit)
+  --uint_val UINT_VAL      Set uint value (64-bit)
+  --string_val STRING_VAL  Set string value
+  --float_val FLOAT_VAL    Set float value
+  --proto_bytes PROTO_VAL  Set protobuf bytes value
+  --bytes_val_file FILE    Send file as bytes value
+  --replace                Use replace instead of update
+
+GetRequest only:
+  --get-type DATA_TYPE     Use specific data type for request (ALL,CONFIG,STATE,OPERATIONAL)
+
+Sample subscribe only:
+  --interval INTERVAL      Sample subscribe poll interval in ms
+
 )USAGE";
 
 // Pipe file descriptors used to transfer signals from the handler to the cancel
@@ -220,16 +229,6 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
 }
 
 ::util::Status Main(int argc, char** argv) {
-  // Default certificate file location for TLS-mode
-  FLAGS_ca_cert_file = DEFAULT_CERTS_DIR "ca.crt";
-  FLAGS_server_key_file = DEFAULT_CERTS_DIR "stratum.key";
-  FLAGS_server_cert_file = DEFAULT_CERTS_DIR "stratum.crt";
-  FLAGS_client_key_file = DEFAULT_CERTS_DIR "client.key";
-  FLAGS_client_cert_file = DEFAULT_CERTS_DIR "client.crt";
-
-  // Parse command line flags
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
   ::gflags::SetUsageMessage(kUsage);
   InitGoogle(argv[0], &argc, &argv, true);
   stratum::InitStratumLogging();
@@ -262,7 +261,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
   });
 
   ASSIGN_OR_RETURN(auto credentials_manager,
-                   CredentialsManager::CreateInstance(true));
+                   CredentialsManager::CreateInstance());
   auto channel = ::grpc::CreateChannel(
       FLAGS_grpc_addr,
       credentials_manager->GenerateExternalFacingClientCredentials());
@@ -306,7 +305,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     auto stream_reader_writer = stub->Subscribe(&ctx);
     ::gnmi::SubscribeRequest req = BuildGnmiSubOnchangeRequest(path);
     PRINT_MSG(req, "REQUEST");
-    RET_CHECK(stream_reader_writer->Write(req)) << "Cannot write request.";
+    RET_CHECK(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");
@@ -317,7 +316,7 @@ void BuildGnmiPath(std::string path_str, ::gnmi::Path* path) {
     ::gnmi::SubscribeRequest req =
         BuildGnmiSubSampleRequest(path, FLAGS_interval);
     PRINT_MSG(req, "REQUEST");
-    RET_CHECK(stream_reader_writer->Write(req)) << "Cannot write request.";
+    RET_CHECK(stream_reader_writer->Write(req)) << "Can not write request.";
     ::gnmi::SubscribeResponse resp;
     while (stream_reader_writer->Read(&resp)) {
       PRINT_MSG(resp, "RESPONSE");

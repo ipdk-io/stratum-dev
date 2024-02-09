@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - split-arch
-      - stratum-updates
   pull_request:
     branches:
       - split-arch
@@ -30,13 +29,15 @@ jobs:
         id: changes
         uses: tj-actions/changed-files@v42
         with:
-          files: |
-            **.c
-            **.h
-            **.cc
+          files_yaml: |
+            src:
+              - '**.c'
+              - '**.cc'
+              - '**.h'
+              - '!stratum/hal/lib/bcm/**'
 
       - name: Check for formatting errors
         run: |
-          for file in ${{ steps.changes.outputs.all_changed_files }}; do
+          for file in ${{ steps.changes.outputs.src_all_changed_files }}; do
             clang-format --dry-run -Werror $file
           done

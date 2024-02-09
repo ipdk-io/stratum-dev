@@ -15,6 +15,7 @@
 #include "stratum/hal/lib/barefoot/bf_sde_mock.h"
 #include "stratum/hal/lib/barefoot/bfrt_constants.h"
 #include "stratum/hal/lib/barefoot/bfrt_counter_manager_mock.h"
+#include "stratum/hal/lib/barefoot/bfrt_p4runtime_translator_mock.h"
 #include "stratum/hal/lib/barefoot/bfrt_packetio_manager_mock.h"
 #include "stratum/hal/lib/barefoot/bfrt_pre_manager_mock.h"
 #include "stratum/hal/lib/barefoot/bfrt_table_manager_mock.h"
@@ -56,11 +57,13 @@ class BfrtNodeTest : public ::testing::Test {
     bfrt_pre_manager_mock_ = absl::make_unique<BfrtPreManagerMock>();
     bfrt_counter_manager_mock_ = absl::make_unique<BfrtCounterManagerMock>();
     bf_sde_mock_ = absl::make_unique<BfSdeMock>();
+    bfrt_p4runtime_translator_mock_ =
+        absl::make_unique<BfrtP4RuntimeTranslatorMock>();
 
     bfrt_node_ = BfrtNode::CreateInstance(
         bfrt_table_manager_mock_.get(), bfrt_packetio_manager_mock_.get(),
         bfrt_pre_manager_mock_.get(), bfrt_counter_manager_mock_.get(),
-        bf_sde_mock_.get(), kDeviceId);
+        bfrt_p4runtime_translator_mock_.get(), bf_sde_mock_.get(), kDeviceId);
   }
 
   ::util::Status PushChassisConfig(const ChassisConfig& config,
@@ -124,6 +127,9 @@ class BfrtNodeTest : public ::testing::Test {
       EXPECT_CALL(*bfrt_packetio_manager_mock_,
                   PushChassisConfig(EqualsProto(config), kNodeId))
           .WillOnce(Return(::util::OkStatus()));
+      EXPECT_CALL(*bfrt_p4runtime_translator_mock_,
+                  PushChassisConfig(EqualsProto(config), kNodeId))
+          .WillOnce(Return(::util::OkStatus()));
       // EXPECT_CALL(*bfrt_pre_manager_mock_,
       //             PushChassisConfig(EqualsProto(config), kNodeId))
       //     .WillOnce(Return(::util::OkStatus()));
@@ -144,6 +150,9 @@ class BfrtNodeTest : public ::testing::Test {
       EXPECT_CALL(*bfrt_table_manager_mock_, VerifyForwardingPipelineConfig(_))
           .WillOnce(Return(::util::OkStatus()));
       EXPECT_CALL(*bf_sde_mock_, AddDevice(kDeviceId, _))
+          .WillOnce(Return(::util::OkStatus()));
+      EXPECT_CALL(*bfrt_p4runtime_translator_mock_,
+                  PushForwardingPipelineConfig(_))
           .WillOnce(Return(::util::OkStatus()));
       EXPECT_CALL(*bfrt_packetio_manager_mock_, PushForwardingPipelineConfig(_))
           .WillOnce(Return(::util::OkStatus()));
@@ -193,7 +202,7 @@ class BfrtNodeTest : public ::testing::Test {
   static constexpr int kLogicalPortId = 35;
   static constexpr uint32 kPortId = 941;
   static constexpr uint32 kL2McastGroupId = 20;
-  static constexpr char kBfConfigPipelineString[] = R"PROTO(
+  static constexpr char kBfConfigPipelineString[] = R"pb(
     p4_name: "prog1"
     bfruntime_info: "{json: true}"
     profiles {
@@ -201,8 +210,8 @@ class BfrtNodeTest : public ::testing::Test {
       context: "{json: true}"
       binary: "<raw bin>"
     }
-  )PROTO";
-  static constexpr char kValidP4InfoString[] = R"PROTO(
+  )pb";
+  static constexpr char kValidP4InfoString[] = R"pb(
     pkg_info {
       arch: "tna"
     }
@@ -279,7 +288,7 @@ class BfrtNodeTest : public ::testing::Test {
       }
       size: 500
     }
-  )PROTO";
+  )pb";
 
   std::unique_ptr<BfrtTableManagerMock> bfrt_table_manager_mock_;
   std::unique_ptr<BfrtPacketioManagerMock> bfrt_packetio_manager_mock_;
@@ -287,6 +296,7 @@ class BfrtNodeTest : public ::testing::Test {
   std::unique_ptr<BfrtCounterManagerMock> bfrt_counter_manager_mock_;
   std::unique_ptr<BfSdeMock> bf_sde_mock_;
   std::unique_ptr<BfrtNode> bfrt_node_;
+  std::unique_ptr<BfrtP4RuntimeTranslatorMock> bfrt_p4runtime_translator_mock_;
 };
 
 constexpr uint64 BfrtNodeTest::kNodeId;
@@ -1395,7 +1405,6 @@ TEST_F(BfrtNodeTest, ReadForwardingEntriesSuccess_TableEntry) {
       *bfrt_table_manager_mock_,
       ReadTableEntry(session_mock, EqualsProto(*table_entry), &writer_mock))
       .WillOnce(Return(::util::OkStatus()));
-
   std::vector<::util::Status> results = {};
   EXPECT_OK(ReadForwardingEntries(req, &writer_mock, &results));
   EXPECT_EQ(1U, results.size());
@@ -1457,16 +1466,15 @@ TEST_F(BfrtNodeTest, HandleStreamMessageRequest_Invalid) {
                   StratumErrorSpace(), ERR_UNIMPLEMENTED, "Unsupported")));
 }
 
-// HandleStreamMessageRequest() should reject StreamMessageRequests with digest
-// acks.
+// HandleStreamMessageRequest() should blindly accept StreamMessageRequests with
+// digest acks.
 TEST_F(BfrtNodeTest, HandleStreamMessageRequest_DigestAck) {
   ASSERT_NO_FATAL_FAILURE(PushChassisConfigWithCheck());
   ::p4::v1::StreamMessageRequest req;
   req.mutable_digest_ack();
 
-  EXPECT_THAT(HandleStreamMessageRequest(req),
-              DerivedFromStatus(::util::Status(
-                  StratumErrorSpace(), ERR_UNIMPLEMENTED, "Unsupported")));
+  // TODO(max): extend once we actually implement digest acks.
+  EXPECT_OK(HandleStreamMessageRequest(req));
 }
 
 // HandleStreamMessageRequest() should reject StreamMessageRequests with

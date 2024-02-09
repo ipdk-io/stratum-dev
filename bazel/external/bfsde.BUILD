@@ -1,5 +1,5 @@
 # Copyright 2020-present Open Networking Foundation
-# Copyright 2023 Intel Corporation
+# Copyright 2023-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@//bazel/rules:package_rule.bzl", "pkg_tar_with_symlinks")
@@ -22,9 +22,9 @@ cc_library(
         "barefoot-bin/lib/libclish.so*",
         "barefoot-bin/lib/libdriver.so*",
         "barefoot-bin/lib/libpython3*",
+        # target libraries from p4lang (was libbfsys and libbfutils before 9.9.0)
         "barefoot-bin/lib/libtarget_sys.so*",
         "barefoot-bin/lib/libtarget_utils.so*",
-        "barefoot-bin/lib/libbf_switchd_lib.a*",
     ]),
     hdrs = glob([
         "barefoot-bin/include/bf_rt/*.h",
@@ -51,12 +51,6 @@ cc_library(
         "-ldl",
     ],
     strip_include_prefix = "barefoot-bin/include",
-    deps = [
-        # TODO(bocon): PI needed when linking libdriver.so if/when pi is
-        # enabled when building bf-drivers. This shouldn't hurt, but can
-        # be excluded if/when PI is removed from the SDE build options.
-        "@//stratum/hal/lib/pi:pi_bf",
-    ],
 )
 
 pkg_tar_with_symlinks(
@@ -81,6 +75,9 @@ pkg_tar_with_symlinks(
         # BSP libraries for Edgecore Wedge100bf series.
         "barefoot-bin/lib/libacctonbf_driver.so*",
         "barefoot-bin/lib/libtcl_server.so*",
+        # target libraries from p4lang (was libbfsys and libbfutils before 9.9.0)
+        "barefoot-bin/lib/libtarget_sys.so*",
+        "barefoot-bin/lib/libtarget_utils.so*",
     ]),
     mode = "0644",
     package_dir = "/usr",
@@ -92,6 +89,7 @@ pkg_tar_with_symlinks(
     srcs = glob([
         "barefoot-bin/share/bf_rt_shared/**",
         "barefoot-bin/share/bfsys/**",
+        "barefoot-bin/share/bf_switchd/**",
         "barefoot-bin/share/cli/xml/**",
         "barefoot-bin/share/microp_fw/**",
         "barefoot-bin/share/tofino_sds_fw/**",
@@ -109,6 +107,16 @@ pkg_tar(
     strip_prefix = "barefoot-bin",
 )
 
+pkg_tar(
+    name = "bf_binary_files",
+    srcs = glob([
+        "barefoot-bin/bin/credo_firmware.bin*",  # firmware for retimers in the 65x
+    ]),
+    mode = "0644",
+    package_dir = "/usr",
+    strip_prefix = "barefoot-bin",
+)
+
 # This string setting is templated with the correct version string by reading
 # the $SDE_INSTALL/share/VERSION file. Then one of the config settings below
 # will match and can be used with select().
@@ -118,23 +126,44 @@ string_setting(
 )
 
 config_setting(
-    name = "sde_version_9.3.1",
-    flag_values = {
-        ":sde_version_setting": "9.3.1",
-    },
-)
-
-config_setting(
-    name = "sde_version_9.5.0",
-    flag_values = {
-        ":sde_version_setting": "9.5.0",
-    },
-)
-
-config_setting(
     name = "sde_version_9.7.0",
     flag_values = {
         ":sde_version_setting": "9.7.0",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.7.1",
+    flag_values = {
+        ":sde_version_setting": "9.7.1",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.7.2",
+    flag_values = {
+        ":sde_version_setting": "9.7.2",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.8.0",
+    flag_values = {
+        ":sde_version_setting": "9.8.0",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.9.0",
+    flag_values = {
+        ":sde_version_setting": "9.9.0",
+    },
+)
+
+config_setting(
+    name = "sde_version_9.10.0",
+    flag_values = {
+        ":sde_version_setting": "9.10.0",
     },
 )
 

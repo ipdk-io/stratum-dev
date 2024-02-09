@@ -61,7 +61,7 @@ void InitStratumLogging() {
     LogToStderr();
   }
 
-  if (kStampingEnabled) {
+  if (kBuildTimestamp > 0 && kStampingEnabled) {
     LOG(INFO) << "Stratum version "
               << kBuildScmRevision
               // TODO(max): enable once CI does not modify the source tree
@@ -96,7 +96,7 @@ bool SetLogLevel(const LoggingConfig& logging_config) {
 
 }  // namespace stratum
 
-// ostream overload for std::nulptr_t for C++11
+// ostream overload for std::nullptr_t for C++11
 // see: https://stackoverflow.com/a/46256849
 #if __cplusplus == 201103L
 #include <cstddef>

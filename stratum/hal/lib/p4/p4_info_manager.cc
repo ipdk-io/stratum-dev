@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // P4InfoManager implementation.
@@ -12,8 +13,8 @@
 #include "absl/strings/strip.h"
 #include "absl/strings/substitute.h"
 #include "gflags/gflags.h"
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/gtl/map_util.h"
-#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 
@@ -34,12 +35,13 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       action_profile_map_("Action-Profile"),
       counter_map_("Counter"),
       direct_counter_map_("Direct-Counter"),
-      direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
+      direct_meter_map_("Direct-Meter"),
+      pkt_mod_meter_map_("PacketModMeter"),
+      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
-      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
-      pkt_mod_meter_map_("PacketModMeter"),
+      digest_map_("Digest"),
       all_resource_ids_() {}
 
 P4InfoManager::P4InfoManager()
@@ -48,12 +50,13 @@ P4InfoManager::P4InfoManager()
       action_profile_map_("Action-Profile"),
       counter_map_("Counter"),
       direct_counter_map_("Direct-Counter"),
-      direct_meter_map_("Direct-Meter"),
       meter_map_("Meter"),
+      direct_meter_map_("Direct-Meter"),
+      pkt_mod_meter_map_("PacketModMeter"),
+      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
-      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
-      pkt_mod_meter_map_("PacketModMeter"),
+      digest_map_("Digest"),
       all_resource_ids_() {}
 
 P4InfoManager::~P4InfoManager() {}
@@ -61,7 +64,6 @@ P4InfoManager::~P4InfoManager() {}
 // Since P4InfoManager can be used in a verify role, it attempts to continue
 // processing after most errors in order to describe every problem it
 // encounters in p4_info_.
-
 ::util::Status P4InfoManager::InitializeAndVerify() {
   if (!all_resource_ids_.empty() || !all_resource_names_.empty()) {
     return MAKE_ERROR(ERR_INTERNAL) << "P4Info is already initialized";
@@ -82,25 +84,27 @@ P4InfoManager::~P4InfoManager() {}
       status, counter_map_.BuildMaps(p4_info_.counters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(status, direct_counter_map_.BuildMaps(
                                      p4_info_.direct_counters(), preamble_cb));
-  APPEND_STATUS_IF_ERROR(status, direct_meter_map_.BuildMaps(
-                                     p4_info_.direct_meters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(status,
                          meter_map_.BuildMaps(p4_info_.meters(), preamble_cb));
+  APPEND_STATUS_IF_ERROR(status, direct_meter_map_.BuildMaps(
+                                     p4_info_.direct_meters(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, value_set_map_.BuildMaps(p4_info_.value_sets(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
+  APPEND_STATUS_IF_ERROR(
+      status, digest_map_.BuildMaps(p4_info_.digests(), preamble_cb));
 
   // This code depends on a proposed change to the P4Runtime specification,
   // and is provisional.
   if (!p4_info_.externs().empty()) {
     for (const auto& p4extern : p4_info_.externs()) {
       switch (p4extern.extern_type_id()) {
-        case stratum::hal::tdi::kEs2kExternDirectPacketModMeter:
-          InitializeDirectMeters(p4extern);
+        case ::p4::config::v1::P4Ids_Prefix_PACKET_MOD_METER:
+          InitDirectPacketModMeters(p4extern);
           break;
-        case stratum::hal::tdi::kEs2kExternPacketModMeter:
-          InitializeMeters(p4extern);
+        case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
+          InitPacketModMeters(p4extern);
           break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
@@ -115,7 +119,7 @@ P4InfoManager::~P4InfoManager() {}
   return status;
 }
 
-void P4InfoManager::InitializeDirectMeters(
+void P4InfoManager::InitDirectPacketModMeters(
     const p4::config::v1::Extern& p4extern) {
   const auto& extern_instances = p4extern.instances();
   PreambleCallback preamble_cb =
@@ -132,7 +136,8 @@ void P4InfoManager::InitializeDirectMeters(
   direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);
 }
 
-void P4InfoManager::InitializeMeters(const p4::config::v1::Extern& p4extern) {
+void P4InfoManager::InitPacketModMeters(
+    const p4::config::v1::Extern& p4extern) {
   const auto& extern_instances = p4extern.instances();
   PreambleCallback preamble_cb =
       std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
@@ -150,6 +155,7 @@ void P4InfoManager::InitializeMeters(const p4::config::v1::Extern& p4extern) {
   pkt_mod_meter_map_.BuildMaps(all_meter_objects_, preamble_cb);
 }
 
+// FindTable
 ::util::StatusOr<const ::p4::config::v1::Table> P4InfoManager::FindTableByID(
     uint32 table_id) const {
   return table_map_.FindByID(table_id);
@@ -160,6 +166,7 @@ void P4InfoManager::InitializeMeters(const p4::config::v1::Extern& p4extern) {
   return table_map_.FindByName(table_name);
 }
 
+// FindAction
 ::util::StatusOr<const ::p4::config::v1::Action> P4InfoManager::FindActionByID(
     uint32 action_id) const {
   return action_map_.FindByID(action_id);
@@ -170,6 +177,7 @@ P4InfoManager::FindActionByName(const std::string& action_name) const {
   return action_map_.FindByName(action_name);
 }
 
+// FindActionProfile
 ::util::StatusOr<const ::p4::config::v1::ActionProfile>
 P4InfoManager::FindActionProfileByID(uint32 profile_id) const {
   return action_profile_map_.FindByID(profile_id);
@@ -180,6 +188,7 @@ P4InfoManager::FindActionProfileByName(const std::string& profile_name) const {
   return action_profile_map_.FindByName(profile_name);
 }
 
+// FindCounter
 ::util::StatusOr<const ::p4::config::v1::Counter>
 P4InfoManager::FindCounterByID(uint32 counter_id) const {
   return counter_map_.FindByID(counter_id);
@@ -190,6 +199,7 @@ P4InfoManager::FindCounterByName(const std::string& counter_name) const {
   return counter_map_.FindByName(counter_name);
 }
 
+// FindDirectCounter
 ::util::StatusOr<const ::p4::config::v1::DirectCounter>
 P4InfoManager::FindDirectCounterByID(uint32 counter_id) const {
   return direct_counter_map_.FindByID(counter_id);
@@ -200,16 +210,7 @@ P4InfoManager::FindDirectCounterByName(const std::string& counter_name) const {
   return direct_counter_map_.FindByName(counter_name);
 }
 
-::util::StatusOr<const ::p4::config::v1::DirectMeter>
-P4InfoManager::FindDirectMeterByID(uint32 meter_id) const {
-  return direct_meter_map_.FindByID(meter_id);
-}
-
-::util::StatusOr<const ::p4::config::v1::DirectMeter>
-P4InfoManager::FindDirectMeterByName(const std::string& meter_name) const {
-  return direct_meter_map_.FindByName(meter_name);
-}
-
+// FindMeter
 ::util::StatusOr<const ::p4::config::v1::Meter> P4InfoManager::FindMeterByID(
     uint32 meter_id) const {
   return meter_map_.FindByID(meter_id);
@@ -220,26 +221,29 @@ P4InfoManager::FindDirectMeterByName(const std::string& meter_name) const {
   return meter_map_.FindByName(meter_name);
 }
 
-::util::StatusOr<const ::p4::config::v1::ValueSet>
-P4InfoManager::FindValueSetByID(uint32 value_set_id) const {
-  return value_set_map_.FindByID(value_set_id);
+// FindDirectMeter
+::util::StatusOr<const ::p4::config::v1::DirectMeter>
+P4InfoManager::FindDirectMeterByID(uint32 meter_id) const {
+  return direct_meter_map_.FindByID(meter_id);
 }
 
-::util::StatusOr<const ::p4::config::v1::ValueSet>
-P4InfoManager::FindValueSetByName(const std::string& value_set_name) const {
-  return value_set_map_.FindByName(value_set_name);
+::util::StatusOr<const ::p4::config::v1::DirectMeter>
+P4InfoManager::FindDirectMeterByName(const std::string& meter_name) const {
+  return direct_meter_map_.FindByName(meter_name);
 }
 
-::util::StatusOr<const ::p4::config::v1::Register>
-P4InfoManager::FindRegisterByID(uint32 register_id) const {
-  return register_map_.FindByID(register_id);
+// FindPktModMeter
+::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+P4InfoManager::FindPktModMeterByID(uint32 meter_id) const {
+  return pkt_mod_meter_map_.FindByID(meter_id);
 }
 
-::util::StatusOr<const ::p4::config::v1::Register>
-P4InfoManager::FindRegisterByName(const std::string& register_name) const {
-  return register_map_.FindByName(register_name);
+::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+P4InfoManager::FindPktModMeterByName(const std::string& meter_name) const {
+  return pkt_mod_meter_map_.FindByName(meter_name);
 }
 
+// FindDirectPktModMeter
 ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
 P4InfoManager::FindDirectPktModMeterByID(uint32 meter_id) const {
   return direct_pkt_mod_meter_map_.FindByID(meter_id);
@@ -251,16 +255,40 @@ P4InfoManager::FindDirectPktModMeterByName(
   return direct_pkt_mod_meter_map_.FindByName(meter_name);
 }
 
-::util::StatusOr<const ::p4::config::v1::PacketModMeter>
-P4InfoManager::FindPktModMeterByID(uint32 meter_id) const {
-  return pkt_mod_meter_map_.FindByID(meter_id);
+// FindValueSet
+::util::StatusOr<const ::p4::config::v1::ValueSet>
+P4InfoManager::FindValueSetByID(uint32 value_set_id) const {
+  return value_set_map_.FindByID(value_set_id);
 }
 
-::util::StatusOr<const ::p4::config::v1::PacketModMeter>
-P4InfoManager::FindPktModMeterByName(const std::string& meter_name) const {
-  return pkt_mod_meter_map_.FindByName(meter_name);
+::util::StatusOr<const ::p4::config::v1::ValueSet>
+P4InfoManager::FindValueSetByName(const std::string& value_set_name) const {
+  return value_set_map_.FindByName(value_set_name);
 }
 
+// FindRegister
+::util::StatusOr<const ::p4::config::v1::Register>
+P4InfoManager::FindRegisterByID(uint32 register_id) const {
+  return register_map_.FindByID(register_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::Register>
+P4InfoManager::FindRegisterByName(const std::string& register_name) const {
+  return register_map_.FindByName(register_name);
+}
+
+// FindDigest
+::util::StatusOr<const ::p4::config::v1::Digest> P4InfoManager::FindDigestByID(
+    uint32 digest_id) const {
+  return digest_map_.FindByID(digest_id);
+}
+
+::util::StatusOr<const ::p4::config::v1::Digest>
+P4InfoManager::FindDigestByName(const std::string& digest_name) const {
+  return digest_map_.FindByName(digest_name);
+}
+
+// FindResourceType
 ::util::StatusOr<const std::string> P4InfoManager::FindResourceTypeByID(
     uint32 id_key) const {
   auto iter = id_to_resource_type_map_.find(id_key);
@@ -379,10 +407,11 @@ void P4InfoManager::DumpNamesToIDs() const {
   action_profile_map_.DumpNamesToIDs();
   counter_map_.DumpNamesToIDs();
   direct_counter_map_.DumpNamesToIDs();
-  direct_meter_map_.DumpNamesToIDs();
   meter_map_.DumpNamesToIDs();
+  direct_meter_map_.DumpNamesToIDs();
   value_set_map_.DumpNamesToIDs();
   register_map_.DumpNamesToIDs();
+  digest_map_.DumpNamesToIDs();
 }
 
 ::util::Status P4InfoManager::VerifyRequiredObjects() {

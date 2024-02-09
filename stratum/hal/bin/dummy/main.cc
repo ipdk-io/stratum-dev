@@ -1,4 +1,5 @@
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/glue/init_google.h"
@@ -14,7 +15,7 @@ namespace hal {
 namespace dummy_switch {
 
 // Entry point of Dummy Switch
-::util::Status Main(int argc, char* argv[]) {
+static ::util::Status Main(int argc, char* argv[]) {
   InitGoogle(argv[0], &argc, &argv, true);
   InitStratumLogging();
 

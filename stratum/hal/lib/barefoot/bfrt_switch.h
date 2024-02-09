@@ -1,16 +1,18 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_BAREFOOT_BFRT_SWITCH_H_
 #define STRATUM_HAL_LIB_BAREFOOT_BFRT_SWITCH_H_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "stratum/hal/lib/barefoot/bf_chassis_manager.h"
+#include "stratum/hal/lib/barefoot/bf_global_vars.h"
 #include "stratum/hal/lib/barefoot/bf_sde_interface.h"
 #include "stratum/hal/lib/barefoot/bfrt_node.h"
 #include "stratum/hal/lib/common/phal_interface.h"
@@ -78,7 +80,7 @@ class BfrtSwitch : public SwitchInterface {
   static std::unique_ptr<BfrtSwitch> CreateInstance(
       PhalInterface* phal_interface, BfChassisManager* bf_chassis_manager,
       BfSdeInterface* bf_sde_interface,
-      const std::map<int, BfrtNode*>& device_id_to_bfrt_node);
+      const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node);
 
   // BfrtSwitch is neither copyable nor movable.
   BfrtSwitch(const BfrtSwitch&) = delete;
@@ -92,7 +94,7 @@ class BfrtSwitch : public SwitchInterface {
   BfrtSwitch(PhalInterface* phal_interface,
              BfChassisManager* bf_chassis_manager,
              BfSdeInterface* bf_sde_interface,
-             const std::map<int, BfrtNode*>& device_id_to_bfrt_node);
+             const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node);
 
   // Internal version of VerifyForwardingPipelineConfig() which takes no locks.
   ::util::Status DoVerifyForwardingPipelineConfig(
@@ -128,14 +130,14 @@ class BfrtSwitch : public SwitchInterface {
   // node/ASIC. This map is initialized in the constructor and will not change
   // during the lifetime of the class.
   // TODO(max): Does this need to be protected by chassis_lock?
-  const std::map<int, BfrtNode*> device_id_to_bfrt_node_;  // pointers not owned
+  const absl::flat_hash_map<int, BfrtNode*> device_id_to_bfrt_node_;
 
   // Map from the node ids to to a pointer to BfrtNode which contain all the
   // per-node managers for that node/ASIC. Created whenever a config is pushed.
   // At any point in time, this map will contain as keys the ids of the nodes
   // that had a successful config push.
   // TODO(max): Does this need to be protected by chassis_lock?
-  std::map<uint64, BfrtNode*> node_id_to_bfrt_node_;  //  pointers not owned
+  absl::flat_hash_map<uint64, BfrtNode*> node_id_to_bfrt_node_;
 };
 
 }  // namespace barefoot

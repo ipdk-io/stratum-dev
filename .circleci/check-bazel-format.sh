@@ -41,6 +41,7 @@ stratum/hal/bin/bcm/sim/BUILD
 stratum/hal/bin/bcm/standalone/BUILD
 stratum/hal/bin/bcm/standalone/BUILD
 stratum/hal/bin/bmv2/bmv2.bzl
+stratum/hal/bin/dummy/BUILD
 stratum/hal/bin/np4intel/BUILD
 stratum/hal/bin/np4intel/np4intel.bzl
 stratum/hal/config/platform_config_test.bzl
@@ -63,13 +64,9 @@ stratum/p4c_backends/fpm/bcm/BUILD
 stratum/p4c_backends/ir/BUILD
 stratum/p4c_backends/test/BUILD
 stratum/p4c_backends/test/build_defs.bzl
-stratum/pipelines/loopback/BUILD
-stratum/pipelines/main/BUILD
-stratum/pipelines/ptf/BUILD
-stratum/pipelines/ptf/ptf_exec.bzl
-stratum/pipelines/ptf/scapy_exec.bzl
 stratum/portage/BUILD
 stratum/portage/build_defs.bzl
+stratum/procmon/BUILD
 stratum/public/lib/BUILD
 stratum/public/model/BUILD
 stratum/public/proto/BUILD
