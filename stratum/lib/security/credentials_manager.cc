@@ -5,6 +5,8 @@
 
 #include "stratum/lib/security/credentials_manager.h"
 
+#include <algorithm>
+#include <cctype>
 #include <map>
 #include <memory>
 #include <string>
@@ -41,20 +43,31 @@ namespace {
 
 const std::map<std::string, grpc_ssl_client_certificate_request_type>
     client_cert_req_type_map = {
-        {"NO_REQUEST", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
-        {"REQUEST_NO_VERIFY",
+        {"no_request", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
+        {"request_no_verify",
          GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-        {"REQUEST_AND_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
-        {"REQUIRE_NO_VERIFY",
+        {"request_and_verify", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
+        {"require_no_verify",
          GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-        {"REQUIRE_AND_VERIFY",
+        {"require_and_verify",
          GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}};
+
+static std::string ToLower(std::string text) {
+  // - We pass 'text' by value because std::transform modifies its input,
+  //   and we need to work on a copy.
+  // - This is alleged to be the best way to lowercase a string.
+  //   It works for all character sets, not just ascii.
+  std::transform(text.begin(), text.end(), text.begin(),
+      [](unsigned char c){ return std::tolower(c); });
+  return text;
+}
 
 // Returns the value of the client_cert_req_type command-line flag.
 ::util::StatusOr<grpc_ssl_client_certificate_request_type>
 GetCertRequestType() {
+  std::string flag_value = ToLower(FLAGS_client_cert_req_type);
   auto option =
-      gtl::FindOrNull(client_cert_req_type_map, FLAGS_client_cert_req_type);
+      gtl::FindOrNull(client_cert_req_type_map, flag_value);
   if (option == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "--client_cert_req_type '" << FLAGS_client_cert_req_type
