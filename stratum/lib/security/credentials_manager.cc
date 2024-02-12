@@ -58,7 +58,7 @@ static std::string ToLower(std::string text) {
   // - This is alleged to be the best way to lowercase a string.
   //   It works for all character sets, not just ascii.
   std::transform(text.begin(), text.end(), text.begin(),
-      [](unsigned char c){ return std::tolower(c); });
+                 [](unsigned char c) { return std::tolower(c); });
   return text;
 }
 
@@ -66,8 +66,7 @@ static std::string ToLower(std::string text) {
 ::util::StatusOr<grpc_ssl_client_certificate_request_type>
 GetCertRequestType() {
   std::string flag_value = ToLower(FLAGS_client_cert_req_type);
-  auto option =
-      gtl::FindOrNull(client_cert_req_type_map, flag_value);
+  auto option = gtl::FindOrNull(client_cert_req_type_map, flag_value);
   if (option == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "--client_cert_req_type '" << FLAGS_client_cert_req_type
