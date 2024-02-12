@@ -4,7 +4,6 @@
 #include "stratum/hal/lib/barefoot/bfrt_switch.h"
 
 #include <algorithm>
-#include <map>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -23,10 +22,10 @@ namespace stratum {
 namespace hal {
 namespace barefoot {
 
-BfrtSwitch::BfrtSwitch(PhalInterface* phal_interface,
-                       BfChassisManager* bf_chassis_manager,
-                       BfSdeInterface* bf_sde_interface,
-                       const std::map<int, BfrtNode*>& device_id_to_bfrt_node)
+BfrtSwitch::BfrtSwitch(
+    PhalInterface* phal_interface, BfChassisManager* bf_chassis_manager,
+    BfSdeInterface* bf_sde_interface,
+    const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node)
     : phal_interface_(ABSL_DIE_IF_NULL(phal_interface)),
       bf_sde_interface_(ABSL_DIE_IF_NULL(bf_sde_interface)),
       bf_chassis_manager_(ABSL_DIE_IF_NULL(bf_chassis_manager)),
@@ -114,6 +113,14 @@ BfrtSwitch::~BfrtSwitch() {}
 }
 
 ::util::Status BfrtSwitch::Shutdown() {
+  // The shutdown flag must be checked on all read or write accesses to
+  // state protected by chassis_lock, whether within RPC executions or
+  // event handler threads.
+  {
+    absl::WriterMutexLock l(&chassis_lock);
+    shutdown = true;
+  }
+
   ::util::Status status = ::util::OkStatus();
   for (const auto& entry : device_id_to_bfrt_node_) {
     BfrtNode* node = entry.second;
@@ -122,6 +129,7 @@ BfrtSwitch::~BfrtSwitch() {}
   APPEND_STATUS_IF_ERROR(status, bf_chassis_manager_->Shutdown());
   APPEND_STATUS_IF_ERROR(status, phal_interface_->Shutdown());
   // APPEND_STATUS_IF_ERROR(status, bf_sde_interface_->Shutdown());
+  node_id_to_bfrt_node_.clear();
 
   return status;
 }
@@ -133,8 +141,8 @@ BfrtSwitch::~BfrtSwitch() {}
 ::util::Status BfrtSwitch::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   if (!req.updates_size()) return ::util::OkStatus();  // nothing to do.
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in WriteRequest.";
-  CHECK_RETURN_IF_FALSE(results != nullptr)
+  RET_CHECK(req.device_id()) << "No device_id in WriteRequest.";
+  RET_CHECK(results != nullptr)
       << "Need to provide non-null results pointer for non-empty updates.";
 
   absl::ReaderMutexLock l(&chassis_lock);
@@ -146,9 +154,9 @@ BfrtSwitch::~BfrtSwitch() {}
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(req.device_id()) << "No device_id in ReadRequest.";
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(req.device_id()) << "No device_id in ReadRequest.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&chassis_lock);
   ASSIGN_OR_RETURN(auto* bfrt_node, GetBfrtNodeFromNodeId(req.device_id()));
@@ -259,7 +267,7 @@ BfrtSwitch::~BfrtSwitch() {}
 std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
     PhalInterface* phal_interface, BfChassisManager* bf_chassis_manager,
     BfSdeInterface* bf_sde_interface,
-    const std::map<int, BfrtNode*>& device_id_to_bfrt_node) {
+    const absl::flat_hash_map<int, BfrtNode*>& device_id_to_bfrt_node) {
   return absl::WrapUnique(new BfrtSwitch(phal_interface, bf_chassis_manager,
                                          bf_sde_interface,
                                          device_id_to_bfrt_node));
@@ -306,7 +314,7 @@ std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
       BfrtNode* bfrt_node =
           gtl::FindPtrOrNull(device_id_to_bfrt_node_, device_id);
       if (bfrt_node == nullptr) {
-        ::util::Status error = MAKE_ERROR(ERR_INVALID_PARAM)
+        ::util::Status error = MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
                                << "Node ID " << node_id
                                << " mapped to unknown device " << device_id
                                << ".";
@@ -329,7 +337,7 @@ std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
     int device_id) const {
   BfrtNode* bfrt_node = gtl::FindPtrOrNull(device_id_to_bfrt_node_, device_id);
   if (bfrt_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
            << "Device " << device_id << " is unknown.";
   }
   return bfrt_node;
@@ -339,7 +347,7 @@ std::unique_ptr<BfrtSwitch> BfrtSwitch::CreateInstance(
     uint64 node_id) const {
   BfrtNode* bfrt_node = gtl::FindPtrOrNull(node_id_to_bfrt_node_, node_id);
   if (bfrt_node == nullptr) {
-    return MAKE_ERROR(ERR_INVALID_PARAM)
+    return MAKE_ERROR(ERR_ENTRY_NOT_FOUND)
            << "Node with ID " << node_id
            << " is unknown or no config has been pushed to it yet.";
   }

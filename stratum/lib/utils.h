@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_LIB_UTILS_H_
@@ -153,6 +154,12 @@ inline bool IsDir(const std::string& path) {
     return false;
   }
   return S_ISDIR(stbuf.st_mode);
+}
+
+inline bool IsRegularFile(const std::string& path) {
+  struct stat buf;
+  int rc = lstat(path.c_str(), &buf);
+  return (rc == 0 && S_ISREG(buf.st_mode));
 }
 
 // Breaks a path string into directory and filename components and returns the

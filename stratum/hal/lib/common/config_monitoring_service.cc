@@ -22,7 +22,6 @@
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/openconfig_converter.h"
 #include "stratum/hal/lib/common/target_options.h"
-#include "stratum/hal/lib/common/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 #include "stratum/public/lib/error.h"

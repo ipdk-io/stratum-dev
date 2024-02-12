@@ -1,4 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #ifndef STRATUM_HAL_LIB_BAREFOOT_BFRT_TABLE_MANAGER_H_
 #define STRATUM_HAL_LIB_BAREFOOT_BFRT_TABLE_MANAGER_H_
@@ -14,11 +15,12 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/barefoot/bf.pb.h"
+#include "stratum/hal/lib/barefoot/bf_global_vars.h"
 #include "stratum/hal/lib/barefoot/bf_sde_interface.h"
+#include "stratum/hal/lib/barefoot/bfrt_p4runtime_translator.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/p4/p4_info_manager.h"
-#include "stratum/lib/timer_daemon.h"
 
 namespace stratum {
 namespace hal {
@@ -37,6 +39,11 @@ class BfrtTableManager {
   virtual ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config) const
       LOCKS_EXCLUDED(lock_);
+
+  // Performs coldboot shutdown. Note that there is no public Initialize().
+  // Initialization is done as part of PushForwardingPipelineConfig() if the
+  // class is not initialized by the time we push config.
+  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(lock_);
 
   // Writes a table entry.
   virtual ::util::Status WriteTableEntry(
@@ -68,6 +75,12 @@ class BfrtTableManager {
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::MeterEntry& meter_entry) LOCKS_EXCLUDED(lock_);
+
+  // Writes a digest entry.
+  virtual ::util::Status WriteDigestEntry(
+      std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      const ::p4::v1::Update::Type type,
+      const ::p4::v1::DigestEntry& table_entry) LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile member.
   virtual ::util::Status WriteActionProfileMember(
@@ -113,9 +126,26 @@ class BfrtTableManager {
       const ::p4::v1::MeterEntry& meter_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
 
+  // Read the data of a digest entry.
+  virtual ::util::Status ReadDigestEntry(
+      std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      const ::p4::v1::DigestEntry& digest_entry,
+      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+
+  // Registers a writer to be invoked when we receive a digest lst from the
+  // ASIC.
+  virtual ::util::Status RegisterDigestListWriter(
+      const std::shared_ptr<WriterInterface<::p4::v1::DigestList>>& writer)
+      LOCKS_EXCLUDED(digest_list_writer_lock_);
+
+  // Unregisters the digest list writer.
+  virtual ::util::Status UnregisterDigestListWriter()
+      LOCKS_EXCLUDED(digest_list_writer_lock_);
+
   // Creates a table manager instance.
   static std::unique_ptr<BfrtTableManager> CreateInstance(
-      OperationMode mode, BfSdeInterface* bf_sde_interface, int device);
+      OperationMode mode, BfSdeInterface* bf_sde_interface,
+      BfrtP4RuntimeTranslator* bfrt_p4runtime_translator, int device);
 
  protected:
   // Default constructor. To be called by the Mock class instance only.
@@ -125,7 +155,9 @@ class BfrtTableManager {
   // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
   explicit BfrtTableManager(OperationMode mode,
-                            BfSdeInterface* bf_sde_interface, int device);
+                            BfSdeInterface* bf_sde_interface,
+                            BfrtP4RuntimeTranslator* bfrt_p4runtime_translator,
+                            int device);
 
   ::util::Status BuildTableKey(const ::p4::v1::TableEntry& table_entry,
                                BfSdeInterface::TableKeyInterface* table_key)
@@ -166,8 +198,17 @@ class BfrtTableManager {
       const BfSdeInterface::TableDataInterface* table_data)
       SHARED_LOCKS_REQUIRED(lock_);
 
-  ::util::Status SetupRegisterReset(const ::p4::config::v1::P4Info& p4_info)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+  // Construct a P4RT digest list from a list of learn data.
+  ::util::StatusOr<::p4::v1::DigestList> BuildP4DigestList(
+      const BfSdeInterface::DigestList& digest_list) LOCKS_EXCLUDED(lock_);
+
+  // Handles received digest lists, converts them to P4Runtime and hands them
+  // over the registered receive writer.
+  ::util::Status HandleDigestList()
+      LOCKS_EXCLUDED(lock_, digest_list_writer_lock_, chassis_lock);
+
+  // Digest list handle thread function.
+  static void* DigestListThreadFunc(void* arg);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
@@ -182,11 +223,31 @@ class BfrtTableManager {
   // Reader-writer lock used to protect access to pipeline state.
   mutable absl::Mutex lock_;
 
-  std::vector<TimerDaemon::DescriptorPtr> register_timer_descriptors_
+  // Mutex lock for protecting digest_list_writer.
+  mutable absl::Mutex digest_list_writer_lock_;
+
+  // Stores the registered writer for DigestList.
+  std::shared_ptr<WriterInterface<::p4::v1::DigestList>> digest_list_writer_
+      GUARDED_BY(digest_list_writer_lock_);
+
+  // Stores the bfrt session used in digest list callbacks. We don't use this
+  // session to modify anything, but it is still required to be valid.
+  std::shared_ptr<BfSdeInterface::SessionInterface> digest_list_session_
       GUARDED_BY(lock_);
+
+  // Buffer channel for digest lists coming from the SDE to this manager.
+  std::shared_ptr<Channel<BfSdeInterface::DigestList>>
+      digest_list_receive_channel_ GUARDED_BY(lock_);
+
+  // The ID of the RX thread which handles incoming digest lists from the SDE.
+  pthread_t digest_rx_thread_id_ GUARDED_BY(lock_);
 
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   BfSdeInterface* bf_sde_interface_ = nullptr;  // not owned by this class.
+
+  // Pointer to a BfrtTranslator implementation that translate P4Runtime
+  // entities, not owned by this class.
+  BfrtP4RuntimeTranslator* bfrt_p4runtime_translator_ = nullptr;
 
   // Helper class to validate the P4Info and requests against it.
   // TODO(max): Maybe this manager should be created in the node and passed down

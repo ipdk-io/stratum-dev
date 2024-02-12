@@ -12,6 +12,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "bf_rt/bf_rt_init.hpp"
+#include "bf_rt/bf_rt_learn.hpp"
 #include "bf_rt/bf_rt_session.hpp"
 #include "bf_rt/bf_rt_table.hpp"
 #include "bf_rt/bf_rt_table_key.hpp"
@@ -55,6 +56,7 @@ class TableKey : public BfSdeInterface::TableKeyInterface {
                           std::string* high) const override;
   ::util::Status SetPriority(uint32 priority) override;
   ::util::Status GetPriority(uint32* priority) const override;
+  ::util::Status GetTableId(uint32* table_id) const override;
 
   // Allocates a new table key object.
   static ::util::StatusOr<std::unique_ptr<BfSdeInterface::TableKeyInterface>>
@@ -120,7 +122,7 @@ class BfSdeWrapper : public BfSdeInterface {
     static ::util::StatusOr<std::shared_ptr<BfSdeInterface::SessionInterface>>
     CreateSession() {
       auto bfrt_session = bfrt::BfRtSession::sessionCreate();
-      CHECK_RETURN_IF_FALSE(bfrt_session) << "Failed to create new session.";
+      RET_CHECK(bfrt_session) << "Failed to create new session.";
       VLOG(1) << "Started new BfRt session with ID "
               << bfrt_session->sessHandleGet();
 
@@ -192,6 +194,11 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status RegisterPacketReceiveWriter(
       int device, std::unique_ptr<ChannelWriter<std::string>> writer) override;
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
+  ::util::Status RegisterDigestListWriter(
+      int device, std::unique_ptr<ChannelWriter<DigestList>> writer) override
+      LOCKS_EXCLUDED(digest_list_callback_lock_);
+  ::util::Status UnregisterDigestListWriter(int device) override
+      LOCKS_EXCLUDED(digest_list_callback_lock_);
   ::util::StatusOr<uint32> CreateMulticastNode(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       int mc_replication_id, const std::vector<uint32>& mc_lag_ids,
@@ -347,6 +354,21 @@ class BfSdeWrapper : public BfSdeInterface {
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, TableDataInterface* table_data) override
       LOCKS_EXCLUDED(data_lock_);
+  ::util::Status InsertDigest(
+      int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::Duration max_timeout)
+      LOCKS_EXCLUDED(data_lock_) override;
+  ::util::Status ModifyDigest(
+      int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      uint32 table_id, absl::Duration max_timeout)
+      LOCKS_EXCLUDED(data_lock_) override;
+  ::util::Status DeleteDigest(
+      int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      uint32 table_id) LOCKS_EXCLUDED(data_lock_) override;
+  ::util::Status ReadDigests(
+      int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+      uint32 table_id, std::vector<uint32>* digest_ids,
+      absl::Duration* max_timeout) override LOCKS_EXCLUDED(data_lock_);
 
   ::util::StatusOr<uint32> GetBfRtId(uint32 p4info_id) const override
       LOCKS_EXCLUDED(data_lock_);
@@ -377,6 +399,15 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
                                 bf_pkt_rx_ring_t rx_ring)
       LOCKS_EXCLUDED(packet_rx_callback_lock_);
+
+  // Writes a received digest list to the registered writer. Called from the SDE
+  // callback function.
+  ::util::Status HandleDigestList(
+      const bf_rt_target_t& bf_dev_tgt,
+      const std::shared_ptr<bfrt::BfRtSession> session,
+      const bfrt::BfRtLearn* learn,
+      std::vector<std::unique_ptr<bfrt::BfRtLearnData>>* learn_data)
+      LOCKS_EXCLUDED(digest_list_callback_lock_);
 
   // Called whenever a port status event is received from SDK. It forwards the
   // port status event to the module who registered a callback by calling
@@ -413,6 +444,9 @@ class BfSdeWrapper : public BfSdeInterface {
   // Mutex protecting the packet rx writer map.
   mutable absl::Mutex packet_rx_callback_lock_;
 
+  // Mutex protecting the digest list writer map.
+  mutable absl::Mutex digest_list_callback_lock_;
+
   // RW mutex lock for protecting the pipeline state.
   mutable absl::Mutex data_lock_;
 
@@ -425,6 +459,13 @@ class BfSdeWrapper : public BfSdeInterface {
   static bf_status_t BfPktRxNotifyCallback(bf_dev_id_t device, bf_pkt* pkt,
                                            void* cookie,
                                            bf_pkt_rx_ring_t rx_ring);
+
+  // Callback registered with the SDE for digest list notifications.
+  static bf_status_t BfDigestCallback(
+      const bf_rt_target_t& bf_dev_tgt,
+      const std::shared_ptr<bfrt::BfRtSession> session,
+      std::vector<std::unique_ptr<bfrt::BfRtLearnData>> learn_data,
+      bf_rt_learn_msg_hdl* const learn_msg_hdl, const void* cookie);
 
   // Common code for multicast group handling.
   ::util::Status WriteMulticastGroup(
@@ -486,6 +527,10 @@ class BfSdeWrapper : public BfSdeInterface {
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
       device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
+
+  // Map from device ID to digest list receive writer.
+  absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<DigestList>>>
+      device_to_digest_list_writer_ GUARDED_BY(digest_list_callback_lock_);
 
   // Map from device ID to vector of all allocated PPGs.
   absl::flat_hash_map<int, std::vector<bf_tm_ppg_hdl>> device_to_ppg_handles_

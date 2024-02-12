@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2013 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bf_sde_wrapper.h"
@@ -32,6 +32,7 @@
 
 extern "C" {
 #include "bf_switchd/bf_switchd.h"
+#include "pipe_mgr/pipe_mgr_intf.h"
 #include "tofino/bf_pal/bf_pal_port_intf.h"
 #include "tofino/bf_pal/dev_intf.h"
 #include "tofino/bf_pal/pltfm_intf.h"
@@ -46,10 +47,6 @@ int switch_pci_sysfs_str_get(char* name, size_t name_size);
 
 DEFINE_string(bfrt_sde_config_dir, "/var/run/stratum/bfrt_config",
               "The dir used by the SDE to load the device configuration.");
-DEFINE_bool(incompatible_enable_bfrt_legacy_bytestring_responses, true,
-            "Enables the legacy padded byte string format in P4Runtime "
-            "responses for Stratum-bfrt. The strings are left unchanged from "
-            "the underlying SDE.");
 
 namespace stratum {
 namespace hal {
@@ -240,6 +237,36 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
   return s;
 }
 
+::util::StatusOr<std::string> DumpLearnData(
+    const bfrt::BfRtLearnData* learn_data) {
+  const bfrt::BfRtLearn* learn;
+  RETURN_IF_BFRT_ERROR(learn_data->getParent(&learn));
+
+  std::string s;
+  absl::StrAppend(&s, "bfrt_learn_data { ");
+  std::vector<bf_rt_id_t> data_field_ids;
+  RETURN_IF_BFRT_ERROR(learn->learnFieldIdListGet(&data_field_ids));
+  for (const auto& field_id : data_field_ids) {
+    std::string field_name;
+    size_t field_size;
+    bool is_active;
+    RETURN_IF_BFRT_ERROR(learn->learnFieldNameGet(field_id, &field_name));
+    RETURN_IF_BFRT_ERROR(learn->learnFieldSizeGet(field_id, &field_size));
+    RETURN_IF_BFRT_ERROR(learn_data->isActive(field_id, &is_active));
+    std::string v(NumBitsToNumBytes(field_size), '\x00');
+    RETURN_IF_BFRT_ERROR(learn_data->getValue(
+        field_id, v.size(),
+        reinterpret_cast<uint8*>(gtl::string_as_array(&v))));
+    std::string value = absl::StrCat("0x", StringToHex(v));
+    absl::StrAppend(&s, field_name, " { field_id: ", field_id,
+                    " field_size: ", field_size, " value: ", value,
+                    " is_active: ", is_active, " } ");
+  }
+  absl::StrAppend(&s, "}");
+
+  return s;
+}
+
 ::util::Status GetField(const bfrt::BfRtTableKey& table_key,
                         std::string field_name, uint64* field_value) {
   bf_rt_id_t field_id;
@@ -248,7 +275,7 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
   RETURN_IF_BFRT_ERROR(table_key.tableGet(&table));
   RETURN_IF_BFRT_ERROR(table->keyFieldIdGet(field_name, &field_id));
   RETURN_IF_BFRT_ERROR(table->keyFieldDataTypeGet(field_id, &data_type));
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_key.getValue(field_id, field_value));
@@ -264,7 +291,7 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
   RETURN_IF_BFRT_ERROR(table_key->tableGet(&table));
   RETURN_IF_BFRT_ERROR(table->keyFieldIdGet(field_name, &field_id));
   RETURN_IF_BFRT_ERROR(table->keyFieldDataTypeGet(field_id, &data_type));
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_key->setValue(field_id, value));
@@ -289,7 +316,7 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Requested uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data.getValue(field_id, field_value));
@@ -314,7 +341,7 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::STRING)
+  RET_CHECK(data_type == bfrt::DataType::STRING)
       << "Requested string but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data.getValue(field_id, field_value));
@@ -339,7 +366,7 @@ inline constexpr uint64 BytesPerSecondToKbits(uint64 bytes) {
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::BOOL)
+  RET_CHECK(data_type == bfrt::DataType::BOOL)
       << "Requested bool but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data.getValue(field_id, field_value));
@@ -365,8 +392,8 @@ template <typename T>
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::INT_ARR ||
-                        data_type == bfrt::DataType::BOOL_ARR)
+  RET_CHECK(data_type == bfrt::DataType::INT_ARR ||
+            data_type == bfrt::DataType::BOOL_ARR)
       << "Requested array but field has type " << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data.getValue(field_id, field_values));
 
@@ -390,7 +417,7 @@ template <typename T>
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Setting uint64 but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data->setValue(field_id, value));
@@ -415,7 +442,7 @@ template <typename T>
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::STRING)
+  RET_CHECK(data_type == bfrt::DataType::STRING)
       << "Setting string but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data->setValue(field_id, field_value));
@@ -440,7 +467,7 @@ template <typename T>
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::BOOL)
+  RET_CHECK(data_type == bfrt::DataType::BOOL)
       << "Setting bool but field " << field_name << " has type "
       << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data->setValue(field_id, field_value));
@@ -466,8 +493,8 @@ template <typename T>
     RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(field_name, &field_id));
     RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
   }
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::INT_ARR ||
-                        data_type == bfrt::DataType::BOOL_ARR)
+  RET_CHECK(data_type == bfrt::DataType::INT_ARR ||
+            data_type == bfrt::DataType::BOOL_ARR)
       << "Requested array but field has type " << static_cast<int>(data_type);
   RETURN_IF_BFRT_ERROR(table_data->setValue(field_id, value));
 
@@ -479,8 +506,8 @@ template <typename T>
     bf_rt_target_t bf_dev_target, const bfrt::BfRtTable* table,
     std::vector<std::unique_ptr<bfrt::BfRtTableKey>>* table_keys,
     std::vector<std::unique_ptr<bfrt::BfRtTableData>>* table_datums) {
-  CHECK_RETURN_IF_FALSE(table_keys) << "table_keys is null";
-  CHECK_RETURN_IF_FALSE(table_datums) << "table_datums is null";
+  RET_CHECK(table_keys) << "table_keys is null";
+  RET_CHECK(table_datums) << "table_datums is null";
 
   // Get number of entries. Some types of tables are preallocated and are always
   // "full". The SDE does not support querying the usage on these.
@@ -490,12 +517,8 @@ template <typename T>
   if (table_type == bfrt::BfRtTable::TableType::METER ||
       table_type == bfrt::BfRtTable::TableType::COUNTER) {
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(
         table->tableSizeGet(*bfrt_session, bf_dev_target, &table_size));
-#else
-    RETURN_IF_BFRT_ERROR(table->tableSizeGet(&table_size));
-#endif  // SDE_9_4_0
     entries = table_size;
   } else {
     RETURN_IF_BFRT_ERROR(table->tableUsageGet(
@@ -637,9 +660,7 @@ template <typename T>
   RETURN_IF_BFRT_ERROR(table_key_->getValue(
       id, value->size(),
       reinterpret_cast<uint8*>(gtl::string_as_array(value))));
-  if (!FLAGS_incompatible_enable_bfrt_legacy_bytestring_responses) {
-    *value = ByteStringToP4RuntimeByteString(*value);
-  }
+  *value = ByteStringToP4RuntimeByteString(*value);
 
   return ::util::OkStatus();
 }
@@ -657,10 +678,8 @@ template <typename T>
   RETURN_IF_BFRT_ERROR(table_key_->getValueandMask(
       id, value->size(), reinterpret_cast<uint8*>(gtl::string_as_array(value)),
       reinterpret_cast<uint8*>(gtl::string_as_array(mask))));
-  if (!FLAGS_incompatible_enable_bfrt_legacy_bytestring_responses) {
-    *value = ByteStringToP4RuntimeByteString(*value);
-    *mask = ByteStringToP4RuntimeByteString(*mask);
-  }
+  *value = ByteStringToP4RuntimeByteString(*value);
+  *mask = ByteStringToP4RuntimeByteString(*mask);
 
   return ::util::OkStatus();
 }
@@ -676,9 +695,7 @@ template <typename T>
   RETURN_IF_BFRT_ERROR(table_key_->getValueLpm(
       id, prefix->size(),
       reinterpret_cast<uint8*>(gtl::string_as_array(prefix)), prefix_length));
-  if (!FLAGS_incompatible_enable_bfrt_legacy_bytestring_responses) {
-    *prefix = ByteStringToP4RuntimeByteString(*prefix);
-  }
+  *prefix = ByteStringToP4RuntimeByteString(*prefix);
 
   return ::util::OkStatus();
 }
@@ -696,10 +713,8 @@ template <typename T>
   RETURN_IF_BFRT_ERROR(table_key_->getValueRange(
       id, low->size(), reinterpret_cast<uint8*>(gtl::string_as_array(low)),
       reinterpret_cast<uint8*>(gtl::string_as_array(high))));
-  if (!FLAGS_incompatible_enable_bfrt_legacy_bytestring_responses) {
-    *low = ByteStringToP4RuntimeByteString(*low);
-    *high = ByteStringToP4RuntimeByteString(*high);
-  }
+  *low = ByteStringToP4RuntimeByteString(*low);
+  *high = ByteStringToP4RuntimeByteString(*high);
 
   return ::util::OkStatus();
 }
@@ -723,6 +738,14 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   auto key = std::unique_ptr<BfSdeInterface::TableKeyInterface>(
       new TableKey(std::move(table_key)));
   return key;
+}
+
+::util::Status TableKey::GetTableId(uint32* table_id) const {
+  const bfrt::BfRtTable* table;
+  RETURN_IF_BFRT_ERROR(table_key_->tableGet(&table));
+  RETURN_IF_BFRT_ERROR(table->tableIdGet(table_id));
+
+  return ::util::OkStatus();
 }
 
 ::util::Status TableData::SetParam(int id, const std::string& value) {
@@ -766,9 +789,7 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   RETURN_IF_BFRT_ERROR(table_data_->getValue(
       id, value->size(),
       reinterpret_cast<uint8*>(gtl::string_as_array(value))));
-  if (!FLAGS_incompatible_enable_bfrt_legacy_bytestring_responses) {
-    *value = ByteStringToP4RuntimeByteString(*value);
-  }
+  *value = ByteStringToP4RuntimeByteString(*value);
 
   return ::util::OkStatus();
 }
@@ -791,7 +812,7 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   bfrt::DataType data_type;
   RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(kActionMemberId, &field_id));
   RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Requested uint64 but field $ACTION_MEMBER_ID has type "
       << static_cast<int>(data_type);
   bool is_active;
@@ -823,7 +844,7 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
   bfrt::DataType data_type;
   RETURN_IF_BFRT_ERROR(table->dataFieldIdGet(kSelectorGroupId, &field_id));
   RETURN_IF_BFRT_ERROR(table->dataFieldDataTypeGet(field_id, &data_type));
-  CHECK_RETURN_IF_FALSE(data_type == bfrt::DataType::UINT64)
+  RET_CHECK(data_type == bfrt::DataType::UINT64)
       << "Requested uint64 but field $SELECTOR_GROUP_ID has type "
       << static_cast<int>(data_type);
   bool is_active;
@@ -877,8 +898,8 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
 }
 
 ::util::Status TableData::GetCounterData(uint64* bytes, uint64* packets) const {
-  CHECK_RETURN_IF_FALSE(bytes);
-  CHECK_RETURN_IF_FALSE(packets);
+  RET_CHECK(bytes);
+  RET_CHECK(packets);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(table_data_->getParent(&table));
 
@@ -917,7 +938,7 @@ TableKey::CreateTableKey(const bfrt::BfRtInfo* bfrt_info_, int table_id) {
 }
 
 ::util::Status TableData::GetActionId(int* action_id) const {
-  CHECK_RETURN_IF_FALSE(action_id);
+  RET_CHECK(action_id);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(table_data_->getParent(&table));
   bf_rt_id_t bf_action_id = 0;
@@ -1411,6 +1432,8 @@ namespace {
           PriorityToTofinoSchedulingPriority(queue_mapping.priority()));
       RETURN_IF_BFRT_ERROR(bf_tm_sched_q_priority_set(
           device, sdk_port, queue_mapping.queue_id(), priority));
+      RETURN_IF_BFRT_ERROR(bf_tm_sched_q_remaining_bw_priority_set(
+          device, sdk_port, queue_mapping.queue_id(), priority));
       RETURN_IF_BFRT_ERROR(bf_tm_sched_q_dwrr_weight_set(
           device, sdk_port, queue_mapping.queue_id(), queue_mapping.weight()));
       // Set maximum shaping rate on queue, if requested.
@@ -1473,8 +1496,7 @@ namespace {
         default:
           return MAKE_ERROR(ERR_INVALID_PARAM)
                  << "Invalid queue guaranteed minimum rate config in "
-                    "QueueMapping "
-                 << queue_mapping.ShortDebugString() << ".";
+                 << "QueueMapping " << queue_mapping.ShortDebugString() << ".";
       }
       if (queue_mapping.enable_color_drop()) {
         RETURN_IF_BFRT_ERROR(
@@ -1545,8 +1567,7 @@ bool BfSdeWrapper::IsValidPort(int device, int port) {
 ::util::StatusOr<bool> BfSdeWrapper::IsSoftwareModel(int device) {
   bool is_sw_model;
   auto bf_status = bf_pal_pltfm_type_get(device, &is_sw_model);
-  CHECK_RETURN_IF_FALSE(bf_status == BF_SUCCESS)
-      << "Error getting software model status.";
+  RET_CHECK(bf_status == BF_SUCCESS) << "Error getting software model status.";
 
   return is_sw_model;
 }
@@ -1658,12 +1679,18 @@ std::string BfSdeWrapper::GetBfChipType(int device) const {
 }
 
 std::string BfSdeWrapper::GetSdeVersion() const {
-#if defined(SDE_9_3_1)
-  return "9.3.1";
-#elif defined(SDE_9_5_0)
-  return "9.5.0";
-#elif defined(SDE_9_7_0)
+#if defined(SDE_9_7_0)
   return "9.7.0";
+#elif defined(SDE_9_7_1)
+  return "9.7.1";
+#elif defined(SDE_9_7_2)
+  return "9.7.2";
+#elif defined(SDE_9_8_0)
+  return "9.8.0";
+#elif defined(SDE_9_9_0)
+  return "9.9.0";
+#elif defined(SDE_9_10_0)
+  return "9.10.0";
 #elif defined(SDE_9_11_0)
   return "9.11.0";
 #else
@@ -1674,9 +1701,8 @@ std::string BfSdeWrapper::GetSdeVersion() const {
 ::util::StatusOr<uint32> BfSdeWrapper::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
   const int port = port_key.port;
-  CHECK_RETURN_IF_FALSE(port >= 0)
-      << "Port ID must be non-negative. Attempted to get port " << port
-      << " on dev " << device << ".";
+  RET_CHECK(port >= 0) << "Port ID must be non-negative. Attempted to get port "
+                       << port << " on dev " << device << ".";
 
   // PortKey uses three possible values for channel:
   //     > 0: port is channelized (first channel is 1)
@@ -1687,12 +1713,12 @@ std::string BfSdeWrapper::GetSdeVersion() const {
   //     Otherwise, port is already 0 in the non-channelized case
   const int channel =
       (port_key.channel > 0) ? port_key.channel - 1 : port_key.channel;
-  CHECK_RETURN_IF_FALSE(channel >= 0)
-      << "Channel must be set for port " << port << " on dev " << device << ".";
+  RET_CHECK(channel >= 0) << "Channel must be set for port " << port
+                          << " on dev " << device << ".";
 
   char port_string[MAX_PORT_HDL_STRING_LEN];
   int r = snprintf(port_string, sizeof(port_string), "%d/%d", port, channel);
-  CHECK_RETURN_IF_FALSE(r > 0 && r < sizeof(port_string))
+  RET_CHECK(r > 0 && r < sizeof(port_string))
       << "Failed to build port string for port " << port << " channel "
       << channel << " on dev " << device << ".";
 
@@ -1704,12 +1730,12 @@ std::string BfSdeWrapper::GetSdeVersion() const {
 
 ::util::StatusOr<int> BfSdeWrapper::GetPcieCpuPort(int device) {
   int port = p4_devport_mgr_pcie_cpu_port_get(device);
-  CHECK_RETURN_IF_FALSE(port != -1);
+  RET_CHECK(port != -1);
   return port;
 }
 
 ::util::Status BfSdeWrapper::SetTmCpuPort(int device, int port) {
-  CHECK_RETURN_IF_FALSE(p4_pd_tm_set_cpuport(device, port) == 0)
+  RET_CHECK(p4_pd_tm_set_cpuport(device, port) == 0)
       << "Unable to set CPU port " << port << " on device " << device;
   return ::util::OkStatus();
 }
@@ -1728,9 +1754,8 @@ std::string BfSdeWrapper::GetSdeVersion() const {
 ::util::Status BfSdeWrapper::InitializeSde(const std::string& sde_install_path,
                                            const std::string& sde_config_file,
                                            bool run_in_background) {
-  CHECK_RETURN_IF_FALSE(sde_install_path != "")
-      << "sde_install_path is required";
-  CHECK_RETURN_IF_FALSE(sde_config_file != "") << "sde_config_file is required";
+  RET_CHECK(sde_install_path != "") << "sde_install_path is required";
+  RET_CHECK(sde_config_file != "") << "sde_config_file is required";
 
   // Parse bf_switchd arguments.
   auto switchd_main_ctx = absl::make_unique<bf_switchd_context_t>();
@@ -1770,8 +1795,8 @@ std::string BfSdeWrapper::GetSdeVersion() const {
                                        const BfrtDeviceConfig& device_config) {
   absl::WriterMutexLock l(&data_lock_);
 
-  // CHECK_RETURN_IF_FALSE(initialized_) << "Not initialized";
-  CHECK_RETURN_IF_FALSE(device_config.programs_size() > 0);
+  // RET_CHECK(initialized_) << "Not initialized";
+  RET_CHECK(device_config.programs_size() > 0);
 
   // if (pipeline_initialized_) {
   // RETURN_IF_BFRT_ERROR(bf_device_remove(device));
@@ -1805,7 +1830,7 @@ std::string BfSdeWrapper::GetSdeVersion() const {
     p4_program->bfrt_json_file = &(*bfrt_path)[0];
     p4_program->num_p4_pipelines = program.pipelines_size();
     path_strings.emplace_back(std::move(bfrt_path));
-    CHECK_RETURN_IF_FALSE(program.pipelines_size() > 0);
+    RET_CHECK(program.pipelines_size() > 0);
     for (int j = 0; j < program.pipelines_size(); ++j) {
       const auto& pipeline = program.pipelines(j);
       const std::string pipeline_path =
@@ -1826,7 +1851,7 @@ std::string BfSdeWrapper::GetSdeVersion() const {
       path_strings.emplace_back(std::move(config_path));
       path_strings.emplace_back(std::move(context_path));
 
-      CHECK_RETURN_IF_FALSE(pipeline.scope_size() <= MAX_P4_PIPELINES);
+      RET_CHECK(pipeline.scope_size() <= MAX_P4_PIPELINES);
       pipeline_profile->num_pipes_in_scope = pipeline.scope_size();
       for (int p = 0; p < pipeline.scope_size(); ++p) {
         const auto& scope = pipeline.scope(p);
@@ -1843,18 +1868,18 @@ std::string BfSdeWrapper::GetSdeVersion() const {
   // Set SDE log levels for modules of interest.
   // TODO(max): create story around SDE logs. How to get them into glog? What
   // levels to enable for which modules?
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(
       bf_sys_log_level_set(BF_MOD_BFRT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  CHECK_RETURN_IF_FALSE(
-      bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  CHECK_RETURN_IF_FALSE(
+  RET_CHECK(bf_sys_log_level_set(BF_MOD_PKT, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
+            0);
+  RET_CHECK(
       bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
-  CHECK_RETURN_IF_FALSE(
-      bf_sys_log_level_set(BF_MOD_TM, BF_LOG_DEST_STDOUT, BF_LOG_WARN) == 0);
+  RET_CHECK(bf_sys_log_level_set(BF_MOD_TM, BF_LOG_DEST_STDOUT, BF_LOG_WARN) ==
+            0);
   stat_mgr_enable_detail_trace = false;
   if (VLOG_IS_ON(2)) {
-    CHECK_RETURN_IF_FALSE(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
-                                               BF_LOG_INFO) == 0);
+    RET_CHECK(bf_sys_log_level_set(BF_MOD_PIPE, BF_LOG_DEST_STDOUT,
+                                   BF_LOG_INFO) == 0);
     stat_mgr_enable_detail_trace = true;
   }
 
@@ -1962,8 +1987,8 @@ BfSdeWrapper::CreateTableData(int table_id, int action_id) {
                                             bf_pkt_rx_ring_t rx_ring) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
   auto rx_writer = gtl::FindOrNull(device_to_packet_rx_writer_, device);
-  CHECK_RETURN_IF_FALSE(rx_writer)
-      << "No Rx callback registered for device id " << device << ".";
+  RET_CHECK(rx_writer) << "No Rx callback registered for device id " << device
+                       << ".";
 
   std::string buffer(reinterpret_cast<const char*>(bf_pkt_get_pkt_data(pkt)),
                      bf_pkt_get_pkt_size(pkt));
@@ -1995,6 +2020,82 @@ bf_status_t BfSdeWrapper::BfPktRxNotifyCallback(bf_dev_id_t device, bf_pkt* pkt,
   // TODO(max): Handle error
   bf_sde_wrapper->HandlePacketRx(device, pkt, rx_ring);
   return bf_pkt_free(device, pkt);
+}
+
+::util::Status BfSdeWrapper::RegisterDigestListWriter(
+    int device, std::unique_ptr<ChannelWriter<DigestList>> writer) {
+  absl::WriterMutexLock l(&digest_list_callback_lock_);
+  device_to_digest_list_writer_[device] = std::move(writer);
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::UnregisterDigestListWriter(int device) {
+  absl::WriterMutexLock l(&digest_list_callback_lock_);
+  device_to_digest_list_writer_.erase(device);
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::HandleDigestList(
+    const bf_rt_target_t& bf_dev_tgt,
+    const std::shared_ptr<bfrt::BfRtSession> session,
+    const bfrt::BfRtLearn* learn,
+    std::vector<std::unique_ptr<bfrt::BfRtLearnData>>* learn_data) {
+  absl::ReaderMutexLock l(&digest_list_callback_lock_);
+  bf_rt_id_t digest_id;
+  RETURN_IF_BFRT_ERROR(learn->learnIdGet(&digest_id));
+  std::vector<bf_rt_id_t> data_field_ids;
+  RETURN_IF_BFRT_ERROR(learn->learnFieldIdListGet(&data_field_ids));
+
+  DigestList digest_list;
+  digest_list.device = bf_dev_tgt.dev_id;
+  digest_list.digest_id = digest_id;
+  digest_list.timestamp = absl::Now();
+  for (auto& data : *learn_data) {
+    VLOG(2) << DumpLearnData(data.get()).ValueOr("<error parsing data>");
+    DigestList::Digest digest;
+    for (const auto& field_id : data_field_ids) {
+      size_t field_size;
+      RETURN_IF_BFRT_ERROR(learn->learnFieldSizeGet(field_id, &field_size));
+      std::string value(NumBitsToNumBytes(field_size), '\x00');
+      RETURN_IF_BFRT_ERROR(data->getValue(
+          field_id, value.size(),
+          reinterpret_cast<uint8*>(gtl::string_as_array(&value))));
+      digest.push_back(ByteStringToP4RuntimeByteString(value));
+    }
+    digest_list.digests.push_back(digest);
+  }
+
+  auto rx_writer =
+      gtl::FindOrNull(device_to_digest_list_writer_, bf_dev_tgt.dev_id);
+  RET_CHECK(rx_writer) << "No digest callback registered for device id "
+                       << bf_dev_tgt.dev_id << ".";
+  ::util::Status status = (*rx_writer)->TryWrite(std::move(digest_list));
+  LOG_IF_EVERY_N(INFO, !status.ok(), 500)
+      << "Dropped digest list received from ASIC.";
+  VLOG(1) << "Received learn data from ASIC for device " << bf_dev_tgt.dev_id
+          << ".";
+
+  return ::util::OkStatus();
+}
+
+bf_status_t BfSdeWrapper::BfDigestCallback(
+    const bf_rt_target_t& bf_dev_tgt,
+    const std::shared_ptr<bfrt::BfRtSession> session,
+    std::vector<std::unique_ptr<bfrt::BfRtLearnData>> learn_data,
+    bf_rt_learn_msg_hdl* const learn_msg_hdl, const void* cookie) {
+  // We only need to grab the first learn object, as this callback is not
+  // invoked with "mixed" digests. All will be from the same digests ID.
+  const bfrt::BfRtLearn* learn;
+  if (learn_data.empty()) return BF_SUCCESS;
+  auto bf_status = learn_data.front()->getParent(&learn);
+  if (bf_status != BF_SUCCESS) {
+    LOG(ERROR) << "failed to get parent of learn data: " << bf_status << ".";
+    return bf_status;
+  }
+  BfSdeWrapper* bf_sde_wrapper = BfSdeWrapper::GetSingleton();
+  bf_sde_wrapper->HandleDigestList(bf_dev_tgt, session, learn, &learn_data);
+  // Acknowledge the learn data immediately. We don't support digest acks yet.
+  return learn->bfRtLearnNotifyAck(session, learn_msg_hdl);
 }
 
 bf_rt_target_t BfSdeWrapper::GetDeviceTarget(int device) const {
@@ -2060,7 +2161,7 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session) {
   if (VLOG_IS_ON(2)) {
     auto real_session = std::dynamic_pointer_cast<Session>(session);
-    CHECK_RETURN_IF_FALSE(real_session);
+    RET_CHECK(real_session);
 
     auto bf_dev_tgt = GetDeviceTarget(device);
     const bfrt::BfRtTable* table;
@@ -2101,18 +2202,14 @@ namespace {
 ::util::StatusOr<uint32> BfSdeWrapper::GetFreeMulticastNodeId(
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromNameGet(kPreNodeTable, &table));
   size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
   RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                            bf_dev_tgt, &table_size));
-#else
-  RETURN_IF_BFRT_ERROR(table->tableSizeGet(&table_size));
-#endif  // SDE_9_4_0
   uint32 usage;
   RETURN_IF_BFRT_ERROR(table->tableUsageGet(
       *real_session->bfrt_session_, bf_dev_tgt,
@@ -2148,7 +2245,7 @@ namespace {
   ::absl::ReaderMutexLock l(&data_lock_);
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;  // PRE node table.
   bf_rt_id_t table_id;
@@ -2186,7 +2283,7 @@ namespace {
   ::absl::ReaderMutexLock l(&data_lock_);
 
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -2213,7 +2310,7 @@ namespace {
     const std::vector<uint32>& mc_node_ids) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -2237,12 +2334,12 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 mc_node_id, int* replication_id, std::vector<uint32>* lag_ids,
     std::vector<uint32>* ports) {
-  CHECK_RETURN_IF_FALSE(replication_id);
-  CHECK_RETURN_IF_FALSE(lag_ids);
-  CHECK_RETURN_IF_FALSE(ports);
+  RET_CHECK(replication_id);
+  RET_CHECK(lag_ids);
+  RET_CHECK(ports);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;  // PRE node table.
@@ -2279,7 +2376,7 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 group_id, const std::vector<uint32>& mc_node_ids, bool insert) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;  // PRE MGID table.
   bf_rt_id_t table_id;
@@ -2340,7 +2437,7 @@ namespace {
     uint32 group_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;  // PRE MGID table.
@@ -2359,11 +2456,11 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 group_id, std::vector<uint32>* group_ids,
     std::vector<std::vector<uint32>>* mc_node_ids) {
-  CHECK_RETURN_IF_FALSE(group_ids);
-  CHECK_RETURN_IF_FALSE(mc_node_ids);
+  RET_CHECK(group_ids);
+  RET_CHECK(mc_node_ids);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;  // PRE MGID table.
@@ -2413,7 +2510,7 @@ namespace {
     uint32 session_id, int egress_port, int egress_queue, int cos,
     int max_pkt_len, bool insert) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(
@@ -2480,7 +2577,7 @@ namespace {
     uint32 session_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(
@@ -2506,13 +2603,13 @@ namespace {
     uint32 session_id, std::vector<uint32>* session_ids,
     std::vector<int>* egress_ports, std::vector<int>* coss,
     std::vector<int>* max_pkt_lens) {
-  CHECK_RETURN_IF_FALSE(session_ids);
-  CHECK_RETURN_IF_FALSE(egress_ports);
-  CHECK_RETURN_IF_FALSE(coss);
-  CHECK_RETURN_IF_FALSE(max_pkt_lens);
+  RET_CHECK(session_ids);
+  RET_CHECK(egress_ports);
+  RET_CHECK(coss);
+  RET_CHECK(max_pkt_lens);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -2564,13 +2661,12 @@ namespace {
     // Data: $session_enable
     bool session_enable;
     RETURN_IF_ERROR(GetField(*table_data, "$session_enable", &session_enable));
-    CHECK_RETURN_IF_FALSE(session_enable)
-        << "Found a session that is not enabled.";
+    RET_CHECK(session_enable) << "Found a session that is not enabled.";
     // Data: $ucast_egress_port_valid
     bool ucast_egress_port_valid;
     RETURN_IF_ERROR(GetField(*table_data, "$ucast_egress_port_valid",
                              &ucast_egress_port_valid));
-    CHECK_RETURN_IF_FALSE(ucast_egress_port_valid)
+    RET_CHECK(ucast_egress_port_valid)
         << "Found a unicase egress port that is not set valid.";
   }
 
@@ -2588,7 +2684,7 @@ namespace {
     absl::optional<uint64> packet_count) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(counter_id, &table));
@@ -2632,12 +2728,12 @@ namespace {
     std::vector<absl::optional<uint64>>* byte_counts,
     std::vector<absl::optional<uint64>>* packet_counts,
     absl::Duration timeout) {
-  CHECK_RETURN_IF_FALSE(counter_indices);
-  CHECK_RETURN_IF_FALSE(byte_counts);
-  CHECK_RETURN_IF_FALSE(packet_counts);
+  RET_CHECK(counter_indices);
+  RET_CHECK(byte_counts);
+  RET_CHECK(packet_counts);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -2736,7 +2832,7 @@ namespace {
     const std::string& register_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -2771,12 +2867,8 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
-#else
-    RETURN_IF_BFRT_ERROR(table->tableSizeGet(&table_size));
-#endif  // SDE_9_4_0
     for (size_t i = 0; i < table_size; ++i) {
       // Register key: $REGISTER_INDEX
       RETURN_IF_ERROR(SetField(table_key.get(), kRegisterIndex, i));
@@ -2793,11 +2885,11 @@ namespace {
     uint32 table_id, absl::optional<uint32> register_index,
     std::vector<uint32>* register_indices, std::vector<uint64>* register_datas,
     absl::Duration timeout) {
-  CHECK_RETURN_IF_FALSE(register_indices);
-  CHECK_RETURN_IF_FALSE(register_datas);
+  RET_CHECK(register_indices);
+  RET_CHECK(register_datas);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   RETURN_IF_ERROR(SynchronizeRegisters(device, session, table_id, timeout));
 
@@ -2845,7 +2937,7 @@ namespace {
         // fetching the data in an uint64 vector with one entry per pipe.
         std::vector<uint64> register_data;
         RETURN_IF_BFRT_ERROR(table_data->getValue(f1_field_id, &register_data));
-        CHECK_RETURN_IF_FALSE(register_data.size() > 0);
+        RET_CHECK(register_data.size() > 0);
         register_datas->push_back(register_data[0]);
         break;
       }
@@ -2869,7 +2961,7 @@ namespace {
     uint64 cir, uint64 cburst, uint64 pir, uint64 pburst) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -2908,12 +3000,8 @@ namespace {
   } else {
     // Wildcard write to all indices.
     size_t table_size;
-#if defined(SDE_9_4_0) || defined(SDE_9_5_0) || defined(SDE_9_7_0) || defined(SDE_9_11_0)
     RETURN_IF_BFRT_ERROR(table->tableSizeGet(*real_session->bfrt_session_,
                                              bf_dev_tgt, &table_size));
-#else
-    RETURN_IF_BFRT_ERROR(table->tableSizeGet(&table_size));
-#endif  // SDE_9_4_0
     for (size_t i = 0; i < table_size; ++i) {
       // Meter key: $METER_INDEX
       RETURN_IF_ERROR(SetField(table_key.get(), kMeterIndex, i));
@@ -2931,14 +3019,14 @@ namespace {
     std::vector<uint32>* meter_indices, std::vector<uint64>* cirs,
     std::vector<uint64>* cbursts, std::vector<uint64>* pirs,
     std::vector<uint64>* pbursts, std::vector<bool>* in_pps) {
-  CHECK_RETURN_IF_FALSE(meter_indices);
-  CHECK_RETURN_IF_FALSE(cirs);
-  CHECK_RETURN_IF_FALSE(cbursts);
-  CHECK_RETURN_IF_FALSE(pirs);
-  CHECK_RETURN_IF_FALSE(pbursts);
+  RET_CHECK(meter_indices);
+  RET_CHECK(cirs);
+  RET_CHECK(cbursts);
+  RET_CHECK(pirs);
+  RET_CHECK(pbursts);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -3040,9 +3128,9 @@ namespace {
     uint32 table_id, int member_id, const TableDataInterface* table_data,
     bool insert) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3099,7 +3187,7 @@ namespace {
     uint32 table_id, int member_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3129,11 +3217,11 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 table_id, int member_id, std::vector<int>* member_ids,
     std::vector<std::unique_ptr<TableDataInterface>>* table_datas) {
-  CHECK_RETURN_IF_FALSE(member_ids);
-  CHECK_RETURN_IF_FALSE(table_datas);
+  RET_CHECK(member_ids);
+  RET_CHECK(table_datas);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -3181,7 +3269,7 @@ namespace {
     const std::vector<uint32>& member_ids,
     const std::vector<bool>& member_status, bool insert) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3253,7 +3341,7 @@ namespace {
     uint32 table_id, int group_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3284,13 +3372,13 @@ namespace {
     std::vector<int>* max_group_sizes,
     std::vector<std::vector<uint32>>* member_ids,
     std::vector<std::vector<bool>>* member_status) {
-  CHECK_RETURN_IF_FALSE(group_ids);
-  CHECK_RETURN_IF_FALSE(max_group_sizes);
-  CHECK_RETURN_IF_FALSE(member_ids);
-  CHECK_RETURN_IF_FALSE(member_status);
+  RET_CHECK(group_ids);
+  RET_CHECK(max_group_sizes);
+  RET_CHECK(member_ids);
+  RET_CHECK(member_status);
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   auto bf_dev_tgt = GetDeviceTarget(device);
   const bfrt::BfRtTable* table;
@@ -3356,11 +3444,11 @@ namespace {
     const TableDataInterface* table_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_key = dynamic_cast<const TableKey*>(table_key);
-  CHECK_RETURN_IF_FALSE(real_table_key);
+  RET_CHECK(real_table_key);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3390,11 +3478,11 @@ namespace {
     const TableDataInterface* table_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_key = dynamic_cast<const TableKey*>(table_key);
-  CHECK_RETURN_IF_FALSE(real_table_key);
+  RET_CHECK(real_table_key);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3422,9 +3510,9 @@ namespace {
     uint32 table_id, const TableKeyInterface* table_key) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_key = dynamic_cast<const TableKey*>(table_key);
-  CHECK_RETURN_IF_FALSE(real_table_key);
+  RET_CHECK(real_table_key);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3449,11 +3537,11 @@ namespace {
     TableDataInterface* table_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_key = dynamic_cast<const TableKey*>(table_key);
-  CHECK_RETURN_IF_FALSE(real_table_key);
+  RET_CHECK(real_table_key);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3473,7 +3561,7 @@ namespace {
     std::vector<std::unique_ptr<TableDataInterface>>* table_datas) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
   auto bf_dev_tgt = GetDeviceTarget(device);
@@ -3501,9 +3589,9 @@ namespace {
     uint32 table_id, const TableDataInterface* table_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3519,7 +3607,7 @@ namespace {
     uint32 table_id) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3535,9 +3623,9 @@ namespace {
     uint32 table_id, TableDataInterface* table_data) {
   ::absl::ReaderMutexLock l(&data_lock_);
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
   auto real_table_data = dynamic_cast<const TableData*>(table_data);
-  CHECK_RETURN_IF_FALSE(real_table_data);
+  RET_CHECK(real_table_data);
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
 
@@ -3546,6 +3634,111 @@ namespace {
       *real_session->bfrt_session_, bf_dev_tgt,
       bfrt::BfRtTable::BfRtTableGetFlag::GET_FROM_SW,
       real_table_data->table_data_.get()));
+
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::InsertDigest(
+    int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+    uint32 table_id, absl::Duration max_timeout) {
+  ::absl::WriterMutexLock l(&data_lock_);
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+
+  auto bf_dev_tgt = GetDeviceTarget(device);
+  const bfrt::BfRtLearn* learn_obj;
+  RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtLearnFromIdGet(table_id, &learn_obj));
+  RETURN_IF_BFRT_ERROR(learn_obj->bfRtLearnCallbackRegister(
+      real_session->bfrt_session_, bf_dev_tgt, BfSdeWrapper::BfDigestCallback,
+      nullptr));
+  // We need to ensure that there is no partical configuration left behind in
+  // case of failures in later code.
+  auto digest_deleter =
+      absl::MakeCleanup([real_session, learn_obj, bf_dev_tgt]() {
+        // No error handling possible here.
+        pipe_status_t ret = learn_obj->bfRtLearnCallbackDeregister(
+            real_session->bfrt_session_, bf_dev_tgt);
+        LOG_IF(ERROR, ret != PIPE_SUCCESS)
+            << "Error deleting dangling digest. Device is in unknown state.";
+      });
+
+  RETURN_IF_BFRT_ERROR(pipe_mgr_flow_lrn_set_timeout(
+      real_session->bfrt_session_->sessHandleGet(), device,
+      absl::ToInt64Microseconds(max_timeout)))
+      << "max_timeout " << max_timeout << " is likely too long.";
+  // TODO(max): handle remaining digest config params.
+
+  std::move(digest_deleter).Cancel();
+
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::ModifyDigest(
+    int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+    uint32 table_id, absl::Duration max_timeout) {
+  ::absl::WriterMutexLock l(&data_lock_);
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+
+  // Ensure the digest ID is valid.
+  auto bf_dev_tgt = GetDeviceTarget(device);
+  const bfrt::BfRtLearn* learn_obj;
+  RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtLearnFromIdGet(table_id, &learn_obj));
+
+  RETURN_IF_BFRT_ERROR(pipe_mgr_flow_lrn_set_timeout(
+      real_session->bfrt_session_->sessHandleGet(), device,
+      absl::ToInt64Microseconds(max_timeout)))
+      << "max_timeout " << max_timeout << " is likely too long.";
+  // TODO(max): handle remaining digest config params.
+
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::DeleteDigest(
+    int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+    uint32 table_id) {
+  ::absl::WriterMutexLock l(&data_lock_);
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+
+  auto bf_dev_tgt = GetDeviceTarget(device);
+  const bfrt::BfRtLearn* learn_obj;
+  RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtLearnFromIdGet(table_id, &learn_obj));
+  RETURN_IF_BFRT_ERROR(learn_obj->bfRtLearnCallbackDeregister(
+      real_session->bfrt_session_, bf_dev_tgt));
+
+  return ::util::OkStatus();
+}
+
+::util::Status BfSdeWrapper::ReadDigests(
+    int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
+    uint32 table_id, std::vector<uint32>* digest_ids,
+    absl::Duration* max_timeout) {
+  ::absl::WriterMutexLock l(&data_lock_);
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+  auto bf_dev_tgt = GetDeviceTarget(device);
+
+  std::vector<const bfrt::BfRtLearn*> learn_vec;
+  if (table_id) {
+    const bfrt::BfRtLearn* learn_obj;
+    RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtLearnFromIdGet(table_id, &learn_obj));
+    learn_vec.push_back(learn_obj);
+  } else {
+    RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtInfoGetLearns(&learn_vec));
+  }
+
+  digest_ids->resize(0);
+  for (size_t i = 0; i < learn_vec.size(); ++i) {
+    bf_rt_id_t id;
+    RETURN_IF_BFRT_ERROR(learn_vec[i]->learnIdGet(&id));
+    digest_ids->push_back(id);
+  }
+
+  uint32 learn_timeout_us;
+  RETURN_IF_BFRT_ERROR(
+      pipe_mgr_flow_lrn_get_timeout(device, &learn_timeout_us));
+  *max_timeout = absl::Microseconds(learn_timeout_us);
 
   return ::util::OkStatus();
 }
@@ -3583,7 +3776,7 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 table_id, absl::Duration timeout) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));
@@ -3626,7 +3819,7 @@ namespace {
     int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
     uint32 table_id, absl::Duration timeout) {
   auto real_session = std::dynamic_pointer_cast<Session>(session);
-  CHECK_RETURN_IF_FALSE(real_session);
+  RET_CHECK(real_session);
 
   const bfrt::BfRtTable* table;
   RETURN_IF_BFRT_ERROR(bfrt_info_->bfrtTableFromIdGet(table_id, &table));

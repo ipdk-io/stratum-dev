@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/utils.h"
@@ -19,6 +20,9 @@ namespace stratum {
 namespace hal {
 
 using ::google::protobuf::util::MessageDifferencer;
+using test_utils::IsOkAndHolds;
+using test_utils::StatusIs;
+using ::testing::_;
 
 TEST(CommonUtilsTest, PrintNodeForEmptyNodeProto) {
   Node node;
@@ -134,6 +138,42 @@ TEST(CommonUtilsTest, PrintPortState) {
   EXPECT_EQ("DOWN", PrintPortState(PORT_STATE_DOWN));
   EXPECT_EQ("FAILED", PrintPortState(PORT_STATE_FAILED));
   EXPECT_EQ("UNKNOWN", PrintPortState(PORT_STATE_UNKNOWN));
+}
+
+TEST(CommonUtilsTest, MacAddressToYangString) {
+  EXPECT_EQ("00:00:00:00:00:00", MacAddressToYangString(0ul));
+  EXPECT_EQ("11:22:33:44:55:66", MacAddressToYangString(0x112233445566ul));
+  EXPECT_EQ("01:02:03:04:05:06", MacAddressToYangString(0x010203040506ul));
+  EXPECT_EQ("00:00:00:11:11:11", MacAddressToYangString(0x000000111111ul));
+  EXPECT_EQ("11:22:33:44:55:66", MacAddressToYangString(0xffff112233445566ul));
+}
+
+TEST(CommonUtilsTest, YangStringToMacAddress) {
+  EXPECT_THAT(YangStringToMacAddress("00:00:00:00:00:00"), IsOkAndHolds(0ul));
+  EXPECT_THAT(YangStringToMacAddress("01:02:03:04:05:06"),
+              IsOkAndHolds(0x010203040506ul));
+  EXPECT_THAT(YangStringToMacAddress("11:22:33:44:55:66"),
+              IsOkAndHolds(0x112233445566ul));
+  EXPECT_THAT(YangStringToMacAddress("00:00:00:11:11:11"),
+              IsOkAndHolds(0x000000111111ul));
+  EXPECT_THAT(YangStringToMacAddress("0:0:0:0:0:0").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("11:22:33:44:55:66:77").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("11;22;33;44;55;66").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("11-22-33-44-55-66").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("st:ra:tu:mr:oc:ks").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("0").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("123").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
+  EXPECT_THAT(YangStringToMacAddress("112233445566").status(),
+              StatusIs(_, ERR_INVALID_PARAM, _));
 }
 
 TEST(PortUtilsTest, BuildSingletonPort) {
@@ -435,7 +475,7 @@ TEST(DecimalUtilTest, TestFromDoubleToDecimal64) {
           .status());
 }
 
-void DecimalToDoubleTest(int64 digits, uint32 precision, double to) {
+static void DecimalToDoubleTest(int64 digits, uint32 precision, double to) {
   ::gnmi::Decimal64 from;
   from.set_digits(digits);
   from.set_precision(precision);

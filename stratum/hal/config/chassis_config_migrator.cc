@@ -73,7 +73,7 @@ static ::util::Status Main(int argc, char** argv) {
   if (config.chassis().platform() != PLT_GENERIC_BAREFOOT_TOFINO &&
       config.chassis().platform() != PLT_GENERIC_BAREFOOT_TOFINO2) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
-        << "Chassis config is not for a Tofino platform";
+           << "Chassis config is not for a Tofino platform";
   }
   for (auto& singleton_port : *config.mutable_singleton_ports()) {
     RETURN_IF_ERROR(MigrateSingletonPort(&singleton_port));

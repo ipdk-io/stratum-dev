@@ -4,13 +4,17 @@
 set -e
 
 LOG_DIR=${LOG_DIR:-/var/log}
-SDE_VERSION=${SDE_VERSION:-9.5.0}
+SDE_VERSION=${SDE_VERSION:-9.7.2}
 DOCKER_IMAGE=${DOCKER_IMAGE:-stratumproject/stratum-bfrt}
-DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG:-$SDE_VERSION}
+DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG:-latest-$SDE_VERSION}
 
 # Try to load the platform string if not already set.
 if [[ -z "$PLATFORM" ]] && [[ -f "/etc/onl/platform" ]]; then
     PLATFORM=$(cat /etc/onl/platform)
+elif [[ -z "$PLATFORM" ]] && [[ -f "/etc/sonic/sonic-environment" ]]; then
+    PLATFORM=$(source /etc/sonic/sonic-environment; echo "$PLATFORM" | sed 's/_/-/g')
+    echo "Stopping SONiC services..."
+    sudo systemctl stop sonic.target
 elif [[ -z "$PLATFORM" ]]; then
     echo "PLATFORM variable must be set manually on non-ONL switches."
     exit 255

@@ -1,7 +1,7 @@
 # Copyright 2021-present Open Networking Foundation
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:stretch as runtime
+FROM bitnami/minideb:buster as runtime
 
 LABEL maintainer="Stratum dev <stratum-dev@lists.stratumproject.org>"
 LABEL description="Docker-based distribution of the Stratum-tools package"
@@ -17,4 +17,5 @@ CMD bf_pipeline_builder -version && \
     stratum_stub -version && \
     procmon_main -version && \
     gnmi_cli -version && \
+    p4_pipeline_pusher -version && \
     stratum_replay -version

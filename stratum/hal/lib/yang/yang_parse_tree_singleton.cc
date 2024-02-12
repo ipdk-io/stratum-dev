@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Implements the YangParseTreePaths::AddSubtreeInterfaceFromSingleton()
@@ -239,7 +239,8 @@ void SetUpInterfacesInterfaceConfigEnabled(const bool state, uint64 node_id,
       return status;
     }
 
-    // Update the chassis config
+    // Update the chassis config.
+    // TODO(max): use std::find to handle lookup failures.
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
@@ -307,7 +308,7 @@ void SetUpInterfacesInterfaceConfigLoopbackMode(const bool loopback,
       return status;
     }
 
-    // Update the chassis config
+    // Update the chassis config.
     ChassisConfig* new_config = config->writable();
     for (auto& singleton_port : *new_config->mutable_singleton_ports()) {
       if (singleton_port.node() == node_id && singleton_port.id() == port_id) {
@@ -366,11 +367,9 @@ void SetUpInterfacesInterfaceEthernetConfigMacAddress(uint64 node_id,
       return MAKE_ERROR(ERR_INVALID_PARAM) << "not a TypedValue message!";
     }
     std::string mac_address_string = typed_val->string_val();
-    if (!IsMacAddressValid(mac_address_string)) {
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "wrong value!";
-    }
+    ASSIGN_OR_RETURN(uint64 mac_address,
+                     YangStringToMacAddress(mac_address_string));
 
-    uint64 mac_address = YangStringToMacAddress(mac_address_string);
     // Set the value.
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_mac_address,

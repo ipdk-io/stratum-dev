@@ -28,6 +28,7 @@ BfrtNode::BfrtNode(BfrtTableManager* bfrt_table_manager,
                    BfrtPacketioManager* bfrt_packetio_manager,
                    BfrtPreManager* bfrt_pre_manager,
                    BfrtCounterManager* bfrt_counter_manager,
+                   BfrtP4RuntimeTranslator* bfrt_p4runtime_translator,
                    BfSdeInterface* bf_sde_interface, int device_id)
     : pipeline_initialized_(false),
       initialized_(false),
@@ -37,6 +38,7 @@ BfrtNode::BfrtNode(BfrtTableManager* bfrt_table_manager,
       bfrt_packetio_manager_(bfrt_packetio_manager),
       bfrt_pre_manager_(ABSL_DIE_IF_NULL(bfrt_pre_manager)),
       bfrt_counter_manager_(ABSL_DIE_IF_NULL(bfrt_counter_manager)),
+      bfrt_p4runtime_translator_(ABSL_DIE_IF_NULL(bfrt_p4runtime_translator)),
       node_id_(0),
       device_id_(device_id) {}
 
@@ -49,6 +51,7 @@ BfrtNode::BfrtNode()
       bfrt_packetio_manager_(nullptr),
       bfrt_pre_manager_(nullptr),
       bfrt_counter_manager_(nullptr),
+      bfrt_p4runtime_translator_(nullptr),
       node_id_(0),
       device_id_(-1) {}
 
@@ -59,10 +62,12 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
     BfrtTableManager* bfrt_table_manager,
     BfrtPacketioManager* bfrt_packetio_manager,
     BfrtPreManager* bfrt_pre_manager, BfrtCounterManager* bfrt_counter_manager,
+    BfrtP4RuntimeTranslator* bfrt_p4runtime_translator,
     BfSdeInterface* bf_sde_interface, int device_id) {
   return absl::WrapUnique(
       new BfrtNode(bfrt_table_manager, bfrt_packetio_manager, bfrt_pre_manager,
-                   bfrt_counter_manager, bf_sde_interface, device_id));
+                   bfrt_counter_manager, bfrt_p4runtime_translator,
+                   bf_sde_interface, device_id));
 }
 
 ::util::Status BfrtNode::PushChassisConfig(const ChassisConfig& config,
@@ -71,6 +76,8 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
   node_id_ = node_id;
   // RETURN_IF_ERROR(bfrt_table_manager_->PushChassisConfig(config, node_id));
   RETURN_IF_ERROR(bfrt_packetio_manager_->PushChassisConfig(config, node_id));
+  RETURN_IF_ERROR(
+      bfrt_p4runtime_translator_->PushChassisConfig(config, node_id));
   initialized_ = true;
 
   return ::util::OkStatus();
@@ -125,12 +132,15 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
   if (!initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
-  CHECK_RETURN_IF_FALSE(bfrt_config_.programs_size() > 0);
+  RET_CHECK(bfrt_config_.programs_size() > 0);
 
   // Calling AddDevice() overwrites any previous pipeline.
   RETURN_IF_ERROR(bf_sde_interface_->AddDevice(device_id_, bfrt_config_));
 
   // Push pipeline config to the managers.
+  const auto& p4info = bfrt_config_.programs(0).p4info();
+  RETURN_IF_ERROR(
+      bfrt_p4runtime_translator_->PushForwardingPipelineConfig(p4info));
   RETURN_IF_ERROR(
       bfrt_packetio_manager_->PushForwardingPipelineConfig(bfrt_config_));
   RETURN_IF_ERROR(
@@ -139,16 +149,14 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       bfrt_pre_manager_->PushForwardingPipelineConfig(bfrt_config_));
   RETURN_IF_ERROR(
       bfrt_counter_manager_->PushForwardingPipelineConfig(bfrt_config_));
-
   pipeline_initialized_ = true;
   return ::util::OkStatus();
 }
 
 ::util::Status BfrtNode::VerifyForwardingPipelineConfig(
     const ::p4::v1::ForwardingPipelineConfig& config) const {
-  CHECK_RETURN_IF_FALSE(config.has_p4info()) << "Missing P4 info";
-  CHECK_RETURN_IF_FALSE(!config.p4_device_config().empty())
-      << "Missing P4 device config";
+  RET_CHECK(config.has_p4info()) << "Missing P4 info";
+  RET_CHECK(!config.p4_device_config().empty()) << "Missing P4 device config";
   BfPipelineConfig bf_config;
   RETURN_IF_ERROR(ExtractBfPipelineConfig(config, &bf_config));
   RETURN_IF_ERROR(bfrt_table_manager_->VerifyForwardingPipelineConfig(config));
@@ -160,7 +168,7 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
   auto status = ::util::OkStatus();
   // TODO(max): Check if we need to de-init the ASIC or SDE
   // TODO(max): Enable other Shutdown calls once implemented.
-  // APPEND_STATUS_IF_ERROR(status, bfrt_table_manager_->Shutdown());
+  APPEND_STATUS_IF_ERROR(status, bfrt_table_manager_->Shutdown());
   APPEND_STATUS_IF_ERROR(status, bfrt_packetio_manager_->Shutdown());
   // APPEND_STATUS_IF_ERROR(status, bfrt_pre_manager_->Shutdown());
   // APPEND_STATUS_IF_ERROR(status, bfrt_counter_manager_->Shutdown());
@@ -178,10 +186,9 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
 ::util::Status BfrtNode::WriteForwardingEntries(
     const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results) {
   absl::WriterMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == node_id_)
+  RET_CHECK(req.device_id() == node_id_)
       << "Request device id must be same as id of this BfrtNode.";
-  CHECK_RETURN_IF_FALSE(req.atomicity() ==
-                        ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
+  RET_CHECK(req.atomicity() == ::p4::v1::WriteRequest::CONTINUE_ON_ERROR)
       << "Request atomicity "
       << ::p4::v1::WriteRequest::Atomicity_Name(req.atomicity())
       << " is not supported.";
@@ -234,9 +241,12 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
             session, update.type(), update.entity().meter_entry());
         break;
       }
+      case ::p4::v1::Entity::kDigestEntry:
+        status = bfrt_table_manager_->WriteDigestEntry(
+            session, update.type(), update.entity().digest_entry());
+        break;
       case ::p4::v1::Entity::kDirectMeterEntry:
       case ::p4::v1::Entity::kValueSetEntry:
-      case ::p4::v1::Entity::kDigestEntry:
       default:
         status = MAKE_ERROR(ERR_UNIMPLEMENTED)
                  << "Unsupported entity type: " << update.ShortDebugString();
@@ -261,11 +271,11 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
     const ::p4::v1::ReadRequest& req,
     WriterInterface<::p4::v1::ReadResponse>* writer,
     std::vector<::util::Status>* details) {
-  CHECK_RETURN_IF_FALSE(writer) << "Channel writer must be non-null.";
-  CHECK_RETURN_IF_FALSE(details) << "Details pointer must be non-null.";
+  RET_CHECK(writer) << "Channel writer must be non-null.";
+  RET_CHECK(details) << "Details pointer must be non-null.";
 
   absl::ReaderMutexLock l(&lock_);
-  CHECK_RETURN_IF_FALSE(req.device_id() == node_id_)
+  RET_CHECK(req.device_id() == node_id_)
       << "Request device id must be same as id of this BfrtNode.";
   if (!initialized_ || !pipeline_initialized_) {
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
@@ -342,9 +352,15 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
         details->push_back(status);
         break;
       }
+      case ::p4::v1::Entity::kDigestEntry: {
+        auto status = bfrt_table_manager_->ReadDigestEntry(
+            session, entity.digest_entry(), writer);
+        success &= status.ok();
+        details->push_back(status);
+        break;
+      }
       case ::p4::v1::Entity::kDirectMeterEntry:
       case ::p4::v1::Entity::kValueSetEntry:
-      case ::p4::v1::Entity::kDigestEntry:
       default: {
         success = false;
         details->push_back(MAKE_ERROR(ERR_UNIMPLEMENTED)
@@ -354,8 +370,7 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       }
     }
   }
-  CHECK_RETURN_IF_FALSE(writer->Write(resp))
-      << "Write to stream channel failed.";
+  RET_CHECK(writer->Write(resp)) << "Write to stream channel failed.";
   if (!success) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
@@ -374,8 +389,17 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
       std::make_shared<ProtoOneofWriterWrapper<::p4::v1::StreamMessageResponse,
                                                ::p4::v1::PacketIn>>(
           writer, &::p4::v1::StreamMessageResponse::mutable_packet);
+  RETURN_IF_ERROR(
+      bfrt_packetio_manager_->RegisterPacketReceiveWriter(packet_in_writer));
 
-  return bfrt_packetio_manager_->RegisterPacketReceiveWriter(packet_in_writer);
+  auto digest_list_writer =
+      std::make_shared<ProtoOneofWriterWrapper<::p4::v1::StreamMessageResponse,
+                                               ::p4::v1::DigestList>>(
+          writer, &::p4::v1::StreamMessageResponse::mutable_digest);
+  RETURN_IF_ERROR(
+      bfrt_table_manager_->RegisterDigestListWriter(digest_list_writer));
+
+  return ::util::OkStatus();
 }
 
 ::util::Status BfrtNode::UnregisterStreamMessageResponseWriter() {
@@ -398,6 +422,9 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
     case ::p4::v1::StreamMessageRequest::kPacket: {
       return bfrt_packetio_manager_->TransmitPacket(req.packet());
     }
+    case ::p4::v1::StreamMessageRequest::kDigestAck:
+      // TODO(max): implement digest ack handling.
+      return ::util::OkStatus();
     default:
       return MAKE_ERROR(ERR_UNIMPLEMENTED)
              << "Unsupported StreamMessageRequest " << req.ShortDebugString()
@@ -411,7 +438,7 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId: {
       ::p4::v1::ActionProfileMember act_prof_member;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_member))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_member))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile member.";
       return bfrt_table_manager_->WriteActionProfileMember(session, type,
@@ -419,15 +446,15 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
     }
     case kTnaExternActionSelectorId: {
       ::p4::v1::ActionProfileGroup act_prof_group;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_group))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_group))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile group.";
       return bfrt_table_manager_->WriteActionProfileGroup(session, type,
                                                           act_prof_group);
     }
     default:
-      return MAKE_ERROR() << "Unsupported extern entry: "
-                          << entry.ShortDebugString() << ".";
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "Unsupported extern entry: " << entry.ShortDebugString() << ".";
   }
 }
 
@@ -438,7 +465,7 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
   switch (entry.extern_type_id()) {
     case kTnaExternActionProfileId: {
       ::p4::v1::ActionProfileMember act_prof_member;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_member))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_member))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile member";
       return bfrt_table_manager_->ReadActionProfileMember(
@@ -446,7 +473,7 @@ std::unique_ptr<BfrtNode> BfrtNode::CreateInstance(
     }
     case kTnaExternActionSelectorId: {
       ::p4::v1::ActionProfileGroup act_prof_group;
-      CHECK_RETURN_IF_FALSE(entry.entry().UnpackTo(&act_prof_group))
+      RET_CHECK(entry.entry().UnpackTo(&act_prof_group))
           << "Entry " << entry.ShortDebugString()
           << " is not an action profile group";
       return bfrt_table_manager_->ReadActionProfileGroup(

@@ -415,7 +415,7 @@ message Node {
 // class. For example:
 // SaiSwitch: An implementation of SwitchInterface based on SAI. This class
 //            translates SingletonPort to SAI port of type sai_object_id_t
-//            and viceversa.
+//            and vice versa.
 // BcmSwitch: An implementation of SwitchInterface that uses BCM SDK directly.
 //            This class translates SingletonPort to a tuple of
 //            (int unit, bcm_port_t port) and vice versa.

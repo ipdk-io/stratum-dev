@@ -193,12 +193,8 @@ bool ConvertTrunkMemberBlockStateToBool(const TrunkMemberBlockState& state);
 std::string MacAddressToYangString(const uint64& mac_address);
 
 // A helper function that converts data received from the gNMI interface into a
-// format expected by the HAL (MAC addresses are expected to be
-// uint64).
-uint64 YangStringToMacAddress(const std::string& yang_string);
-
-// A helper function that checks if string of mac_address is valid.
-bool IsMacAddressValid(const std::string& mac_address);
+// format expected by the HAL (MAC addresses are expected to be uint64).
+::util::StatusOr<uint64> YangStringToMacAddress(const std::string& yang_string);
 
 // A helper function that checks if autoneg state is enabled.
 bool IsPortAutonegEnabled(const TriState& state);
@@ -248,9 +244,6 @@ std::string ConvertLogSeverityToString(const LoggingConfig& logging_config);
 // A helper method that converts Openconfig severity to glog log level.
 ::util::Status ConvertStringToLogSeverity(const std::string& severity_string,
                                           LoggingConfig* logging_config);
-
-// Checks whether filename is a regular file and not a symlink
-bool IsRegularFile(const std::string& filename);
 
 }  // namespace hal
 }  // namespace stratum

@@ -1184,7 +1184,7 @@ TEST_F(YangParseTreeTest,
       "interface", "interface-1")("ethernet")("config")("mac-address")();
 
   static constexpr char kMacAddressAsString[] = "11:22:33:44:55:66";
-  static constexpr char kMacStrings[][21] = {
+  static constexpr char kInvalidMacStrings[][21] = {
       "11:22:33:44:55",        // String too short
       "11:22:33:44:55:66:77",  // String too long
       "11;22;33;44;55;66",     // Incorrect delimiter
@@ -1197,6 +1197,7 @@ TEST_F(YangParseTreeTest,
       "00112233445566",        // No colon
       "11:22:333:44:55:66",    // Too many hex digits
       "11:22:3:44:55:66",      // Too few hex digits
+      "0:0:0:0:0:0",           // Too few hex digits
       "",                      // Empty string
       "st:ra:tu:mr:oc:ks"      // Non-hex digits
   };
@@ -1212,13 +1213,14 @@ TEST_F(YangParseTreeTest,
                               /* Notification will not be called */ nullptr),
               StatusIs(_, _, ContainsRegex("not a TypedValue message")));
 
-  for (auto mac_string : kMacStrings) {
+  for (const auto& mac_string : kInvalidMacStrings) {
     // Check reaction to wrong value.
     invalid_val.set_string_val(mac_string);
-    EXPECT_THAT(ExecuteOnUpdate(path, invalid_val,
-                                /* SetValue will not be called */ nullptr,
-                                /* Notification will not be called */ nullptr),
-                StatusIs(_, _, ContainsRegex("wrong value")));
+    EXPECT_THAT(
+        ExecuteOnUpdate(path, invalid_val,
+                        /* SetValue will not be called */ nullptr,
+                        /* Notification will not be called */ nullptr),
+        StatusIs(_, ERR_INVALID_PARAM, ContainsRegex("not a valid MAC")));
 
     // Check if mac_address remains unchanged.
     ASSERT_OK(ExecuteOnPoll(path, &resp));

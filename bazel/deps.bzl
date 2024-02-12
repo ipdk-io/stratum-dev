@@ -11,8 +11,8 @@ load(
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//bazel:workspace_rule.bzl", "remote_workspace")
 
-P4RUNTIME_VER = "1.3.0"
-P4RUNTIME_SHA = "20b187a965fab78df9b8253da14166b8666938a82a2aeea16c6f9abaa934bdcb"
+P4RUNTIME_VER = "1.4.0-rc.5"
+P4RUNTIME_SHA = "ba31fb9afce6e62ffe565b16bb909e144cd30d65d926cd90af25e99ee8de863a"
 
 GNMI_COMMIT = "39cb2fffed5c9a84970bde47b3d39c8c716dc17a"
 GNMI_SHA = "3701005f28044065608322c179625c8898beadb80c89096b3d8aae1fbac15108"
@@ -20,12 +20,6 @@ GNMI_SHA = "3701005f28044065608322c179625c8898beadb80c89096b3d8aae1fbac15108"
 TAI_COMMIT = "9a673b7310b29c97237b3066a96ea2e43e236cf3"
 TAI_SHA = "6c3562906be3a3608f2e0e26c407d6ba4cbc4b587f87b99d811c8530e74edfca"
 
-BF_SDE_PI_VER = {
-    "9_3_1": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
-    "9_5_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
-    "9_7_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
-    "9_11_0": "4546038f5770e84dc0d2bba90f1ee7811c9955df",
-}
 GNOI_COMMIT = "437c62e630389aa4547b4f0521d0bca3fb2bf811"
 GNOI_SHA = "77d8c271adc22f94a18a5261c28f209370e87a5e615801a4e7e0d09f06da531f"
 
@@ -55,7 +49,7 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_p4c",
             remote = "https://github.com/p4lang/p4c",
-            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a",
+            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a", # 19-Dec-2019
             build_file = "@//bazel:external/p4c.BUILD",
             sha256 = "541ab66df80465dac9702779b6446b80234210410e6f5948d995a978475b64c2",
         )
@@ -90,20 +84,9 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_PI",
             remote = "https://github.com/p4lang/PI.git",
-            commit = "a5fd855d4b3293e23816ef6154e83dc6621aed6a",
+            commit = "a5fd855d4b3293e23816ef6154e83dc6621aed6a", # 26-Jul-2021
             sha256 = "7df38438f94d64c5005b890210d3f1b40e2402870295e21d44cceac67ebd1a1b",
         )
-
-    for sde_ver in BF_SDE_PI_VER:
-        dep_name = "com_github_p4lang_PI_bf_" + sde_ver
-        pi_commit = BF_SDE_PI_VER[sde_ver]
-        if dep_name not in native.existing_rules():
-            # ----- PI for Barefoot targets -----
-            remote_workspace(
-                name = dep_name,
-                remote = "https://github.com/p4lang/PI.git",
-                commit = pi_commit,
-            )
 
     if "com_github_p4lang_PI_np4" not in native.existing_rules():
         # ----- PI for Netcope targets -----

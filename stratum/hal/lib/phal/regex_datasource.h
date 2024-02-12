@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-// FIXME(boc) google only #include "base/basictypes.h"
 #include "absl/memory/memory.h"
 #include "re2/re2.h"
 #include "stratum/glue/status/status.h"
