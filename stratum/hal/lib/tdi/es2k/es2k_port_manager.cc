@@ -31,7 +31,7 @@
 
 extern "C" {
 #include "ipu_pal/port_intf.h"
-#include "tdi_types/tdi_types.h"
+#include "ipu_types/ipu_types.h"
 }
 
 namespace stratum {
@@ -62,20 +62,20 @@ namespace {
 }
 
 // A callback function executed in SDE port state change thread context.
-tdi_status_t sde_port_status_callback(tdi_dev_id_t device,
-                                      tdi_dev_port_t dev_port, bool up,
+ipu_status_t sde_port_status_callback(ipu_dev_id_t device,
+                                      ipu_dev_port_t dev_port, bool up,
                                       void* cookie) {
   absl::Time timestamp = absl::Now();
   Es2kPortManager* es2k_port_manager = Es2kPortManager::GetSingleton();
   if (!es2k_port_manager) {
     LOG(ERROR) << "Es2kPortManager singleton instance is not initialized.";
-    return TDI_INTERNAL_ERROR;
+    return IPU_INTERNAL_ERROR;
   }
   // Forward the event.
   auto status =
       es2k_port_manager->OnPortStatusEvent(device, dev_port, up, timestamp);
 
-  return status.ok() ? TDI_SUCCESS : TDI_INTERNAL_ERROR;
+  return status.ok() ? IPU_SUCCESS : IPU_INTERNAL_ERROR;
 }
 
 }  // namespace
@@ -149,15 +149,15 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 ::util::Status Es2kPortManager::AddPort(int device, int port, uint64 speed_bps,
                                         FecMode fec_mode) {
   auto port_attrs = absl::make_unique<port_attributes_t>();
-  RETURN_IF_TDI_ERROR(ipu_pal_port_add(static_cast<tdi_dev_id_t>(device),
-                                       static_cast<tdi_dev_port_t>(port),
+  RETURN_IF_TDI_ERROR(ipu_pal_port_add(static_cast<ipu_dev_id_t>(device),
+                                       static_cast<ipu_dev_port_t>(port),
                                        port_attrs.get()));
   return ::util::OkStatus();
 }
 
 ::util::Status Es2kPortManager::DeletePort(int device, int port) {
-  RETURN_IF_TDI_ERROR(ipu_pal_port_del(static_cast<tdi_dev_id_t>(device),
-                                       static_cast<tdi_dev_port_t>(port)));
+  RETURN_IF_TDI_ERROR(ipu_pal_port_del(static_cast<ipu_dev_id_t>(device),
+                                       static_cast<ipu_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 
@@ -183,7 +183,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-bool Es2kPortManager::IsValidPort(int device, int port) { return TDI_SUCCESS; }
+bool Es2kPortManager::IsValidPort(int device, int port) { return IPU_SUCCESS; }
 
 ::util::Status Es2kPortManager::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
@@ -219,9 +219,9 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return TDI_SUCCESS; }
       << "Failed to build port string for port " << port << " channel "
       << channel << " on dev " << device << ".";
 
-  tdi_dev_port_t dev_port;
+  ipu_dev_port_t dev_port;
   RETURN_IF_TDI_ERROR(ipu_pal_port_str_to_dev_port_map(
-      static_cast<tdi_dev_id_t>(device), port_string, &dev_port));
+      static_cast<ipu_dev_id_t>(device), port_string, &dev_port));
   return static_cast<uint32>(dev_port);
 }
 

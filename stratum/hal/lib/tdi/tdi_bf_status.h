@@ -7,7 +7,7 @@
 
 extern "C" {
 #ifdef ES2K_TARGET
-#include "tdi_types/tdi_types.h"
+#include "ipu_types/ipu_types.h"
 #else
 #include "bf_types/bf_types.h"
 #endif
@@ -21,53 +21,53 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-// Wrapper object for a tdi_status code from the SDE.
+// Wrapper object for a ipu_status code from the SDE.
 class TdiBfStatus {
  public:
 #ifdef ES2K_TARGET
-  explicit TdiBfStatus(tdi_status_t status) : status_(status) {}
-  operator bool() const { return status_ == TDI_SUCCESS; }
-  inline tdi_status_t status() const { return status_; }
+  explicit TdiBfStatus(ipu_status_t status) : status_(status) {}
+  operator bool() const { return status_ == IPU_SUCCESS; }
+  inline ipu_status_t status() const { return status_; }
   inline ErrorCode error_code() const {
     switch (status_) {
-      case TDI_SUCCESS:
+      case IPU_SUCCESS:
         return ERR_SUCCESS;
-      case TDI_NOT_READY:
+      case IPU_NOT_READY:
         return ERR_NOT_INITIALIZED;
-      case TDI_INVALID_ARG:
+      case IPU_INVALID_ARG:
         return ERR_INVALID_PARAM;
-      case TDI_ALREADY_EXISTS:
+      case IPU_ALREADY_EXISTS:
         return ERR_ENTRY_EXISTS;
-      case TDI_NO_SYS_RESOURCES:
-      case TDI_MAX_SESSIONS_EXCEEDED:
-      case TDI_NO_SPACE:
-      case TDI_EAGAIN:
+      case IPU_NO_SYS_RESOURCES:
+      case IPU_MAX_SESSIONS_EXCEEDED:
+      case IPU_NO_SPACE:
+      case IPU_EAGAIN:
         return ERR_NO_RESOURCE;
-      case TDI_ENTRY_REFERENCES_EXIST:
+      case IPU_ENTRY_REFERENCES_EXIST:
         return ERR_FAILED_PRECONDITION;
-      case TDI_TXN_NOT_SUPPORTED:
-      case TDI_NOT_SUPPORTED:
+      case IPU_TXN_NOT_SUPPORTED:
+      case IPU_NOT_SUPPORTED:
         return ERR_OPER_NOT_SUPPORTED;
-      case TDI_HW_COMM_FAIL:
-      case TDI_HW_UPDATE_FAILED:
+      case IPU_HW_COMM_FAIL:
+      case IPU_HW_UPDATE_FAILED:
         return ERR_HARDWARE_ERROR;
-      case TDI_NO_LEARN_CLIENTS:
+      case IPU_NO_LEARN_CLIENTS:
         return ERR_FEATURE_UNAVAILABLE;
-      case TDI_IDLE_UPDATE_IN_PROGRESS:
+      case IPU_IDLE_UPDATE_IN_PROGRESS:
         return ERR_OPER_STILL_RUNNING;
-      case TDI_OBJECT_NOT_FOUND:
-      case TDI_TABLE_NOT_FOUND:
+      case IPU_OBJECT_NOT_FOUND:
+      case IPU_TABLE_NOT_FOUND:
         return ERR_ENTRY_NOT_FOUND;
-      case TDI_NOT_IMPLEMENTED:
+      case IPU_NOT_IMPLEMENTED:
         return ERR_UNIMPLEMENTED;
-      case TDI_SESSION_NOT_FOUND:
-      case TDI_INIT_ERROR:
-      case TDI_TABLE_LOCKED:
-      case TDI_IO:
-      case TDI_UNEXPECTED:
-      case TDI_DEVICE_LOCKED:
-      case TDI_INTERNAL_ERROR:
-      case TDI_IN_USE:
+      case IPU_SESSION_NOT_FOUND:
+      case IPU_INIT_ERROR:
+      case IPU_TABLE_LOCKED:
+      case IPU_IO:
+      case IPU_UNEXPECTED:
+      case IPU_DEVICE_LOCKED:
+      case IPU_INTERNAL_ERROR:
+      case IPU_IN_USE:
       default:
         return ERR_INTERNAL;
     }
@@ -124,7 +124,7 @@ class TdiBfStatus {
 
  private:
 #ifdef ES2K_TARGET
-  tdi_status_t status_;
+  ipu_status_t status_;
 #else
   bf_status_t status_;
 #endif
@@ -138,7 +138,7 @@ class TdiBfStatus {
   } else /* NOLINT */                                         \
     return MAKE_ERROR(__ret.error_code())                     \
            << "'" << #expr << "' failed with error message: " \
-           << FixMessage(tdi_err_str(__ret.status()))
+           << FixMessage(ipu_err_str(__ret.status()))
 #else
 #define RETURN_IF_TDI_ERROR(expr)                             \
   if (const TdiBfStatus __ret = TdiBfStatus(expr)) {          \
@@ -165,7 +165,7 @@ class TdiBfStatus {
                 ? ""                                                        \
                 : " ")                                                      \
         << "'" << #expr << "' failed with error message: "                  \
-        << FixMessage(tdi_err_str(__ret.status()))
+        << FixMessage(ipu_err_str(__ret.status()))
 #else
 #define APPEND_STATUS_IF_BFRT_ERROR(status, expr)                           \
   if (const TdiBfStatus __ret = TdiBfStatus(expr)) {                        \
