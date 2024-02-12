@@ -27,7 +27,7 @@ DEFINE_string(server_key_file, "", "Path to gRPC server private key file");
 DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
 DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
-DEFINE_string(client_cert_req_type, "NO_REQUEST",
+DEFINE_string(client_cert_req_type, "no_request",
               "Client certificate request type");
 
 namespace stratum {
@@ -41,7 +41,7 @@ constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
 
 namespace {
 
-const std::map<std::string, grpc_ssl_client_certificate_request_type>
+const std::map<const std::string, grpc_ssl_client_certificate_request_type>
     client_cert_req_type_map = {
         {"no_request", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
         {"request_no_verify",
