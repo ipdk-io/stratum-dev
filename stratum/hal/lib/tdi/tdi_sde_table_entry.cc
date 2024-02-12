@@ -66,13 +66,13 @@ using namespace stratum::hal::tdi::helpers;
   tdi_status_t status = table->entryAdd(*real_session->tdi_session_, *dev_tgt,
                                         flags, *real_table_key->table_key_,
                                         *real_table_data->table_data_);
-  if (status == BF_ALREADY_EXISTS) {
+  if (status == TDI_ALREADY_EXISTS) {
     return MAKE_ERROR(::util::error::Code::ALREADY_EXISTS)
            << "Duplicate table entry with " << dump_args();
-  } else if (status == BF_NO_SPACE) {
+  } else if (status == TDI_NO_SPACE) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "Table is already full. No space for " << dump_args();
-  } else if (status != BF_SUCCESS) {
+  } else if (status != TDI_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "Error adding table entry with " << dump_args();
   }
@@ -147,10 +147,10 @@ using namespace stratum::hal::tdi::helpers;
   tdi_status_t status = table->entryDel(*real_session->tdi_session_, *dev_tgt,
                                         flags, *real_table_key->table_key_);
 
-  if (status == BF_OBJECT_NOT_FOUND) {
+  if (status == TDI_OBJECT_NOT_FOUND) {
     return MAKE_ERROR(::util::error::Code::NOT_FOUND)
            << "No matching table entry with " << dump_args();
-  } else if (status != BF_SUCCESS) {
+  } else if (status != TDI_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "Error deleting table entry with " << dump_args();
   }

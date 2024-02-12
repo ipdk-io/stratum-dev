@@ -156,12 +156,12 @@ namespace {
   for (size_t _ = 0; _ < table_size; ++_) {
     // Key: $MULTICAST_NODE_ID
     RETURN_IF_ERROR(SetFieldExact(table_key.get(), kMcNodeId, id));
-    bf_status_t status;
+    tdi_status_t status;
     status = table->entryGet(*real_session->tdi_session_, *dev_tgt, flags,
                              *table_key, table_data.get());
-    if (status == BF_OBJECT_NOT_FOUND) {
+    if (status == TDI_OBJECT_NOT_FOUND) {
       return id;
-    } else if (status == BF_SUCCESS) {
+    } else if (status == TDI_SUCCESS) {
       id++;
       continue;
     } else {

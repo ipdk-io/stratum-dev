@@ -129,7 +129,11 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
     bf_config.set_p4_name(program["program-name"].get<std::string>());
     LOG(INFO) << "Found P4 program: " << bf_config.p4_name();
     std::string tdi_content;
+#ifdef ES2K_TARGET
+    RETURN_IF_ERROR(ReadFileToString(program["tdi-config"], &tdi_content));
+#else
     RETURN_IF_ERROR(ReadFileToString(program["bfrt-config"], &tdi_content));
+#endif
     bf_config.set_bfruntime_info(tdi_content);
     for (const auto& pipeline : program["p4_pipelines"]) {
       auto profile = bf_config.add_profiles();

@@ -30,8 +30,8 @@
 #include "stratum/lib/channel/channel.h"
 
 extern "C" {
-#include "bf_pal/bf_pal_port_intf.h"
-#include "bf_types/bf_types.h"
+#include "ipu_pal/port_intf.h"
+#include "ipu_types/ipu_types.h"
 }
 
 namespace stratum {
@@ -62,19 +62,20 @@ namespace {
 }
 
 // A callback function executed in SDE port state change thread context.
-bf_status_t sde_port_status_callback(bf_dev_id_t device, bf_dev_port_t dev_port,
-                                     bool up, void* cookie) {
+ipu_status_t sde_port_status_callback(ipu_dev_id_t device,
+                                      ipu_dev_port_t dev_port, bool up,
+                                      void* cookie) {
   absl::Time timestamp = absl::Now();
   Es2kPortManager* es2k_port_manager = Es2kPortManager::GetSingleton();
   if (!es2k_port_manager) {
     LOG(ERROR) << "Es2kPortManager singleton instance is not initialized.";
-    return BF_INTERNAL_ERROR;
+    return IPU_INTERNAL_ERROR;
   }
   // Forward the event.
   auto status =
       es2k_port_manager->OnPortStatusEvent(device, dev_port, up, timestamp);
 
-  return status.ok() ? BF_SUCCESS : BF_INTERNAL_ERROR;
+  return status.ok() ? IPU_SUCCESS : IPU_INTERNAL_ERROR;
 }
 
 }  // namespace
@@ -101,7 +102,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 
 ::util::Status Es2kPortManager::GetPortCounters(int device, int port,
                                                 PortCounters* counters) {
-  uint64_t stats[BF_PORT_NUM_COUNTERS] = {0};
+  uint64_t stats[TDI_PORT_NUM_COUNTERS] = {0};
 
   return ::util::OkStatus();
 }
@@ -148,15 +149,15 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 ::util::Status Es2kPortManager::AddPort(int device, int port, uint64 speed_bps,
                                         FecMode fec_mode) {
   auto port_attrs = absl::make_unique<port_attributes_t>();
-  RETURN_IF_TDI_ERROR(bf_pal_port_add(static_cast<bf_dev_id_t>(device),
-                                      static_cast<bf_dev_port_t>(port),
-                                      port_attrs.get()));
+  RETURN_IF_TDI_ERROR(ipu_pal_port_add(static_cast<ipu_dev_id_t>(device),
+                                       static_cast<ipu_dev_port_t>(port),
+                                       port_attrs.get()));
   return ::util::OkStatus();
 }
 
 ::util::Status Es2kPortManager::DeletePort(int device, int port) {
-  RETURN_IF_TDI_ERROR(bf_pal_port_del(static_cast<bf_dev_id_t>(device),
-                                      static_cast<bf_dev_port_t>(port)));
+  RETURN_IF_TDI_ERROR(ipu_pal_port_del(static_cast<ipu_dev_id_t>(device),
+                                       static_cast<ipu_dev_port_t>(port)));
   return ::util::OkStatus();
 }
 
@@ -182,7 +183,7 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
   return ::util::OkStatus();
 }
 
-bool Es2kPortManager::IsValidPort(int device, int port) { return BF_SUCCESS; }
+bool Es2kPortManager::IsValidPort(int device, int port) { return IPU_SUCCESS; }
 
 ::util::Status Es2kPortManager::SetPortLoopbackMode(
     int device, int port, LoopbackState loopback_mode) {
@@ -218,9 +219,9 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return BF_SUCCESS; }
       << "Failed to build port string for port " << port << " channel "
       << channel << " on dev " << device << ".";
 
-  bf_dev_port_t dev_port;
-  RETURN_IF_TDI_ERROR(bf_pal_port_str_to_dev_port_map(
-      static_cast<bf_dev_id_t>(device), port_string, &dev_port));
+  ipu_dev_port_t dev_port;
+  RETURN_IF_TDI_ERROR(ipu_pal_port_str_to_dev_port_map(
+      static_cast<ipu_dev_id_t>(device), port_string, &dev_port));
   return static_cast<uint32>(dev_port);
 }
 

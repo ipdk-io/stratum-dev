@@ -32,8 +32,8 @@
 #include "tdi_rt/tdi_rt_defs.h"
 
 extern "C" {
-#include "bf_pal/dev_intf.h"
-#include "bf_switchd/lib/bf_switchd_lib_init.h"
+#include "ipu_p4d/lib/ipu_p4d_lib_init.h"
+#include "ipu_pal/dev_intf.h"
 }
 
 namespace stratum {
@@ -106,7 +106,7 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   RET_CHECK(sde_config_file != "") << "sde_config_file is required";
 
   // Parse bf_switchd arguments.
-  auto switchd_main_ctx = absl::make_unique<bf_switchd_context_t>();
+  auto switchd_main_ctx = absl::make_unique<ipu_p4d_context_t>();
   switchd_main_ctx->install_dir = strdup(sde_install_path.c_str());
   switchd_main_ctx->conf_file = strdup(sde_config_file.c_str());
   switchd_main_ctx->skip_p4 = true;
@@ -116,7 +116,7 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
     switchd_main_ctx->shell_set_ucli = true;
   }
 
-  RETURN_IF_TDI_ERROR(bf_switchd_lib_init(switchd_main_ctx.get()))
+  RETURN_IF_TDI_ERROR(ipu_p4d_lib_init(switchd_main_ctx.get()))
       << "Error when starting switchd.";
   LOG(INFO) << "switchd started successfully";
 
@@ -135,10 +135,10 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
 
   tdi_id_mapper_.reset();
 
-  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_begin(dev_id,
-                                                    BF_DEV_WARM_INIT_FAST_RECFG,
-                                                    /* upgrade_agents */ true));
-  bf_device_profile_t device_profile = {};
+  RETURN_IF_TDI_ERROR(
+      ipu_pal_device_warm_init_begin(dev_id, TDI_DEV_WARM_INIT_FAST_RECFG,
+                                     /* upgrade_agents */ true));
+  tdi_device_profile_t device_profile = {};
 
   // Commit new files to disk and build device profile for SDE to load.
   RETURN_IF_ERROR(RecursivelyCreateDir(FLAGS_tdi_sde_config_dir));
@@ -154,10 +154,10 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
     RETURN_IF_ERROR(RecursivelyCreateDir(program_path));
     RETURN_IF_ERROR(WriteStringToFile(program.bfrt(), *tdirt_path));
 
-    bf_p4_program_t* p4_program = &device_profile.p4_programs[i];
+    tdi_p4_program_t* p4_program = &device_profile.p4_programs[i];
     ::snprintf(p4_program->prog_name, _PI_UPDATE_MAX_NAME_SIZE, "%s",
                program.name().c_str());
-    p4_program->bfrt_json_file = &(*tdirt_path)[0];
+    p4_program->tdi_json_file = &(*tdirt_path)[0];
     p4_program->num_p4_pipelines = program.pipelines_size();
     path_strings.emplace_back(std::move(tdirt_path));
     RET_CHECK(program.pipelines_size() > 0);
@@ -173,7 +173,7 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
       RETURN_IF_ERROR(WriteStringToFile(pipeline.context(), *context_path));
       RETURN_IF_ERROR(WriteStringToFile(pipeline.config(), *config_path));
 
-      bf_p4_pipeline_t* pipeline_profile = &p4_program->p4_pipelines[j];
+      tdi_p4_pipeline_t* pipeline_profile = &p4_program->p4_pipelines[j];
       ::snprintf(pipeline_profile->p4_pipeline_name, _PI_UPDATE_MAX_NAME_SIZE,
                  "%s", pipeline.name().c_str());
       pipeline_profile->cfg_file = &(*config_path)[0];
@@ -191,8 +191,8 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   }
 
   // This call re-initializes most SDE components.
-  RETURN_IF_TDI_ERROR(bf_pal_device_add(dev_id, &device_profile));
-  RETURN_IF_TDI_ERROR(bf_pal_device_warm_init_end(dev_id));
+  RETURN_IF_TDI_ERROR(ipu_pal_device_add(dev_id, &device_profile));
+  RETURN_IF_TDI_ERROR(ipu_pal_device_warm_init_end(dev_id));
 
   // Set SDE log levels for modules of interest.
   // TODO(max): create story around SDE logs. How to get them into glog? What

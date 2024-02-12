@@ -153,7 +153,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   auto status = table->operationsAllocate(
       static_cast<tdi_operations_type_e>(TDI_RT_OPERATIONS_TYPE_TRANSMIT_PKTS),
       &ops);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "Error allocating TableOperations object";
   }
@@ -184,7 +184,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
 
   // 3. Transmit the pkt
   status = table->operationsExecute(*dev_tgt, *ops);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     // deallocate operations object and return
     ::tdi::TableOperations* rawPtr = ops.release();
     delete rawPtr;
@@ -194,7 +194,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   return ::util::OkStatus();
 }
 
-::util::Status Es2kSdeWrapper::HandlePacketRx(bf_dev_id_t device,
+::util::Status Es2kSdeWrapper::HandlePacketRx(ipu_dev_id_t device,
                                               const char* pkt_data,
                                               const uint64_t pkt_len) {
   absl::ReaderMutexLock l(&packet_rx_callback_lock_);
@@ -268,7 +268,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   std::unique_ptr<::tdi::NotificationParams> rx_notification_params;
   tdi_status_t status = table->notificationRegistrationParamsAllocate(
       RX, &rx_notification_params);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "rx_notification allocation fail ";
   }
@@ -276,7 +276,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   // Allocate tx params
   std::unique_ptr<::tdi::NotificationParams> tx_notification_params;
   table->notificationRegistrationParamsAllocate(TX, &tx_notification_params);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "tx_notification allocation fail ";
   }
@@ -296,7 +296,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
                                            Es2kSdeWrapper::PktIoRxCallback,
                                            *rx_notification_params, nullptr);
 
-      if (status != BF_SUCCESS) {
+      if (status != IPU_SUCCESS) {
         // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = rx_notification_params.release();
         delete rawPtr;
@@ -315,7 +315,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
                                            Es2kSdeWrapper::PktIoTxCallback,
                                            *tx_notification_params, nullptr);
 
-      if (status != BF_SUCCESS) {
+      if (status != IPU_SUCCESS) {
         // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = tx_notification_params.release();
         delete rawPtr;
@@ -355,7 +355,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   std::unique_ptr<::tdi::NotificationParams> rx_notification_params;
   tdi_status_t status = table->notificationRegistrationParamsAllocate(
       RX, &rx_notification_params);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "rx_notification allocation fail ";
   }
@@ -363,7 +363,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
   // Allocate tx params
   std::unique_ptr<::tdi::NotificationParams> tx_notification_params;
   table->notificationRegistrationParamsAllocate(TX, &tx_notification_params);
-  if (status != BF_SUCCESS) {
+  if (status != IPU_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "tx_notification allocation fail ";
   }
@@ -382,7 +382,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
       status =
           table->notificationDeregister(*dev_tgt, RX, *rx_notification_params);
 
-      if (status != BF_SUCCESS) {
+      if (status != IPU_SUCCESS) {
         // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = rx_notification_params.release();
         delete rawPtr;
@@ -400,7 +400,7 @@ void Es2kSdeWrapper::PktIoRxCallback(
       status =
           table->notificationDeregister(*dev_tgt, TX, *tx_notification_params);
 
-      if (status != BF_SUCCESS) {
+      if (status != IPU_SUCCESS) {
         // deallocate notification_params and return error
         ::tdi::NotificationParams* rawPtr = tx_notification_params.release();
         delete rawPtr;

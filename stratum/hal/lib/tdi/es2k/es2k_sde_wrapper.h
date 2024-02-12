@@ -39,8 +39,8 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeletePktModMeterConfig(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 table_id,
-      absl::optional<uint32> meter_index) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id, absl::optional<uint32> meter_index) override
+      LOCKS_EXCLUDED(data_lock_);
   ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
@@ -63,7 +63,7 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
 
   // Writes a received packet to the registered Rx writer. Called from the SDE
   // callback function.
-  ::util::Status HandlePacketRx(bf_dev_id_t device, const char* pkt_data,
+  ::util::Status HandlePacketRx(ipu_dev_id_t device, const char* pkt_data,
                                 const uint64_t pkt_len)
       LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
