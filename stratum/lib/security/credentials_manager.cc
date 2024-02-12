@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/ascii.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "gflags/gflags.h"
@@ -25,7 +26,7 @@ DEFINE_string(server_key_file, "", "Path to gRPC server private key file");
 DEFINE_string(server_cert_file, "", "Path to gRPC server certificate file");
 DEFINE_string(client_key_file, "", "Path to gRPC client key file");
 DEFINE_string(client_cert_file, "", "Path to gRPC client certificate file");
-DEFINE_string(client_cert_req_type, "NO_REQUEST",
+DEFINE_string(client_cert_req_type, "no_request",
               "Client certificate request type");
 
 namespace stratum {
@@ -39,22 +40,22 @@ constexpr unsigned int CredentialsManager::kFileRefreshIntervalSeconds;
 
 namespace {
 
-const std::map<std::string, grpc_ssl_client_certificate_request_type>
+const std::map<const std::string, grpc_ssl_client_certificate_request_type>
     client_cert_req_type_map = {
-        {"NO_REQUEST", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
-        {"REQUEST_NO_VERIFY",
+        {"no_request", GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE},
+        {"request_no_verify",
          GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-        {"REQUEST_AND_VERIFY", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
-        {"REQUIRE_NO_VERIFY",
+        {"request_and_verify", GRPC_SSL_REQUEST_CLIENT_CERTIFICATE_AND_VERIFY},
+        {"require_no_verify",
          GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_BUT_DONT_VERIFY},
-        {"REQUIRE_AND_VERIFY",
+        {"require_and_verify",
          GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY}};
 
 // Returns the value of the client_cert_req_type command-line flag.
 ::util::StatusOr<grpc_ssl_client_certificate_request_type>
 GetCertRequestType() {
-  auto option =
-      gtl::FindOrNull(client_cert_req_type_map, FLAGS_client_cert_req_type);
+  std::string flag_value = absl::AsciiStrToLower(FLAGS_client_cert_req_type);
+  auto option = gtl::FindOrNull(client_cert_req_type_map, flag_value);
   if (option == nullptr) {
     return MAKE_ERROR(ERR_INVALID_PARAM)
            << "--client_cert_req_type '" << FLAGS_client_cert_req_type
