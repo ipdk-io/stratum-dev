@@ -7,6 +7,6 @@
 add_subdirectory(glue)
 add_subdirectory(lib)
 add_subdirectory(public)
-add_subdirectory(tools)
+add_subdirectory(tools/gnmi)
 
 add_subdirectory(hal)

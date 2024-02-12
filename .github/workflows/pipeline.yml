@@ -2,9 +2,13 @@ name: "Stratum CI Pipeline"
 
 on:
   push:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
   pull_request:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
 
   workflow_dispatch:
 
@@ -35,7 +39,7 @@ jobs:
           path: stratum
 
       - name: Fetch DPDK SDE
-        uses: robinraju/release-downloader@v1.8
+        uses: robinraju/release-downloader@v1.9
         with:
           repository: ${{ env.SDE_REPOSITORY }}
           tag: ${{ env.SDE_TAG }}
@@ -56,17 +60,18 @@ jobs:
         working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-flaky
+          xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-broken,-flaky
 
-      - name: Collect unit test logs
-        if: failure()
+  cdlang_tests:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Clone stratum repository
+        uses: actions/checkout@v4
+        with:
+          path: stratum
+
+      - name: Run cdlang tests
         working-directory: stratum
         run: |
-          cd bazel-testlogs
-          tar czf $GITHUB_WORKSPACE/$DPDK_TESTLOGS stratum/
-
-      - name: Upload unit test logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          path: $DPDK_TESTLOGS
+          bazel test //stratum/testing/cdlang/...

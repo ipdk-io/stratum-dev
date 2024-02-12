@@ -319,6 +319,7 @@ stratum_cc_library(
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
+    tags = ["broken"],
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",

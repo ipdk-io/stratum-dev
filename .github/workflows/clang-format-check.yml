@@ -2,13 +2,17 @@ name: "clang-format check"
 
 on:
   push:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
   pull_request:
-    branches: [split-arch]
+    branches:
+      - split-arch
+      - stratum-updates
 
 concurrency:
   # If workflow for PR or push is already running, stop it and start a new one.
-  group: build-${{ github.ref }}
+  group: clang-format-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,7 +28,7 @@ jobs:
 
       - name: Get list of changed Files
         id: changes
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v42
         with:
           files: |
             **.c
