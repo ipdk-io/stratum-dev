@@ -9,16 +9,31 @@
 ########################
 
 generate_proto_files(
-    "stratum/public/proto/p4_role_config.proto"
-    "${STRATUM_SOURCE_DIR}"
+  "stratum/public/proto/p4_role_config.proto"
+  "${STRATUM_SOURCE_DIR}"
 )
 
 add_library(p4_role_config SHARED
-    ${PB_OUT_DIR}/stratum/public/proto/p4_role_config.pb.cc
-    ${PB_OUT_DIR}/stratum/public/proto/p4_role_config.pb.h
+  ${PB_OUT_DIR}/stratum/public/proto/p4_role_config.pb.cc
+  ${PB_OUT_DIR}/stratum/public/proto/p4_role_config.pb.h
 )
 
 target_include_directories(p4_role_config PUBLIC ${PB_OUT_DIR})
 
 install(TARGETS p4_role_config LIBRARY)
 
+#######################
+# Build error_proto_o #
+#######################
+
+generate_proto_files(
+  "stratum/public/proto/error.proto"
+  "${STRATUM_SOURCE_DIR}"
+)
+
+add_library(error_proto_o OBJECT
+  ${PB_OUT_DIR}/stratum/public/proto/error.pb.cc
+  ${PB_OUT_DIR}/stratum/public/proto/error.pb.h
+)
+
+target_include_directories(error_proto_o PUBLIC ${PB_OUT_DIR})

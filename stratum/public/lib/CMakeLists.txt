@@ -15,4 +15,4 @@ add_library(stratum_public_lib_o OBJECT
 
 target_include_directories(stratum_public_lib_o PUBLIC ${STRATUM_INCLUDES})
 
-add_dependencies(stratum_public_lib_o stratum_proto gnmi_proto)
+add_dependencies(stratum_public_lib_o error_proto_o)
