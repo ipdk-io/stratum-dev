@@ -16,9 +16,6 @@
 #include "p4/v1/p4runtime.pb.h"
 #include "stratum/hal/lib/p4/utils.h"
 
-// Flag to enable/disable part of the role config to address bugs found in
-// testing
-#define IPDK_FIX 1
 
 namespace stratum {
 namespace p4runtime {
@@ -534,8 +531,11 @@ grpc::Status SdnControllerManager::AllowRequest(
                         "Request does not have an election ID.");
   }
 
-#ifdef IPDK_FIX
-
+#ifdef IPDK_ROLE_FIX
+  // When a role name is present, it was observed that the iterator comparison
+  // was failing and would only work for default role names. A 
+  // role_name.has_value() check is being added and the find() is called with 
+  // role_name.value() to access the role_name since it is an optional parameter
   if (role_name.has_value()) {
     const auto& it = election_id_past_by_role_.find(role_name.value());
     if (it == election_id_past_by_role_.end()) {
