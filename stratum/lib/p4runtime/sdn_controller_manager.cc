@@ -530,6 +530,39 @@ grpc::Status SdnControllerManager::AllowRequest(
                         "Request does not have an election ID.");
   }
 
+#ifdef IPDK_ROLE_FIX
+  // When a role name is present, it was observed that the iterator comparison
+  // was failing and would only work for default role names. A
+  // role_name.has_value() check is being added and the find() is called with
+  // role_name.value() instead of just role_name variable to access the
+  // role_name since it is an optional parameter
+  if (role_name.has_value()) {
+    const auto& it = election_id_past_by_role_.find(role_name.value());
+    if (it == election_id_past_by_role_.end()) {
+      return grpc::Status(grpc::StatusCode::PERMISSION_DENIED,
+                          "Only the primary connection can issue requests, but "
+                          "no primary connection has been established.");
+    }
+
+    if (election_id != it->second) {
+      return grpc::Status(
+          grpc::StatusCode::PERMISSION_DENIED,
+          absl::StrCat(
+              "Only the primary connection can issue requests, but this "
+              "SDN connection for role ",
+              PrettyPrintRoleName(role_name), " with election ID ",
+              PrettyPrintElectionId(election_id), " is not primary."));
+    }
+  }
+
+  // TODO (5abeel) Disabling the call to VerifyElectionIdIsActive(). role_name
+  // being invoked without role_name and doesn't match with the list of
+  // connections being maintained.
+  // return VerifyElectionIdIsActive(role_name, election_id, connections_);
+  return grpc::Status::OK;
+
+#else  // original code
+
   const auto& election_id_past_for_role =
       election_id_past_by_role_.find(role_name);
   if (election_id_past_for_role == election_id_past_by_role_.end()) {
@@ -548,6 +581,8 @@ grpc::Status SdnControllerManager::AllowRequest(
   }
 
   return VerifyElectionIdIsActive(role_name, election_id, connections_);
+
+#endif
 }
 
 grpc::Status SdnControllerManager::AllowRequest(

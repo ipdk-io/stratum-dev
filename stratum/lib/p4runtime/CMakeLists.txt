@@ -13,6 +13,10 @@ add_library(stratum_lib_p4runtime_o OBJECT
     sdn_controller_manager.h
 )
 
+if(ES2K_TARGET AND IPDK_ROLE_FIX)
+    target_compile_definitions(stratum_lib_p4runtime_o PUBLIC IPDK_ROLE_FIX)
+endif()
+
 target_include_directories(stratum_lib_p4runtime_o PRIVATE
     ${STRATUM_INCLUDES}
     ${PB_OUT_DIR}
