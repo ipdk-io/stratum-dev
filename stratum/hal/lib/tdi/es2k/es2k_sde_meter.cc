@@ -176,8 +176,7 @@ using namespace stratum::hal::tdi::helpers;
     RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &redPackets));
     cfg.redPackets = redPackets;
   } else {
-    MAKE_ERROR(ERR_INVALID_PARAM)
-        << "Unknown meter field " << field_name << " in meter table ";
+    LOG(WARNING) << "Unknown meter field " << field_name << " in meter table ";
   }
 
   return ::util::OkStatus();
