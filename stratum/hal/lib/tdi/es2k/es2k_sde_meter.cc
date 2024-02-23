@@ -112,6 +112,9 @@ using namespace stratum::hal::tdi::helpers;
 ::util::Status GetMeterField(
     TdiPktModMeterConfig& cfg, const std::string field_name,
     const std::unique_ptr<::tdi::TableData>& table_data, tdi_id_t field_id) {
+  // We only return a value if field_name specifies one of the meter
+  // fields we're interested in. If it isn't, just fall through and
+  // return OK.
   if (field_name == kEs2kMeterProfileIdKPps) {
     uint64 prof_id;
     RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &prof_id));
@@ -175,8 +178,6 @@ using namespace stratum::hal::tdi::helpers;
     uint64 redPackets;
     RETURN_IF_TDI_ERROR(table_data->getValue(field_id, &redPackets));
     cfg.redPackets = redPackets;
-  } else {
-    LOG(WARNING) << "Unknown meter field " << field_name << " in meter table ";
   }
 
   return ::util::OkStatus();
