@@ -31,7 +31,7 @@ add_subdirectory(status)
 
 add_library(stratum_utils SHARED
     $<TARGET_OBJECTS:stratum_glue_o>
-    $<TARGET_OBJECTS:stratum_public_o>
+    $<TARGET_OBJECTS:stratum_public_lib_o>
 )
 
 target_link_libraries(stratum_utils PUBLIC
