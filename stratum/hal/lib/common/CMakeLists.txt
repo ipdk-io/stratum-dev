@@ -1,6 +1,6 @@
 # Build file for //stratum/hal/lib/common
 #
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -43,3 +43,19 @@ add_dependencies(stratum_hal_lib_common_o
     openconfig_proto
     stratum_proto
 )
+
+########################
+# Build common_proto_o #
+########################
+
+generate_proto_files(
+    "stratum/hal/lib/common/common.proto"
+    "${STRATUM_SOURCE_DIR}"
+)
+
+add_library(common_proto_o OBJECT
+    ${PB_OUT_DIR}/stratum/hal/lib/common/common.pb.cc
+    ${PB_OUT_DIR}/stratum/hal/lib/common/common.pb.h
+)
+
+target_include_directories(common_proto_o PUBLIC ${PB_OUT_DIR})
