@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022, 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <string>
@@ -18,11 +18,11 @@
 
 DEFINE_string(p4c_conf_file, "",
               "Path to the JSON output .conf file of the bf-p4c compiler");
-DEFINE_string(bf_pipeline_config_binary_file, "bf_pipeline_config.pb.bin",
-              "Path to file for serialized BfPipelineConfig output");
+DEFINE_string(tdi_pipeline_config_binary_file, "tdi_pipeline_config.pb.bin",
+              "Path to file for serialized TdiPipelineConfig output");
 DEFINE_string(unpack_dir, "",
               "Directory to recreate the compiler output from the serialized "
-              "BfPipelineConfig by unpacking the files to disk");
+              "TdiPipelineConfig by unpacking the files to disk");
 
 namespace stratum {
 namespace hal {
@@ -30,7 +30,7 @@ namespace tdi {
 namespace {
 
 constexpr char kUsage[] =
-    R"USAGE(usage: -p4c_conf_file=/path/to/bf-p4c/output/program.conf -bf_pipeline_config_binary_file=$PWD/bf-pipeline.pb.bin
+    R"USAGE(usage: -p4c_conf_file=/path/to/bf-p4c/output/program.conf -tdi_pipeline_config_binary_file=$PWD/bf-pipeline.pb.bin
 
 This program assembles a Stratum-tdi pipeline protobuf message from the output
 of the P4 compiler. The resulting message can be pushed to Stratum in the
@@ -38,12 +38,12 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
 )USAGE";
 
 ::util::Status Unpack() {
-  RET_CHECK(!FLAGS_bf_pipeline_config_binary_file.empty())
+  RET_CHECK(!FLAGS_tdi_pipeline_config_binary_file.empty())
       << "pipeline_config_binary_file must be specified.";
 
   BfPipelineConfig bf_config;
   RETURN_IF_ERROR(
-      ReadProtoFromBinFile(FLAGS_bf_pipeline_config_binary_file, &bf_config));
+      ReadProtoFromBinFile(FLAGS_tdi_pipeline_config_binary_file, &bf_config));
 
   // TODO(max): replace with <filesystem> once we move to C++17
   char* resolved_path = realpath(FLAGS_unpack_dir.c_str(), nullptr);
@@ -155,7 +155,7 @@ p4_device_config field of the P4Runtime SetForwardingPipelineConfig message.
   }
 
   RETURN_IF_ERROR(
-      WriteProtoToBinFile(bf_config, FLAGS_bf_pipeline_config_binary_file));
+      WriteProtoToBinFile(bf_config, FLAGS_tdi_pipeline_config_binary_file));
 
   return ::util::OkStatus();
 }
