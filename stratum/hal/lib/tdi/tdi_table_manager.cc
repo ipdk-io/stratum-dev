@@ -13,6 +13,7 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
+#include "idpf/p4info.pb.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
@@ -1032,7 +1033,7 @@ TdiTableManager::ReadDirectMeterEntry(
 }
 
 static ::util::Status GetPktModMeterUnitsInPackets(
-    const ::p4::config::v1::PacketModMeter& meter, bool& result) {
+    const ::idpf::PacketModMeter& meter, bool& result) {
   switch (meter.spec().unit()) {
     case ::p4::config::v1::MeterSpec::BYTES:
       result = false;
@@ -1112,7 +1113,7 @@ static ::util::Status GetPktModMeterUnitsInPackets(
     bool pkt_mod_meter_units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
-      p4::config::v1::PacketModMeter meter;
+      ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
       RETURN_IF_ERROR(
@@ -1272,7 +1273,7 @@ static ::util::Status SetPktModMeterConfig(
     bool pkt_mod_meter_units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
-      p4::config::v1::PacketModMeter meter;
+      ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
       RETURN_IF_ERROR(
