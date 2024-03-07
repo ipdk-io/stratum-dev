@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022, 2024 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <string>
@@ -17,7 +17,7 @@
 #include "stratum/lib/utils.h"
 
 DEFINE_string(p4c_conf_file, "",
-              "Path to the JSON output .conf file of the bf-p4c compiler");
+              "Path to the JSON output .conf file of the p4c compiler");
 DEFINE_string(tdi_pipeline_config_binary_file, "tdi_pipeline_config.pb.bin",
               "Path to file for serialized TdiPipelineConfig output");
 DEFINE_string(unpack_dir, "",
@@ -30,7 +30,7 @@ namespace tdi {
 namespace {
 
 constexpr char kUsage[] =
-    R"USAGE(usage: -p4c_conf_file=/path/to/bf-p4c/output/program.conf -tdi_pipeline_config_binary_file=$PWD/bf-pipeline.pb.bin
+    R"USAGE(usage: -p4c_conf_file=/path/to/p4c/output/program.conf -tdi_pipeline_config_binary_file=$PWD/tdi-pipeline.pb.bin
 
 This program assembles a Stratum-tdi pipeline protobuf message from the output
 of the P4 compiler. The resulting message can be pushed to Stratum in the
