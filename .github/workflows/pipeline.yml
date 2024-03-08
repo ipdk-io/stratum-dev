@@ -29,9 +29,9 @@ env:
 
 jobs:
   #---------------------------------------------------------------------
-  # check_stratum_dpdk
+  # dpdk_build_and_test
   #---------------------------------------------------------------------
-  check_stratum_dpdk:
+  dpdk_build_and_test:
     runs-on: ubuntu-20.04
 
     steps:
@@ -42,9 +42,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "~/.cache/bazel"
-          key: bazel-${{ runner.os }}-build-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
+          key: bazel-${{ runner.os }}-dpdk_build-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
           restore-keys: |
-            bazel-${{ runner.os }}-build-
+            bazel-${{ runner.os }}-dpdk_build-
 
       - name: Fetch DPDK SDE
         uses: robinraju/release-downloader@v1.9
@@ -95,7 +95,7 @@ jobs:
           bazel test //stratum/hal/lib/bcm/...
 
   #---------------------------------------------------------------------
-  # cdlang_tests
+  # cdlang_tests (gNMI)
   #---------------------------------------------------------------------
   cdlang_tests:
     runs-on: ubuntu-20.04
