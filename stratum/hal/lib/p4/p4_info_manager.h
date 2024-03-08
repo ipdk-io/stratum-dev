@@ -105,10 +105,10 @@ class P4InfoManager {
   virtual ::util::StatusOr<const ::p4::config::v1::DirectMeter>
   FindDirectMeterByName(const std::string& meter_name) const;
 
-  virtual ::util::StatusOr<const ::idpf::PacketModMeter>
-  FindPktModMeterByID(uint32 meter_id) const;
-  virtual ::util::StatusOr<const ::idpf::PacketModMeter>
-  FindPktModMeterByName(const std::string& meter_name) const;
+  virtual ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
+      uint32 meter_id) const;
+  virtual ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByName(
+      const std::string& meter_name) const;
 
   virtual ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByID(uint32 meter_id) const;
@@ -308,8 +308,7 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::Meter> meter_map_;
   P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
   P4ResourceMap<::idpf::PacketModMeter> pkt_mod_meter_map_;
-  P4ResourceMap<::idpf::DirectPacketModMeter>
-      direct_pkt_mod_meter_map_;
+  P4ResourceMap<::idpf::DirectPacketModMeter> direct_pkt_mod_meter_map_;
   P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
   P4ResourceMap<::p4::config::v1::Register> register_map_;
   P4ResourceMap<::p4::config::v1::Digest> digest_map_;
@@ -321,8 +320,7 @@ class P4InfoManager {
       all_resource_names_;
   absl::flat_hash_map<uint32, std::string> id_to_resource_type_map_;
 
-  google::protobuf::RepeatedPtrField<::idpf::PacketModMeter>
-      all_meter_objects_;
+  google::protobuf::RepeatedPtrField<::idpf::PacketModMeter> all_meter_objects_;
   google::protobuf::RepeatedPtrField<::idpf::DirectPacketModMeter>
       direct_meter_objects_;
 };
