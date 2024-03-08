@@ -41,10 +41,7 @@ jobs:
       - name: Mount bazel cache
         uses: actions/cache@v2
         with:
-          # See https://docs.bazel.build/versions/master/output_directories.html
           path: "~/.cache/bazel"
-          # Create a new cache entry whenever Bazel files change.
-          # See https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows
           key: bazel-${{ runner.os }}-build-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
           restore-keys: |
             bazel-${{ runner.os }}-build-
@@ -80,15 +77,20 @@ jobs:
     steps:
       - name: Clone stratum repository
         uses: actions/checkout@v4
+
+      - name: Mount bazel cache
+        uses: actions/cache@v2
         with:
-          path: stratum
+          path: "~/.cache/bazel"
+          key: bazel-${{ runner.os }}-bcm-tests-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-bcm-tests-
 
       - name: Install prerequisites
         run: |
           sudo apt install libelf-dev
 
       - name: Run unit tests
-        working-directory: stratum
         run: |
           bazel test //stratum/hal/lib/bcm/...
 
