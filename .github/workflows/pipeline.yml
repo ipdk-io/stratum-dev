@@ -29,16 +29,22 @@ env:
 
 jobs:
   #---------------------------------------------------------------------
-  # check_stratum_dpdk
+  # dpdk_build_and_test
   #---------------------------------------------------------------------
-  check_stratum_dpdk:
+  dpdk_build_and_test:
     runs-on: ubuntu-20.04
 
     steps:
       - name: Clone stratum repository
         uses: actions/checkout@v4
+
+      - name: Mount bazel cache
+        uses: actions/cache@v2
         with:
-          path: stratum
+          path: "~/.cache/bazel"
+          key: bazel-${{ runner.os }}-dpdk_build-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-dpdk_build-
 
       - name: Fetch DPDK SDE
         uses: robinraju/release-downloader@v1.9
@@ -53,13 +59,11 @@ jobs:
           rm $SDE_FILENAME
 
       - name: Build Stratum DPDK
-        working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
           bazel build //stratum/hal/bin/tdi/dpdk:stratum_dpdk --define target=dpdk
 
       - name: Run DPDK unit tests
-        working-directory: stratum
         run: |
           export SDE_INSTALL=$SDE_INSTALL_DIR
           xargs -a .github/dpdk-tests.txt bazel test --define target=dpdk --test_tag_filters=-broken,-flaky
@@ -73,20 +77,25 @@ jobs:
     steps:
       - name: Clone stratum repository
         uses: actions/checkout@v4
+
+      - name: Mount bazel cache
+        uses: actions/cache@v2
         with:
-          path: stratum
+          path: "~/.cache/bazel"
+          key: bazel-${{ runner.os }}-bcm-tests-${{ hashFiles('WORKSPACE', '**/*.bzl', '**/BUILD') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-bcm-tests-
 
       - name: Install prerequisites
         run: |
           sudo apt install libelf-dev
 
       - name: Run unit tests
-        working-directory: stratum
         run: |
           bazel test //stratum/hal/lib/bcm/...
 
   #---------------------------------------------------------------------
-  # cdlang_tests
+  # cdlang_tests (gNMI)
   #---------------------------------------------------------------------
   cdlang_tests:
     runs-on: ubuntu-20.04
