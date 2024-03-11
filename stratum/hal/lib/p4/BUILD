@@ -79,7 +79,6 @@ stratum_cc_test(
         "//stratum/public/proto:p4_annotation_cc_proto",
         "//stratum/public/proto:p4_table_defs_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
