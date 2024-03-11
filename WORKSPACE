@@ -37,7 +37,8 @@ git_repository(
     patch_cmds = ["mv proto/* ."],  # Workaround since strip_prefix is broken.
     # tag: 2023.11.0 (3-Oct-2023)
     # descended from v1.4.0-rc.5 (23-Mar-2020)
-    commit = "40e36a3fdef7781f090436e6c5739768b7be05f8",
+    # replaced with SHA from pending PR
+    commit = "7464b4b4db7bb00e442084af4e3ee7e35fd52213",
 )
 
 # ---------------------------------------------------------------------------

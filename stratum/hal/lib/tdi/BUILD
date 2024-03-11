@@ -307,6 +307,7 @@ stratum_cc_library(
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",

@@ -69,22 +69,20 @@ class P4InfoManagerMock : public P4InfoManager {
                          const std::string& meter_name));
 
   // FindPktModMeter
-  MOCK_CONST_METHOD1(FindPktModMeterByID,
-                     ::util::StatusOr<const ::p4::config::v1::PacketModMeter>(
-                         uint32 meter_id));
+  MOCK_CONST_METHOD1(
+      FindPktModMeterByID,
+      ::util::StatusOr<const ::idpf::PacketModMeter>(uint32 meter_id));
   MOCK_CONST_METHOD1(FindPktModMeterByName,
-                     ::util::StatusOr<const ::p4::config::v1::PacketModMeter>(
+                     ::util::StatusOr<const ::idpf::PacketModMeter>(
                          const std::string& meter_name));
 
   // FindDirectPktModMeter
   MOCK_CONST_METHOD1(
       FindDirectPktModMeterByID,
-      ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>(
-          uint32 meter_id));
-  MOCK_CONST_METHOD1(
-      FindDirectPktModMeterByName,
-      ::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>(
-          const std::string& meter_name));
+      ::util::StatusOr<const ::idpf::DirectPacketModMeter>(uint32 meter_id));
+  MOCK_CONST_METHOD1(FindDirectPktModMeterByName,
+                     ::util::StatusOr<const ::idpf::DirectPacketModMeter>(
+                         const std::string& meter_name));
 
   // FindValueSet
   MOCK_CONST_METHOD1(
