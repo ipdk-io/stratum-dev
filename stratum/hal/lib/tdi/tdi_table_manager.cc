@@ -900,8 +900,7 @@ TdiTableManager::ReadDirectMeterEntry(
       result.mutable_config()->set_pir(static_cast<int64>(pir));
       result.mutable_config()->set_pburst(static_cast<int64>(pburst));
     }
-    if (resource_type == "DirectPacketModMeter" &&
-        table_entry.has_meter_config()) {
+    if (resource_type == "DirectPacketModMeter") {
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
