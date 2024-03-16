@@ -102,10 +102,10 @@ P4InfoManager::~P4InfoManager() {}
     for (const auto& p4extern : p4_info_.externs()) {
       switch (p4extern.extern_type_id()) {
         case ::p4::config::v1::P4Ids_Prefix_PACKET_MOD_METER:
-          InitDirectPacketModMeters(p4extern);
+          InitPacketModMeters(p4extern);
           break;
         case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
-          InitPacketModMeters(p4extern);
+          InitDirectPacketModMeters(p4extern);
           break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
