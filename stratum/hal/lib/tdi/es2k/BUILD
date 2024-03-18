@@ -104,24 +104,12 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_sde_meter",
-    srcs = [
-        "es2k_sde_meter.cc",
-        "es2k_sde_wrapper.cc",
-    ],
-    hdrs = ["es2k_sde_wrapper.h"],
+    srcs = ["es2k_sde_meter.cc"],
     deps = [
-        ":es2k_port_manager",
+        ":es2k_sde_wrapper",
         "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
-        "//stratum/glue/gtl:map_util",
         "//stratum/glue/status",
-        "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/tdi:tdi_constants",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
-        "//stratum/lib:constants",
-        "//stratum/lib:utils",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/cleanup",
         "@local_es2k_bin//:es2k_sde",
     ],
 )

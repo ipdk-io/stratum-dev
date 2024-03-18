@@ -3,28 +3,17 @@
 
 // ES2K-specific PktModMeter methods.
 
-#include <stddef.h>
 #include <stdint.h>
 
-#include <algorithm>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "absl/synchronization/mutex.h"
-#include "absl/types/optional.h"
-#include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_sde_wrapper.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
-#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
-#include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
 #include "stratum/hal/lib/tdi/tdi_sde_wrapper.h"
-#include "stratum/lib/macros.h"
-#include "stratum/public/proto/error.pb.h"
 
 namespace stratum {
 namespace hal {

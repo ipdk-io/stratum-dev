@@ -178,7 +178,7 @@ void Es2kSdeWrapper::PktIoTxCallback(
   pkts_info.pkt_len[0] = buffer.size();
   pkts_info.pkt_data[0] = pkt_buf;
 
-  ops->setValue(static_cast<const tdi_operations_field_type_e>(
+  ops->setValue(static_cast<tdi_operations_field_type_e>(
                     TDI_RT_OPERATIONS_TX_PKT_FIELD_TYPE_PKTS_INFO),
                 reinterpret_cast<uint64_t>(&pkts_info));
 
