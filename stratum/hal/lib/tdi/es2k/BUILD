@@ -319,6 +319,17 @@ stratum_cc_test(
     ],
 )
 
+stratum_cc_test(
+    name = "es2k_tdi_status_test",
+    srcs = ["es2k_tdi_status_test.cc"],
+    deps = [
+        ":test_main",
+        "//stratum/hal/lib/tdi:tdi_bf_status",
+        "@com_google_googletest//:gtest",
+        "@local_es2k_bin//:es2k_hdrs",
+    ],
+)
+
 stratum_cc_library(
     name = "test_main",
     testonly = 1,
