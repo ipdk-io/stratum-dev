@@ -2,8 +2,8 @@
 // Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_
-#define STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_
+#ifndef STRATUM_HAL_LIB_TDI_TDI_STATUS_H_
+#define STRATUM_HAL_LIB_TDI_TDI_STATUS_H_
 
 extern "C" {
 #include "tdi/common/tdi_defs.h"
@@ -104,4 +104,4 @@ class TdiStatus {
 }  // namespace hal
 }  // namespace stratum
 
-#endif  // STRATUM_HAL_LIB_TDI_TDI_BF_STATUS_H_
+#endif  // STRATUM_HAL_LIB_TDI_TDI_STATUS_H_

@@ -13,7 +13,7 @@
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {
