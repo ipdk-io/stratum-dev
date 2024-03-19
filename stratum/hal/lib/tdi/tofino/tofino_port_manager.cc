@@ -25,7 +25,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
 

@@ -3,7 +3,7 @@
 
 #include "bf_types/bf_types.h"
 #include "gtest/gtest.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 
 namespace stratum {
 namespace hal {
