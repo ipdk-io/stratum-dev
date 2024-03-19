@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // adapted from ipdk_switch_test, which was
@@ -149,19 +149,16 @@ TEST_F(Es2kSwitchTest, ShutdownFailsWhenSomeManagerShutdownFails) {
   EXPECT_THAT(switch_->Shutdown(), DerivedFromStatus(DefaultError()));
 }
 
-#if 0
 // Chassis config pushed successfully.
 // PushForwardingPipelineConfig() should propagate the config.
-TEST_F(Es2kSwitchTest, PushForwardingPipelineConfigSucceeds) {
+TEST_F(Es2kSwitchTest, DISABLED_PushForwardingPipelineConfigSucceeds) {
   PushChassisConfigSuccessfully();
 
   ::p4::v1::ForwardingPipelineConfig config;
-  EXPECT_CALL(*node_mock_,
-              PushForwardingPipelineConfig(EqualsProto(config)))
+  EXPECT_CALL(*node_mock_, PushForwardingPipelineConfig(EqualsProto(config)))
       .WillOnce(Return(::util::OkStatus()));
   EXPECT_OK(switch_->PushForwardingPipelineConfig(kNodeId, config));
 }
-#endif
 
 // When Es2kSwitchTest fails to push a forwarding config during
 // PushForwardingPipelineConfig(), it should fail immediately.
@@ -196,6 +193,7 @@ TEST_F(Es2kSwitchTest, RegisterEventNotifyWriterTest) {
 
   // Successful Es2kChassisManager registration.
   EXPECT_OK(switch_->RegisterEventNotifyWriter(writer));
+
   // Failed Es2kChassisManager registration.
   EXPECT_THAT(switch_->RegisterEventNotifyWriter(writer),
               DerivedFromStatus(DefaultError()));
