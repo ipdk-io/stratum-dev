@@ -71,8 +71,8 @@ stratum_cc_library(
     name = "tdi_sde_wrapper_interface",
     hdrs = ["tdi_sde_wrapper.h"],
     deps = [
-        ":tdi_bf_status",
         ":tdi_sde_interface",
+        ":tdi_status",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -104,9 +104,8 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "tdi_bf_status",
-    hdrs = ["tdi_bf_status.h"],
-    # tdi_bf_status.h depends on bf_types
+    name = "tdi_status",
+    hdrs = ["tdi_status.h"],
     deps = [
         "//stratum/lib:macros",
     ] + target_sdk_headers,
@@ -128,12 +127,12 @@ stratum_cc_library(
         "tdi_sde_wrapper.cc",
     ],
     deps = [
-        ":tdi_bf_status",
         ":tdi_constants",
         ":tdi_id_mapper",
         ":tdi_sde_flags",
         ":tdi_sde_headers",
         ":tdi_sde_wrapper_interface",
+        ":tdi_status",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -345,10 +344,10 @@ stratum_cc_library(
         "tdi_sde_utils.h",
     ],
     deps = [
-        ":tdi_bf_status",
         ":tdi_cc_proto",
         ":tdi_constants",
         ":tdi_sde_interface",
+        ":tdi_status",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
