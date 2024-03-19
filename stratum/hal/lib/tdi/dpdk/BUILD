@@ -294,6 +294,17 @@ stratum_cc_test(
 )
 
 stratum_cc_test(
+    name = "dpdk_tdi_status_test",
+    srcs = ["dpdk_tdi_status_test.cc"],
+    deps = [
+        ":test_main",
+        "//stratum/hal/lib/tdi:tdi_bf_status",
+        "@com_google_googletest//:gtest",
+        "@local_dpdk_bin//:dpdk_hdrs",
+    ],
+)
+
+stratum_cc_test(
     name = "dpdk_switch_test",
     srcs = [
         "dpdk_switch_test.cc",
