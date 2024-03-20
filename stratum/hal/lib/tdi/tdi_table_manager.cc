@@ -934,15 +934,15 @@ TdiTableManager::ReadDirectMeterEntry(
           ->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
       result.mutable_counter_data()->mutable_green()->set_byte_count(
           static_cast<int64>(cfg.greenBytes));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
+      result.mutable_counter_data()->mutable_green()->set_packet_count(
           static_cast<int64>(cfg.greenPackets));
       result.mutable_counter_data()->mutable_yellow()->set_byte_count(
           static_cast<int64>(cfg.yellowBytes));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
+      result.mutable_counter_data()->mutable_yellow()->set_packet_count(
           static_cast<int64>(cfg.yellowPackets));
       result.mutable_counter_data()->mutable_red()->set_byte_count(
           static_cast<int64>(cfg.redBytes));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
+      result.mutable_counter_data()->mutable_red()->set_packet_count(
           static_cast<int64>(cfg.redPackets));
     }
   }
