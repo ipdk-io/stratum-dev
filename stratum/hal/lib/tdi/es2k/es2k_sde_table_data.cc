@@ -36,18 +36,16 @@ using namespace stratum::hal::tdi::helpers;
         SetField(table_data_.get(), kEs2kMeterPirKbpsUnit, cfg.pir_unit));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbitsUnit,
                              cfg.pburst_unit));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCirKbps,
-                             cfg.cir));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCommitedBurstKbits,
-                             cfg.cburst));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPirKbps,
-                             cfg.pir));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             cfg.pburst));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             cfg.pburst));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPeakBurstKbits,
-                             cfg.pburst));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterCirKbps, cfg.cir));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kEs2kMeterCommitedBurstKbits, cfg.cburst));
+    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterPirKbps, cfg.pir));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kEs2kMeterPeakBurstKbits, cfg.pburst));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kEs2kMeterPeakBurstKbits, cfg.pburst));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kEs2kMeterPeakBurstKbits, cfg.pburst));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterGreenCounterBytes,
                              cfg.greenBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterGreenCounterPackets,
@@ -56,8 +54,8 @@ using namespace stratum::hal::tdi::helpers;
                              cfg.yellowBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterYellowCounterPackets,
                              cfg.yellowPackets));
-    RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterRedCounterBytes,
-                             cfg.redBytes));
+    RETURN_IF_ERROR(
+        SetField(table_data_.get(), kEs2kMeterRedCounterBytes, cfg.redBytes));
     RETURN_IF_ERROR(SetField(table_data_.get(), kEs2kMeterRedCounterPackets,
                              cfg.redPackets));
   }

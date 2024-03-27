@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
@@ -171,20 +171,23 @@ Es2kSwitch::~Es2kSwitch() {}
 
 ::util::Status Es2kSwitch::RegisterEventNotifyWriter(
     std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) {
-  // Gnmi Publisher calls only the switch interface's RegisterEventNotifyWriter
-  // and has no visibility to IPsec Manager. Registering both Chassis Manager
-  // & IPsecManager's gNMI event writers & returning combined status
-  auto rc1 = chassis_manager_->RegisterEventNotifyWriter(writer);
-  auto rc2 = ipsec_manager_->RegisterEventNotifyWriter(writer);
-  if (rc1 == ::util::OkStatus() && rc2 == ::util::OkStatus()) {
-    return ::util::OkStatus();
-  } else {
-    return MAKE_ERROR(ERR_INTERNAL) << " Cannot register gNMI event writers";
-  }
+  auto status = chassis_manager_->RegisterEventNotifyWriter(writer);
+  if (!status.ok()) return status;
+  return ipsec_manager_->RegisterEventNotifyWriter(writer);
+  // TODO(dgf): Unregister chassis_manager event writer if ipsec_manager
+  //            registration fails?
+  //   auto rc2 = ipsec_manager_->RegisterEventNotifyWriter(writer);
+  //   if (!rc2.ok()) chassis_manager_->UnregisterEventNotifyWriter();
+  //   return rc2;
 }
 
 ::util::Status Es2kSwitch::UnregisterEventNotifyWriter() {
   return chassis_manager_->UnregisterEventNotifyWriter();
+  // TODO(dgf): Unregister ipsec_manager event writer as well?
+  //            Unregister both and then return status?
+  //   auto rc1 = chassis_manager_->UnregisterEventNotifyWriter();
+  //   auto rc2 = ipsec_manager_->UnregisterEventNotifyWriter();
+  //   return !rc1.ok() ? rc1 : rc2;
 }
 
 ::util::Status Es2kSwitch::RetrieveValue(uint64 node_id,

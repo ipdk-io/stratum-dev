@@ -13,6 +13,7 @@
 #include "absl/strings/strip.h"
 #include "absl/strings/substitute.h"
 #include "gflags/gflags.h"
+#include "idpf/p4info.pb.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/gtl/map_util.h"
 #include "stratum/lib/macros.h"
@@ -101,10 +102,10 @@ P4InfoManager::~P4InfoManager() {}
     for (const auto& p4extern : p4_info_.externs()) {
       switch (p4extern.extern_type_id()) {
         case ::p4::config::v1::P4Ids_Prefix_PACKET_MOD_METER:
-          InitDirectPacketModMeters(p4extern);
+          InitPacketModMeters(p4extern);
           break;
         case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
-          InitPacketModMeters(p4extern);
+          InitDirectPacketModMeters(p4extern);
           break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
@@ -126,7 +127,7 @@ void P4InfoManager::InitDirectPacketModMeters(
       std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
                 std::placeholders::_2);
   for (const auto& extern_instance : extern_instances) {
-    p4::config::v1::DirectPacketModMeter direct_pkt_mod_meter;
+    ::idpf::DirectPacketModMeter direct_pkt_mod_meter;
     *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
     p4::config::v1::MeterSpec meter_spec;
     meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
@@ -143,7 +144,7 @@ void P4InfoManager::InitPacketModMeters(
       std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
                 std::placeholders::_2);
   for (const auto& extern_instance : extern_instances) {
-    p4::config::v1::PacketModMeter pkt_mod_meter;
+    ::idpf::PacketModMeter pkt_mod_meter;
     *pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
     p4::config::v1::MeterSpec meter_spec;
     meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
@@ -233,23 +234,23 @@ P4InfoManager::FindDirectMeterByName(const std::string& meter_name) const {
 }
 
 // FindPktModMeter
-::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+::util::StatusOr<const ::idpf::PacketModMeter>
 P4InfoManager::FindPktModMeterByID(uint32 meter_id) const {
   return pkt_mod_meter_map_.FindByID(meter_id);
 }
 
-::util::StatusOr<const ::p4::config::v1::PacketModMeter>
+::util::StatusOr<const ::idpf::PacketModMeter>
 P4InfoManager::FindPktModMeterByName(const std::string& meter_name) const {
   return pkt_mod_meter_map_.FindByName(meter_name);
 }
 
 // FindDirectPktModMeter
-::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+::util::StatusOr<const ::idpf::DirectPacketModMeter>
 P4InfoManager::FindDirectPktModMeterByID(uint32 meter_id) const {
   return direct_pkt_mod_meter_map_.FindByID(meter_id);
 }
 
-::util::StatusOr<const ::p4::config::v1::DirectPacketModMeter>
+::util::StatusOr<const ::idpf::DirectPacketModMeter>
 P4InfoManager::FindDirectPktModMeterByName(
     const std::string& meter_name) const {
   return direct_pkt_mod_meter_map_.FindByName(meter_name);

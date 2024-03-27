@@ -28,10 +28,10 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/utils.h"
 

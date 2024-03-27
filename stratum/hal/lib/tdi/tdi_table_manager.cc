@@ -13,6 +13,7 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
+#include "idpf/p4info.pb.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
@@ -899,8 +900,7 @@ TdiTableManager::ReadDirectMeterEntry(
       result.mutable_config()->set_pir(static_cast<int64>(pir));
       result.mutable_config()->set_pburst(static_cast<int64>(pburst));
     }
-    if (resource_type == "DirectPacketModMeter" &&
-        table_entry.has_meter_config()) {
+    if (resource_type == "DirectPacketModMeter") {
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
@@ -934,15 +934,15 @@ TdiTableManager::ReadDirectMeterEntry(
           ->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
       result.mutable_counter_data()->mutable_green()->set_byte_count(
           static_cast<int64>(cfg.greenBytes));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
+      result.mutable_counter_data()->mutable_green()->set_packet_count(
           static_cast<int64>(cfg.greenPackets));
       result.mutable_counter_data()->mutable_yellow()->set_byte_count(
           static_cast<int64>(cfg.yellowBytes));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
+      result.mutable_counter_data()->mutable_yellow()->set_packet_count(
           static_cast<int64>(cfg.yellowPackets));
       result.mutable_counter_data()->mutable_red()->set_byte_count(
           static_cast<int64>(cfg.redBytes));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
+      result.mutable_counter_data()->mutable_red()->set_packet_count(
           static_cast<int64>(cfg.redPackets));
     }
   }
@@ -1032,7 +1032,7 @@ TdiTableManager::ReadDirectMeterEntry(
 }
 
 static ::util::Status GetPktModMeterUnitsInPackets(
-    const ::p4::config::v1::PacketModMeter& meter, bool& result) {
+    const ::idpf::PacketModMeter& meter, bool& result) {
   switch (meter.spec().unit()) {
     case ::p4::config::v1::MeterSpec::BYTES:
       result = false;
@@ -1112,7 +1112,7 @@ static ::util::Status GetPktModMeterUnitsInPackets(
     bool pkt_mod_meter_units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
-      p4::config::v1::PacketModMeter meter;
+      ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
       RETURN_IF_ERROR(
@@ -1272,7 +1272,7 @@ static ::util::Status SetPktModMeterConfig(
     bool pkt_mod_meter_units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
-      p4::config::v1::PacketModMeter meter;
+      ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
       RETURN_IF_ERROR(

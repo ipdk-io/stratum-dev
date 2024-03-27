@@ -20,9 +20,9 @@
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/utils.h"
 
 extern "C" {

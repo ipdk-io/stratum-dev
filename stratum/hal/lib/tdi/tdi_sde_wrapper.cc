@@ -21,10 +21,10 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/tdi/tdi_bf_status.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_helpers.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
 
 DEFINE_string(tdi_sde_config_dir, "/var/run/stratum/tdi_config",
