@@ -67,13 +67,13 @@ using namespace stratum::hal::tdi::helpers;
                                         flags, *real_table_key->table_key_,
                                         *real_table_data->table_data_);
   if (status == TDI_ALREADY_EXISTS) {
-    return MAKE_ERROR(::util::error::Code::ALREADY_EXISTS)
+    return MAKE_ERROR(::util::error::Code::ALREADY_EXISTS).without_logging()
            << "Duplicate table entry with " << dump_args();
   } else if (status == TDI_NO_SPACE) {
-    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
+    return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED).without_logging()
            << "Table is already full. No space for " << dump_args();
   } else if (status != TDI_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::INTERNAL).without_logging()
            << "Error adding table entry with " << dump_args();
   }
 

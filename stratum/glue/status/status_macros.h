@@ -404,6 +404,19 @@ class UtilStatusConvertibleToBool {
     }                                                                        \
   } while (0)
 
+// Same functionality as RETURN_IF_ERROR, but without logging any messages
+//
+// Example:
+//   RETURN_IF_ERROR_WITHOUT_LOGGING(DoThings(4));
+#define RETURN_IF_ERROR_WITHOUT_LOGGING(expr)                                                \
+  do {                                                                       \
+    /* Using _status below to avoid capture problems if expr is "status". */ \
+    const ::util::Status _status = (expr);                                   \
+    if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
+      return _status;                                                        \
+    }                                                                        \
+  } while (0)
+
 // This is like RETURN_IF_ERROR, but instead of propagating the existing error
 // Status, it constructs a new Status and can append additional messages.
 //
