@@ -408,7 +408,7 @@ class UtilStatusConvertibleToBool {
 //
 // Example:
 //   RETURN_IF_ERROR_WITHOUT_LOGGING(DoThings(4));
-#define RETURN_IF_ERROR_WITHOUT_LOGGING(expr)                                                \
+#define RETURN_IF_ERROR_WITHOUT_LOGGING(expr)                                \
   do {                                                                       \
     /* Using _status below to avoid capture problems if expr is "status". */ \
     const ::util::Status _status = (expr);                                   \
