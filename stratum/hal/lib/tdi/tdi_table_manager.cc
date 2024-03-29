@@ -330,15 +330,15 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
     switch (type) {
       case ::p4::v1::Update::INSERT:
-        RETURN_IF_ERROR(tdi_sde_interface_->InsertTableEntry(
+        RETURN_IF_ERROR_WITHOUT_LOGGING(tdi_sde_interface_->InsertTableEntry(
             device_, session, table_id, table_key.get(), table_data.get()));
         break;
       case ::p4::v1::Update::MODIFY:
-        RETURN_IF_ERROR(tdi_sde_interface_->ModifyTableEntry(
+        RETURN_IF_ERROR_WITHOUT_LOGGING(tdi_sde_interface_->ModifyTableEntry(
             device_, session, table_id, table_key.get(), table_data.get()));
         break;
       case ::p4::v1::Update::DELETE:
-        RETURN_IF_ERROR(tdi_sde_interface_->DeleteTableEntry(
+        RETURN_IF_ERROR_WITHOUT_LOGGING(tdi_sde_interface_->DeleteTableEntry(
             device_, session, table_id, table_key.get()));
         break;
       default:
