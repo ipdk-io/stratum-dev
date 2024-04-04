@@ -148,10 +148,10 @@ using namespace stratum::hal::tdi::helpers;
                                         flags, *real_table_key->table_key_);
 
   if (status == TDI_OBJECT_NOT_FOUND) {
-    return MAKE_ERROR(::util::error::Code::NOT_FOUND)
+    return MAKE_ERROR(::util::error::Code::NOT_FOUND).without_logging()
            << "No matching table entry with " << dump_args();
   } else if (status != TDI_SUCCESS) {
-    return MAKE_ERROR(::util::error::Code::INTERNAL)
+    return MAKE_ERROR(::util::error::Code::INTERNAL).without_logging()
            << "Error deleting table entry with " << dump_args();
   }
 
@@ -171,16 +171,25 @@ using namespace stratum::hal::tdi::helpers;
   RET_CHECK(real_table_data);
   const ::tdi::Table* table;
   RETURN_IF_TDI_ERROR(tdi_info_->tableFromIdGet(table_id, &table));
-
   const ::tdi::Device* device = nullptr;
   ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
   std::unique_ptr<::tdi::Target> dev_tgt;
   device->createTarget(&dev_tgt);
 
   const auto flags = ::tdi::Flags(0);
-  RETURN_IF_TDI_ERROR(table->entryGet(*real_session->tdi_session_, *dev_tgt,
-                                      flags, *real_table_key->table_key_,
-                                      real_table_data->table_data_.get()));
+  tdi_status_t status = table->entryGet(*real_session->tdi_session_, *dev_tgt,
+                                        flags, *real_table_key->table_key_,
+                                        real_table_data->table_data_.get());
+
+  if (status == TDI_TABLE_NOT_FOUND || status == TDI_OBJECT_NOT_FOUND) {
+    return MAKE_ERROR(::util::error::Code::NOT_FOUND).without_logging()
+           << "No matching table entry";
+  } else if (status != TDI_SUCCESS) {
+    TdiStatus ret(status);
+    return MAKE_ERROR(ret.error_code()).without_logging()
+           << "Error getting table entry";
+  }
+
   return ::util::OkStatus();
 }
 
