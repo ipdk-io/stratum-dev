@@ -535,7 +535,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
   RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITHOUT_LOGGING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
   ASSIGN_OR_RETURN(
       ::p4::v1::TableEntry result,
