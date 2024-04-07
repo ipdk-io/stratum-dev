@@ -20,13 +20,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-constexpr absl::Duration Es2kPortManager::kWriteTimeout;
-constexpr int32 Es2kPortManager::kBfDefaultMtu;
-
 Es2kPortManager* Es2kPortManager::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex Es2kPortManager::init_lock_(absl::kConstInit);
-
-Es2kPortManager::Es2kPortManager() : port_status_event_writer_(nullptr) {}
 
 Es2kPortManager* Es2kPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
@@ -53,19 +47,6 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
 
 ::util::Status Es2kPortManager::OnPortStatusEvent(int device, int port, bool up,
                                                   absl::Time timestamp) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = std::move(writer);
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
   return ::util::OkStatus();
 }
 

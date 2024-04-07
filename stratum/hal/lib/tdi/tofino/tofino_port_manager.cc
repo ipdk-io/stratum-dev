@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Tofino-specific SDE port methods.
@@ -41,13 +41,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-constexpr absl::Duration TofinoPortManager::kWriteTimeout;
-constexpr int32 TofinoPortManager::kBfDefaultMtu;
-
 TofinoPortManager* TofinoPortManager::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex TofinoPortManager::init_lock_(absl::kConstInit);
-
-TofinoPortManager::TofinoPortManager() : port_status_event_writer_(nullptr) {}
 
 namespace {
 
@@ -215,12 +209,6 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
   port_status_event_writer_ = std::move(writer);
   RETURN_IF_TDI_ERROR(
       bf_pal_port_status_notif_reg(sde_port_status_callback, nullptr));
-  return ::util::OkStatus();
-}
-
-::util::Status TofinoPortManager::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
   return ::util::OkStatus();
 }
 
