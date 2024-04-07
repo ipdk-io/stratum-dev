@@ -19,6 +19,6 @@ target_link_libraries(p4_pipeline_pusher PUBLIC
     $<TARGET_OBJECTS:p4runtime_session_o>
 )
 
-target_link_libraries(p4_pipeline_pusher PUBLIC p4_role_config)
+target_link_libraries(p4_pipeline_pusher PUBLIC p4_role_config_proto)
 
 install(TARGETS p4_pipeline_pusher RUNTIME)
