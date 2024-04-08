@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Dummy implementation of ES2K Port Manager.
@@ -101,20 +101,6 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return true; }
 ::util::StatusOr<uint32> Es2kPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
   return 43;
-}
-
-::util::StatusOr<int> Es2kPortManager::GetPcieCpuPort(int device) {
-  return 1776;
-}
-
-::util::Status Es2kPortManager::SetTmCpuPort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::SetDeflectOnDropDestination(int device,
-                                                            int port,
-                                                            int queue) {
-  return ::util::OkStatus();
 }
 
 }  // namespace tdi

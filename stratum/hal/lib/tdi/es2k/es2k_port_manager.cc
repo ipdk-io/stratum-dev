@@ -206,21 +206,6 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return IPU_SUCCESS; }
   return static_cast<uint32>(dev_port);
 }
 
-::util::StatusOr<int> Es2kPortManager::GetPcieCpuPort(int device) {
-  int port = 0;
-  return port;
-}
-
-::util::Status Es2kPortManager::SetTmCpuPort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::SetDeflectOnDropDestination(int device,
-                                                            int port,
-                                                            int queue) {
-  return ::util::OkStatus();
-}
-
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

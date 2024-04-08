@@ -51,10 +51,6 @@ class Es2kPortManager : public TdiPortManager {
   virtual ::util::Status SetPortMtu(int device, int port, int32 mtu);
   virtual ::util::Status SetPortLoopbackMode(int uint, int port,
                                              LoopbackState loopback_mode);
-  virtual ::util::StatusOr<int> GetPcieCpuPort(int device);
-  virtual ::util::Status SetTmCpuPort(int device, int port);
-  virtual ::util::Status SetDeflectOnDropDestination(int device, int port,
-                                                     int queue);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
