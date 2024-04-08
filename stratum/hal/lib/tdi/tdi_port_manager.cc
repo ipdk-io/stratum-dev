@@ -4,8 +4,8 @@
 
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 
-#include "absl/time/time.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/lib/channel/channel.h"
 
