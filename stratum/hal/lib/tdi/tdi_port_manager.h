@@ -81,9 +81,6 @@ class TdiPortManager {
   // Timeout for Write() operations on port status events.
   static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
 
-  // Default MTU for ports on ES2K.
-  static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
-
   // RW Mutex to protect the port status writer.
   mutable absl::Mutex port_status_event_writer_lock_;
 

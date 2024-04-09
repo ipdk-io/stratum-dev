@@ -75,6 +75,9 @@ class TofinoPortManager : public TdiPortManager {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
  protected:
+  // Default MTU for Tofino ports.
+  static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
+
   // The singleton instance.
   static TofinoPortManager* singleton_ GUARDED_BY(init_lock_);
 };

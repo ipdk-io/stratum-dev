@@ -14,7 +14,6 @@ namespace hal {
 namespace tdi {
 
 constexpr absl::Duration TdiPortManager::kWriteTimeout;
-constexpr int32 TdiPortManager::kBfDefaultMtu;
 
 ABSL_CONST_INIT absl::Mutex TdiPortManager::init_lock_(absl::kConstInit);
 

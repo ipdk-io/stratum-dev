@@ -42,6 +42,7 @@ namespace hal {
 namespace tdi {
 
 TofinoPortManager* TofinoPortManager::singleton_ = nullptr;
+constexpr int32 TofinoPortManager::kBfDefaultMtu;
 
 namespace {
 
