@@ -38,4 +38,4 @@ target_include_directories(p4runtime_session_o PUBLIC
     ${PB_OUT_DIR}
 )
 
-target_link_libraries(p4runtime_session_o PUBLIC stratum_proto p4_role_config)
+target_link_libraries(p4runtime_session_o PUBLIC stratum_proto p4_role_config_proto)
