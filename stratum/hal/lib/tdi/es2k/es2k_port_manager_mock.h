@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_PORT_MANAGER_MOCK_H_
@@ -62,13 +62,6 @@ class Es2kPortManagerMock : public Es2kPortManager {
 
   MOCK_METHOD(::util::Status, SetPortLoopbackMode,
               (int uint, int port, LoopbackState loopback_mode), (override));
-
-  MOCK_METHOD(::util::StatusOr<int>, GetPcieCpuPort, (int device), (override));
-
-  MOCK_METHOD(::util::Status, SetTmCpuPort, (int device, int port), (override));
-
-  MOCK_METHOD(::util::Status, SetDeflectOnDropDestination,
-              (int device, int port, int queue), (override));
 };
 
 }  // namespace tdi

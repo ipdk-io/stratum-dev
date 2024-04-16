@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_DPDK_PORT_MANAGER_H_
@@ -55,16 +55,10 @@ class DpdkPortManager : public TdiPortManager {
     QemuHotplugMode qemu_hotplug_mode;
   };
 
-  DpdkPortManager();
+  DpdkPortManager() {}
+  virtual ~DpdkPortManager() {}
 
   // ---------- Common public methods ----------
-
-  ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer)
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-
-  ::util::Status UnregisterPortStatusEventWriter()
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   ::util::Status GetPortInfo(int device, int port,
                              TargetDatapathId* target_dp_id);
@@ -122,28 +116,8 @@ class DpdkPortManager : public TdiPortManager {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
  protected:
-  // RW mutex lock for protecting the singleton instance initialization and
-  // reading it back from other threads. Unlike other singleton classes, we
-  // use RW lock as we need the pointer to class to be returned.
-  static absl::Mutex init_lock_;
-
   // The singleton instance.
   static DpdkPortManager* singleton_ GUARDED_BY(init_lock_);
-
- private:
-  // Timeout for Write() operations on port status events.
-  static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
-
-  // Default MTU for ports.
-  static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
-
-  // RM Mutex to protect the port status writer.
-  mutable absl::Mutex port_status_event_writer_lock_;
-
-  // Writer to forward the port status change message to. It is registered
-  // by chassis manager to receive SDE port status change events.
-  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi
