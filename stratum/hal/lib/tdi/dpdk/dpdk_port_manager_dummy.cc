@@ -16,13 +16,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-constexpr absl::Duration DpdkPortManager::kWriteTimeout;
-constexpr int32 DpdkPortManager::kBfDefaultMtu;
-
 DpdkPortManager* DpdkPortManager::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex DpdkPortManager::init_lock_(absl::kConstInit);
-
-DpdkPortManager::DpdkPortManager() : port_status_event_writer_(nullptr) {}
 
 DpdkPortManager* DpdkPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
@@ -59,19 +53,6 @@ DpdkPortManager* DpdkPortManager::GetSingleton() {
   counters->set_in_errors(89);
   counters->set_out_errors(144);
   counters->set_in_fcs_errors(233);
-  return ::util::OkStatus();
-}
-
-::util::Status DpdkPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = std::move(writer);
-  return ::util::OkStatus();
-}
-
-::util::Status DpdkPortManager::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
   return ::util::OkStatus();
 }
 

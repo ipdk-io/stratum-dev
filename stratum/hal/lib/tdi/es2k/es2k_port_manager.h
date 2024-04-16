@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_PORT_MANAGER_H_
@@ -23,15 +23,10 @@ namespace tdi {
 
 class Es2kPortManager : public TdiPortManager {
  public:
-  Es2kPortManager();
+  Es2kPortManager() {}
+  virtual ~Es2kPortManager() {}
 
   // ---------- Common public methods ----------
-
-  ::util::Status RegisterPortStatusEventWriter(
-      std::unique_ptr<ChannelWriter<PortStatusEvent>> writer)
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
-  ::util::Status UnregisterPortStatusEventWriter()
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   ::util::Status GetPortInfo(int device, int port,
                              TargetDatapathId* target_dp_id);
@@ -56,10 +51,6 @@ class Es2kPortManager : public TdiPortManager {
   virtual ::util::Status SetPortMtu(int device, int port, int32 mtu);
   virtual ::util::Status SetPortLoopbackMode(int uint, int port,
                                              LoopbackState loopback_mode);
-  virtual ::util::StatusOr<int> GetPcieCpuPort(int device);
-  virtual ::util::Status SetTmCpuPort(int device, int port);
-  virtual ::util::Status SetDeflectOnDropDestination(int device, int port,
-                                                     int queue);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
@@ -79,28 +70,8 @@ class Es2kPortManager : public TdiPortManager {
       LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
  protected:
-  // RW mutex lock for protecting the singleton instance initialization and
-  // reading it back from other threads. Unlike other singleton classes, we
-  // use RW lock as we need the pointer to class to be returned.
-  static absl::Mutex init_lock_;
-
   // The singleton instance.
   static Es2kPortManager* singleton_ GUARDED_BY(init_lock_);
-
- private:
-  // Timeout for Write() operations on port status events.
-  static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
-
-  // Default MTU for ports on ES2K.
-  static constexpr int32 kBfDefaultMtu = 10 * 1024;  // 10K
-
-  // RM Mutex to protect the port status writer.
-  mutable absl::Mutex port_status_event_writer_lock_;
-
-  // Writer to forward the port status change message to. It is registered
-  // by chassis manager to receive port status change events.
-  std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

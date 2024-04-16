@@ -20,13 +20,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-constexpr absl::Duration TofinoPortManager::kWriteTimeout;
-constexpr int32 TofinoPortManager::kBfDefaultMtu;
-
 TofinoPortManager* TofinoPortManager::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex TofinoPortManager::init_lock_(absl::kConstInit);
-
-TofinoPortManager::TofinoPortManager() : port_status_event_writer_(nullptr) {}
 
 TofinoPortManager* TofinoPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
@@ -69,19 +63,6 @@ TofinoPortManager* TofinoPortManager::GetSingleton() {
 ::util::Status TofinoPortManager::OnPortStatusEvent(int device, int port,
                                                     bool up,
                                                     absl::Time timestamp) {
-  return ::util::OkStatus();
-}
-
-::util::Status TofinoPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = std::move(writer);
-  return ::util::OkStatus();
-}
-
-::util::Status TofinoPortManager::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
   return ::util::OkStatus();
 }
 

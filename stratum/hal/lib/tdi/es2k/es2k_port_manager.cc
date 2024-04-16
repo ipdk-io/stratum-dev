@@ -1,5 +1,5 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ES2K-specific port methods.
@@ -38,13 +38,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-constexpr absl::Duration Es2kPortManager::kWriteTimeout;
-constexpr int32 Es2kPortManager::kBfDefaultMtu;
-
 Es2kPortManager* Es2kPortManager::singleton_ = nullptr;
-ABSL_CONST_INIT absl::Mutex Es2kPortManager::init_lock_(absl::kConstInit);
-
-Es2kPortManager::Es2kPortManager() : port_status_event_writer_(nullptr) {}
 
 namespace {
 
@@ -120,19 +114,6 @@ Es2kPortManager* Es2kPortManager::GetSingleton() {
     }
     return port_status_event_writer_->Write(event, kWriteTimeout);
   }
-}
-
-::util::Status Es2kPortManager::RegisterPortStatusEventWriter(
-    std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = std::move(writer);
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::UnregisterPortStatusEventWriter() {
-  absl::WriterMutexLock l(&port_status_event_writer_lock_);
-  port_status_event_writer_ = nullptr;
-  return ::util::OkStatus();
 }
 
 ::util::Status Es2kPortManager::GetPortInfo(int device, int port,
@@ -223,21 +204,6 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return IPU_SUCCESS; }
   RETURN_IF_TDI_ERROR(ipu_pal_port_str_to_dev_port_map(
       static_cast<ipu_dev_id_t>(device), port_string, &dev_port));
   return static_cast<uint32>(dev_port);
-}
-
-::util::StatusOr<int> Es2kPortManager::GetPcieCpuPort(int device) {
-  int port = 0;
-  return port;
-}
-
-::util::Status Es2kPortManager::SetTmCpuPort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kPortManager::SetDeflectOnDropDestination(int device,
-                                                            int port,
-                                                            int queue) {
-  return ::util::OkStatus();
 }
 
 }  // namespace tdi
