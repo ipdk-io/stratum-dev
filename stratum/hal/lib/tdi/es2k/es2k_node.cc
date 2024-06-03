@@ -91,7 +91,12 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   }
 
   bool success = true;
-  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+  static bool is_session_created = false;
+  static std::shared_ptr<TdiSdeInterface::SessionInterface> session;
+  if (!is_session_created) {
+    ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+    is_session_created = true;
+  }
   RETURN_IF_ERROR(session->BeginBatch());
   for (const auto& update : req.updates()) {
     ::util::Status status = ::util::OkStatus();
