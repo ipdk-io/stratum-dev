@@ -110,6 +110,9 @@ class Es2kNode : public TdiNode {
   TdiPreManager* tdi_pre_manager_;
   TdiCounterManager* tdi_counter_manager_;
 
+  // Persistent session used by WriteForwardingEntries.
+  std::shared_ptr<TdiSdeInterface::SessionInterface> _forwarding_session;
+
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
   // lifetime of the class.
