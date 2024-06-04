@@ -90,13 +90,13 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
 
-  bool success = true;
-  static bool is_session_created = false;
-  static std::shared_ptr<TdiSdeInterface::SessionInterface> session;
-  if (!is_session_created) {
+  if (!_forwarding_session) {
     ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
-    is_session_created = true;
+    _forwarding_session = session;
   }
+  auto session = _forwarding_session;
+
+  bool success = true;
   RETURN_IF_ERROR(session->BeginBatch());
   for (const auto& update : req.updates()) {
     ::util::Status status = ::util::OkStatus();
@@ -151,7 +151,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
                  << "Unsupported entity type: " << update.ShortDebugString();
         break;
     }
-    success &= status.ok();
+    success &&= status.ok();
     results->push_back(status);
   }
   RETURN_IF_ERROR(session->EndBatch());
