@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_ES2K_NODE_H_
@@ -110,8 +110,8 @@ class Es2kNode : public TdiNode {
   TdiPreManager* tdi_pre_manager_;
   TdiCounterManager* tdi_counter_manager_;
 
-  // Persistent session used by WriteForwardingEntries.
-  std::shared_ptr<TdiSdeInterface::SessionInterface> _forwarding_session;
+  // Persistent TDI session used by WriteForwardingEntries.
+  std::shared_ptr<TdiSdeInterface::SessionInterface> forwarding_session_;
 
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
