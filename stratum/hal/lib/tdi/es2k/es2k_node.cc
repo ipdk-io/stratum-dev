@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_node.h"
@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "absl/memory/memory.h"
+#include "gflags/gflags.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/common/proto_oneof_writer_wrapper.h"
 #include "stratum/hal/lib/common/writer_interface.h"
@@ -21,6 +22,9 @@
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 #include "stratum/public/proto/error.pb.h"
+
+DEFINE_bool(enable_sticky_tdi_session, false,
+            "Use persistent TDI session to write forwarding entries");
 
 namespace stratum {
 namespace hal {
@@ -90,8 +94,20 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
     return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
   }
 
+  std::shared_ptr<TdiSdeInterface::SessionInterface> session;
+  if (!FLAGS_enable_sticky_tdi_session) {
+    // Use transient TDI session.
+    ASSIGN_OR_RETURN(session, tdi_sde_interface_->CreateSession());
+  } else if (forwarding_session_) {
+    // Use persistent TDI session.
+    session = forwarding_session_;
+  } else {
+    // Create persistent TDI session.
+    ASSIGN_OR_RETURN(session, tdi_sde_interface_->CreateSession());
+    forwarding_session_ = session;
+  }
+
   bool success = true;
-  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   RETURN_IF_ERROR(session->BeginBatch());
   for (const auto& update : req.updates()) {
     ::util::Status status = ::util::OkStatus();
