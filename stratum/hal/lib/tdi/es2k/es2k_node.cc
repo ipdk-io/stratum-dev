@@ -152,7 +152,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   RETURN_IF_ERROR(session->EndBatch());
 
   if (!success) {
-    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
+    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more write operations failed.";
   }
 
@@ -275,7 +275,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   }
   RET_CHECK(writer->Write(resp)) << "Write to stream channel failed.";
   if (!success) {
-    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
+    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
   }
   return ::util::OkStatus();
