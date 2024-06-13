@@ -6,6 +6,7 @@ on:
       - split-arch
   pull_request:
     branches:
+      - mev-ts*
       - split-arch
       - stratum-updates
 
