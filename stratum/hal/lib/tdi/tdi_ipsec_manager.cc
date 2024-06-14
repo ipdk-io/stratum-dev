@@ -113,7 +113,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   if (op_type == IPSEC_SADB_CONFIG_OP_ADD_ENTRY) {
     // Convert encryption key from hex to ASCII
     std::string hex_encoded = msg.esp_payload().encryption().key();
-    RETURN_IF_ERROR(ValidateIETFYangHexString(hex_encoded));
+    RETURN_IF_ERROR(ValidateYangHexString(hex_encoded));
 
     std::string ascii_encoded = ConvertEncryptionKeyEncoding(hex_encoded);
     msg.mutable_esp_payload()->mutable_encryption()->set_key(ascii_encoded);

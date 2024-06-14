@@ -272,7 +272,7 @@ std::string Demangle(const char* mangled) {
   return ::util::OkStatus();
 }
 
-::util::Status ValidateIETFYangHexString(std::string input) {
+::util::Status ValidateYangHexString(const std::string& input) {
   const std::regex pattern("^([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})*)$");
   if (regex_match(input, pattern)) {
     return ::util::OkStatus();
