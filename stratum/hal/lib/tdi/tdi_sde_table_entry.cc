@@ -186,8 +186,7 @@ using namespace stratum::hal::tdi::helpers;
            << "No matching table entry";
   } else if (status != TDI_SUCCESS) {
     TdiStatus ret(status);
-    return MAKE_ERROR(ret.error_code())
-           << "Error getting table entry";
+    return MAKE_ERROR(ret.error_code()) << "Error getting table entry";
   }
 
   return ::util::OkStatus();
