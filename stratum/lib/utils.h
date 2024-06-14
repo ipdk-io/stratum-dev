@@ -270,7 +270,7 @@ std::string Demangle(const char* mangled);
 // From YANG definition: A hexadecimal string with octets represented as
 // hex digits separated by colons. The canonical representation uses lowercase
 // characters.   pattern '([0-9a-fA-F]{2}(:[0-9a-fA-F]{2})*)?';
-::util::Status ValidateIETFYangHexString(std::string input);
+::util::Status ValidateYangHexString(const std::string& input);
 
 }  // namespace stratum
 
