@@ -39,12 +39,14 @@ add_subdirectory(stratum)
 function(add_stratum_object_libs _TGT)
     target_sources(${_TGT} PRIVATE
         $<TARGET_OBJECTS:stratum_glue_o>
+        $<TARGET_OBJECTS:stratum_glue_status_o>
         $<TARGET_OBJECTS:stratum_hal_lib_common_o>
         $<TARGET_OBJECTS:stratum_hal_lib_p4_o>
         $<TARGET_OBJECTS:stratum_hal_lib_phal_o>
         $<TARGET_OBJECTS:stratum_lib_o>
         $<TARGET_OBJECTS:stratum_lib_p4runtime_o>
         $<TARGET_OBJECTS:stratum_lib_security_o>
+        $<TARGET_OBJECTS:stratum_lib_utils_o>
         $<TARGET_OBJECTS:stratum_main_o>
         $<TARGET_OBJECTS:stratum_public_lib_o>
         $<TARGET_OBJECTS:stratum_tdi_common_o>
