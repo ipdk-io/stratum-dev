@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Intel Corporation.
+// Copyright 2022-2024 Intel Corporation.
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_ipsec_manager.h"

@@ -1,6 +1,6 @@
 # Build file for //stratum/hal/lib/yang
 #
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -39,5 +39,6 @@ target_include_directories(stratum_yang_parse_tree_o PRIVATE
 
 add_dependencies(stratum_yang_parse_tree_o
     gnmi_proto
+    openconfig_proto_o
     stratum_proto
 )

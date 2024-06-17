@@ -1,14 +1,14 @@
 # Build file for //stratum/glue/status
 #
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
-##################
-# stratum_glue_o #
-##################
+#########################
+# stratum_glue_status_o #
+#########################
 
-target_sources(stratum_glue_o PRIVATE
+add_library(stratum_glue_status_o OBJECT
     canonical_errors.cc
     canonical_errors.h
     posix_error_space.cc
@@ -21,9 +21,12 @@ target_sources(stratum_glue_o PRIVATE
     statusor.h
 )
 
-target_include_directories(stratum_glue_o PUBLIC ${DEPEND_INSTALL_DIR}/include)
+target_include_directories(stratum_glue_status_o PUBLIC
+    ${DEPEND_INSTALL_DIR}/include
+    ${STRATUM_INCLUDES}
+)
 
-target_link_libraries(stratum_glue_o PUBLIC
+target_link_libraries(stratum_glue_status_o PUBLIC
     gflags::gflags_shared
     glog::glog
 )
