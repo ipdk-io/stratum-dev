@@ -29,15 +29,14 @@ add_subdirectory(status)
 # stratum_utils #
 #################
 
-add_library(stratum_utils SHARED
-    $<TARGET_OBJECTS:stratum_glue_o>
+add_library(stratum_utils STATIC
+    $<TARGET_OBJECTS:error_proto_o>
+    $<TARGET_OBJECTS:stratum_glue_status_o>
+    $<TARGET_OBJECTS:stratum_lib_utils_o>
     $<TARGET_OBJECTS:stratum_public_lib_o>
 )
 
 target_link_libraries(stratum_utils PUBLIC
-    absl::strings
-    absl::synchronization
-    gflags::gflags_shared
     glog::glog
 )
 
