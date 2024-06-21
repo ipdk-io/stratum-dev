@@ -1,4 +1,5 @@
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_cc//cc:defs.bzl", "cc_test")
