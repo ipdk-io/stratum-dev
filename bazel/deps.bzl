@@ -49,7 +49,7 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_p4c",
             remote = "https://github.com/p4lang/p4c",
-            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a", # 19-Dec-2019
+            commit = "94e55783733be7420b8d8fd7bfc0025a3ad9033a",  # 19-Dec-2019
             build_file = "@//bazel:external/p4c.BUILD",
             sha256 = "541ab66df80465dac9702779b6446b80234210410e6f5948d995a978475b64c2",
         )
@@ -84,7 +84,7 @@ def stratum_deps():
         remote_workspace(
             name = "com_github_p4lang_PI",
             remote = "https://github.com/p4lang/PI.git",
-            commit = "a5fd855d4b3293e23816ef6154e83dc6621aed6a", # 26-Jul-2021
+            commit = "a5fd855d4b3293e23816ef6154e83dc6621aed6a",  # 26-Jul-2021
             sha256 = "7df38438f94d64c5005b890210d3f1b40e2402870295e21d44cceac67ebd1a1b",
         )
 
