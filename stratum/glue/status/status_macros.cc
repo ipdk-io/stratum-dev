@@ -151,9 +151,8 @@ MakeErrorStream::Impl::~Impl() {
                      true /* should_log */, ERROR /* log_severity */,
                      should_log_stack_trace_);
   } else {
-    const LogSeverity actual_severity = ERROR;
     return MakeError(file_, line_, error_space_, code_, str, should_log_,
-                     actual_severity, should_log_stack_trace_);
+                     log_severity_, should_log_stack_trace_);
   }
 }
 
