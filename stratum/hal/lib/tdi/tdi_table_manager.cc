@@ -412,8 +412,17 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::LPM: {
         std::string prefix;
         uint16 prefix_length = 0;
-        RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(), &prefix,
-                                          &prefix_length));
+        {
+          auto status = table_key->GetLpm(expected_match_field.id(), &prefix,
+                                          &prefix_length);
+          if (status.error_code() == ::util::error::Code::ALREADY_EXISTS) {
+            // This is a common condition and not necessarily serious.
+            // Limit logger output and propagate status.
+            LOG(INFO) << "Duplicate table entry";
+            return status;
+          }
+          RETURN_IF_ERROR(status);
+        }
         match.mutable_lpm()->set_value(prefix);
         match.mutable_lpm()->set_prefix_len(prefix_length);
         if (!IsDontCareMatch(match.lpm())) {
