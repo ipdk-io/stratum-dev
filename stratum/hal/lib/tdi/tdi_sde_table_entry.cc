@@ -70,7 +70,7 @@ using namespace stratum::hal::tdi::helpers;
     // This is a common condition and not necessarily serious.
     // Log without detail and propagate the status.
     return MAKE_ERROR(::util::error::Code::ALREADY_EXISTS).severity(INFO)
-           << "Duplicate table entry";
+           << "Duplicate table entry (may not be an error)";
   } else if (status == TDI_NO_SPACE) {
     return MAKE_ERROR(::util::error::Code::RESOURCE_EXHAUSTED)
            << "Table is already full. No space for " << dump_args();
