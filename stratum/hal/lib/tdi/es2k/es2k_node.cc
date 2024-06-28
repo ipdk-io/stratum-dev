@@ -168,7 +168,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   RETURN_IF_ERROR(session->EndBatch());
 
   if (!success) {
-    // Tally up the ALREADY_EXISTS errors.
+    // Tally up the number of ALREADY_EXISTS errors.
     int already_exists_errors = 0;
     for (const ::util::Status& status : *results) {
       if (status.error_code() == ::util::error::Code::ALREADY_EXISTS) {
@@ -182,7 +182,7 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
       // If all the errors are ALREADY_EXISTS, downgrade severity to INFO
       // and set the description to something less likely to alarm the
       // customer.
-      const char* entries = (already_exists_errors) ? "entry" : "entries";
+      const char* entries = (already_exists_errors == 1) ? "entry" : "entries";
       return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
                  .severity(INFO)
                  .without_logging()
