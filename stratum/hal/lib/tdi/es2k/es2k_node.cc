@@ -168,8 +168,30 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   RETURN_IF_ERROR(session->EndBatch());
 
   if (!success) {
-    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
-           << "One or more write operations failed.";
+    // Tally up the number of ALREADY_EXISTS errors.
+    int already_exists_errors = 0;
+    for (const ::util::Status& status : *results) {
+      if (status.error_code() == ::util::error::Code::ALREADY_EXISTS) {
+        ++already_exists_errors;
+      } else if (!status.ok()) {
+        already_exists_errors = 0;
+        break;
+      }
+    }
+    if (already_exists_errors) {
+      // If all the errors are ALREADY_EXISTS, downgrade severity to INFO
+      // and set the description to something less likely to alarm the
+      // customer.
+      const char* entries = (already_exists_errors == 1) ? "entry" : "entries";
+      return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
+                 .severity(INFO)
+                 .without_logging()
+             << "Duplicate table " << entries << " (may not be an error)";
+
+    } else {
+      return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
+             << "One or more write operations failed.";
+    }
   }
 
   LOG(INFO) << "P4-based forwarding entities written successfully to node with "
