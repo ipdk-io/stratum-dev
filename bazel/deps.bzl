@@ -197,9 +197,9 @@ def stratum_deps():
     if "com_google_googletest" not in native.existing_rules():
         http_archive(
             name = "com_google_googletest",
-            sha256 = "d3d307a240e129bb57da8aae64f3b0099bf1b8efff7249df993b619b8641ec77",
-            strip_prefix = "googletest-a3460d1aeeaa43fdf137a6adefef10ba0b59fe4b",
-            urls = ["https://github.com/google/googletest/archive/a3460d1aeeaa43fdf137a6adefef10ba0b59fe4b.zip"],
+            sha256 = "8daa1a71395892f7c1ec5f7cb5b099a02e606be720d62f1a6a98f8f8898ec826",
+            strip_prefix = "googletest-e2239ee6043f73722e7aa812a459f54a28552929",
+            urls = ["https://github.com/google/googletest/archive/e2239ee6043f73722e7aa812a459f54a28552929.zip"],
         )
 
     if "com_googlesource_code_re2" not in native.existing_rules():
