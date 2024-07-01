@@ -39,9 +39,9 @@ def stratum_deps():
     if "com_google_googleapis" not in native.existing_rules():
         http_archive(
             name = "com_google_googleapis",
-            urls = ["https://github.com/googleapis/googleapis/archive/9b1c49de24301ba6bf1ee6462a634fffc2b97677.zip"],
-            strip_prefix = "googleapis-9b1c49de24301ba6bf1ee6462a634fffc2b97677",
-            sha256 = "2b10a2fe30a0ab4279d803ed7b3bfefb61c48fb3aa651e5f2d4899b4167b7f3b",
+            urls = ["https://github.com/googleapis/googleapis/archive/01d4201e2620da2084d2151522c25cf49dda9da3.zip"],
+            strip_prefix = "googleapis-01d4201e2620da2084d2151522c25cf49dda9da3",
+            sha256 = "f25472e77c059ebcda01fd241bf5d6094b62747cafa8e939ac776c16069e5852",
         )
 
     if "com_github_p4lang_p4c" not in native.existing_rules():
