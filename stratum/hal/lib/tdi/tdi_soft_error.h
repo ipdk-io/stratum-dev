@@ -37,7 +37,7 @@ static inline bool IsSoftError(int err) {
 
 // Special version of RETURN_IF_ERROR() that suppresses logging if this
 // is a soft error.
-#define FILTERED_RETURN_IF_ERROR(expr)                                       \
+#define RETURN_IF_ERROR_WITH_FILTERING(expr)                                 \
   do {                                                                       \
     const ::util::Status _status = (expr);                                   \
     if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
