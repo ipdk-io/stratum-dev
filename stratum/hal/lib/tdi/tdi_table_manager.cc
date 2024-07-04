@@ -19,18 +19,18 @@
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
+#include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
 
-// Special version of RETURN_IF_ERROR() that logs an abbreviated message
-// if the status code is ALREADY_EXISTS.
+// Special version of RETURN_IF_ERROR() that suppresses logging if this
+// is a soft error.
 #define MATCH_FIELD_RETURN_IF_ERROR(expr)                                    \
   do {                                                                       \
     /* Using _status below to avoid capture problems if expr is "status". */ \
     const ::util::Status _status = (expr);                                   \
     if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
-      if (_status.error_code() == ::util::error::Code::ALREADY_EXISTS) {     \
-        LOG(INFO) << "Duplicate table entry (may not be an error)";          \
+      if (IsSoftError(_status.error_code())) {                               \
         return _status;                                                      \
       }                                                                      \
       LOG(ERROR) << "Return Error: " << #expr << " failed with " << _status; \

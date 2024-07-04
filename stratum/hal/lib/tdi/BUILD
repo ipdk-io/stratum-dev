@@ -292,6 +292,7 @@ stratum_cc_library(
     deps = [
         ":tdi_cc_proto",
         ":tdi_sde_interface",
+        ":tdi_status",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",

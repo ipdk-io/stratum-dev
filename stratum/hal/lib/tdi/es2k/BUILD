@@ -52,6 +52,7 @@ stratum_cc_library(
     hdrs = ["es2k_node.h"],
     deps = [
         "//stratum/hal/lib/tdi:tdi_node",
+        "//stratum/hal/lib/tdi:tdi_status",
         "@com_github_gflags_gflags//:gflags",
     ],
 )
