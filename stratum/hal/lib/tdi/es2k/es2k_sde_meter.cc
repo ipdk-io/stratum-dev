@@ -98,7 +98,7 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::Status GetMeterField(
+static ::util::Status GetMeterField(
     TdiPktModMeterConfig& cfg, const std::string field_name,
     const std::unique_ptr<::tdi::TableData>& table_data, tdi_id_t field_id) {
   // We only return a value if field_name specifies one of the meter
