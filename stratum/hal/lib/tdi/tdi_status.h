@@ -72,29 +72,6 @@ class TdiStatus {
   tdi_status_t status_;
 };
 
-// Checks whether a TDI status code is a soft error.
-static inline bool IsSoftTdiError(tdi_status_t err) {
-  return (err == TDI_ALREADY_EXISTS) || (err == TDI_OBJECT_NOT_FOUND) ||
-         (err == TDI_TABLE_NOT_FOUND);
-}
-
-// Checks whether a Stratum error code is a soft error.
-static inline bool IsSoftError(ErrorCode err) {
-  return (err == ERR_ENTRY_EXISTS) || (err == ERR_ENTRY_NOT_FOUND);
-}
-
-// Checks whether a canonical error code is a soft error.
-static inline bool IsSoftError(::util::error::Code err) {
-  return (err == ::util::error::ALREADY_EXISTS) ||
-         (err == ::util::error::NOT_FOUND);
-}
-
-// Checks whether the integer error_code() value of a Status object
-// is a soft error.
-static inline bool IsSoftError(int err) {
-  return IsSoftError(static_cast<::util::error::Code>(err));
-}
-
 // A macro to simplify checking and logging the return value of an SDE
 // function call.
 #define RETURN_IF_TDI_ERROR(expr)                             \

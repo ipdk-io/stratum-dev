@@ -148,8 +148,8 @@ using namespace stratum::hal::tdi::helpers;
                                         flags, *real_table_key->table_key_);
 
   if (status == TDI_OBJECT_NOT_FOUND) {
-    return MAKE_ERROR(::util::error::Code::NOT_FOUND)
-           << "No matching table entry with " << dump_args();
+    return MAKE_ERROR(::util::error::Code::NOT_FOUND).without_logging()
+           << "No matching table entry";
   } else if (status != TDI_SUCCESS) {
     return MAKE_ERROR(::util::error::Code::INTERNAL)
            << "Error deleting table entry with " << dump_args();
@@ -182,7 +182,7 @@ using namespace stratum::hal::tdi::helpers;
                                         real_table_data->table_data_.get());
 
   if (status == TDI_TABLE_NOT_FOUND || status == TDI_OBJECT_NOT_FOUND) {
-    return MAKE_ERROR(::util::error::Code::NOT_FOUND)
+    return MAKE_ERROR(::util::error::Code::NOT_FOUND).without_logging()
            << "No matching table entry";
   } else if (status != TDI_SUCCESS) {
     TdiStatus ret(status);

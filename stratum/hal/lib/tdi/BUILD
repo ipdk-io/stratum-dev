@@ -112,6 +112,16 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_soft_error",
+    hdrs = ["tdi_soft_error.h"],
+    deps = [
+        ":tdi_status",
+        "//stratum/glue/status",
+        "//stratum/public/lib:error",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_sde_wrapper",
     srcs = [
         "tdi_sde_action_profile.cc",
@@ -292,7 +302,7 @@ stratum_cc_library(
     deps = [
         ":tdi_cc_proto",
         ":tdi_sde_interface",
-        ":tdi_status",
+        ":tdi_soft_error",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",

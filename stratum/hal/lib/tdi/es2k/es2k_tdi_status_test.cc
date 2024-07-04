@@ -3,6 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "ipu_types/ipu_types.h"
+#include "stratum/hal/lib/tdi/tdi_soft_error.h"
 #include "stratum/hal/lib/tdi/tdi_status.h"
 
 namespace stratum {

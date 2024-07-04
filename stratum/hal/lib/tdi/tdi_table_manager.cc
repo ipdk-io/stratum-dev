@@ -19,24 +19,9 @@
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
-#include "stratum/hal/lib/tdi/tdi_status.h"
+#include "stratum/hal/lib/tdi/tdi_soft_error.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
-
-// Special version of RETURN_IF_ERROR() that suppresses logging if this
-// is a soft error.
-#define MATCH_FIELD_RETURN_IF_ERROR(expr)                                    \
-  do {                                                                       \
-    /* Using _status below to avoid capture problems if expr is "status". */ \
-    const ::util::Status _status = (expr);                                   \
-    if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
-      if (IsSoftError(_status.error_code())) {                               \
-        return _status;                                                      \
-      }                                                                      \
-      LOG(ERROR) << "Return Error: " << #expr << " failed with " << _status; \
-      return _status;                                                        \
-    }                                                                        \
-  } while (0)
 
 DEFINE_uint32(
     tdi_table_sync_timeout_ms,
@@ -406,7 +391,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     match.set_field_id(expected_match_field.id());
     switch (expected_match_field.match_type()) {
       case ::p4::config::v1::MatchField::EXACT: {
-        MATCH_FIELD_RETURN_IF_ERROR(table_key->GetExact(
+        FILTERED_RETURN_IF_ERROR(table_key->GetExact(
             expected_match_field.id(), match.mutable_exact()->mutable_value()));
         if (!IsDontCareMatch(match.exact())) {
           *result.add_match() = match;
@@ -416,7 +401,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::TERNARY: {
         has_priority_field = true;
         std::string value, mask;
-        MATCH_FIELD_RETURN_IF_ERROR(
+        FILTERED_RETURN_IF_ERROR(
             table_key->GetTernary(expected_match_field.id(), &value, &mask));
         match.mutable_ternary()->set_value(value);
         match.mutable_ternary()->set_mask(mask);
@@ -428,8 +413,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::LPM: {
         std::string prefix;
         uint16 prefix_length = 0;
-        MATCH_FIELD_RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(),
-                                                      &prefix, &prefix_length));
+        FILTERED_RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(),
+                                                   &prefix, &prefix_length));
         match.mutable_lpm()->set_value(prefix);
         match.mutable_lpm()->set_prefix_len(prefix_length);
         if (!IsDontCareMatch(match.lpm())) {
@@ -440,7 +425,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::RANGE: {
         has_priority_field = true;
         std::string low, high;
-        MATCH_FIELD_RETURN_IF_ERROR(
+        FILTERED_RETURN_IF_ERROR(
             table_key->GetRange(expected_match_field.id(), &low, &high));
         match.mutable_range()->set_low(low);
         match.mutable_range()->set_high(high);
