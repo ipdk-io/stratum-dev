@@ -12,7 +12,24 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+//----------------------------------------------------------------------
+// A Soft Error is an easily recoverable condition that the application
+// may not consider to be an error at all. Common examples include:
+//
+// - End of File (read)
+// - End of Sequence (get-next)
+// - Specified Item Already Exists (add)
+// - Specified Item Not Found (get, remove)
+//
+// We treat soft errors differently by limiting the extent to which
+// they are logged as the status code is passed up the stack.
+//
+//----------------------------------------------------------------------
+
 // Checks whether a TDI status code is a soft error.
+//
+// TDI_OBJECT_NOT_FOUND and TDI_TABLE_NOT_FOUND are both down-mapped
+// to ERR_ENTRY_NOT_FOUND, so we treat them as indistinguishable.
 static inline bool IsSoftTdiError(tdi_status_t err) {
   return (err == TDI_ALREADY_EXISTS) || (err == TDI_OBJECT_NOT_FOUND) ||
          (err == TDI_TABLE_NOT_FOUND);
@@ -23,7 +40,7 @@ static inline bool IsSoftError(ErrorCode err) {
   return (err == ERR_ENTRY_EXISTS) || (err == ERR_ENTRY_NOT_FOUND);
 }
 
-// Checks whether a canonical error code is a soft error.
+// Checks whether a canonical error is a soft error.
 static inline bool IsSoftError(::util::error::Code err) {
   return (err == ::util::error::ALREADY_EXISTS) ||
          (err == ::util::error::NOT_FOUND);
