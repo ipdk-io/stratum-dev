@@ -12,12 +12,17 @@
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "gflags/gflags.h"
 #include "stratum/glue/gtl/stl_util.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_sde_utils.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
+
+DEFINE_bool(optimize_full_table_reads, true,
+            "Whether to skip full-table reads if the reported table size "
+            "is zero.");
 
 namespace stratum {
 namespace hal {
@@ -430,7 +435,10 @@ namespace helpers {
 
   table_keys->resize(0);
   table_values->resize(0);
-  if (entries == 0) return ::util::OkStatus();
+
+  if (FLAGS_optimize_full_table_reads && entries == 0) {
+    return ::util::OkStatus();
+  }
 
   // Get first entry.
   {
