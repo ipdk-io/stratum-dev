@@ -1,8 +1,9 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include <exception>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -83,7 +84,11 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 }
 
 ::util::Status Main(int argc, char* argv[]) {
-  ParseCommandLine(argc, argv, true);
+  try {
+    ParseCommandLine(argc, argv, true);
+  } catch (const std::exception& e) {
+    return MAKE_ERROR(ERR_INTERNAL) << e.what();
+  }
   return Main(nullptr, nullptr);
 }
 
