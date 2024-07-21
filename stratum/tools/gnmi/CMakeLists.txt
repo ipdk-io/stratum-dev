@@ -21,7 +21,7 @@ target_link_libraries(gnmi_cli PUBLIC
     gRPC::re2
     protobuf::libprotobuf
     pthread
-    rpc_proto
+    google_rpc_proto
 )
 
 if(HAVE_POSIX_AIO)

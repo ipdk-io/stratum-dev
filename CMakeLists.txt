@@ -113,7 +113,7 @@ function(add_stratum_proto_libs _TGT)
         openconfig_proto
         stratum_proto
         gnmi_proto
-        rpc_proto
+        google_rpc_proto
         p4runtime_proto
     )
 endfunction()
