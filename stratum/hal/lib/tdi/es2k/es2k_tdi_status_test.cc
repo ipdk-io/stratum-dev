@@ -3,6 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "ipu_types/ipu_types.h"
+#include "stratum/hal/lib/tdi/tdi_soft_error.h"
 #include "stratum/hal/lib/tdi/tdi_status.h"
 
 namespace stratum {
@@ -63,6 +64,36 @@ TEST_F(Es2kTdiStatusTest, successful_status_is_boolean_true) {
 TEST_F(Es2kTdiStatusTest, failure_status_is_boolean_false) {
   TdiStatus not_okay(TDI_INTERNAL_ERROR);
   ASSERT_FALSE(not_okay);
+}
+
+// Verify that TDI_ALREADY_EXISTS is a soft error.
+TEST_F(Es2kTdiStatusTest, tdi_already_exists_is_soft_error) {
+  ASSERT_TRUE(IsSoftTdiError(TDI_ALREADY_EXISTS));
+}
+
+// Verify that TDI_NO_SPACE is not a soft error.
+TEST_F(Es2kTdiStatusTest, tdi_no_space_is_not_soft_error) {
+  ASSERT_FALSE(IsSoftTdiError(TDI_NO_SPACE));
+}
+
+// Verify that ERR_ENTRY_NOT_FOUND is a soft error.
+TEST_F(Es2kTdiStatusTest, err_entry_not_found_is_soft_error) {
+  ASSERT_TRUE(IsSoftError(ERR_ENTRY_NOT_FOUND));
+}
+
+// Verify that ERR_UNIMPLEMENTED is not a soft error.
+TEST_F(Es2kTdiStatusTest, err_unimplemented_is_not_soft_error) {
+  ASSERT_FALSE(IsSoftError(ERR_UNIMPLEMENTED));
+}
+
+// Verify that ALREADY_EXISTS is a soft error.
+TEST_F(Es2kTdiStatusTest, already_exists_is_soft_error) {
+  ASSERT_TRUE(IsSoftError(::util::error::ALREADY_EXISTS));
+}
+
+// Verify that INVALID_ARGUMENT is not a soft error.
+TEST_F(Es2kTdiStatusTest, invalid_argument_is_not_soft_error) {
+  ASSERT_FALSE(IsSoftError(::util::error::INVALID_ARGUMENT));
 }
 
 }  // namespace tdi

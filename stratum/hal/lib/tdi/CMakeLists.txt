@@ -11,7 +11,6 @@
 add_library(stratum_tdi_common_o OBJECT
     tdi_action_profile_manager.cc
     tdi_action_profile_manager.h
-    tdi_status.h
     tdi_counter_manager.cc
     tdi_counter_manager.h
     tdi_global_vars.cc
@@ -46,6 +45,8 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_utils.h
     tdi_sde_wrapper.cc
     tdi_sde_wrapper.h
+    tdi_soft_error.h
+    tdi_status.h
     tdi_table_manager.cc
     tdi_table_manager.h
     utils.cc
