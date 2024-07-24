@@ -640,24 +640,29 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   // 4. table id and match key: return single entry
 
   if (table_entry.match_size() == 0 && !table_entry.is_default_action()) {
+    // No match keys, and not a default action.
     std::vector<::p4::v1::TableEntry> wanted_tables;
     if (table_entry.table_id() == 0) {
-      // 1.
+      // 1. Table id specified.
       const ::p4::config::v1::P4Info& p4_info = p4_info_manager_->p4_info();
       for (const auto& table : p4_info.tables()) {
         ::p4::v1::TableEntry te;
         te.set_table_id(table.preamble().id());
         if (table_entry.has_counter_data()) {
+          // This method returns a mutable pointer to the counter data.
+          // We ignore the returned pointer.
+          // What gives?
           te.mutable_counter_data();
         }
         wanted_tables.push_back(te);
       }
     } else {
-      // 2.
+      // 2. Table id not specified.
       wanted_tables.push_back(table_entry);
     }
     // TODO(max): can wildcard reads request counter_data?
     if (table_entry.has_counter_data()) {
+      // Refresh counter data from hardware.
       for (const auto& wanted_table_entry : wanted_tables) {
         RETURN_IF_ERROR(tdi_sde_interface_->SynchronizeCounters(
             device_, session, wanted_table_entry.table_id(),
@@ -673,11 +678,12 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
     return ::util::OkStatus();
   } else if (table_entry.match_size() == 0 && table_entry.is_default_action()) {
-    // 3.
+    // 3. Have table id, no match keys, is default action.
     return ReadDefaultTableEntry(session, table_entry, writer);
   } else {
-    // 4.
+    // 4. Have table id, have match keys, not default action.
     if (table_entry.has_counter_data()) {
+      // Synchronize counter data before reading.
       RETURN_IF_ERROR(tdi_sde_interface_->SynchronizeCounters(
           device_, session, table_entry.table_id(),
           absl::Milliseconds(FLAGS_tdi_table_sync_timeout_ms)));
