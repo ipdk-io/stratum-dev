@@ -42,11 +42,6 @@ static void ipsec_notification_callback(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                         uint8_t ipsec_sa_protocol,
                                         char* ipsec_sa_dest_address, bool ipv4,
                                         void* cookie) {
-  // printf("IPsec callback: dev_id=%d, ipsec_sa_spi=%d, soft_lifetime=%d, "
-  //       "ipsec_sa_protocol=%d, "
-  //       "ipsec_sa_dest_address=%s, ipv4=%d, cookie=%p\n",
-  //       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
-  //       ipsec_sa_dest_address, ipv4, cookie);
   auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager*>(cookie);
   ipsec_mgr_hdl->SendSADExpireNotificationEvent(
       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
@@ -73,7 +68,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
       IPSEC_NOTIFICATION_TABLE_NAME, &ipsec_notification_callback, this);
 
-  if (status != ::util::OkStatus()) {
+  if (!status.ok()) {
     LOG(ERROR) << "Failed to register IPsec notification callback";
   }
   return ::util::OkStatus();
@@ -84,7 +79,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
     auto status = InitializeNotificationCallback();
-    if (status == ::util::OkStatus()) {
+    if (status.ok()) {
       notif_initialized_ = true;
     }
   }
@@ -92,7 +87,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   auto status = tdi_fixed_function_manager_->FetchSpi(
       session, IPSEC_FETCH_SPI_TABLE_NAME, &fetched_spi);
-  if (status != ::util::OkStatus()) {
+  if (!status.ok()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more read operations failed.";
   }
@@ -105,7 +100,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
   if (!notif_initialized_) {
     auto status = InitializeNotificationCallback();
-    if (status == ::util::OkStatus()) {
+    if (status.ok()) {
       notif_initialized_ = true;
     }
   }
@@ -122,7 +117,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   auto status = tdi_fixed_function_manager_->WriteSadbEntry(
       session, IPSEC_CONFIG_SADB_TABLE_NAME, op_type, msg);
-  if (status != ::util::OkStatus()) {
+  if (!status.ok()) {
     return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
            << "One or more write operations failed. "
            << "offload-id=" << msg.offload_id()

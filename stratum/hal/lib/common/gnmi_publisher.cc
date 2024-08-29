@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/gnmi_publisher.h"
@@ -144,7 +144,7 @@ GnmiPublisher::~GnmiPublisher() {}
                                                 SubscriptionHandle* h) {
   auto status = Subscribe(&TreeNode::AllSubtreeLeavesSupportOnTimer,
                           &TreeNode::GetOnTimerHandler, path, stream, h);
-  if (status != ::util::OkStatus()) {
+  if (!status.ok()) {
     return status;
   }
   EventHandlerRecordPtr weak(*h);
@@ -171,7 +171,7 @@ GnmiPublisher::~GnmiPublisher() {}
                                                 SubscriptionHandle* h) {
   auto status = Subscribe(&TreeNode::AllSubtreeLeavesSupportOnChange,
                           &TreeNode::GetOnChangeHandler, path, stream, h);
-  if (status != ::util::OkStatus()) {
+  if (!status.ok()) {
     return status;
   }
   // A handler has been successfully found and now it has to be registered in
@@ -274,7 +274,7 @@ void GnmiPublisher::ReadGnmiEvents(
     }
     // Handle received message.
     ::util::Status status = HandleChange(*event_ptr);
-    if (status != ::util::OkStatus()) LOG(ERROR) << status;
+    if (!status.ok()) LOG(ERROR) << status;
   } while (true);
 }
 
