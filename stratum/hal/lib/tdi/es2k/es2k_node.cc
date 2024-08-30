@@ -313,8 +313,23 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   }
   RET_CHECK(writer->Write(resp)) << "Write to stream channel failed.";
   if (!success) {
-    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
-           << "One or more read operations failed.";
+    int num_not_found_errors = 0;
+    int num_errors = 0;
+    for (const ::util::Status& status : *details) {
+      if (status.error_code() == ::util::error::NOT_FOUND) {
+        ++num_not_found_errors;
+      }
+      if (!status.ok()) ++num_errors;
+    }
+    if (num_not_found_errors == num_errors) {
+      // If all the errors are NOT_FOUND, return NOT_FOUND.
+      const char* message = (num_errors > 1) ? "One or more entries not found"
+                                             : "Entry not found";
+      return MAKE_ERROR(::util::error::NOT_FOUND).without_logging() << message;
+    } else {
+      return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
+             << "One or more read operations failed.";
+    }
   }
   return ::util::OkStatus();
 }
