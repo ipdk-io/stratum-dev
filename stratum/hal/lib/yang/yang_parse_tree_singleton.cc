@@ -102,7 +102,7 @@ void SetUpInterfacesInterfaceEthernetConfigPortSpeed(uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_port_speed,
                            &PortSpeed::set_speed_bps, speed_bps);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -170,7 +170,7 @@ void SetUpInterfacesInterfaceEthernetConfigAutoNegotiate(uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_autoneg_status,
                            &AutonegotiationStatus::set_state, autoneg_status);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -235,7 +235,7 @@ void SetUpInterfacesInterfaceConfigEnabled(const bool state, uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_admin_status,
                            &AdminStatus::set_state, typed_state);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -304,7 +304,7 @@ void SetUpInterfacesInterfaceConfigLoopbackMode(const bool loopback,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_loopback_status,
                            &LoopbackStatus::set_state, typed_state);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -374,7 +374,7 @@ void SetUpInterfacesInterfaceEthernetConfigMacAddress(uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_mac_address,
                            &MacAddress::set_mac_address, mac_address);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 

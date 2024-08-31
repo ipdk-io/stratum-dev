@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2021-2023 Intel Corporation.
+// Copyright 2021-2024 Intel Corporation.
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/config_monitoring_service.h"
@@ -485,7 +485,7 @@ constexpr int kThousandMilliseconds = 1000 /* milliseconds */;
               PeriodicWithHeartbeat(sample_interval, heartbeat_interval),
               subscription.path(), stream, &h);
         }
-        if (status == ::util::OkStatus()) {
+        if (status.ok()) {
           // A handle has to be saved, so later we know what to unsubscribe.
           (*subscriptions)[subscription.path()] = h;
         } else {
