@@ -171,7 +171,7 @@ void SetUpInterfacesInterfaceConfigPortType(uint64 type, uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_port_type,
                            &DpdkPortTypeValue::set_type, port_type);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -252,7 +252,7 @@ void SetUpInterfacesInterfaceConfigDeviceType(uint64 type, uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_device_type,
                            &DpdkDeviceTypeValue::set_device_type, device_type);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -473,7 +473,7 @@ void SetUpInterfacesInterfaceConfigPacketDir(uint64 packet_dir, uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_packet_dir,
                            &PacketDirValue::set_packet_dir, direction);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -681,7 +681,7 @@ void SetUpInterfacesInterfaceConfigMtuValue(uint64 mtu, uint64 node_id,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_mtu_value,
                            &MtuValue::set_mtu_value, mtu_val);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -751,7 +751,7 @@ void SetUpInterfacesInterfaceConfigQueues(uint64 queues_count, uint64 node_id,
     auto status = SetValue(
         node_id, port_id, tree, &SetRequest::Request::Port::mutable_queue_count,
         &QueuesConfigured::set_queue_count, queues_configured);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 

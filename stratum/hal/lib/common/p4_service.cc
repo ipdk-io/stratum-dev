@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2021-2023 Intel Corporation.
+// Copyright 2021-2024 Intel Corporation.
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/p4_service.h"
@@ -366,6 +366,7 @@ void LogReadRequest(uint64 node_id, const ::p4::v1::ReadRequest& req,
   RETURN_IF_NOT_AUTHORIZED(auth_policy_checker_, P4Service, Read, context);
 
   if (!req->entities_size()) return ::grpc::Status::OK;
+
   // device_id is nothing but the node_id specified in the config for the node.
   uint64 node_id = req->device_id();
   if (node_id == 0) {

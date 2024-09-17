@@ -28,7 +28,7 @@ jobs:
 
       - name: Get list of changed Files
         id: changes
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v45
         with:
           files_yaml: |
             src:

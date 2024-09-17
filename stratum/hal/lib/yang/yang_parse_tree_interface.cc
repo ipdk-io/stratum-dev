@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Interface setup functions for YangParseTreePaths. Used by the
@@ -626,7 +626,7 @@ void SetUpInterfacesInterfaceConfigHealthIndicator(const std::string& state,
     auto status = SetValue(node_id, port_id, tree,
                            &SetRequest::Request::Port::mutable_health_indicator,
                            &HealthIndicator::set_state, typed_state);
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
@@ -709,7 +709,7 @@ void SetUpInterfacesInterfaceEthernetConfigForwardingViability(
                  &SetRequest::Request::Port::mutable_forwarding_viability,
                  &ForwardingViability::set_state, new_forwarding_viability);
 
-    if (status != ::util::OkStatus()) {
+    if (!status.ok()) {
       return status;
     }
 
