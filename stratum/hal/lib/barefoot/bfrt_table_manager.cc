@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/barefoot/bfrt_table_manager.h"
@@ -897,17 +897,13 @@ BfrtTableManager::ReadDirectCounterEntry(
       << "Wildcard MeterEntry reads are not supported.";
   ASSIGN_OR_RETURN(uint32 table_id, bf_sde_interface_->GetBfRtId(
                                         translated_meter_entry.meter_id()));
-  bool meter_units_in_bits;  // or packets
   {
     absl::ReaderMutexLock l(&lock_);
     ASSIGN_OR_RETURN(auto meter, p4_info_manager_->FindMeterByID(
                                      translated_meter_entry.meter_id()));
     switch (meter.spec().unit()) {
       case ::p4::config::v1::MeterSpec::BYTES:
-        meter_units_in_bits = true;
-        break;
       case ::p4::config::v1::MeterSpec::PACKETS:
-        meter_units_in_bits = false;
         break;
       default:
         return MAKE_ERROR(ERR_INVALID_PARAM)
