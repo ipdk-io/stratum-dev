@@ -546,8 +546,7 @@ namespace {
   }
 
   // Get all entries following the first.
-  bool finished = false;
-  do {
+  for (;;) {
     // Input and output vectors for GetNextN.
     std::vector<std::unique_ptr<::tdi::TableKey>> keys(burst_size);
     std::vector<std::unique_ptr<::tdi::TableData>> data(burst_size);
@@ -567,6 +566,7 @@ namespace {
     auto tdi_status =
         table->entryGetNextN(*tdi_session, tdi_dev_target, flags, prev_key,
                              burst_size, &pairs, &actual);
+
     // TDI returns OBJECT_NOT_FOUND when it is unable to get any more entries.
     // If it returned any entries, we need to add them to the output vectors
     // and then return OK.
@@ -574,7 +574,7 @@ namespace {
     // I don't know why NOT_SUPPORTED is treated the same as OBJECT_NOT_FOUND.
     // We check for it because that's what the original code did.
     if (tdi_status == TDI_OBJECT_NOT_FOUND || tdi_status == TDI_NOT_SUPPORTED) {
-      finished = true;
+      return ::util::OkStatus();
     } else {
       RETURN_IF_TDI_ERROR(tdi_status);
     }
@@ -593,7 +593,7 @@ namespace {
     table_values->insert(table_values->end(),
                          std::make_move_iterator(data.begin()),
                          std::make_move_iterator(data_end));
-  } while (!finished);
+  }
 
   // Sanity check.
   CHECK(table_keys->size() == table_values->size());
