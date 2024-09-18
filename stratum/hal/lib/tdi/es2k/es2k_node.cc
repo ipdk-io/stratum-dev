@@ -322,10 +322,11 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
       }
       if (!status.ok()) ++num_errors;
     }
+
     if (num_not_found_errors == num_errors) {
       // If all errors are NOT_FOUND, return NOT_FOUND.
-      const char* message = (num_errors > 1) ? "One or more entities not found"
-                                             : "Entity not found";
+      const char* message = (num_errors > 1) ? "One or more entities not found."
+                                             : "Entity not found.";
       return MAKE_ERROR(::util::error::NOT_FOUND).without_logging() << message;
     } else {
       return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
