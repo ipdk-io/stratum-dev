@@ -29,8 +29,19 @@ DEFINE_bool(optimize_full_table_reads, true,
             "Whether to skip full-table reads if the reported table size "
             "is zero.");
 
+DEFINE_bool(experimental_read_extra_entries, false,
+            "Whether to read additional entries when doing a full-table "
+            "read using the table size.");
+
 DEFINE_uint32(full_table_read_burst_size, DEFAULT_BURST_SIZE,
               "Number of entries to read per burst.");
+
+// TDI returns OBJECT_NOT_FOUND if it is unable to get any more entries.
+// We also check for TDI_NOT_SUPPORTED because that's what the original
+// code did.
+static inline bool ObjectNotFound(tdi_status_t status) {
+  return (status == TDI_OBJECT_NOT_FOUND) || (status == TDI_NOT_SUPPORTED);
+}
 
 namespace stratum {
 namespace hal {
@@ -422,11 +433,10 @@ namespace {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  uint32 entries = 0;
-
   // Get number of entries. Some types of tables are preallocated and are
   // always "full". The SDE does not support querying the utilization of
   // these tables.
+  uint32 entries = 0;
   if (IsPreallocatedTable(*table)) {
     size_t table_size;
     RETURN_IF_TDI_ERROR(
@@ -455,11 +465,7 @@ namespace {
     auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
                                            table_key.get(), table_data.get());
     if (tdi_status != TDI_SUCCESS) {
-      // SDE iterates through all the tables, and if no entry is present for
-      // that table, TDI_OBJECT_NOT_FOUND is returned in which case it's no
-      // operation for flow dump for that table.
-      if (tdi_status == TDI_OBJECT_NOT_FOUND ||
-          tdi_status == TDI_NOT_SUPPORTED) {
+      if (ObjectNotFound(tdi_status)) {
         return ::util::OkStatus();
       }
       RETURN_IF_TDI_ERROR(tdi_status);
@@ -471,10 +477,10 @@ namespace {
 
   if (entries == 1) return ::util::OkStatus();
 
-  // Get all entries following the first.
+  // Get remaining entries.
   {
     std::vector<std::unique_ptr<::tdi::TableKey>> keys(entries - 1);
-    std::vector<std::unique_ptr<::tdi::TableData>> data(keys.size());
+    std::vector<std::unique_ptr<::tdi::TableData>> data(entries - 1);
     ::tdi::Table::keyDataPairs pairs;
 
     for (size_t i = 0; i < keys.size(); ++i) {
@@ -489,14 +495,44 @@ namespace {
                                              pairs.size(), &pairs, &actual));
 
     auto keys_end = keys.begin();
-    auto data_end = data.begin();
     std::advance(keys_end, actual);
+
+    auto data_end = data.begin();
     std::advance(data_end, actual);
+
     table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
                        std::make_move_iterator(keys_end));
+
     table_values->insert(table_values->end(),
                          std::make_move_iterator(data.begin()),
                          std::make_move_iterator(data_end));
+  }
+
+  if (FLAGS_experimental_read_extra_entries) {
+    // Add-on-miss entries are not included in the table size.
+    // Get additional entries one at a time until there are no more.
+    for (;;) {
+      std::unique_ptr<::tdi::TableKey> table_key;
+      std::unique_ptr<::tdi::TableData> table_data;
+
+      RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
+      RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
+
+      ::tdi::Table::keyDataPairs pairs;
+      pairs.push_back(std::make_pair(table_key.get(), table_data.get()));
+
+      uint32 actual = 0;
+      constexpr uint32 NUM_ENTRIES = 1;
+      auto tdi_status = table->entryGetNextN(*tdi_session, tdi_dev_target,
+                                             flags, *table_keys->back(),
+                                             NUM_ENTRIES, &pairs, &actual);
+      if (ObjectNotFound(tdi_status)) break;
+      RETURN_IF_TDI_ERROR(tdi_status);
+      if (actual == 0) break;
+
+      table_keys->push_back(std::move(table_key));
+      table_values->push_back(std::move(table_data));
+    }
   }
 
   CHECK(table_keys->size() == table_values->size());
@@ -545,8 +581,11 @@ namespace {
     burst_size = DEFAULT_BURST_SIZE;
   }
 
-  // Get all entries following the first.
+  // Get remaining entries.
+  int iteration = 0;
   for (;;) {
+    ++iteration;
+
     // Input and output vectors for GetNextN.
     std::vector<std::unique_ptr<::tdi::TableKey>> keys(burst_size);
     std::vector<std::unique_ptr<::tdi::TableData>> data(burst_size);
@@ -559,24 +598,24 @@ namespace {
     }
 
     // Key of the last entry fetched.
-    const ::tdi::TableKey& prev_key = *(*table_keys).back();
+    std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
 
     uint32 actual = 0;
 
     auto tdi_status =
-        table->entryGetNextN(*tdi_session, tdi_dev_target, flags, prev_key,
+        table->entryGetNextN(*tdi_session, tdi_dev_target, flags, *prev_key,
                              burst_size, &pairs, &actual);
-
-    // TDI returns OBJECT_NOT_FOUND when it is unable to get any more entries.
-    // If it returned any entries, we need to add them to the output vectors
-    // and then return OK.
-    //
-    // I don't know why NOT_SUPPORTED is treated the same as OBJECT_NOT_FOUND.
-    // We check for it because that's what the original code did.
-    if (tdi_status == TDI_OBJECT_NOT_FOUND || tdi_status == TDI_NOT_SUPPORTED) {
-      return ::util::OkStatus();
+    if (ObjectNotFound(tdi_status)) {
+      break;
     } else {
       RETURN_IF_TDI_ERROR(tdi_status);
+    }
+
+    // Guard against infinite loop.
+    if (actual == 0) {
+      LOG(WARNING) << "iteration " << iteration
+                   << ": entryGetNextN returned 0 entries";
+      break;
     }
 
     // Move key pointers to the output vector.
