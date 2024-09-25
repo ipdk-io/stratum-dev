@@ -425,18 +425,15 @@ namespace helpers {
 namespace {
 
 /**
- * GetAllEntriesByCount() - Fetches all the entries in a table by querying
- * the number of entries in the table and then reading that many entries.
+ * GetNumberOfEntries - Returns the number of entries in the table.
  */
-::util::Status GetAllEntriesByCount(
-    std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
-    const ::tdi::Flags& flags, const ::tdi::Table*& table,
-    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
-    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  // Get number of entries. Some types of tables are preallocated and are
-  // always "full". The SDE does not support querying the utilization of
-  // these tables.
-  uint32 entries = 0;
+::util::Status GetNumberOfEntries(std::shared_ptr<::tdi::Session>& tdi_session,
+                                  ::tdi::Target& tdi_dev_target,
+                                  const ::tdi::Flags& flags,
+                                  const ::tdi::Table*& table, uint32& entries) {
+  entries = 0;
+  // Some types of tables are preallocated and always "full". The SDE
+  // does not support querying the utilization of these tables.
   if (IsPreallocatedTable(*table)) {
     size_t table_size;
     RETURN_IF_TDI_ERROR(
@@ -446,93 +443,196 @@ namespace {
     RETURN_IF_TDI_ERROR(
         table->usageGet(*tdi_session, tdi_dev_target, flags, &entries));
   }
+  return ::util::OkStatus();
+}
 
-  if (entries == 0) return ::util::OkStatus();
+/**
+ * GetFirstEntry() - Fetches the first entry in the table.
+ */
+::util::Status GetFirstEntry(
+    std::shared_ptr<::tdi::Session>& tdi_session, const ::tdi::Flags& flags,
+    const ::tdi::Table*& table,
+    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
+    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  // QUESTION: Why does GetFirstEntry() define its own ::tdi::Target
+  // instead of using the one passed to GetAllEntries()?
+  const ::tdi::Device* device = nullptr;
+  ::tdi::DevMgr::getInstance().deviceGet(0, &device);
+  std::unique_ptr<::tdi::Target> dev_tgt;
+  device->createTarget(&dev_tgt);
 
-  // Get first entry.
-  {
-    const ::tdi::Device* device = nullptr;
-    ::tdi::DevMgr::getInstance().deviceGet(0, &device);
-    std::unique_ptr<::tdi::Target> dev_tgt;
-    device->createTarget(&dev_tgt);
+  std::unique_ptr<::tdi::TableKey> table_key;
+  std::unique_ptr<::tdi::TableData> table_data;
 
-    std::unique_ptr<::tdi::TableKey> table_key;
-    std::unique_ptr<::tdi::TableData> table_data;
+  RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
+  RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
 
-    RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
-    RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
-
-    auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
-                                           table_key.get(), table_data.get());
-    if (tdi_status != TDI_SUCCESS) {
-      if (ObjectNotFound(tdi_status)) {
-        return ::util::OkStatus();
-      }
-      RETURN_IF_TDI_ERROR(tdi_status);
+  auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
+                                         table_key.get(), table_data.get());
+  if (tdi_status != TDI_SUCCESS) {
+    if (ObjectNotFound(tdi_status)) {
+      LOG(INFO) << __func__ << ": entryGetFirst() returned ObjectNotFound";
+      return ::util::OkStatus();
     }
-
-    table_keys->push_back(std::move(table_key));
-    table_values->push_back(std::move(table_data));
+    RETURN_IF_TDI_ERROR(tdi_status);
   }
 
-  if (entries == 1) return ::util::OkStatus();
+  table_keys->push_back(std::move(table_key));
+  table_values->push_back(std::move(table_data));
 
-  // Get remaining entries.
-  {
-    std::vector<std::unique_ptr<::tdi::TableKey>> keys(entries - 1);
-    std::vector<std::unique_ptr<::tdi::TableData>> data(entries - 1);
-    ::tdi::Table::keyDataPairs pairs;
+  return ::util::OkStatus();
+}
 
-    for (size_t i = 0; i < keys.size(); ++i) {
-      RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[i]));
-      RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
-      pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
-    }
+/**
+ * GetNextEntries() - Fetches the specified number of entries from the table.
+ * The first entry has already been fetched.
+ */
+::util::Status GetNextEntries(
+    std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
+    const ::tdi::Flags& flags, const ::tdi::Table*& table,
+    const uint32 num_entries,
+    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
+    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  // Input and output vectors for GetNextN.
+  std::vector<std::unique_ptr<::tdi::TableKey>> keys(num_entries);
+  std::vector<std::unique_ptr<::tdi::TableData>> data(num_entries);
+  ::tdi::Table::keyDataPairs pairs;
 
-    uint32 actual = 0;
-    RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
-                                             flags, *(*table_keys)[0],
-                                             pairs.size(), &pairs, &actual));
+  for (uint32 i = 0; i < num_entries; ++i) {
+    RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[i]));
+    RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
+    pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
+  }
 
+  // Key of the last entry fetched.
+  // TODO(derek): replace (*table_keys)[0] with table_keys->back().
+  const std::unique_ptr<::tdi::TableKey>& prev_key = (*table_keys)[0];
+  if (prev_key != table_keys->back()) {
+    LOG(INFO) << "check: prev_key != table_keys->back()";
+  }
+  if (prev_key.get() != table_keys->back().get()) {
+    LOG(INFO) << "check: prev_key.get() != table_keys->back().get()";
+  }
+  LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
+            << ", prev_key: " << DumpTableKey(prev_key.get());
+
+  uint32 actual = 0;
+  // TODO(derek): replace *(*table_keys)[0] with *prev_key.
+  RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target, flags,
+                                           *(*table_keys)[0], pairs.size(),
+                                           &pairs, &actual));
+  LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
+
+  if (actual) {
+    // Append key pointers to the table_keys vector.
     auto keys_end = keys.begin();
     std::advance(keys_end, actual);
 
-    auto data_end = data.begin();
-    std::advance(data_end, actual);
-
     table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
                        std::make_move_iterator(keys_end));
+
+    // Append data pointers to the table_values vector.
+    auto data_end = data.begin();
+    std::advance(data_end, actual);
 
     table_values->insert(table_values->end(),
                          std::make_move_iterator(data.begin()),
                          std::make_move_iterator(data_end));
   }
 
-  if (FLAGS_experimental_read_extra_entries) {
-    // Add-on-miss entries are not included in the table size.
-    // Get additional entries one at a time until there are no more.
-    for (;;) {
-      std::unique_ptr<::tdi::TableKey> table_key;
-      std::unique_ptr<::tdi::TableData> table_data;
+  return ::util::OkStatus();
+}
 
-      RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
-      RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
+/**
+ * GetExtraEntries() - Fetches entries one at a time until there are no more.
+ */
+::util::Status GetExtraEntries(
+    std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
+    const ::tdi::Flags& flags, const ::tdi::Table*& table,
+    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
+    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  // Fetch one entry at a time.
+  constexpr uint32 NUM_ENTRIES = 1;
 
-      ::tdi::Table::keyDataPairs pairs;
-      pairs.push_back(std::make_pair(table_key.get(), table_data.get()));
+  for (;;) {
+    std::unique_ptr<::tdi::TableKey> table_key;
+    std::unique_ptr<::tdi::TableData> table_data;
 
-      uint32 actual = 0;
-      constexpr uint32 NUM_ENTRIES = 1;
-      auto tdi_status = table->entryGetNextN(*tdi_session, tdi_dev_target,
-                                             flags, *table_keys->back(),
-                                             NUM_ENTRIES, &pairs, &actual);
-      if (ObjectNotFound(tdi_status)) break;
-      RETURN_IF_TDI_ERROR(tdi_status);
-      if (actual == 0) break;
+    RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
+    RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
 
+    ::tdi::Table::keyDataPairs pairs;
+    pairs.push_back(std::make_pair(table_key.get(), table_data.get()));
+
+    // Key of the last entry fetched.
+    const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
+    LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
+              << ", prev_key: " << DumpTableKey(prev_key.get());
+
+    uint32 actual = 0;
+    RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
+                                             flags, *prev_key, NUM_ENTRIES,
+                                             &pairs, &actual));
+    LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
+
+    if (actual) {
       table_keys->push_back(std::move(table_key));
       table_values->push_back(std::move(table_data));
     }
+  }
+  return ::util::OkStatus();
+}
+
+/**
+ * GetAllEntriesByCount() - Fetches all the entries in a table by querying
+ * the number of entries in the table and then reading that many entries.
+ */
+::util::Status GetAllEntriesByCount(
+    std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
+    const ::tdi::Flags& flags, const ::tdi::Table*& table,
+    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
+    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  bool read_extra_entries = FLAGS_experimental_read_extra_entries;
+  ::util::Status status;
+
+  uint32 entries = 0;
+  status =
+      GetNumberOfEntries(tdi_session, tdi_dev_target, flags, table, entries);
+  if (!status.ok()) {
+    LOG(INFO) << "GetNumberOfEntries: " << status.error_message();
+    return status;
+  }
+
+  if (entries == 0 && !read_extra_entries) {
+    return ::util::OkStatus();
+  }
+
+  // Get first entry.
+  status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
+  if (!status.ok()) {
+    LOG(INFO) << "GetFirstEntry: " << status.error_message();
+    return status;
+  }
+  if (table_keys->size() == 0) {
+    // No first entry means the table is empty.
+    return ::util::OkStatus();
+  }
+
+  // Get remaining entries.
+  if (entries > 1) {
+    status = GetNextEntries(tdi_session, tdi_dev_target, flags, table,
+                            entries - 1, table_keys, table_values);
+    LOG(INFO) << "GetNextEntries: " << status.error_message();
+    if (!status.ok()) return status;
+  }
+
+  if (read_extra_entries) {
+    // Add-on-miss entries are not included in the table size, so we
+    // need to continue reading until there are no more entries.
+    status = GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
+                             table_keys, table_values);
+    LOG(INFO) << "GetExtraEntries: " << status.error_message();
+    if (!status.ok()) return status;
   }
 
   CHECK(table_keys->size() == table_values->size());
@@ -548,31 +648,17 @@ namespace {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  ::util::Status status;
+
   // Get first entry.
-  {
-    const ::tdi::Device* device = nullptr;
-    ::tdi::DevMgr::getInstance().deviceGet(0, &device);
-    std::unique_ptr<::tdi::Target> dev_tgt;
-    device->createTarget(&dev_tgt);
-
-    std::unique_ptr<::tdi::TableKey> table_key;
-    std::unique_ptr<::tdi::TableData> table_data;
-
-    RETURN_IF_TDI_ERROR(table->keyAllocate(&table_key));
-    RETURN_IF_TDI_ERROR(table->dataAllocate(&table_data));
-
-    auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
-                                           table_key.get(), table_data.get());
-
-    if (tdi_status == TDI_OBJECT_NOT_FOUND || tdi_status == TDI_NOT_SUPPORTED) {
-      return ::util::OkStatus();
-    } else {
-      RETURN_IF_TDI_ERROR(tdi_status);
-    }
-
-    // Move key and data pointers to the output vectors.
-    table_keys->push_back(std::move(table_key));
-    table_values->push_back(std::move(table_data));
+  status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
+  if (!status.ok()) {
+    LOG(INFO) << "GetFirstEntry: " << status.error_message();
+    return status;
+  }
+  if (table_keys->size() == 0) {
+    // No first entry means the table is empty.
+    return ::util::OkStatus();
   }
 
   // Number of entries to read per burst.
@@ -582,56 +668,57 @@ namespace {
   }
 
   // Get remaining entries.
-  int iteration = 0;
   for (;;) {
-    ++iteration;
-
     // Input and output vectors for GetNextN.
     std::vector<std::unique_ptr<::tdi::TableKey>> keys(burst_size);
     std::vector<std::unique_ptr<::tdi::TableData>> data(burst_size);
     ::tdi::Table::keyDataPairs pairs;
 
-    for (size_t i = 0; i < keys.size(); ++i) {
+    for (uint32 i = 0; i < burst_size; ++i) {
       RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[i]));
       RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
       pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
     }
 
     // Key of the last entry fetched.
-    std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
+    const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
+    LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
+              << ", prev_key: " << DumpTableKey(prev_key.get());
 
     uint32 actual = 0;
+    RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
+                                             flags, *prev_key, burst_size,
+                                             &pairs, &actual));
+    LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
 
-    auto tdi_status =
-        table->entryGetNextN(*tdi_session, tdi_dev_target, flags, *prev_key,
-                             burst_size, &pairs, &actual);
-    if (ObjectNotFound(tdi_status)) {
-      break;
+    if (actual) {
+      // Append key pointers to the table_keys vector.
+      auto keys_end = keys.begin();
+      std::advance(keys_end, actual);
+
+      table_keys->insert(table_keys->end(),
+                         std::make_move_iterator(keys.begin()),
+                         std::make_move_iterator(keys_end));
+
+      // Append data pointers to the table_values vector.
+      auto data_end = data.begin();
+      std::advance(data_end, actual);
+
+      table_values->insert(table_values->end(),
+                           std::make_move_iterator(data.begin()),
+                           std::make_move_iterator(data_end));
     } else {
-      RETURN_IF_TDI_ERROR(tdi_status);
-    }
-
-    // Guard against infinite loop.
-    if (actual == 0) {
-      LOG(WARNING) << "iteration " << iteration
-                   << ": entryGetNextN returned 0 entries";
+      // No more entries.
       break;
     }
+  }
 
-    // Move key pointers to the output vector.
-    auto keys_end = keys.begin();
-    std::advance(keys_end, actual);
-
-    table_keys->insert(table_keys->end(), std::make_move_iterator(keys.begin()),
-                       std::make_move_iterator(keys_end));
-
-    // Move data pointers to the output vector.
-    auto data_end = data.begin();
-    std::advance(data_end, actual);
-
-    table_values->insert(table_values->end(),
-                         std::make_move_iterator(data.begin()),
-                         std::make_move_iterator(data_end));
+  if (FLAGS_experimental_read_extra_entries) {
+    // Add-on-miss entries are not included in the table size, so we
+    // need to continue reading until there are no more entries.
+    status = GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
+                             table_keys, table_values);
+    if (!status.ok()) return status;
   }
 
   // Sanity check.
