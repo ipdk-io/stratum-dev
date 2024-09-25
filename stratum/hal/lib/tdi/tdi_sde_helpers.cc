@@ -469,13 +469,11 @@ namespace {
 
   auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
                                          table_key.get(), table_data.get());
-  if (tdi_status != TDI_SUCCESS) {
-    if (ObjectNotFound(tdi_status)) {
-      LOG(INFO) << __func__ << ": entryGetFirst() returned ObjectNotFound";
-      return ::util::OkStatus();
-    }
-    RETURN_IF_TDI_ERROR(tdi_status);
+  if (ObjectNotFound(tdi_status)) {
+    LOG(INFO) << __func__ << ": entryGetFirst() returned ObjectNotFound";
+    return ::util::OkStatus();
   }
+  RETURN_IF_TDI_ERROR(tdi_status);
 
   table_keys->push_back(std::move(table_key));
   table_values->push_back(std::move(table_data));
