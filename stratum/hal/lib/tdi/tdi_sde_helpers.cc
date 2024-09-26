@@ -424,6 +424,10 @@ namespace helpers {
 
 namespace {
 
+inline const std::string LogPrefix(const char* func) {
+  return absl::StrCat("[", func, "] ");
+}
+
 /**
  * GetNumberOfEntries - Returns the number of entries in the table.
  */
@@ -454,6 +458,8 @@ namespace {
     const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  static const std::string PREFIX = LogPrefix(__func__);
+
   // QUESTION: Why does GetFirstEntry() define its own ::tdi::Target
   // instead of using the one passed to GetAllEntries()?
   const ::tdi::Device* device = nullptr;
@@ -470,7 +476,7 @@ namespace {
   auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
                                          table_key.get(), table_data.get());
   if (ObjectNotFound(tdi_status)) {
-    LOG(INFO) << __func__ << ": entryGetFirst() returned ObjectNotFound";
+    LOG(INFO) << PREFIX << "entryGetFirst() returned ObjectNotFound";
     return ::util::OkStatus();
   }
   RETURN_IF_TDI_ERROR(tdi_status);
@@ -491,6 +497,9 @@ namespace {
     const uint32 num_entries,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  static const std::string PREFIX = LogPrefix(__func__);
+  LOG(INFO) << PREFIX << "num_entries: " << num_entries;
+
   // Input and output vectors for GetNextN.
   std::vector<std::unique_ptr<::tdi::TableKey>> keys(num_entries);
   std::vector<std::unique_ptr<::tdi::TableData>> data(num_entries);
@@ -511,15 +520,14 @@ namespace {
   if (prev_key.get() != table_keys->back().get()) {
     LOG(INFO) << "check: prev_key.get() != table_keys->back().get()";
   }
-  LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
-            << ", prev_key: " << DumpTableKey(prev_key.get());
+  LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
 
   uint32 actual = 0;
   // TODO(derek): replace *(*table_keys)[0] with *prev_key.
   RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target, flags,
                                            *(*table_keys)[0], pairs.size(),
                                            &pairs, &actual));
-  LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
+  LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
 
   if (actual) {
     // Append key pointers to the table_keys vector.
@@ -549,7 +557,7 @@ namespace {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  // Fetch one entry at a time.
+  static const std::string PREFIX = LogPrefix(__func__);
   constexpr uint32 NUM_ENTRIES = 1;
 
   for (;;) {
@@ -564,14 +572,13 @@ namespace {
 
     // Key of the last entry fetched.
     const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
-    LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
-              << ", prev_key: " << DumpTableKey(prev_key.get());
+    LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
 
     uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
                                              flags, *prev_key, NUM_ENTRIES,
                                              &pairs, &actual));
-    LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
+    LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
 
     if (actual) {
       table_keys->push_back(std::move(table_key));
@@ -590,6 +597,7 @@ namespace {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  static const std::string PREFIX = LogPrefix(__func__);
   bool read_extra_entries = FLAGS_experimental_read_extra_entries;
   ::util::Status status;
 
@@ -597,7 +605,7 @@ namespace {
   status =
       GetNumberOfEntries(tdi_session, tdi_dev_target, flags, table, entries);
   if (!status.ok()) {
-    LOG(INFO) << "GetNumberOfEntries: " << status.error_message();
+    LOG(INFO) << PREFIX << "GetNumberOfEntries(): " << status.error_message();
     return status;
   }
 
@@ -608,7 +616,7 @@ namespace {
   // Get first entry.
   status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
   if (!status.ok()) {
-    LOG(INFO) << "GetFirstEntry: " << status.error_message();
+    LOG(INFO) << PREFIX << "GetFirstEntry(): " << status.error_message();
     return status;
   }
   if (table_keys->size() == 0) {
@@ -620,7 +628,7 @@ namespace {
   if (entries > 1) {
     status = GetNextEntries(tdi_session, tdi_dev_target, flags, table,
                             entries - 1, table_keys, table_values);
-    LOG(INFO) << "GetNextEntries: " << status.error_message();
+    LOG(INFO) << PREFIX << "GetNextEntries(): " << status.error_message();
     if (!status.ok()) return status;
   }
 
@@ -629,7 +637,7 @@ namespace {
     // need to continue reading until there are no more entries.
     status = GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
                              table_keys, table_values);
-    LOG(INFO) << "GetExtraEntries: " << status.error_message();
+    LOG(INFO) << PREFIX << "GetExtraEntries(): " << status.error_message();
     if (!status.ok()) return status;
   }
 
@@ -646,12 +654,13 @@ namespace {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
+  static const std::string PREFIX = LogPrefix(__func__);
   ::util::Status status;
 
   // Get first entry.
   status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
   if (!status.ok()) {
-    LOG(INFO) << "GetFirstEntry: " << status.error_message();
+    LOG(INFO) << PREFIX << "GetFirstEntry(): " << status.error_message();
     return status;
   }
   if (table_keys->size() == 0) {
@@ -680,14 +689,13 @@ namespace {
 
     // Key of the last entry fetched.
     const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
-    LOG(INFO) << __func__ << ": " << DumpTableMetadata(table)
-              << ", prev_key: " << DumpTableKey(prev_key.get());
+    LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
 
     uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
                                              flags, *prev_key, burst_size,
                                              &pairs, &actual));
-    LOG(INFO) << "entryGetNextN() returned " << actual << " entries";
+    LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
 
     if (actual) {
       // Append key pointers to the table_keys vector.
@@ -724,6 +732,22 @@ namespace {
   return ::util::OkStatus();
 }
 
+/**
+ * DumpTableOptions() - Formats the GetAllEntries() command-line options.
+ */
+const std::string DumpTableOptions() {
+  std::string s;
+  absl::StrAppend(&s, "optimize_full_table_reads: ",
+                  FLAGS_optimize_full_table_reads);
+  if (!FLAGS_optimize_full_table_reads) {
+    absl::StrAppend(&s, ", full_table_read_burst_size: ",
+                    FLAGS_full_table_read_burst_size);
+  }
+  absl::StrAppend(&s, ", experimental_read_extra_entries: ",
+                  FLAGS_experimental_read_extra_entries);
+  return s;
+}
+
 }  // namespace
 
 /**
@@ -734,6 +758,8 @@ namespace {
     const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>* table_values) {
+  static const std::string PREFIX = LogPrefix(__func__);
+
   // Sanity check.
   RET_CHECK(table_keys) << "table_keys is null";
   RET_CHECK(table_values) << "table_values is null";
@@ -742,6 +768,9 @@ namespace {
   table_values->resize(0);
 
   const ::tdi::Flags flags(0);
+
+  LOG(INFO) << PREFIX << DumpTableMetadata(table);
+  LOG(INFO) << PREFIX << DumpTableOptions();
 
   if (FLAGS_optimize_full_table_reads) {
     return GetAllEntriesByCount(tdi_session, tdi_dev_target, flags, table,
