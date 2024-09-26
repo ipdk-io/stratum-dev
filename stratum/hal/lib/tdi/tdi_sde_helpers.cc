@@ -25,14 +25,17 @@ constexpr int MINIMUM_BURST_SIZE = 1;
 constexpr int MAXIMUM_BURST_SIZE = 1024;
 constexpr int DEFAULT_BURST_SIZE = 20;
 
+// [no]fetch_table_burst_mode (bulk vs. burst)
 DEFINE_bool(optimize_full_table_reads, true,
             "Whether to skip full-table reads if the reported table size "
             "is zero.");
 
+// [no]fetch_table_extra_entries
 DEFINE_bool(experimental_read_extra_entries, false,
             "Whether to read additional entries when doing a full-table "
             "read using the table size.");
 
+// fetch_table_burst_size=BURST_SIZE
 DEFINE_uint32(full_table_read_burst_size, DEFAULT_BURST_SIZE,
               "Number of entries to read per burst.");
 
@@ -580,10 +583,10 @@ inline const std::string LogPrefix(const char* func) {
                                              &pairs, &actual));
     LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
 
-    if (actual) {
-      table_keys->push_back(std::move(table_key));
-      table_values->push_back(std::move(table_data));
-    }
+    if (actual == 0) break;
+
+    table_keys->push_back(std::move(table_key));
+    table_values->push_back(std::move(table_data));
   }
   return ::util::OkStatus();
 }
