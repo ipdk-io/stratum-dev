@@ -740,11 +740,11 @@ inline const std::string LogPrefix(const char* func) {
  */
 const std::string DumpTableOptions() {
   std::string s;
-  absl::StrAppend(&s, "optimize_full_table_reads: ",
-                  FLAGS_optimize_full_table_reads);
+  absl::StrAppend(
+      &s, "optimize_full_table_reads: ", FLAGS_optimize_full_table_reads);
   if (!FLAGS_optimize_full_table_reads) {
-    absl::StrAppend(&s, ", full_table_read_burst_size: ",
-                    FLAGS_full_table_read_burst_size);
+    absl::StrAppend(
+        &s, ", full_table_read_burst_size: ", FLAGS_full_table_read_burst_size);
   }
   absl::StrAppend(&s, ", experimental_read_extra_entries: ",
                   FLAGS_experimental_read_extra_entries);
