@@ -25,20 +25,6 @@ constexpr int MINIMUM_BURST_SIZE = 1;
 constexpr int MAXIMUM_BURST_SIZE = 1024;
 constexpr int DEFAULT_BURST_SIZE = 20;
 
-// [no]fetch_table_burst_mode (bulk vs. burst)
-DEFINE_bool(optimize_full_table_reads, true,
-            "Whether to skip full-table reads if the reported table size "
-            "is zero.");
-
-// [no]fetch_table_extra_entries
-DEFINE_bool(experimental_read_extra_entries, false,
-            "Whether to read additional entries when doing a full-table "
-            "read using the table size.");
-
-// fetch_table_burst_size=BURST_SIZE
-DEFINE_uint32(full_table_read_burst_size, DEFAULT_BURST_SIZE,
-              "Number of entries to read per burst.");
-
 // TDI returns OBJECT_NOT_FOUND if it is unable to get any more entries.
 // We also check for TDI_NOT_SUPPORTED because that's what the original
 // code did.
@@ -427,10 +413,6 @@ namespace helpers {
 
 namespace {
 
-inline const std::string LogPrefix(const char* func) {
-  return absl::StrCat("[", func, "] ");
-}
-
 /**
  * GetNumberOfEntries - Returns the number of entries in the table.
  */
@@ -461,8 +443,6 @@ inline const std::string LogPrefix(const char* func) {
     const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
-
   // QUESTION: Why does GetFirstEntry() define its own ::tdi::Target
   // instead of using the one passed to GetAllEntries()?
   const ::tdi::Device* device = nullptr;
@@ -479,7 +459,7 @@ inline const std::string LogPrefix(const char* func) {
   auto tdi_status = table->entryGetFirst(*tdi_session, *dev_tgt, flags,
                                          table_key.get(), table_data.get());
   if (ObjectNotFound(tdi_status)) {
-    LOG(INFO) << PREFIX << "entryGetFirst() returned ObjectNotFound";
+    // Table is empty.
     return ::util::OkStatus();
   }
   RETURN_IF_TDI_ERROR(tdi_status);
@@ -491,7 +471,7 @@ inline const std::string LogPrefix(const char* func) {
 }
 
 /**
- * GetNextEntries() - Fetches the specified number of entries from the table.
+ * GetNextEntries() - Fetches the remaining entries from the table.
  * The first entry has already been fetched.
  */
 ::util::Status GetNextEntries(
@@ -500,9 +480,6 @@ inline const std::string LogPrefix(const char* func) {
     const uint32 num_entries,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
-  LOG(INFO) << PREFIX << "num_entries: " << num_entries;
-
   // Input and output vectors for GetNextN.
   std::vector<std::unique_ptr<::tdi::TableKey>> keys(num_entries);
   std::vector<std::unique_ptr<::tdi::TableData>> data(num_entries);
@@ -514,23 +491,10 @@ inline const std::string LogPrefix(const char* func) {
     pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
   }
 
-  // Key of the last entry fetched.
-  // TODO(derek): replace (*table_keys)[0] with table_keys->back().
-  const std::unique_ptr<::tdi::TableKey>& prev_key = (*table_keys)[0];
-  if (prev_key != table_keys->back()) {
-    LOG(INFO) << "check: prev_key != table_keys->back()";
-  }
-  if (prev_key.get() != table_keys->back().get()) {
-    LOG(INFO) << "check: prev_key.get() != table_keys->back().get()";
-  }
-  LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
-
   uint32 actual = 0;
-  // TODO(derek): replace *(*table_keys)[0] with *prev_key.
   RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target, flags,
-                                           *(*table_keys)[0], pairs.size(),
+                                           *table_keys->back(), pairs.size(),
                                            &pairs, &actual));
-  LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
 
   if (actual) {
     // Append key pointers to the table_keys vector.
@@ -553,14 +517,19 @@ inline const std::string LogPrefix(const char* func) {
 }
 
 /**
- * GetExtraEntries() - Fetches entries one at a time until there are no more.
+ * GetExtraEntries() - Fetches table entries until there are no more.
+ *
+ * Hardware-learned (add-on-miss) entries are not included in the reported
+ * table size, so we continue fetching after getting the "remaining" entries.
+ *
+ * We fetch one entry at a time because pipe_mgr logs error messages if we
+ * request multiple entries.
  */
 ::util::Status GetExtraEntries(
     std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
   constexpr uint32 NUM_ENTRIES = 1;
 
   for (;;) {
@@ -573,15 +542,10 @@ inline const std::string LogPrefix(const char* func) {
     ::tdi::Table::keyDataPairs pairs;
     pairs.push_back(std::make_pair(table_key.get(), table_data.get()));
 
-    // Key of the last entry fetched.
-    const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
-    LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
-
     uint32 actual = 0;
     RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
-                                             flags, *prev_key, NUM_ENTRIES,
-                                             &pairs, &actual));
-    LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
+                                             flags, *table_keys->back(),
+                                             NUM_ENTRIES, &pairs, &actual));
 
     if (actual == 0) break;
 
@@ -600,155 +564,30 @@ inline const std::string LogPrefix(const char* func) {
     const ::tdi::Flags& flags, const ::tdi::Table*& table,
     std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
-  bool read_extra_entries = FLAGS_experimental_read_extra_entries;
-  ::util::Status status;
-
   uint32 entries = 0;
-  status =
-      GetNumberOfEntries(tdi_session, tdi_dev_target, flags, table, entries);
-  if (!status.ok()) {
-    LOG(INFO) << PREFIX << "GetNumberOfEntries(): " << status.error_message();
-    return status;
-  }
+  RETURN_IF_ERROR(
+      GetNumberOfEntries(tdi_session, tdi_dev_target, flags, table, entries));
 
-  if (entries == 0 && !read_extra_entries) {
-    return ::util::OkStatus();
-  }
+  RETURN_IF_ERROR(
+      GetFirstEntry(tdi_session, flags, table, table_keys, table_values));
 
-  // Get first entry.
-  status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
-  if (!status.ok()) {
-    LOG(INFO) << PREFIX << "GetFirstEntry(): " << status.error_message();
-    return status;
-  }
   if (table_keys->size() == 0) {
-    // No first entry means the table is empty.
+    // Table is empty.
     return ::util::OkStatus();
   }
 
-  // Get remaining entries.
   if (entries > 1) {
-    status = GetNextEntries(tdi_session, tdi_dev_target, flags, table,
-                            entries - 1, table_keys, table_values);
-    LOG(INFO) << PREFIX << "GetNextEntries(): " << status.error_message();
-    if (!status.ok()) return status;
+    RETURN_IF_ERROR(GetNextEntries(tdi_session, tdi_dev_target, flags, table,
+                                   entries - 1, table_keys, table_values));
   }
 
-  if (read_extra_entries) {
-    // Add-on-miss entries are not included in the table size, so we
-    // need to continue reading until there are no more entries.
-    status = GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
-                             table_keys, table_values);
-    LOG(INFO) << PREFIX << "GetExtraEntries(): " << status.error_message();
-    if (!status.ok()) return status;
-  }
+  // Add-on-miss entries are not included in the table size, so we
+  // need to continue reading until there are no more entries.
+  RETURN_IF_ERROR(GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
+                                  table_keys, table_values));
 
   CHECK(table_keys->size() == table_values->size());
   return ::util::OkStatus();
-}
-
-/**
- * GetAllEntriesInBursts() - Fetches all the entries in a table by repeatedly
- * reading N entries at a time until there are no more.
- */
-::util::Status GetAllEntriesInBursts(
-    std::shared_ptr<::tdi::Session>& tdi_session, ::tdi::Target& tdi_dev_target,
-    const ::tdi::Flags& flags, const ::tdi::Table*& table,
-    std::vector<std::unique_ptr<::tdi::TableKey>>*& table_keys,
-    std::vector<std::unique_ptr<::tdi::TableData>>*& table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
-  ::util::Status status;
-
-  // Get first entry.
-  status = GetFirstEntry(tdi_session, flags, table, table_keys, table_values);
-  if (!status.ok()) {
-    LOG(INFO) << PREFIX << "GetFirstEntry(): " << status.error_message();
-    return status;
-  }
-  if (table_keys->size() == 0) {
-    // No first entry means the table is empty.
-    return ::util::OkStatus();
-  }
-
-  // Number of entries to read per burst.
-  uint32 burst_size = FLAGS_full_table_read_burst_size;
-  if (burst_size < MINIMUM_BURST_SIZE || burst_size > MAXIMUM_BURST_SIZE) {
-    burst_size = DEFAULT_BURST_SIZE;
-  }
-
-  // Get remaining entries.
-  for (;;) {
-    // Input and output vectors for GetNextN.
-    std::vector<std::unique_ptr<::tdi::TableKey>> keys(burst_size);
-    std::vector<std::unique_ptr<::tdi::TableData>> data(burst_size);
-    ::tdi::Table::keyDataPairs pairs;
-
-    for (uint32 i = 0; i < burst_size; ++i) {
-      RETURN_IF_TDI_ERROR(table->keyAllocate(&keys[i]));
-      RETURN_IF_TDI_ERROR(table->dataAllocate(&data[i]));
-      pairs.push_back(std::make_pair(keys[i].get(), data[i].get()));
-    }
-
-    // Key of the last entry fetched.
-    const std::unique_ptr<::tdi::TableKey>& prev_key = table_keys->back();
-    LOG(INFO) << PREFIX << "prev_key: " << DumpTableKey(prev_key.get());
-
-    uint32 actual = 0;
-    RETURN_IF_TDI_ERROR(table->entryGetNextN(*tdi_session, tdi_dev_target,
-                                             flags, *prev_key, burst_size,
-                                             &pairs, &actual));
-    LOG(INFO) << PREFIX << "entryGetNextN() returned " << actual << " entries";
-
-    if (actual) {
-      // Append key pointers to the table_keys vector.
-      auto keys_end = keys.begin();
-      std::advance(keys_end, actual);
-
-      table_keys->insert(table_keys->end(),
-                         std::make_move_iterator(keys.begin()),
-                         std::make_move_iterator(keys_end));
-
-      // Append data pointers to the table_values vector.
-      auto data_end = data.begin();
-      std::advance(data_end, actual);
-
-      table_values->insert(table_values->end(),
-                           std::make_move_iterator(data.begin()),
-                           std::make_move_iterator(data_end));
-    } else {
-      // No more entries.
-      break;
-    }
-  }
-
-  if (FLAGS_experimental_read_extra_entries) {
-    // Add-on-miss entries are not included in the table size, so we
-    // need to continue reading until there are no more entries.
-    status = GetExtraEntries(tdi_session, tdi_dev_target, flags, table,
-                             table_keys, table_values);
-    if (!status.ok()) return status;
-  }
-
-  // Sanity check.
-  CHECK(table_keys->size() == table_values->size());
-  return ::util::OkStatus();
-}
-
-/**
- * DumpTableOptions() - Formats the GetAllEntries() command-line options.
- */
-const std::string DumpTableOptions() {
-  std::string s;
-  absl::StrAppend(
-      &s, "optimize_full_table_reads: ", FLAGS_optimize_full_table_reads);
-  if (!FLAGS_optimize_full_table_reads) {
-    absl::StrAppend(
-        &s, ", full_table_read_burst_size: ", FLAGS_full_table_read_burst_size);
-  }
-  absl::StrAppend(&s, ", experimental_read_extra_entries: ",
-                  FLAGS_experimental_read_extra_entries);
-  return s;
 }
 
 }  // namespace
@@ -761,8 +600,6 @@ const std::string DumpTableOptions() {
     const ::tdi::Table* table,
     std::vector<std::unique_ptr<::tdi::TableKey>>* table_keys,
     std::vector<std::unique_ptr<::tdi::TableData>>* table_values) {
-  static const std::string PREFIX = LogPrefix(__func__);
-
   // Sanity check.
   RET_CHECK(table_keys) << "table_keys is null";
   RET_CHECK(table_values) << "table_values is null";
@@ -772,17 +609,8 @@ const std::string DumpTableOptions() {
 
   const ::tdi::Flags flags(0);
 
-  LOG(INFO) << PREFIX << DumpTableMetadata(table);
-  LOG(INFO) << PREFIX << DumpTableOptions();
-
-  if (FLAGS_optimize_full_table_reads) {
-    return GetAllEntriesByCount(tdi_session, tdi_dev_target, flags, table,
-                                table_keys, table_values);
-  } else {
-    return GetAllEntriesInBursts(tdi_session, tdi_dev_target, flags, table,
-                                 table_keys, table_values);
-  }
-  return ::util::OkStatus();
+  return GetAllEntriesByCount(tdi_session, tdi_dev_target, flags, table,
+                              table_keys, table_values);
 }
 
 // TDI does not provide a target-neutral way for us to determine whether a
