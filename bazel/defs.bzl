@@ -1,5 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
+# Copyright 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 """
@@ -35,7 +36,9 @@ STRATUM_DISABLED_COMPILER_WARNINGS_COMMON = [
     "-Wno-unused-parameter",
     "-Wno-unused-variable",
 ]
-STRATUM_DISABLED_COMPILER_WARNINGS_GCC = []
+STRATUM_DISABLED_COMPILER_WARNINGS_GCC = [
+    "-Wno-redundant-move",
+]
 STRATUM_DISABLED_COMPILER_WARNINGS_LLVM = [
     "-Wno-gnu-zero-variadic-macro-arguments",
     "-Wno-missing-variable-declarations",
