@@ -47,6 +47,48 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+namespace {
+
+// Sets meter config from p4runtime messages.
+void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                          const ::p4::v1::PolicerMeterConfig& meter_config,
+                          const ::p4::v1::MeterCounterData& counter_data) {
+  config.meter_prof_id = meter_config.policer_meter_prof_id();
+  config.cir_unit = meter_config.policer_spec_cir_unit();
+  config.cburst_unit = meter_config.policer_spec_cbs_unit();
+  config.pir_unit = meter_config.policer_spec_eir_unit();
+  config.pburst_unit = meter_config.policer_spec_ebs_unit();
+  config.cir = meter_config.policer_spec_cir();
+  config.cburst = meter_config.policer_spec_cbs();
+  config.pir = meter_config.policer_spec_eir();
+  config.pburst = meter_config.policer_spec_ebs();
+
+  config.greenBytes = counter_data.green().byte_count();
+  config.greenPackets = counter_data.green().packet_count();
+  config.yellowBytes = counter_data.yellow().byte_count();
+  config.yellowPackets = counter_data.yellow().packet_count();
+  config.redBytes = counter_data.red().byte_count();
+  config.redPackets = counter_data.red().packet_count();
+}
+
+// Convenience function to set meter config from a MeterEntry.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::MeterEntry& meter_entry) {
+  return SetPktModMeterConfig(config,
+                              meter_entry.config().policer_meter_config(),
+                              meter_entry.counter_data());
+}
+
+// Convenience function to set meter config from a TableEntry.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::TableEntry& table_entry) {
+  return SetPktModMeterConfig(config,
+                              table_entry.meter_config().policer_meter_config(),
+                              table_entry.meter_counter_data());
+}
+
+}  // namespace
+
 TdiTableManager::TdiTableManager(OperationMode mode,
                                  TdiSdeInterface* tdi_sde_interface, int device)
     : mode_(mode),
@@ -77,42 +119,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     const ::p4::v1::ForwardingPipelineConfig& config) const {
   // TODO(unknown): Implement if needed.
   return ::util::OkStatus();
-}
-
-static void SetPktModMeterConfig(
-    TdiPktModMeterConfig& config,
-    const ::p4::v1::PolicerMeterConfig& meter_config,
-    const ::p4::v1::MeterCounterData& counter_data) {
-  config.meter_prof_id = meter_config.policer_meter_prof_id();
-  config.cir_unit = meter_config.policer_spec_cir_unit();
-  config.cburst_unit = meter_config.policer_spec_cbs_unit();
-  config.pir_unit = meter_config.policer_spec_eir_unit();
-  config.pburst_unit = meter_config.policer_spec_ebs_unit();
-  config.cir = meter_config.policer_spec_cir();
-  config.cburst = meter_config.policer_spec_cbs();
-  config.pir = meter_config.policer_spec_eir();
-  config.pburst = meter_config.policer_spec_ebs();
-
-  config.greenBytes = counter_data.green().byte_count();
-  config.greenPackets = counter_data.green().packet_count();
-  config.yellowBytes = counter_data.yellow().byte_count();
-  config.yellowPackets = counter_data.yellow().packet_count();
-  config.redBytes = counter_data.red().byte_count();
-  config.redPackets = counter_data.red().packet_count();
-}
-
-static inline void SetPktModMeterConfig(
-    TdiPktModMeterConfig& config, const ::p4::v1::MeterEntry& meter_entry) {
-  return SetPktModMeterConfig(config,
-                              meter_entry.config().policer_meter_config(),
-                              meter_entry.counter_data());
-}
-
-static inline void SetPktModMeterConfig(
-    TdiPktModMeterConfig& config, const ::p4::v1::TableEntry& table_entry) {
-  return SetPktModMeterConfig(config,
-                              table_entry.meter_config().policer_meter_config(),
-                              table_entry.meter_counter_data());
 }
 
 ::util::Status TdiTableManager::BuildTableKey(
