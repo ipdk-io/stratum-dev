@@ -201,6 +201,23 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   return ::util::OkStatus();
 }
 
+template <typename T>
+static ::util::Status GetMeterUnitsInPackets(const T& meter,
+                                             bool& units_in_packets) {
+  switch (meter.spec().unit()) {
+    case ::p4::config::v1::MeterSpec::BYTES:
+      units_in_packets = false;
+      break;
+    case ::p4::config::v1::MeterSpec::PACKETS:
+      units_in_packets = true;
+      break;
+    default:
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
+                                           << meter.ShortDebugString() << ".";
+  }
+  return ::util::OkStatus();
+}
+
 ::util::Status TdiTableManager::BuildTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data) {
@@ -230,23 +247,13 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
-      bool meter_units_in_packets;  // or bytes
+      bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
+
       RETURN_IF_ERROR(table_data->SetMeterConfig(
-          meter_units_in_packets, table_entry.meter_config().cir(),
+          units_in_packets, table_entry.meter_config().cir(),
           table_entry.meter_config().cburst(), table_entry.meter_config().pir(),
           table_entry.meter_config().pburst()));
     }
@@ -257,23 +264,13 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
-      bool meter_units_in_packets;  // or bytes
+      bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(
           auto meter, p4_info_manager_->FindDirectPktModMeterByID(resource_id));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
+
       TdiPktModMeterConfig config;
-      config.isPktModMeter = meter_units_in_packets;
+      config.isPktModMeter = units_in_packets;
       config.meter_prof_id = table_entry.meter_config()
                                  .policer_meter_config()
                                  .policer_meter_prof_id();
@@ -804,23 +801,13 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter") {
-      bool meter_units_in_packets;  // or bytes
+      bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
+
       RETURN_IF_ERROR(table_data->SetMeterConfig(
-          meter_units_in_packets, direct_meter_entry.config().cir(),
+          units_in_packets, direct_meter_entry.config().cir(),
           direct_meter_entry.config().cburst(),
           direct_meter_entry.config().pir(),
           direct_meter_entry.config().pburst()));
@@ -1053,22 +1040,6 @@ TdiTableManager::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-static ::util::Status GetPktModMeterUnitsInPackets(
-    const ::idpf::PacketModMeter& meter, bool& result) {
-  switch (meter.spec().unit()) {
-    case ::p4::config::v1::MeterSpec::BYTES:
-      result = false;
-      break;
-    case ::p4::config::v1::MeterSpec::PACKETS:
-      result = true;
-      break;
-    default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                           << meter.ShortDebugString() << ".";
-  }
-  return ::util::OkStatus();
-}
-
 ::util::Status TdiTableManager::ReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
@@ -1131,14 +1102,13 @@ static ::util::Status GetPktModMeterUnitsInPackets(
   }
 
   else if (resource_type == "PacketModMeter") {
-    bool pkt_mod_meter_units_in_packets;
+    bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
-      RETURN_IF_ERROR(
-          GetPktModMeterUnitsInPackets(meter, pkt_mod_meter_units_in_packets));
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
 
     // Index 0 is a valid value and not a wildcard.
@@ -1258,23 +1228,12 @@ static ::util::Status SetPktModMeterConfig(
                    p4_info_manager_->FindResourceTypeByID(meter_id));
 
   if (resource_type == "Meter" && meter_entry.has_config()) {
-    bool meter_units_in_packets;  // or bytes
+    bool units_in_packets;  // or bytes
     {
       absl::ReaderMutexLock l(&lock_);
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-          meter_units_in_packets = false;
-          break;
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          meter_units_in_packets = true;
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
-      }
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
 
     absl::optional<uint32> meter_index;
@@ -1285,20 +1244,19 @@ static ::util::Status SetPktModMeterConfig(
     }
 
     RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
-        device_, session, meter_id, meter_index, meter_units_in_packets,
+        device_, session, meter_id, meter_index, units_in_packets,
         meter_entry.config().cir(), meter_entry.config().cburst(),
         meter_entry.config().pir(), meter_entry.config().pburst()));
   }
 
   if (resource_type == "PacketModMeter") {
-    bool pkt_mod_meter_units_in_packets;
+    bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
       ASSIGN_OR_RETURN(
           meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
-      RETURN_IF_ERROR(
-          GetPktModMeterUnitsInPackets(meter, pkt_mod_meter_units_in_packets));
+      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
 
     absl::optional<uint32> meter_index;
@@ -1311,7 +1269,7 @@ static ::util::Status SetPktModMeterConfig(
     if (meter_entry.has_config()) {
       TdiPktModMeterConfig config;
       RETURN_IF_ERROR(SetPktModMeterConfig(config, meter_entry));
-      config.isPktModMeter = pkt_mod_meter_units_in_packets;
+      config.isPktModMeter = units_in_packets;
 
       RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
           device_, session, meter_id, meter_index, config));
