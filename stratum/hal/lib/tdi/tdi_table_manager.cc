@@ -315,8 +315,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                  << meter.ShortDebugString() << ".";
       }
       TdiPktModMeterConfig config;
-      config.isPktModMeter = meter_units_in_packets;
       SetPktModMeterConfig(config, table_entry);
+      config.isPktModMeter = meter_units_in_packets;
       RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
     }
   }
