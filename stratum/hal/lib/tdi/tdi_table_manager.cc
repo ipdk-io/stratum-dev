@@ -47,6 +47,26 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+namespace {
+
+template <typename T>
+::util::Status GetMeterUnitsInPackets(const T& meter, bool& units_in_packets) {
+  switch (meter.spec().unit()) {
+    case ::p4::config::v1::MeterSpec::BYTES:
+      units_in_packets = false;
+      break;
+    case ::p4::config::v1::MeterSpec::PACKETS:
+      units_in_packets = true;
+      break;
+    default:
+      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
+                                           << meter.ShortDebugString() << ".";
+  }
+  return ::util::OkStatus();
+}
+
+}  // namespace
+
 TdiTableManager::TdiTableManager(OperationMode mode,
                                  TdiSdeInterface* tdi_sde_interface, int device)
     : mode_(mode),
@@ -197,23 +217,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   RETURN_IF_ERROR(table_data->Reset(action.action_id()));
   for (const auto& param : action.params()) {
     RETURN_IF_ERROR(table_data->SetParam(param.param_id(), param.value()));
-  }
-  return ::util::OkStatus();
-}
-
-template <typename T>
-static ::util::Status GetMeterUnitsInPackets(const T& meter,
-                                             bool& units_in_packets) {
-  switch (meter.spec().unit()) {
-    case ::p4::config::v1::MeterSpec::BYTES:
-      units_in_packets = false;
-      break;
-    case ::p4::config::v1::MeterSpec::PACKETS:
-      units_in_packets = true;
-      break;
-    default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                           << meter.ShortDebugString() << ".";
   }
   return ::util::OkStatus();
 }
