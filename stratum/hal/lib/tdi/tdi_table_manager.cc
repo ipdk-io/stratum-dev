@@ -504,14 +504,9 @@ static ::util::Status GetMeterUnitsInPackets(const T& meter,
     if (resource_type == "Direct-Meter" && request.has_meter_config()) {
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
+      {
+        bool units_in_packets;
+        RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
       }
       uint64 cir = 0;
       uint64 cburst = 0;
@@ -1057,14 +1052,9 @@ TdiTableManager::ReadDirectMeterEntry(
       absl::ReaderMutexLock l(&lock_);
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
-      switch (meter.spec().unit()) {
-        case ::p4::config::v1::MeterSpec::BYTES:
-        case ::p4::config::v1::MeterSpec::PACKETS:
-          break;
-        default:
-          return MAKE_ERROR(ERR_INVALID_PARAM)
-                 << "Unsupported meter spec on meter "
-                 << meter.ShortDebugString() << ".";
+      {
+        bool units_in_packets;
+        RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
       }
     }
     // Index 0 is a valid value and not a wildcard.
