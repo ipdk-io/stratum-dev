@@ -47,6 +47,57 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+namespace {
+
+// Sets policer meter from internal configuration.
+void SetPolicerMeterConfig(::p4::v1::PolicerMeterConfig* meter_config,
+                           const TdiPktModMeterConfig& cfg) {
+  meter_config->set_policer_meter_prof_id(
+      static_cast<int64>(cfg.meter_prof_id));
+  meter_config->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
+  meter_config->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
+  meter_config->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
+  meter_config->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
+  meter_config->set_policer_spec_cir(static_cast<int64>(cfg.cir));
+  meter_config->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
+  meter_config->set_policer_spec_eir(static_cast<int64>(cfg.pir));
+  meter_config->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
+}
+
+// Sets counter data from internal configuration.
+void SetCounterData(::p4::v1::MeterCounterData* counter_data,
+                    const TdiPktModMeterConfig& cfg) {
+  counter_data->mutable_green()->set_byte_count(
+      static_cast<int64>(cfg.greenBytes));
+  counter_data->mutable_green()->set_packet_count(
+      static_cast<int64>(cfg.greenPackets));
+  counter_data->mutable_yellow()->set_byte_count(
+      static_cast<int64>(cfg.yellowBytes));
+  counter_data->mutable_yellow()->set_packet_count(
+      static_cast<int64>(cfg.yellowPackets));
+  counter_data->mutable_red()->set_byte_count(static_cast<int64>(cfg.redBytes));
+  counter_data->mutable_red()->set_packet_count(
+      static_cast<int64>(cfg.redPackets));
+}
+
+// Convenience function to set DirectMeterEntry from internal configuration.
+inline void SetDirectMeterEntry(::p4::v1::DirectMeterEntry& meter_entry,
+                                const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
+}
+
+// Convenience function to set MeterEntry from internal configuration.
+inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
+                          const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
+}
+
+}  // namespace
+
 TdiTableManager::TdiTableManager(OperationMode mode,
                                  TdiSdeInterface* tdi_sde_interface, int device)
     : mode_(mode),
@@ -77,49 +128,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     const ::p4::v1::ForwardingPipelineConfig& config) const {
   // TODO(unknown): Implement if needed.
   return ::util::OkStatus();
-}
-
-static void SetPolicerMeterConfig(::p4::v1::PolicerMeterConfig* meter_config,
-                                  const TdiPktModMeterConfig& cfg) {
-  meter_config->set_policer_meter_prof_id(
-      static_cast<int64>(cfg.meter_prof_id));
-  meter_config->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
-  meter_config->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
-  meter_config->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
-  meter_config->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
-  meter_config->set_policer_spec_cir(static_cast<int64>(cfg.cir));
-  meter_config->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
-  meter_config->set_policer_spec_eir(static_cast<int64>(cfg.pir));
-  meter_config->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
-}
-
-static void SetCounterData(::p4::v1::MeterCounterData* counter_data,
-                           const TdiPktModMeterConfig& cfg) {
-  counter_data->mutable_green()->set_byte_count(
-      static_cast<int64>(cfg.greenBytes));
-  counter_data->mutable_green()->set_packet_count(
-      static_cast<int64>(cfg.greenPackets));
-  counter_data->mutable_yellow()->set_byte_count(
-      static_cast<int64>(cfg.yellowBytes));
-  counter_data->mutable_yellow()->set_packet_count(
-      static_cast<int64>(cfg.yellowPackets));
-  counter_data->mutable_red()->set_byte_count(static_cast<int64>(cfg.redBytes));
-  counter_data->mutable_red()->set_packet_count(
-      static_cast<int64>(cfg.redPackets));
-}
-
-static inline void SetDirectMeterEntry(::p4::v1::DirectMeterEntry& meter_entry,
-                                       const TdiPktModMeterConfig& cfg) {
-  SetPolicerMeterConfig(
-      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
-  SetCounterData(meter_entry.mutable_counter_data(), cfg);
-}
-
-static inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
-                                 const TdiPktModMeterConfig& cfg) {
-  SetPolicerMeterConfig(
-      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
-  SetCounterData(meter_entry.mutable_counter_data(), cfg);
 }
 
 ::util::Status TdiTableManager::BuildTableKey(
