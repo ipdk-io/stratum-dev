@@ -49,6 +49,8 @@ namespace tdi {
 
 namespace {
 
+// Sets a Boolean variable to indicate whether the specified meter is
+// configured to measure traffic in packets (true) or bytes (false).
 template <typename T>
 ::util::Status GetMeterUnitsInPackets(const T& meter, bool& units_in_packets) {
   switch (meter.spec().unit()) {
@@ -63,6 +65,47 @@ template <typename T>
                                            << meter.ShortDebugString() << ".";
   }
   return ::util::OkStatus();
+}
+
+// Sets a meter configuration variable from a pair of PolicerMeterConfig
+// and MeterCounterData protobufs.
+void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                          const ::p4::v1::PolicerMeterConfig& meter_config,
+                          const ::p4::v1::MeterCounterData& counter_data) {
+  config.meter_prof_id = meter_config.policer_meter_prof_id();
+  config.cir_unit = meter_config.policer_spec_cir_unit();
+  config.cburst_unit = meter_config.policer_spec_cbs_unit();
+  config.pir_unit = meter_config.policer_spec_eir_unit();
+  config.pburst_unit = meter_config.policer_spec_ebs_unit();
+  config.cir = meter_config.policer_spec_cir();
+  config.cburst = meter_config.policer_spec_cbs();
+  config.pir = meter_config.policer_spec_eir();
+  config.pburst = meter_config.policer_spec_ebs();
+
+  config.greenBytes = counter_data.green().byte_count();
+  config.greenPackets = counter_data.green().packet_count();
+  config.yellowBytes = counter_data.yellow().byte_count();
+  config.yellowPackets = counter_data.yellow().packet_count();
+  config.redBytes = counter_data.red().byte_count();
+  config.redPackets = counter_data.red().packet_count();
+}
+
+// Convenience function to set a meter configuration variable from a
+// MeterEntry protobuf.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::MeterEntry& meter_entry) {
+  return SetPktModMeterConfig(config,
+                              meter_entry.config().policer_meter_config(),
+                              meter_entry.counter_data());
+}
+
+// Convenience function to set a meter configuration variable from a
+// TableEntry protobuf.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::TableEntry& table_entry) {
+  return SetPktModMeterConfig(config,
+                              table_entry.meter_config().policer_meter_config(),
+                              table_entry.meter_counter_data());
 }
 
 }  // namespace
@@ -273,39 +316,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
 
       TdiPktModMeterConfig config;
+      SetPktModMeterConfig(config, table_entry);
       config.isPktModMeter = units_in_packets;
-      config.meter_prof_id = table_entry.meter_config()
-                                 .policer_meter_config()
-                                 .policer_meter_prof_id();
-      config.cir_unit = table_entry.meter_config()
-                            .policer_meter_config()
-                            .policer_spec_cir_unit();
-      config.cburst_unit = table_entry.meter_config()
-                               .policer_meter_config()
-                               .policer_spec_cbs_unit();
-      config.pir_unit = table_entry.meter_config()
-                            .policer_meter_config()
-                            .policer_spec_eir_unit();
-      config.pburst_unit = table_entry.meter_config()
-                               .policer_meter_config()
-                               .policer_spec_ebs_unit();
-      config.cir =
-          table_entry.meter_config().policer_meter_config().policer_spec_cir();
-      config.cburst =
-          table_entry.meter_config().policer_meter_config().policer_spec_cbs();
-      config.pir =
-          table_entry.meter_config().policer_meter_config().policer_spec_eir();
-      config.pburst =
-          table_entry.meter_config().policer_meter_config().policer_spec_ebs();
-      config.greenBytes = table_entry.meter_counter_data().green().byte_count();
-      config.greenPackets =
-          table_entry.meter_counter_data().green().packet_count();
-      config.yellowBytes =
-          table_entry.meter_counter_data().yellow().byte_count();
-      config.yellowPackets =
-          table_entry.meter_counter_data().yellow().packet_count();
-      config.redBytes = table_entry.meter_counter_data().red().byte_count();
-      config.redPackets = table_entry.meter_counter_data().red().packet_count();
+
       RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
     }
   }
@@ -1174,34 +1187,6 @@ TdiTableManager::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-static ::util::Status SetPktModMeterConfig(
-    TdiPktModMeterConfig& config, const ::p4::v1::MeterEntry& meter_entry) {
-  config.meter_prof_id =
-      meter_entry.config().policer_meter_config().policer_meter_prof_id();
-  config.cir_unit =
-      meter_entry.config().policer_meter_config().policer_spec_cir_unit();
-  config.cburst_unit =
-      meter_entry.config().policer_meter_config().policer_spec_cbs_unit();
-  config.pir_unit =
-      meter_entry.config().policer_meter_config().policer_spec_eir_unit();
-  config.pburst_unit =
-      meter_entry.config().policer_meter_config().policer_spec_ebs_unit();
-  config.cir = meter_entry.config().policer_meter_config().policer_spec_cir();
-  config.cburst =
-      meter_entry.config().policer_meter_config().policer_spec_cbs();
-  config.pir = meter_entry.config().policer_meter_config().policer_spec_eir();
-  config.pburst =
-      meter_entry.config().policer_meter_config().policer_spec_ebs();
-  config.greenBytes = meter_entry.counter_data().green().byte_count();
-  config.greenPackets = meter_entry.counter_data().green().packet_count();
-  config.yellowBytes = meter_entry.counter_data().yellow().byte_count();
-  config.yellowPackets = meter_entry.counter_data().yellow().packet_count();
-  config.redBytes = meter_entry.counter_data().red().byte_count();
-  config.redPackets = meter_entry.counter_data().red().packet_count();
-
-  return ::util::OkStatus();
-}
-
 ::util::Status TdiTableManager::WriteMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type,
@@ -1261,7 +1246,7 @@ static ::util::Status SetPktModMeterConfig(
 
     if (meter_entry.has_config()) {
       TdiPktModMeterConfig config;
-      RETURN_IF_ERROR(SetPktModMeterConfig(config, meter_entry));
+      SetPktModMeterConfig(config, meter_entry);
       config.isPktModMeter = units_in_packets;
 
       RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
