@@ -1,5 +1,7 @@
+# stratum/lib/p4runtime/BUILD
+
 # Copyright 2021-present Open Networking Foundation
-# Copyright 2020 Google LLC
+# Copyright 2020-2024 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -13,6 +15,18 @@ licenses(["notice"])  # Apache v2
 package(
     default_visibility = STRATUM_INTERNAL,
 )
+
+config_setting(
+    name = "es2k_target",
+    define_values = {
+        "target": "es2k",
+    },
+)
+
+IPDK_ROLE_FIX = select({
+    ":es2k_target": ["IPDK_ROLE_FIX"],
+    "//conditions:default": [],
+})
 
 stratum_cc_library(
     name = "p4runtime_session",
@@ -42,6 +56,7 @@ stratum_cc_library(
     name = "sdn_controller_manager",
     srcs = ["sdn_controller_manager.cc"],
     hdrs = ["sdn_controller_manager.h"],
+    defines = IPDK_ROLE_FIX,
     deps = [
         "//stratum/hal/lib/p4:utils",
         "//stratum/public/proto:p4_role_config_cc_proto",
