@@ -26,9 +26,8 @@ namespace stratum {
 namespace hal {
 
 // This type defines a callback that verifies the Preamble content.
-typedef std::function<::util::Status(
-    const ::p4::config::v1::Preamble& preamble,
-    const std::string& resource_type)>
+typedef std::function<::util::Status(const ::p4::config::v1::Preamble& preamble,
+                                     const std::string& resource_type)>
     PreambleCallback;
 
 // This class provides a common implementation for mapping P4 IDs and names
@@ -101,9 +100,8 @@ class P4ResourceMap {
   void AddIdMapEntry(const T& p4_resource) {
     uint32 id_key = p4_resource.preamble().id();
     auto id_result = id_to_resource_map_.emplace(id_key, &p4_resource);
-    DCHECK(id_result.second)
-        << "P4Info unexpected duplicate " << resource_type_ << " ID "
-        << PrintP4ObjectID(id_key);
+    DCHECK(id_result.second) << "P4Info unexpected duplicate " << resource_type_
+                             << " ID " << PrintP4ObjectID(id_key);
   }
 
   void AddNameMapEntry(const T& p4_resource) {

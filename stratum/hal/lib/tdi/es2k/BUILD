@@ -1,4 +1,4 @@
-# stratum/hal/lib/tdi/es2k/BUILD
+# stratum/hal/lib/tdi/es2k:BUILD
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
@@ -316,6 +316,32 @@ stratum_cc_test(
         "//stratum/hal/lib/tdi:tdi_status",
         "@com_google_googletest//:gtest",
         "@local_es2k_bin//:es2k_hdrs",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_extern_manager",
+    srcs = ["es2k_extern_manager.cc"],
+    hdrs = ["es2k_extern_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_test(
+    name = "es2k_extern_manager_test",
+    srcs = ["es2k_extern_manager_test.cc"],
+    deps = [
+        ":es2k_extern_manager",
+        ":test_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
