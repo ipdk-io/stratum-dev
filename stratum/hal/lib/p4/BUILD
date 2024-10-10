@@ -137,6 +137,7 @@ stratum_cc_library(
     srcs = ["p4_info_manager.cc"],
     hdrs = ["p4_info_manager.h"],
     deps = [
+        ":p4_resource_map",
         ":utils",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -180,6 +181,22 @@ stratum_cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+stratum_cc_library(
+    name = "p4_resource_map",
+    hdrs = ["p4_resource_map.h"],
+    deps = [
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:statusor",
+        "//stratum/lib:macros",
+        "//stratum/lib:utils",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
