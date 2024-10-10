@@ -108,6 +108,55 @@ inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
                               table_entry.meter_counter_data());
 }
 
+// Sets a PolicerMeterConfig protobuf from a meter configuration variable.
+void SetPolicerMeterConfig(::p4::v1::PolicerMeterConfig* meter_config,
+                           const TdiPktModMeterConfig& cfg) {
+  meter_config->set_policer_meter_prof_id(
+      static_cast<int64>(cfg.meter_prof_id));
+  meter_config->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
+  meter_config->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
+  meter_config->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
+  meter_config->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
+  meter_config->set_policer_spec_cir(static_cast<int64>(cfg.cir));
+  meter_config->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
+  meter_config->set_policer_spec_eir(static_cast<int64>(cfg.pir));
+  meter_config->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
+}
+
+// Sets a MeterCounterData protobuf from a meter configuration variable.
+void SetCounterData(::p4::v1::MeterCounterData* counter_data,
+                    const TdiPktModMeterConfig& cfg) {
+  counter_data->mutable_green()->set_byte_count(
+      static_cast<int64>(cfg.greenBytes));
+  counter_data->mutable_green()->set_packet_count(
+      static_cast<int64>(cfg.greenPackets));
+  counter_data->mutable_yellow()->set_byte_count(
+      static_cast<int64>(cfg.yellowBytes));
+  counter_data->mutable_yellow()->set_packet_count(
+      static_cast<int64>(cfg.yellowPackets));
+  counter_data->mutable_red()->set_byte_count(static_cast<int64>(cfg.redBytes));
+  counter_data->mutable_red()->set_packet_count(
+      static_cast<int64>(cfg.redPackets));
+}
+
+// Convenience function to set a DirectMeterEntry protobuf from a meter
+// configuration variable.
+inline void SetDirectMeterEntry(::p4::v1::DirectMeterEntry& meter_entry,
+                                const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
+}
+
+// Convenience function to set a MeterEntry protobuf from a meter
+// configuration variable.
+inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
+                          const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
+}
+
 }  // namespace
 
 TdiTableManager::TdiTableManager(OperationMode mode,
@@ -924,46 +973,7 @@ TdiTableManager::ReadDirectMeterEntry(
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
-
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_meter_prof_id(static_cast<int64>(cfg.meter_prof_id));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir(static_cast<int64>(cfg.cir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir(static_cast<int64>(cfg.pir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
-          static_cast<int64>(cfg.greenBytes));
-      result.mutable_counter_data()->mutable_green()->set_packet_count(
-          static_cast<int64>(cfg.greenPackets));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
-          static_cast<int64>(cfg.yellowBytes));
-      result.mutable_counter_data()->mutable_yellow()->set_packet_count(
-          static_cast<int64>(cfg.yellowPackets));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
-          static_cast<int64>(cfg.redBytes));
-      result.mutable_counter_data()->mutable_red()->set_packet_count(
-          static_cast<int64>(cfg.redPackets));
+      SetDirectMeterEntry(result, cfg);
     }
   }
 
@@ -1134,47 +1144,7 @@ TdiTableManager::ReadDirectMeterEntry(
       ::p4::v1::MeterEntry result;
       result.set_meter_id(meter_entry.meter_id());
       result.mutable_index()->set_index(meter_indices[i]);
-
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_meter_prof_id(static_cast<int64>(cfg[i].meter_prof_id));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir_unit(static_cast<int64>(cfg[i].cir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs_unit(static_cast<int64>(cfg[i].cburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir_unit(static_cast<int64>(cfg[i].pir_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs_unit(static_cast<int64>(cfg[i].pburst_unit));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cir(static_cast<int64>(cfg[i].cir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_cbs(static_cast<int64>(cfg[i].cburst));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_eir(static_cast<int64>(cfg[i].pir));
-      result.mutable_config()
-          ->mutable_policer_meter_config()
-          ->set_policer_spec_ebs(static_cast<int64>(cfg[i].pburst));
-      result.mutable_counter_data()->mutable_green()->set_byte_count(
-          static_cast<int64>(cfg[i].greenBytes));
-      result.mutable_counter_data()->mutable_green()->set_packet_count(
-          static_cast<int64>(cfg[i].greenPackets));
-      result.mutable_counter_data()->mutable_yellow()->set_byte_count(
-          static_cast<int64>(cfg[i].yellowBytes));
-      result.mutable_counter_data()->mutable_yellow()->set_packet_count(
-          static_cast<int64>(cfg[i].yellowPackets));
-      result.mutable_counter_data()->mutable_red()->set_byte_count(
-          static_cast<int64>(cfg[i].redBytes));
-      result.mutable_counter_data()->mutable_red()->set_packet_count(
-          static_cast<int64>(cfg[i].redPackets));
-
+      SetMeterEntry(result, cfg[i]);
       *resp.add_entities()->mutable_meter_entry() = result;
     }
 

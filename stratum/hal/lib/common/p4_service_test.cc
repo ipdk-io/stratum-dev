@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/p4_service.h"
@@ -42,6 +43,7 @@ using ::testing::_;
 using ::testing::DoAll;
 using ::testing::HasSubstr;
 using ::testing::Invoke;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 using ::testing::WithArgs;
@@ -58,7 +60,9 @@ class P4ServiceTest
   void SetUp() override {
     mode_ = ::testing::get<0>(GetParam());
     role_name_ = ::testing::get<1>(GetParam()) ? kRoleName1 : "";
-    switch_mock_ = absl::make_unique<SwitchMock>();
+    // Use NiceMock to suppress "Uninteresting mock function call" warnings
+    // on RegisterStreamMessageResponseWriter().
+    switch_mock_ = absl::make_unique<NiceMock<SwitchMock>>();
     auth_policy_checker_mock_ = absl::make_unique<AuthPolicyCheckerMock>();
     error_buffer_ = absl::make_unique<ErrorBuffer>();
     p4_service_ = absl::make_unique<P4Service>(mode_, switch_mock_.get(),
