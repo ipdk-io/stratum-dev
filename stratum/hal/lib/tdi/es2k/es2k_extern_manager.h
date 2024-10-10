@@ -23,25 +23,46 @@ class Es2kExternManager : public P4ExternManager {
   Es2kExternManager();
   virtual ~Es2kExternManager() {}
 
-  virtual void Initialize(const ::p4::config::v1::P4Info& p4info,
-                          PreambleCallback preamble_cb) override;
+  //--------------------------------------------------------------------
+  //  P4ExternManager methods (public)
+  //--------------------------------------------------------------------
+  void Initialize(const ::p4::config::v1::P4Info& p4info,
+                  PreambleCallback preamble_cb) override;
 
+  //--------------------------------------------------------------------
+  //  Es2kExternManager methods (public)
+  //--------------------------------------------------------------------
+  // FindPktModMeter
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
       uint32 meter_id) const;
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByName(
       const std::string& meter_name) const;
 
+  // FindDirectPktModMeter
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByID(uint32 meter_id) const;
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByName(const std::string& meter_name) const;
 
+  void DumpNamesToIDs() const;
+
+  // Instance is neither copyable nor movable.
+  Es2kExternManager(const Es2kExternManager&) = delete;
+  Es2kExternManager& operator=(const Es2kExternManager&) = delete;
+
  private:
+  //----------------------------------------------------------------------
+  //  Private methods
+  //----------------------------------------------------------------------
   void InitDirectPacketModMeters(const p4::config::v1::Extern& p4extern,
                                  PreambleCallback preamble_cb);
+
   void InitPacketModMeters(const p4::config::v1::Extern& p4extern,
                            PreambleCallback preamble_cb);
 
+  //----------------------------------------------------------------------
+  //  Private data
+  //----------------------------------------------------------------------
   P4ResourceMap<::idpf::PacketModMeter> pkt_mod_meter_map_;
   P4ResourceMap<::idpf::DirectPacketModMeter> direct_pkt_mod_meter_map_;
 

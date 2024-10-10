@@ -14,6 +14,10 @@ Es2kExternManager::Es2kExternManager()
     : pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter") {}
 
+//----------------------------------------------------------------------
+//  P4ExternManager methods (public)
+//----------------------------------------------------------------------
+
 void Es2kExternManager::Initialize(const ::p4::config::v1::P4Info& p4info,
                                    PreambleCallback preamble_cb) {
   if (!p4info.externs().empty()) {
@@ -33,6 +37,42 @@ void Es2kExternManager::Initialize(const ::p4::config::v1::P4Info& p4info,
     }
   }
 }
+
+//----------------------------------------------------------------------
+//  Es2kExternManager methods (public)
+//----------------------------------------------------------------------
+
+// FindPktModMeter
+::util::StatusOr<const ::idpf::PacketModMeter>
+Es2kExternManager::FindPktModMeterByID(uint32 meter_id) const {
+  return pkt_mod_meter_map_.FindByID(meter_id);
+}
+
+::util::StatusOr<const ::idpf::PacketModMeter>
+Es2kExternManager::FindPktModMeterByName(const std::string& meter_name) const {
+  return pkt_mod_meter_map_.FindByName(meter_name);
+}
+
+// FindDirectPktModMeter
+::util::StatusOr<const ::idpf::DirectPacketModMeter>
+Es2kExternManager::FindDirectPktModMeterByID(uint32 meter_id) const {
+  return direct_pkt_mod_meter_map_.FindByID(meter_id);
+}
+
+::util::StatusOr<const ::idpf::DirectPacketModMeter>
+Es2kExternManager::FindDirectPktModMeterByName(
+    const std::string& meter_name) const {
+  return direct_pkt_mod_meter_map_.FindByName(meter_name);
+}
+
+void Es2kExternManager::DumpNamesToIDs() const {
+  pkt_mod_meter_map_.DumpNamesToIDs();
+  direct_pkt_mod_meter_map_.DumpNamesToIDs();
+}
+
+//----------------------------------------------------------------------
+//  Es2kExternManager methods (private)
+//----------------------------------------------------------------------
 
 void Es2kExternManager::InitDirectPacketModMeters(
     const p4::config::v1::Extern& p4extern, PreambleCallback preamble_cb) {
@@ -72,29 +112,6 @@ void Es2kExternManager::InitPacketModMeters(
   }
 
   pkt_mod_meter_map_.BuildMaps(meter_objects_, preamble_cb);
-}
-
-// FindPktModMeter
-::util::StatusOr<const ::idpf::PacketModMeter>
-Es2kExternManager::FindPktModMeterByID(uint32 meter_id) const {
-  return pkt_mod_meter_map_.FindByID(meter_id);
-}
-
-::util::StatusOr<const ::idpf::PacketModMeter>
-Es2kExternManager::FindPktModMeterByName(const std::string& meter_name) const {
-  return pkt_mod_meter_map_.FindByName(meter_name);
-}
-
-// FindDirectPktModMeter
-::util::StatusOr<const ::idpf::DirectPacketModMeter>
-Es2kExternManager::FindDirectPktModMeterByID(uint32 meter_id) const {
-  return direct_pkt_mod_meter_map_.FindByID(meter_id);
-}
-
-::util::StatusOr<const ::idpf::DirectPacketModMeter>
-Es2kExternManager::FindDirectPktModMeterByName(
-    const std::string& meter_name) const {
-  return direct_pkt_mod_meter_map_.FindByName(meter_name);
 }
 
 }  // namespace hal
