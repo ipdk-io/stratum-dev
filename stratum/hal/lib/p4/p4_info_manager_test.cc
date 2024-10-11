@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // P4InfoManager unit tests.
@@ -19,6 +19,8 @@
 #include "stratum/public/proto/p4_table_defs.pb.h"
 
 DECLARE_bool(skip_p4_min_objects_check);
+
+#define TEST_TOR_P4_INFO 1
 
 namespace stratum {
 namespace hal {
@@ -195,16 +197,17 @@ class P4InfoManagerTest : public testing::Test {
     SetUpNewP4Info();
   }
 
-  // FIXME(boc) disabling test due to missing tor_p4_info.pb.txt
+#ifdef TEST_TOR_P4_INFO
   // Populates p4_test_info_ with all resources from the tor.p4 spec.  This
   // data provides assurance that P4InfoManager can handle real P4 compiler
   // output.
-  //  void SetUpTorP4Info() {
-  //    const std::string kTorP4File =
-  //        "stratum/hal/lib/p4/testdata/tor_p4_info.pb.txt";
-  //    ASSERT_TRUE(ReadProtoFromTextFile(kTorP4File, &p4_test_info_).ok());
-  //    SetUpNewP4Info();
-  //  }
+  void SetUpTorP4Info() {
+    const std::string kTorP4File =
+        "stratum/hal/lib/p4/testdata/tor_p4_info.pb.txt";
+    ASSERT_TRUE(ReadProtoFromTextFile(kTorP4File, &p4_test_info_).ok());
+    SetUpNewP4Info();
+  }
+#endif
 
   ::p4::config::v1::P4Info p4_test_info_;           // Sets up test P4Info.
   std::unique_ptr<P4InfoManager> p4_test_manager_;  // P4InfoManager for tests.
@@ -848,8 +851,7 @@ TEST_F(P4InfoManagerTest, TestDumpNamesToIDs) {
   p4_test_manager_->DumpNamesToIDs();
 }
 
-// FIXME(boc) disabling test due to missing tor_p4_info.pb.txt
-/*
+#ifdef TEST_TOR_P4_INFO
 // Tests ability to handle a "real" P4 spec (tor.p4).
 TEST_F(P4InfoManagerTest, TestTorP4Info) {
   SetUpTorP4Info();
@@ -931,7 +933,7 @@ TEST_F(P4InfoManagerTest, TestDuplicateIDTableAndAction) {
   EXPECT_FALSE(status.error_message().empty());
   EXPECT_THAT(status.error_message(), HasSubstr("not unique"));
 }
- */
+#endif
 
 #if 0
 // TODO(unknown): Rework this test for 2 objects with global IDs.
@@ -972,9 +974,9 @@ TEST_F(P4InfoManagerTest, TestTableMissingActionXref) {
   EXPECT_THAT(status.error_message(), HasSubstr("refers to an invalid"));
 }
 
+#ifdef TEST_TOR_P4_INFO
 // FIXME(boc) disabling test due to missing tor_p4_info.pb.txt
 // Tests GetSwitchStackAnnotations with a pipeline_stage.
-/*
 TEST_F(P4InfoManagerTest, TestPipelineStageAnnotations) {
   SetUpTorP4Info();
   ASSERT_TRUE(p4_test_manager_->InitializeAndVerify().ok());
@@ -983,7 +985,7 @@ TEST_F(P4InfoManagerTest, TestPipelineStageAnnotations) {
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(P4Annotation::VLAN_ACL, status.ValueOrDie().pipeline_stage());
 }
- */
+#endif
 
 // Tests GetSwitchStackAnnotations with multiple annotations.
 TEST_F(P4InfoManagerTest, TestGetAnnotationsMultiple) {
