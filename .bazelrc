@@ -49,3 +49,11 @@ build:release --compilation_mode=opt
 build:release --copt='-O2'
 build:release --linkopt=-Wl,--strip-all
 build:release --stamp
+
+# DPDK target
+build:dpdk --define target=dpdk
+test:dpdk  --define target=dpdk
+
+# ES2K target
+build:es2k --define target=es2k
+test:es2k  --define target=es2k
