@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Extracted from the P4InfoManager class.
+// Note that is module is covered by P4InfoManagerTest.
 
 #ifndef STRATUM_HAL_LIB_P4_P4_RESOURCE_MAP
 #define STRATUM_HAL_LIB_P4_P4_RESOURCE_MAP
@@ -13,7 +14,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "google/protobuf/repeated_field.h"
-#include "idpf/p4info.pb.h"
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
