@@ -174,6 +174,7 @@ stratum_cc_test(
     srcs = ["p4_info_manager_test.cc"],
     deps = [
         ":p4_info_manager",
+        ":test_main",
         ":testdata",
         "//stratum/lib:utils",
         "//stratum/public/proto:p4_table_defs_cc_proto",
@@ -181,7 +182,6 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -473,4 +473,15 @@ stratum_cc_library(
     name = "testdata",
     arches = HOST_ARCHES,
     data = glob(["testdata/**"]),
+)
+
+cc_library(
+    name = "test_main",
+    testonly = 1,
+    srcs = ["test_main.cc"],
+    deps = [
+        "//stratum/glue:init_google",
+        "//stratum/glue:logging",
+        "@com_google_googletest//:gtest",
+    ],
 )
