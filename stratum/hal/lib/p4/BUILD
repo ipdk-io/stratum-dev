@@ -1,6 +1,6 @@
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2024 Intel Corporation
+# Copyright 2023-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -138,6 +138,7 @@ stratum_cc_library(
     srcs = ["p4_info_manager.cc"],
     hdrs = ["p4_info_manager.h"],
     deps = [
+        ":p4_resource_map",
         ":utils",
         "//stratum/glue:logging",
         "//stratum/glue/gtl:map_util",
@@ -181,6 +182,23 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+stratum_cc_library(
+    name = "p4_resource_map",
+    hdrs = ["p4_resource_map.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:utils",
+        "//stratum/lib:macros",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
