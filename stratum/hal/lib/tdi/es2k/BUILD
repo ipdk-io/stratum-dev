@@ -320,6 +320,22 @@ stratum_cc_test(
 )
 
 stratum_cc_library(
+    name = "es2k_extern_manager",
+    srcs = ["es2k_extern_manager.cc"],
+    hdrs = ["es2k_extern_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_library(
     name = "test_main",
     testonly = 1,
     srcs = ["test_main.cc"],
