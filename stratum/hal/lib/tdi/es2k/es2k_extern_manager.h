@@ -1,9 +1,5 @@
-// Copyright 2018 Google LLC
-// Copyright 2018-present Open Networking Foundation
 // Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
-
-// ES2K-specific P4 extern manager.
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_ES2K_EXTERN_MANAGER_H_
 #define STRATUM_HAL_LIB_TDI_ES2K_ES2K_EXTERN_MANAGER_H_
@@ -14,13 +10,13 @@
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/p4/p4_extern_manager.h"
 #include "stratum/hal/lib/p4/p4_resource_map.h"
+#include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 
 namespace stratum {
 namespace hal {
 
-class Es2kExternManager : public P4ExternManager {
+class Es2kExternManager : public TdiExternManager {
  public:
   Es2kExternManager();
   virtual ~Es2kExternManager() {}

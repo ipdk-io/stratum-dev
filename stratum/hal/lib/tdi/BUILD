@@ -291,7 +291,9 @@ stratum_cc_library(
     hdrs = ["tdi_table_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_extern_manager",
         ":tdi_sde_interface",
+        ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -320,7 +322,7 @@ stratum_cc_library(
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
-#   tags = ["broken"],  # disabled 3 test cases
+    #   tags = ["broken"],  # disabled 3 test cases
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",
@@ -428,6 +430,29 @@ stratum_cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_extern_manager",
+    srcs = ["tdi_extern_manager.cc"],
+    hdrs = ["tdi_extern_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_target_factory",
+    hdrs = ["tdi_target_factory.h"],
+    deps = [
+        ":tdi_extern_manager",
     ],
 )
 

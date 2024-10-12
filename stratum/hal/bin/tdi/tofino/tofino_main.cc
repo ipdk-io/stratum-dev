@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "gflags/gflags.h"
@@ -13,6 +13,7 @@
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
+#include "stratum/hal/lib/tdi/tdi_target_factory.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_hal.h"
 #include "stratum/hal/lib/tdi/tofino/tofino_port_manager.h"
@@ -58,8 +59,9 @@ namespace tdi {
   VLOG(1) << "SDE version: " << sde_wrapper->GetSdeVersion();
   VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
 
-  auto table_manager =
-      TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
+  TdiTargetFactory tdi_target_factory;
+  auto table_manager = TdiTableManager::CreateInstance(
+      mode, sde_wrapper, tdi_target_factory, device_id);
 
   auto action_profile_manager =
       TdiActionProfileManager::CreateInstance(sde_wrapper, device_id);

@@ -18,6 +18,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
+#include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
@@ -160,15 +161,21 @@ inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
 }  // namespace
 
 TdiTableManager::TdiTableManager(OperationMode mode,
-                                 TdiSdeInterface* tdi_sde_interface, int device)
+                                 TdiSdeInterface* tdi_sde_interface,
+                                 TdiTargetFactory& tdi_target_factory,
+                                 int device)
     : mode_(mode),
       tdi_sde_interface_(ABSL_DIE_IF_NULL(tdi_sde_interface)),
       p4_info_manager_(nullptr),
+      tdi_target_factory_(tdi_target_factory),
+      tdi_extern_manager_(nullptr),
       device_(device) {}
 
 std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
-    OperationMode mode, TdiSdeInterface* tdi_sde_interface, int device) {
-  return absl::WrapUnique(new TdiTableManager(mode, tdi_sde_interface, device));
+    OperationMode mode, TdiSdeInterface* tdi_sde_interface,
+    TdiTargetFactory& tdi_target_factory, int device) {
+  return absl::WrapUnique(
+      new TdiTableManager(mode, tdi_sde_interface, tdi_target_factory, device));
 }
 
 ::util::Status TdiTableManager::PushForwardingPipelineConfig(
@@ -179,8 +186,10 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   const auto& p4_info = program.p4info();
   std::unique_ptr<P4InfoManager> p4_info_manager =
       absl::make_unique<P4InfoManager>(p4_info);
-  RETURN_IF_ERROR(p4_info_manager->InitializeAndVerify());
+  auto extern_manager = tdi_target_factory_.CreateTdiExternManager();
+  RETURN_IF_ERROR(p4_info_manager->InitializeAndVerify(extern_manager.get()));
   p4_info_manager_ = std::move(p4_info_manager);
+  tdi_extern_manager_ = std::move(extern_manager);
 
   return ::util::OkStatus();
 }
@@ -361,7 +370,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
         table_entry.has_meter_config()) {
       bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(
-          auto meter, p4_info_manager_->FindDirectPktModMeterByID(resource_id));
+          auto meter,
+          tdi_extern_manager_->FindDirectPktModMeterByID(resource_id));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
 
       TdiPktModMeterConfig config;
@@ -1122,8 +1132,8 @@ TdiTableManager::ReadDirectMeterEntry(
     {
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(
-          meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
+      ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+                                  meter_entry.meter_id()));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
 
@@ -1202,8 +1212,8 @@ TdiTableManager::ReadDirectMeterEntry(
     {
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(
-          meter, p4_info_manager_->FindPktModMeterByID(meter_entry.meter_id()));
+      ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+                                  meter_entry.meter_id()));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
 

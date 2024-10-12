@@ -3,8 +3,6 @@
 
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
 
-#include <functional>
-
 #include "stratum/glue/logging.h"
 
 namespace stratum {

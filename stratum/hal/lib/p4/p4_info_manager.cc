@@ -94,7 +94,7 @@ P4InfoManager::~P4InfoManager() {}
   APPEND_STATUS_IF_ERROR(
       status, digest_map_.BuildMaps(p4_info_.digests(), preamble_cb));
 
-  if (!p4_info_.externs().empty() && extern_manager != nullptr) {
+  if (extern_manager != nullptr) {
     extern_manager->Initialize(p4_info_, preamble_cb);
   }
 
