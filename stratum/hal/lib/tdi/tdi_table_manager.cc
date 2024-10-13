@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
+#include "stratum/hal/lib/tdi/tdi_table_helpers.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
 
@@ -48,25 +49,9 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-namespace {
+using namespace stratum::hal::tdi::helpers;
 
-// Sets a Boolean variable to indicate whether the specified meter is
-// configured to measure traffic in packets (true) or bytes (false).
-template <typename T>
-::util::Status GetMeterUnitsInPackets(const T& meter, bool& units_in_packets) {
-  switch (meter.spec().unit()) {
-    case ::p4::config::v1::MeterSpec::BYTES:
-      units_in_packets = false;
-      break;
-    case ::p4::config::v1::MeterSpec::PACKETS:
-      units_in_packets = true;
-      break;
-    default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                           << meter.ShortDebugString() << ".";
-  }
-  return ::util::OkStatus();
-}
+namespace {
 
 // Sets a meter configuration variable from a pair of PolicerMeterConfig
 // and MeterCounterData protobufs.

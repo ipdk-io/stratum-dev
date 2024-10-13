@@ -293,6 +293,7 @@ stratum_cc_library(
         ":tdi_cc_proto",
         ":tdi_extern_manager",
         ":tdi_sde_interface",
+        ":tdi_table_helpers",
         ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
@@ -706,5 +707,62 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_table_helpers",
+    hdrs = ["tdi_table_helpers.h"],
+    deps = [
+        "//stratum/glue/status:status_macros",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_resource_handler",
+    hdrs = ["tdi_resource_handler.h"],
+    deps = [
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:writer_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_direct_counter_handler",
+    srcs = ["tdi_direct_counter_handler.cc"],
+    hdrs = ["tdi_direct_counter_handler.h"],
+    deps = [
+        ":tdi_resource_handler",
+        ":tdi_sde_interface",
+        ":tdi_table_helpers",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:writer_interface",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_direct_meter_handler",
+    srcs = ["tdi_direct_meter_handler.cc"],
+    hdrs = ["tdi_direct_meter_handler.h"],
+    deps = [
+        ":tdi_resource_handler",
+        ":tdi_sde_interface",
+        ":tdi_table_helpers",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
