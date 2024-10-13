@@ -5,6 +5,7 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_RESOURCE_HANDLER_
 #define STRATUM_HAL_LIB_TDI_TDI_RESOURCE_HANDLER_
 
+#include "absl/synchronization/mutex.h"
 #include "p4/v1/p4runtime.pb.h"
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
@@ -56,7 +57,7 @@ class TdiResourceHandler {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-      uint32 resource_id) {
+      uint32 meter_id) {
     return ::util::OkStatus();
   }
 

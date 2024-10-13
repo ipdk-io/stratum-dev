@@ -766,3 +766,19 @@ stratum_cc_library(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
+
+stratum_cc_library(
+    name = "tdi_meter_handler",
+    srcs = ["tdi_meter_handler.cc"],
+    hdrs = ["tdi_meter_handler.h"],
+    deps = [
+        ":tdi_resource_handler",
+        ":tdi_sde_interface",
+        ":tdi_table_helpers",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/p4:p4_info_manager",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)

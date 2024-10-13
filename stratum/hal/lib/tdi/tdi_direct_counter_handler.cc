@@ -26,7 +26,8 @@ using namespace stratum::hal::tdi::helpers;
   return ::util::OkStatus();
 }
 
-::util::StatusOr<::p4::v1::TableEntry> TdiDirectCounterHandler::BuildP4TableEntry(
+::util::StatusOr<::p4::v1::TableEntry>
+TdiDirectCounterHandler::BuildP4TableEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
     const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
     uint32 resource_id) {
