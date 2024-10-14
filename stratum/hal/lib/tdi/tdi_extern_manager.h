@@ -15,32 +15,37 @@
 
 namespace stratum {
 namespace hal {
+namespace tdi {
 
 class TdiExternManager : public P4ExternManager {
  public:
-  TdiExternManager();
-  virtual ~TdiExternManager() {}
+  TdiExternManager() {}
+  virtual ~TdiExternManager() = default;
 
-  virtual void Initialize(const ::p4::config::v1::P4Info& p4info,
-                          const PreambleCallback& preamble_cb);
+  static std::unique_ptr<TdiExternManager> CreateInstance();
 
-  virtual ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
+  void Initialize(const ::p4::config::v1::P4Info& p4info,
+                  const PreambleCallback& preamble_cb) override;
+
+  // TODO(derek): Once the resource handlers have been implemented,
+  // remove the following methods from TdiExternManager and
+  // dynamic_cast<Es2kExternManager>(extern_manager.get()) in
+  // Es2kResourceMapper to obtain the pointer to use when
+  // instantiating the Es2k PktModMeter handlers.
+  ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
       uint32 meter_id) const;
 
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByName(
       const std::string& meter_name) const;
 
-  virtual ::util::StatusOr<const ::idpf::DirectPacketModMeter>
+  ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByID(uint32 meter_id) const;
 
-  virtual ::util::StatusOr<const ::idpf::DirectPacketModMeter>
+  ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByName(const std::string& meter_name) const;
-
-  // Instance is neither copyable nor movable.
-  TdiExternManager(const TdiExternManager&) = delete;
-  TdiExternManager& operator=(const TdiExternManager&) = delete;
 };
 
+}  // namespace tdi
 }  // namespace hal
 }  // namespace stratum
 

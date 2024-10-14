@@ -7,6 +7,7 @@
 
 namespace stratum {
 namespace hal {
+namespace tdi {
 
 Es2kExternManager::Es2kExternManager()
     : pkt_mod_meter_map_("PacketModMeter"),
@@ -85,5 +86,6 @@ void Es2kExternManager::InitDirectPacketModMeters(
   direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);
 }
 
+}  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

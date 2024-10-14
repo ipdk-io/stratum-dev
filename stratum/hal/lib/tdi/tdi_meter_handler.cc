@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2024 Intel Corporation
+// Copyright 2023-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // TDI Meter resource handler (implementation).
@@ -15,6 +15,16 @@ namespace hal {
 namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
+
+TdiMeterHandler::TdiMeterHandler(TdiSdeInterface* sde_interface,
+                                 P4InfoManager* p4_info_manager,
+                                 absl::Mutex& lock, int device)
+    : tdi_sde_interface_(sde_interface),
+      p4_info_manager_(p4_info_manager),
+      lock_(lock),
+      device_(device) {}
+
+TdiMeterHandler::~TdiMeterHandler() {}
 
 util::Status TdiMeterHandler::ReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,

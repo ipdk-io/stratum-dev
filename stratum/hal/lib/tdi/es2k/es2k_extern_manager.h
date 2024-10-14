@@ -15,11 +15,12 @@
 
 namespace stratum {
 namespace hal {
+namespace tdi {
 
 class Es2kExternManager : public TdiExternManager {
  public:
   Es2kExternManager();
-  virtual ~Es2kExternManager() {}
+  virtual ~Es2kExternManager() = default;
 
   void Initialize(const ::p4::config::v1::P4Info& p4info,
                   const PreambleCallback& preamble_cb) override;
@@ -33,10 +34,6 @@ class Es2kExternManager : public TdiExternManager {
   FindDirectPktModMeterByID(uint32 meter_id) const;
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByName(const std::string& meter_name) const;
-
-  // Instance is neither copyable nor movable.
-  Es2kExternManager(const Es2kExternManager&) = delete;
-  Es2kExternManager& operator=(const Es2kExternManager&) = delete;
 
  private:
   void InitPacketModMeters(const p4::config::v1::Extern& p4extern,
@@ -54,6 +51,7 @@ class Es2kExternManager : public TdiExternManager {
       direct_meter_objects_;
 };
 
+}  // namespace tdi
 }  // namespace hal
 }  // namespace stratum
 

@@ -73,15 +73,6 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "es2k_target_factory",
-    hdrs = ["es2k_target_factory.h"],
-    deps = [
-        "//stratum/hal/lib/tdi:tdi_target_factory",
-        "@com_google_absl//absl/memory",
-    ],
-)
-
-stratum_cc_library(
     name = "es2k_node_mock",
     testonly = 1,
     hdrs = ["es2k_node_mock.h"],
@@ -357,6 +348,17 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "es2k_target_factory",
+#   srcs = ["es2k_target_factory.cc"],
+    hdrs = ["es2k_target_factory.h"],
+    deps = [
+        ":es2k_extern_manager",
+        ":es2k_resource_mapper",
+        "//stratum/hal/lib/tdi:tdi_target_factory",
+    ],
+)
+
+stratum_cc_library(
     name = "es2k_direct_pkt_mod_meter_handler",
     srcs = ["es2k_direct_pkt_mod_meter_handler.cc"],
     hdrs = ["es2k_direct_pkt_mod_meter_handler.h"],
@@ -387,5 +389,16 @@ stratum_cc_library(
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/hal/lib/tdi:tdi_table_helpers",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_resource_mapper",
+    srcs = ["es2k_resource_mapper.cc"],
+    hdrs = ["es2k_resource_mapper.h"],
+    deps = [
+        ":es2k_direct_pkt_mod_meter_handler",
+        ":es2k_pkt_mod_meter_handler",
+        "//stratum/hal/lib/tdi:tdi_resource_mapper",
     ],
 )

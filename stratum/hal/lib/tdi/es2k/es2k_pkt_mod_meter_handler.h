@@ -24,12 +24,9 @@ class Es2kPktModMeterHandler : public TdiResourceHandler {
   Es2kPktModMeterHandler(TdiSdeInterface* sde_interface,
                          P4InfoManager* p4_info_manager,
                          TdiExternManager* tdi_extern_manager,
-                         absl::Mutex& lock, int device)
-      : tdi_sde_interface_(sde_interface),
-        p4_info_manager_(p4_info_manager),
-        tdi_extern_manager_(tdi_extern_manager),
-        lock_(lock),
-        device_(device) {}
+                         absl::Mutex& lock, int device);
+
+  virtual ~Es2kPktModMeterHandler();
 
   util::Status ReadMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,

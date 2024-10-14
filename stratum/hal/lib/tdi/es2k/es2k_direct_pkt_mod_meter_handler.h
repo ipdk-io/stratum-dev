@@ -24,11 +24,9 @@ class Es2kDirectPktModMeterHandler : public TdiResourceHandler {
  public:
   Es2kDirectPktModMeterHandler(TdiSdeInterface* sde_interface,
                                TdiExternManager* tdi_extern_manager,
-                               absl::Mutex& lock, int device)
-      : tdi_sde_interface_(sde_interface),
-        tdi_extern_manager_(tdi_extern_manager),
-        lock_(lock),
-        device_(device) {}
+                               absl::Mutex& lock, int device);
+
+  virtual ~Es2kDirectPktModMeterHandler();
 
   util::StatusOr<::p4::v1::DirectMeterEntry> ReadDirectMeterEntry(
       const TdiSdeInterface::TableDataInterface* table_data,

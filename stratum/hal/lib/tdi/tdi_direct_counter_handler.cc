@@ -15,6 +15,11 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
+TdiDirectCounterHandler::TdiDirectCounterHandler(P4InfoManager* p4_info_manager)
+    : p4_info_manager_(p4_info_manager) {}
+
+TdiDirectCounterHandler::~TdiDirectCounterHandler() {}
+
 ::util::Status TdiDirectCounterHandler::BuildTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {

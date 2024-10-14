@@ -15,6 +15,11 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
+TdiDirectMeterHandler::TdiDirectMeterHandler(P4InfoManager* p4_info_manager)
+    : p4_info_manager_(p4_info_manager) {}
+
+TdiDirectMeterHandler::~TdiDirectMeterHandler() {}
+
 ::util::Status TdiDirectMeterHandler::BuildTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
@@ -67,7 +72,8 @@ using namespace stratum::hal::tdi::helpers;
 ::util::StatusOr<::p4::v1::DirectMeterEntry>
 TdiDirectMeterHandler::ReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
-    const ::p4::v1::TableEntry& table_entry, ::p4::v1::DirectMeterEntry& result) {
+    const ::p4::v1::TableEntry& table_entry,
+    ::p4::v1::DirectMeterEntry& result) {
   if (table_entry.has_meter_config()) {
     // TODO(derek): repeated logic
     uint64 cir = 0;

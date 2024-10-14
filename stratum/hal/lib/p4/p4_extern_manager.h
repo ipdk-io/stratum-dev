@@ -12,13 +12,13 @@ namespace hal {
 
 class P4ExternManager {
  public:
-  virtual ~P4ExternManager() {}
+  virtual ~P4ExternManager() = default;
 
   virtual void Initialize(const ::p4::config::v1::P4Info& p4info,
                           const PreambleCallback& preamble_pb) = 0;
 
  protected:
-  // Default constructor. To be called by the Mock class instance only.
+  // Default constructor.
   P4ExternManager() {}
 };
 

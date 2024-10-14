@@ -5,6 +5,8 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_RESOURCE_HANDLER_
 #define STRATUM_HAL_LIB_TDI_TDI_RESOURCE_HANDLER_
 
+#include <memory>
+
 #include "absl/synchronization/mutex.h"
 #include "p4/v1/p4runtime.pb.h"
 #include "stratum/glue/integral_types.h"
@@ -20,7 +22,7 @@ namespace tdi {
 class TdiResourceHandler {
  public:
   TdiResourceHandler() {}
-  virtual ~TdiResourceHandler();
+  virtual ~TdiResourceHandler() = default;
 
   // DirectMeter, DirectCounter, DirectPacketModMeter
   virtual ::util::Status BuildTableData(

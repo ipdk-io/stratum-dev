@@ -3,13 +3,17 @@
 
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 
+#include "absl/memory/memory.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
 
 namespace stratum {
 namespace hal {
+namespace tdi {
 
-TdiExternManager::TdiExternManager() {}
+std::unique_ptr<TdiExternManager> TdiExternManager::CreateInstance() {
+  return absl::make_unique<TdiExternManager>();
+}
 
 void TdiExternManager::Initialize(const ::p4::config::v1::P4Info& p4info,
                                   const PreambleCallback& preamble_cb) {}
@@ -35,5 +39,6 @@ TdiExternManager::FindDirectPktModMeterByName(
   return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << " not supported";
 }
 
+}  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

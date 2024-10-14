@@ -17,6 +17,16 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
+Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
+    TdiSdeInterface* sde_interface, TdiExternManager* tdi_extern_manager,
+    absl::Mutex& lock, int device)
+    : tdi_sde_interface_(sde_interface),
+      tdi_extern_manager_(tdi_extern_manager),
+      lock_(lock),
+      device_(device) {}
+
+Es2kDirectPktModMeterHandler::~Es2kDirectPktModMeterHandler() {}
+
 util::StatusOr<::p4::v1::DirectMeterEntry>
 Es2kDirectPktModMeterHandler::ReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,

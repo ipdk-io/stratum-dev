@@ -21,11 +21,10 @@ namespace tdi {
 class TdiMeterHandler : public TdiResourceHandler {
  public:
   TdiMeterHandler(TdiSdeInterface* sde_interface,
-                  P4InfoManager* p4_info_manager, absl::Mutex& lock, int device)
-      : tdi_sde_interface_(sde_interface),
-        p4_info_manager_(p4_info_manager),
-        lock_(lock),
-        device_(device) {}
+                  P4InfoManager* p4_info_manager, absl::Mutex& lock,
+                  int device);
+
+  virtual ~TdiMeterHandler();
 
   util::Status ReadMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
