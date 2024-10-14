@@ -67,8 +67,7 @@ using namespace stratum::hal::tdi::helpers;
 ::util::StatusOr<::p4::v1::DirectMeterEntry>
 TdiDirectMeterHandler::ReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
-    const ::p4::v1::TableEntry& table_entry, ::p4::v1::DirectMeterEntry& result,
-    uint32 resource_id) {
+    const ::p4::v1::TableEntry& table_entry, ::p4::v1::DirectMeterEntry& result) {
   if (table_entry.has_meter_config()) {
     // TODO(derek): repeated logic
     uint64 cir = 0;

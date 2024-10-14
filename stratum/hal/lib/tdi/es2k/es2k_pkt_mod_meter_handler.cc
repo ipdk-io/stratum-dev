@@ -2,11 +2,12 @@
 // Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// TDI Meter resource handler (implementation).
+// ES2K PacketModMeter resource handler (implementation).
 
-#include "stratum/hal/lib/tdi/tdi_meter_handler.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_pkt_mod_meter_handler.h"
 
 #include "absl/synchronization/mutex.h"
+#include "idpf/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/tdi_table_helpers.h"
 
@@ -16,18 +17,17 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
-util::Status TdiMeterHandler::ReadMeterEntry(
+util::Status Es2kPktModMeterHandler::ReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
     WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-    // TODO(derek): resource_id not used.
-    uint32 resource_id) {
+    uint32 meter_id) {
+  bool units_in_packets;
   {
     absl::ReaderMutexLock l(&lock_);
-    ASSIGN_OR_RETURN(auto meter,
-                     p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
-
-    bool units_in_packets;
+    ::idpf::PacketModMeter meter;
+    ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+                                meter_entry.meter_id()));
     RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
   }
 
@@ -38,45 +38,38 @@ util::Status TdiMeterHandler::ReadMeterEntry(
   }
 
   std::vector<uint32> meter_indices;
-  std::vector<uint64> cirs;
-  std::vector<uint64> cbursts;
-  std::vector<uint64> pirs;
-  std::vector<uint64> pbursts;
-  std::vector<bool> in_pps;
+  std::vector<TdiPktModMeterConfig> cfg;
 
-  RETURN_IF_ERROR(tdi_sde_interface_->ReadIndirectMeters(
-      device_, session, table_id, optional_meter_index, &meter_indices, &cirs,
-      &cbursts, &pirs, &pbursts, &in_pps));
+  RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
+      device_, session, table_id, optional_meter_index, &meter_indices, cfg));
 
   ::p4::v1::ReadResponse resp;
   for (size_t i = 0; i < meter_indices.size(); ++i) {
     ::p4::v1::MeterEntry result;
     result.set_meter_id(meter_entry.meter_id());
     result.mutable_index()->set_index(meter_indices[i]);
-    result.mutable_config()->set_cir(cirs[i]);
-    result.mutable_config()->set_cburst(cbursts[i]);
-    result.mutable_config()->set_pir(pirs[i]);
-    result.mutable_config()->set_pburst(pbursts[i]);
+    SetMeterEntry(result, cfg[i]);
     *resp.add_entities()->mutable_meter_entry() = result;
   }
 
   VLOG(1) << "ReadMeterEntry resp " << resp.DebugString();
-
   if (!writer->Write(resp)) {
     return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
   }
+
   return ::util::OkStatus();
 }
 
-::util::Status TdiMeterHandler::WriteMeterEntry(
+util::Status Es2kPktModMeterHandler::WriteMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
     uint32 meter_id) {
   bool units_in_packets;
   {
     absl::ReaderMutexLock l(&lock_);
-    ASSIGN_OR_RETURN(auto meter,
-                     p4_info_manager_->FindMeterByID(meter_entry.meter_id()));
+    ::idpf::PacketModMeter meter;
+    ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+                                meter_entry.meter_id()));
     RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
   }
 
@@ -87,10 +80,19 @@ util::Status TdiMeterHandler::ReadMeterEntry(
     return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
   }
 
-  RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
-      device_, session, meter_id, meter_index, units_in_packets,
-      meter_entry.config().cir(), meter_entry.config().cburst(),
-      meter_entry.config().pir(), meter_entry.config().pburst()));
+  if (meter_entry.has_config()) {
+    TdiPktModMeterConfig config;
+    SetPktModMeterConfig(config, meter_entry);
+    config.isPktModMeter = units_in_packets;
+
+    RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
+        device_, session, meter_id, meter_index, config));
+  }
+
+  if (type == ::p4::v1::Update::DELETE) {
+    RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
+        device_, session, meter_id, meter_index));
+  }
 
   return ::util::OkStatus();
 }

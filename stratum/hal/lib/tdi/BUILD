@@ -51,12 +51,10 @@ target_sdk_headers = select({
 
 stratum_cc_library(
     name = "tdi_sde_interface",
-    hdrs = [
-        "tdi_pkt_mod_meter_config.h",
-        "tdi_sde_interface.h",
-    ],
+    hdrs = ["tdi_sde_interface.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_pkt_mod_meter_config",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -292,6 +290,7 @@ stratum_cc_library(
     deps = [
         ":tdi_cc_proto",
         ":tdi_extern_manager",
+        ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
         ":tdi_table_helpers",
         ":tdi_target_factory",
@@ -711,11 +710,23 @@ stratum_cc_test(
 )
 
 stratum_cc_library(
+    name = "tdi_pkt_mod_meter_config",
+    hdrs = ["tdi_pkt_mod_meter_config.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_table_helpers",
+    srcs = ["tdi_table_helpers.cc"],
     hdrs = ["tdi_table_helpers.h"],
     deps = [
+        ":tdi_pkt_mod_meter_config",
         "//stratum/glue/status:status_macros",
+        "//stratum/public/proto:error_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
 
