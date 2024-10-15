@@ -35,6 +35,11 @@ class Es2kExternManager : public TdiExternManager {
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
   FindDirectPktModMeterByName(const std::string& meter_name) const;
 
+  uint32 pkt_mod_meter_map_size() const { return pkt_mod_meter_map_.size(); }
+  uint32 direct_pkt_mod_meter_map_size() const {
+    return direct_pkt_mod_meter_map_.size();
+  }
+
  private:
   void InitPacketModMeters(const p4::config::v1::Extern& p4extern,
                            const PreambleCallback& preamble_cb);

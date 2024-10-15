@@ -702,6 +702,17 @@ stratum_cc_library(
     ],
 )
 
+stratum_cc_test(
+    name = "tdi_extern_manager_test",
+    srcs = ["tdi_extern_manager_test.cc"],
+    deps = [
+        ":tdi_extern_manager",
+        ":test_main",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 stratum_cc_library(
     name = "tdi_pkt_mod_meter_config",
     hdrs = ["tdi_pkt_mod_meter_config.h"],

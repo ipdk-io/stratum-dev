@@ -18,10 +18,10 @@ void Es2kExternManager::Initialize(const ::p4::config::v1::P4Info& p4info,
   if (!p4info.externs().empty()) {
     for (const auto& p4extern : p4info.externs()) {
       switch (p4extern.extern_type_id()) {
-        case ::p4::config::v1::P4Ids_Prefix_PACKET_MOD_METER:
+        case ::p4::config::v1::P4Ids::PACKET_MOD_METER:
           InitPacketModMeters(p4extern, preamble_cb);
           break;
-        case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
+        case ::p4::config::v1::P4Ids::DIRECT_PACKET_MOD_METER:
           InitDirectPacketModMeters(p4extern, preamble_cb);
           break;
         default:
