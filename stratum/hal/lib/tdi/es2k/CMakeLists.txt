@@ -26,4 +26,5 @@ target_sources(stratum_tdi_target_o PRIVATE
     es2k_sde_wrapper.cc
     es2k_switch.cc
     es2k_switch.h
+    es2k_target_factory.h
 )

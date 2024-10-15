@@ -7,6 +7,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_direct_pkt_mod_meter_handler.h"
 
 #include "idpf/p4info.pb.h"
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/tdi_table_helpers.h"
@@ -20,7 +21,9 @@ using namespace stratum::hal::tdi::helpers;
 Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
     TdiSdeInterface* sde_interface, TdiExternManager* tdi_extern_manager,
     absl::Mutex& lock, int device)
-    : tdi_sde_interface_(sde_interface),
+    : TdiResourceHandler("DirectPktModMeter",
+                         ::p4::config::v1::P4Ids::DIRECT_PACKET_MOD_METER),
+      tdi_sde_interface_(sde_interface),
       tdi_extern_manager_(tdi_extern_manager),
       lock_(lock),
       device_(device) {}

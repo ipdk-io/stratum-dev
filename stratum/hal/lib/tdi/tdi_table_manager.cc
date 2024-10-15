@@ -239,6 +239,14 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
 
   for (const auto& resource_id : table.direct_resource_ids()) {
+#ifdef TDI_RESOURCE_HANDLER
+    ASSIGN_OR_RETURN(resource_handler,
+                     tdi_resource_mapper_->FindResourceHandler(resource_id));
+    if (resource_handler) {
+      RETURN_IF_ERROR(resource_handler->BuildTableData(table_entry, table_data,
+                                                       resource_id));
+    }
+#else
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
@@ -271,6 +279,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
       RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
     }
+#endif  // TDI_RESOURCE_HANDLER
   }
 
   return ::util::OkStatus();

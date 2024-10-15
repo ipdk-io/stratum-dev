@@ -7,6 +7,7 @@
 #include "stratum/hal/lib/tdi/tdi_meter_handler.h"
 
 #include "absl/synchronization/mutex.h"
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/tdi_table_helpers.h"
 
@@ -19,7 +20,8 @@ using namespace stratum::hal::tdi::helpers;
 TdiMeterHandler::TdiMeterHandler(TdiSdeInterface* sde_interface,
                                  P4InfoManager* p4_info_manager,
                                  absl::Mutex& lock, int device)
-    : tdi_sde_interface_(sde_interface),
+    : TdiResourceHandler("Meter", ::p4::config::v1::P4Ids::METER),
+      tdi_sde_interface_(sde_interface),
       p4_info_manager_(p4_info_manager),
       lock_(lock),
       device_(device) {}

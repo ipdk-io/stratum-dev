@@ -15,13 +15,14 @@ class Es2kResourceMapper : public TdiResourceMapper {
   Es2kResourceMapper() {}
   virtual ~Es2kResourceMapper() = default;
 
-  util::Status Initialize(TdiSdeInterface* sde_interface,
-                          P4InfoManager* p4_info_manager,
-                          TdiExternManager* extern_manager, absl::Mutex* lock,
-                          int device) override;
+  void RegisterResources() override;
 
- protected:
-  ::util::Status RegisterEs2kExterns();
+ private:
+  void RegisterEs2kExterns();
+  void RegisterDirectPacketModMeters(const p4::config::v1::Extern& p4extern);
+  void RegisterPacketModMeters(const p4::config::v1::Extern& p4extern);
+
+  uint32 invalid_type_ids = 0;
 };
 
 }  // namespace tdi

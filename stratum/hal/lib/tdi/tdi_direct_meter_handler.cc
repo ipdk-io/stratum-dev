@@ -6,6 +6,7 @@
 
 #include "stratum/hal/lib/tdi/tdi_direct_meter_handler.h"
 
+#include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/tdi_table_helpers.h"
 
@@ -16,9 +17,8 @@ namespace tdi {
 using namespace stratum::hal::tdi::helpers;
 
 TdiDirectMeterHandler::TdiDirectMeterHandler(P4InfoManager* p4_info_manager)
-    : p4_info_manager_(p4_info_manager) {}
-
-TdiDirectMeterHandler::~TdiDirectMeterHandler() {}
+    : TdiResourceHandler("DirectMeter", ::p4::config::v1::P4Ids::DIRECT_METER),
+      p4_info_manager_(p4_info_manager) {}
 
 ::util::Status TdiDirectMeterHandler::BuildTableData(
     const ::p4::v1::TableEntry& table_entry,

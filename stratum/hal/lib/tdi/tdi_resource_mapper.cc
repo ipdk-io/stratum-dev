@@ -13,31 +13,6 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-namespace {
-
-// Validates the resource ID.
-::util::Status VerifyID(uint32 resource_id, const std::string& resource_type) {
-  if (resource_id == 0) {
-    return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "P4Info " << resource_type
-           << " requires a non-zero ID in preamble";
-  }
-  return ::util::OkStatus();
-}
-
-// Validates the resource name.
-::util::Status VerifyName(const std::string& name,
-                          const std::string& resource_type) {
-  if (name.empty()) {
-    return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "P4Info " << resource_type
-           << " requires a non-empty name in preamble";
-  }
-  return ::util::OkStatus();
-}
-
-}  // namespace
-
 TdiResourceMapper::TdiResourceMapper()
     : tdi_sde_interface_(nullptr),
       p4_info_manager_(nullptr),
@@ -61,74 +36,75 @@ std::unique_ptr<TdiResourceMapper> TdiResourceMapper::CreateInstance() {
   lock_ = lock;
   device_ = device;
 
-  RETURN_IF_ERROR(RegisterDirectCounters());
-  RETURN_IF_ERROR(RegisterDirectMeters());
-  RETURN_IF_ERROR(RegisterMeters());
+  RegisterResources();
 
+  if (invalid_entities) {
+    return MAKE_ERROR(ERR_INVALID_P4_INFO)
+           << invalid_entities << " invalid P4 "
+           << (invalid_entities == 1 ? "entity" : "entities");
+  }
   return ::util::OkStatus();
 }
 
-::util::Status TdiResourceMapper::RegisterDirectCounters() {
+::util::StatusOr<TdiResourceHandler*> TdiResourceMapper::FindResourceHandler(
+    uint32 resource_id) {
+  auto iter = resource_handler_map_.find(resource_id);
+  if (iter == resource_handler_map_.end()) {
+    return nullptr;
+  }
+  return iter->second.get();
+}
+
+void TdiResourceMapper::RegisterResources() {
+  RegisterDirectCounters();
+  RegisterDirectMeters();
+  RegisterMeters();
+}
+
+void TdiResourceMapper::RegisterDirectCounters() {
   const auto& direct_counters = p4info_->direct_counters();
   if (!direct_counters.empty()) {
     auto resource_handler =
         std::make_shared<TdiDirectCounterHandler>(p4_info_manager_);
     for (const auto& counter : direct_counters) {
-      return RegisterResource(counter.preamble(), "DirectCounter",
-                              resource_handler);
+      RegisterResource(counter.preamble(), resource_handler);
     }
   }
-  return ::util::OkStatus();
 }
 
-::util::Status TdiResourceMapper::RegisterDirectMeters() {
+void TdiResourceMapper::RegisterDirectMeters() {
   const auto& direct_meters = p4info_->direct_meters();
   if (!direct_meters.empty()) {
     auto resource_handler =
         std::make_shared<TdiDirectMeterHandler>(p4_info_manager_);
     for (const auto& meter : direct_meters) {
-      return RegisterResource(meter.preamble(), "DirectMeter",
-                              resource_handler);
+      RegisterResource(meter.preamble(), resource_handler);
     }
   }
-  return ::util::OkStatus();
 }
 
-::util::Status TdiResourceMapper::RegisterMeters() {
+void TdiResourceMapper::RegisterMeters() {
   const auto& meters = p4info_->meters();
   if (!meters.empty()) {
     auto resource_handler = std::make_shared<TdiMeterHandler>(
         tdi_sde_interface_, p4_info_manager_, *lock_, device_);
     for (const auto& meter : meters) {
-      return RegisterResource(meter.preamble(), "Meter", resource_handler);
+      RegisterResource(meter.preamble(), resource_handler);
     }
   }
-  return ::util::OkStatus();
 }
 
-::util::Status TdiResourceMapper::RegisterResource(
+void TdiResourceMapper::RegisterResource(
     const ::p4::config::v1::Preamble& preamble,
-    const std::string& resource_type, ResourceHandler resource_handler) {
-  // Validate preamble.
-  auto retval = VerifyID(preamble.id(), resource_type);
-  auto status = VerifyName(preamble.name(), resource_type);
-  APPEND_STATUS_IF_ERROR(retval, status);
-  if (!retval.ok()) return retval;
-
-  // Add entry to resource map.
-  return AddMapEntry(preamble.id(), resource_type, resource_handler);
-}
-
-::util::Status TdiResourceMapper::AddMapEntry(
-    uint32 resource_id, const std::string& resource_type,
     ResourceHandler resource_handler) {
-  auto result = resource_handler_map_.emplace(resource_id, resource_handler);
-  if (!result.second) {
-    return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "P4Info " << resource_type << " ID "
-           << PrintP4ObjectID(resource_id) << " is not unique";
+  if (preamble.id() == 0 || preamble.name().empty()) {
+    ++invalid_entities;
+    return;
   }
-  return ::util::OkStatus();
+  auto result = resource_handler_map_.emplace(preamble.id(), resource_handler);
+  if (!result.second) {
+    ++invalid_entities;
+  }
 }
 
 }  // namespace tdi

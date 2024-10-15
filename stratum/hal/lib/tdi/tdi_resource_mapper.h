@@ -28,24 +28,28 @@ class TdiResourceMapper {
 
   static std::unique_ptr<TdiResourceMapper> CreateInstance();
 
-  virtual ::util::Status Initialize(TdiSdeInterface* sde_interface,
-                                    P4InfoManager* p4_info_manager,
-                                    TdiExternManager* extern_manager,
-                                    absl::Mutex* lock, int device);
+  ::util::Status Initialize(TdiSdeInterface* sde_interface,
+                            P4InfoManager* p4_info_manager,
+                            TdiExternManager* extern_manager, absl::Mutex* lock,
+                            int device);
+
+  ::util::StatusOr<TdiResourceHandler*> FindResourceHandler(uint32 resource_id);
+
+  bool empty() const { return resource_handler_map_.empty(); }
+  uint32 size() const { return resource_handler_map_.size(); }
 
  protected:
-  ::util::Status RegisterDirectCounters();
-  ::util::Status RegisterDirectMeters();
-  ::util::Status RegisterMeters();
+  virtual void RegisterResources();
 
-  ::util::Status RegisterResource(const ::p4::config::v1::Preamble& preamble,
-                                  const std::string& resource_type,
-                                  ResourceHandler resource_handler);
+  void RegisterResource(const ::p4::config::v1::Preamble& preamble,
+                        ResourceHandler resource_handler);
 
-  ::util::Status AddMapEntry(uint32 resource_id,
-                             const std::string& resource_type,
-                             ResourceHandler resource_handler);
+ private:
+  void RegisterDirectCounters();
+  void RegisterDirectMeters();
+  void RegisterMeters();
 
+ protected:
   TdiSdeInterface* tdi_sde_interface_;      // not owned by this class
   P4InfoManager* p4_info_manager_;          // not owned by this class
   TdiExternManager* tdi_extern_manager_;    // not owned by this class
@@ -54,6 +58,7 @@ class TdiResourceMapper {
   int device_;
 
   absl::flat_hash_map<uint32, ResourceHandler> resource_handler_map_;
+  uint32 invalid_entities = 0;
 };
 
 }  // namespace tdi

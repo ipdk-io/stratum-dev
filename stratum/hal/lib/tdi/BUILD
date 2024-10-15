@@ -725,7 +725,6 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "tdi_target_factory",
-#   srcs = ["tdi_target_factory.cc"],
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",

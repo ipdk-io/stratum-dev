@@ -22,7 +22,7 @@ namespace tdi {
 class TdiDirectCounterHandler : public TdiResourceHandler {
  public:
   TdiDirectCounterHandler(P4InfoManager* p4_info_manager);
-  virtual ~TdiDirectCounterHandler();
+  virtual ~TdiDirectCounterHandler() = default;
 
   ::util::Status BuildTableData(const ::p4::v1::TableEntry& table_entry,
                                 TdiSdeInterface::TableDataInterface* table_data,

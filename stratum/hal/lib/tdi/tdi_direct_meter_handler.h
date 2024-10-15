@@ -22,7 +22,7 @@ namespace tdi {
 class TdiDirectMeterHandler : public TdiResourceHandler {
  public:
   TdiDirectMeterHandler(P4InfoManager* p4_info_manager);
-  virtual ~TdiDirectMeterHandler();
+  virtual ~TdiDirectMeterHandler() = default;
 
   ::util::Status BuildTableData(const ::p4::v1::TableEntry& table_entry,
                                 TdiSdeInterface::TableDataInterface* table_data,

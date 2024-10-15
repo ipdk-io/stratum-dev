@@ -14,10 +14,18 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_status.h
     tdi_counter_manager.cc
     tdi_counter_manager.h
+    tdi_direct_counter_handler.cc
+    tdi_direct_counter_handler.h
+    tdi_direct_meter_handler.cc
+    tdi_direct_meter_handler.h
+    tdi_extern_manager.cc
+    tdi_extern_manager.h
     tdi_global_vars.cc
     tdi_global_vars.h
     tdi_id_mapper.cc
     tdi_id_mapper.h
+    tdi_meter_handler.cc
+    tdi_meter_handler.h
     tdi_node.cc
     tdi_node.h
     tdi_packetio_manager.cc
@@ -28,26 +36,13 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_port_manager.h
     tdi_pre_manager.cc
     tdi_pre_manager.h
-    tdi_sde_action_profile.cc
-    tdi_sde_clone_session.cc
-    tdi_sde_common.h
-    tdi_sde_counter.cc
-    tdi_sde_flags.cc
-    tdi_sde_flags.h
-    tdi_sde_helpers.cc
-    tdi_sde_helpers.h
-    tdi_sde_interface.h
-    tdi_sde_meter.cc
-    tdi_sde_multicast.cc
-    tdi_sde_register.cc
-    tdi_sde_table_data.cc
-    tdi_sde_table_entry.cc
-    tdi_sde_table_key.cc
-    tdi_sde_utils.h
-    tdi_sde_wrapper.cc
-    tdi_sde_wrapper.h
+    tdi_resource_mapper.cc
+    tdi_resource_mapper.h
+    tdi_table_helpers.cc
+    tdi_table_helpers.h
     tdi_table_manager.cc
     tdi_table_manager.h
+    tdi_target_factory.h
     utils.cc
     utils.h
 )
@@ -77,6 +72,38 @@ target_include_directories(stratum_tdi_common_o PRIVATE
 )
 
 add_dependencies(stratum_tdi_common_o stratum_proto)
+
+#####################
+# stratum_tdi_sde_o #
+#####################
+
+add_library(stratum_tdi_sde_o OBJECT
+    tdi_sde_action_profile.cc
+    tdi_sde_clone_session.cc
+    tdi_sde_common.h
+    tdi_sde_counter.cc
+    tdi_sde_flags.cc
+    tdi_sde_flags.h
+    tdi_sde_helpers.cc
+    tdi_sde_helpers.h
+    tdi_sde_interface.h
+    tdi_sde_meter.cc
+    tdi_sde_multicast.cc
+    tdi_sde_register.cc
+    tdi_sde_table_data.cc
+    tdi_sde_table_entry.cc
+    tdi_sde_table_key.cc
+    tdi_sde_utils.h
+    tdi_sde_wrapper.cc
+    tdi_sde_wrapper.h
+)
+
+target_include_directories(stratum_tdi_sde_o PUBLIC
+    ${STRATUM_INCLUDES}
+    ${SDE_INSTALL_DIR}/include
+)
+
+add_dependencies(stratum_tdi_sde_o stratum_proto)
 
 ########################
 # stratum_tdi_target_o #

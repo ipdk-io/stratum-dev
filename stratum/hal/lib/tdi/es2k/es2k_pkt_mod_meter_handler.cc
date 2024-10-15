@@ -20,7 +20,9 @@ using namespace stratum::hal::tdi::helpers;
 Es2kPktModMeterHandler::Es2kPktModMeterHandler(
     TdiSdeInterface* sde_interface, P4InfoManager* p4_info_manager,
     TdiExternManager* tdi_extern_manager, absl::Mutex& lock, int device)
-    : tdi_sde_interface_(sde_interface),
+    : TdiResourceHandler("PktModMeter",
+                         ::p4::config::v1::P4Ids::PACKET_MOD_METER),
+      tdi_sde_interface_(sde_interface),
       p4_info_manager_(p4_info_manager),
       tdi_extern_manager_(tdi_extern_manager),
       lock_(lock),

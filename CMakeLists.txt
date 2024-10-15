@@ -50,6 +50,7 @@ function(add_stratum_object_libs _TGT)
         $<TARGET_OBJECTS:stratum_main_o>
         $<TARGET_OBJECTS:stratum_public_lib_o>
         $<TARGET_OBJECTS:stratum_tdi_common_o>
+        $<TARGET_OBJECTS:stratum_tdi_sde_o>
         $<TARGET_OBJECTS:stratum_tdi_target_o>
         $<TARGET_OBJECTS:stratum_yang_parse_tree_o>
     )

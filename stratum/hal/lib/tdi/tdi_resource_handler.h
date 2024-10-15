@@ -6,6 +6,7 @@
 #define STRATUM_HAL_LIB_TDI_TDI_RESOURCE_HANDLER_
 
 #include <memory>
+#include <string>
 
 #include "absl/synchronization/mutex.h"
 #include "p4/v1/p4runtime.pb.h"
@@ -21,7 +22,8 @@ namespace tdi {
 
 class TdiResourceHandler {
  public:
-  TdiResourceHandler() {}
+  TdiResourceHandler(const std::string& resource_type, uint32 type_id)
+      : resource_type_(resource_type), type_id_(type_id) {}
   virtual ~TdiResourceHandler() = default;
 
   // DirectMeter, DirectCounter, DirectPacketModMeter
@@ -70,6 +72,13 @@ class TdiResourceHandler {
       const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) {
     return ::util::OkStatus();
   }
+
+  const std::string& resource_type() const { return resource_type_; }
+  uint32 type_id() const { return type_id_; }
+
+ protected:
+  const std::string resource_type_;
+  const uint32 type_id_;
 };
 
 }  // namespace tdi
