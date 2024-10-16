@@ -18,7 +18,6 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_direct_counter_handler.h
     tdi_direct_meter_handler.cc
     tdi_direct_meter_handler.h
-    tdi_extern_manager.cc
     tdi_extern_manager.h
     tdi_global_vars.cc
     tdi_global_vars.h

@@ -5,6 +5,7 @@
 
 #include <memory>
 
+#include "glog/logging.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_direct_pkt_mod_meter_handler.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_pkt_mod_meter_handler.h"
 
@@ -41,9 +42,14 @@ void Es2kResourceMapper::RegisterEs2kExterns() {
 void Es2kResourceMapper::RegisterDirectPacketModMeters(
     const p4::config::v1::Extern& p4extern) {
   const auto& instances = p4extern.instances();
+
   if (!instances.empty()) {
+    auto extern_manager = dynamic_cast<Es2kExternManager*>(tdi_extern_manager_);
+    CHECK(extern_manager != nullptr);
+
     auto resource_handler = std::make_shared<Es2kDirectPktModMeterHandler>(
-        tdi_sde_interface_, tdi_extern_manager_, *lock_, device_);
+        tdi_sde_interface_, extern_manager, *lock_, device_);
+
     for (const auto& instance : instances) {
       RegisterResource(instance.preamble(), resource_handler);
     }
@@ -53,10 +59,14 @@ void Es2kResourceMapper::RegisterDirectPacketModMeters(
 void Es2kResourceMapper::RegisterPacketModMeters(
     const p4::config::v1::Extern& p4extern) {
   const auto& instances = p4extern.instances();
+
   if (!instances.empty()) {
+    auto extern_manager = dynamic_cast<Es2kExternManager*>(tdi_extern_manager_);
+    CHECK(extern_manager != nullptr);
+
     auto resource_handler = std::make_shared<Es2kPktModMeterHandler>(
-        tdi_sde_interface_, p4_info_manager_, tdi_extern_manager_, *lock_,
-        device_);
+        tdi_sde_interface_, p4_info_manager_, extern_manager, *lock_, device_);
+
     for (const auto& instance : instances) {
       RegisterResource(instance.preamble(), resource_handler);
     }

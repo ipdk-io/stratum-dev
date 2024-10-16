@@ -304,12 +304,13 @@ stratum_cc_library(
         "//stratum/hal/lib/common:writer_interface",
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:utils",
+        "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",  # ES2K
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",  # ES2K
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -688,28 +689,12 @@ stratum_cc_test(
 
 stratum_cc_library(
     name = "tdi_extern_manager",
-    srcs = ["tdi_extern_manager.cc"],
     hdrs = ["tdi_extern_manager.h"],
     deps = [
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status:status_macros",
-        "//stratum/glue/status:statusor",
         "//stratum/hal/lib/p4:p4_extern_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/memory",
-    ],
-)
-
-stratum_cc_test(
-    name = "tdi_extern_manager_test",
-    srcs = ["tdi_extern_manager_test.cc"],
-    deps = [
-        ":tdi_extern_manager",
-        ":test_main",
-        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
-        "@com_google_googletest//:gtest",
     ],
 )
 

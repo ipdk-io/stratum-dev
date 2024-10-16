@@ -13,10 +13,11 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
-#include "idpf/p4info.pb.h"
+#include "idpf/p4info.pb.h"  // ES2K
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"  // ES2K
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
@@ -267,10 +268,14 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
+      auto es2k_extern_manager =
+          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
+      CHECK(es2k_extern_manager != nullptr);
+
       bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(
           auto meter,
-          tdi_extern_manager_->FindDirectPktModMeterByID(resource_id));
+          es2k_extern_manager->FindDirectPktModMeterByID(resource_id));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
 
       TdiPktModMeterConfig config;
@@ -1030,9 +1035,13 @@ TdiTableManager::ReadDirectMeterEntry(
   else if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
+      auto es2k_extern_manager =
+          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
+      CHECK(es2k_extern_manager != nullptr);
+
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+      ASSIGN_OR_RETURN(meter, es2k_extern_manager->FindPktModMeterByID(
                                   meter_entry.meter_id()));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }
@@ -1110,9 +1119,13 @@ TdiTableManager::ReadDirectMeterEntry(
   if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
+      auto es2k_extern_manager =
+          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
+      CHECK(es2k_extern_manager != nullptr);
+
       absl::ReaderMutexLock l(&lock_);
       ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
+      ASSIGN_OR_RETURN(meter, es2k_extern_manager->FindPktModMeterByID(
                                   meter_entry.meter_id()));
       RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
     }

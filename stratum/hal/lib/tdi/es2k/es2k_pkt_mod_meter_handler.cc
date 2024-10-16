@@ -19,12 +19,12 @@ using namespace stratum::hal::tdi::helpers;
 
 Es2kPktModMeterHandler::Es2kPktModMeterHandler(
     TdiSdeInterface* sde_interface, P4InfoManager* p4_info_manager,
-    TdiExternManager* tdi_extern_manager, absl::Mutex& lock, int device)
+    Es2kExternManager* extern_manager, absl::Mutex& lock, int device)
     : TdiResourceHandler("PktModMeter",
                          ::p4::config::v1::P4Ids::PACKET_MOD_METER),
       tdi_sde_interface_(sde_interface),
       p4_info_manager_(p4_info_manager),
-      tdi_extern_manager_(tdi_extern_manager),
+      extern_manager_(extern_manager),
       lock_(lock),
       device_(device) {}
 
@@ -39,8 +39,8 @@ util::Status Es2kPktModMeterHandler::ReadMeterEntry(
   {
     absl::ReaderMutexLock l(&lock_);
     ::idpf::PacketModMeter meter;
-    ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
-                                meter_entry.meter_id()));
+    ASSIGN_OR_RETURN(
+        meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
     RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
   }
 
@@ -81,8 +81,8 @@ util::Status Es2kPktModMeterHandler::WriteMeterEntry(
   {
     absl::ReaderMutexLock l(&lock_);
     ::idpf::PacketModMeter meter;
-    ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
-                                meter_entry.meter_id()));
+    ASSIGN_OR_RETURN(
+        meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
     RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
   }
 

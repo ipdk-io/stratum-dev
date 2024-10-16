@@ -12,7 +12,7 @@
 #include "stratum/glue/integral_types.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/statusor.h"
-#include "stratum/hal/lib/tdi/tdi_extern_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_resource_handler.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 
@@ -23,7 +23,7 @@ namespace tdi {
 class Es2kDirectPktModMeterHandler : public TdiResourceHandler {
  public:
   Es2kDirectPktModMeterHandler(TdiSdeInterface* sde_interface,
-                               TdiExternManager* tdi_extern_manager,
+                               Es2kExternManager* extern_manager,
                                absl::Mutex& lock, int device);
 
   virtual ~Es2kDirectPktModMeterHandler();
@@ -39,9 +39,9 @@ class Es2kDirectPktModMeterHandler : public TdiResourceHandler {
       const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) override;
 
  protected:
-  TdiSdeInterface* tdi_sde_interface_;    // not owned by this class
-  TdiExternManager* tdi_extern_manager_;  // not owned by this class
-  absl::Mutex& lock_;                     // not owned by this class
+  TdiSdeInterface* tdi_sde_interface_;  // not owned by this class
+  Es2kExternManager* extern_manager_;   // not owned by this class
+  absl::Mutex& lock_;                   // not owned by this class
   const int device_;
 };
 

@@ -61,11 +61,14 @@ void Es2kExternManager::InitPacketModMeters(
   for (const auto& extern_instance : extern_instances) {
     ::idpf::PacketModMeter pkt_mod_meter;
     *pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+
     p4::config::v1::MeterSpec meter_spec;
     meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
+    *pkt_mod_meter.mutable_spec() = meter_spec;
+
     pkt_mod_meter.set_size(1024);
     pkt_mod_meter.set_index_width(20);
-    *pkt_mod_meter.mutable_spec() = meter_spec;
+
     meter_objects_.Add(std::move(pkt_mod_meter));
   }
   pkt_mod_meter_map_.BuildMaps(meter_objects_, preamble_cb);
@@ -78,9 +81,11 @@ void Es2kExternManager::InitDirectPacketModMeters(
   for (const auto& extern_instance : extern_instances) {
     ::idpf::DirectPacketModMeter direct_pkt_mod_meter;
     *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+
     p4::config::v1::MeterSpec meter_spec;
     meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
     *direct_pkt_mod_meter.mutable_spec() = meter_spec;
+
     direct_meter_objects_.Add(std::move(direct_pkt_mod_meter));
   }
   direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);

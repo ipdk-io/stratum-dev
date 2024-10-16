@@ -373,14 +373,15 @@ stratum_cc_library(
     srcs = ["es2k_direct_pkt_mod_meter_handler.cc"],
     hdrs = ["es2k_direct_pkt_mod_meter_handler.h"],
     deps = [
+        ":es2k_extern_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/tdi:tdi_extern_manager",
         "//stratum/hal/lib/tdi:tdi_resource_handler",
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/hal/lib/tdi:tdi_table_helpers",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
@@ -390,14 +391,15 @@ stratum_cc_library(
     srcs = ["es2k_pkt_mod_meter_handler.cc"],
     hdrs = ["es2k_pkt_mod_meter_handler.h"],
     deps = [
+        ":es2k_extern_manager",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
         "//stratum/hal/lib/p4:p4_info_manager",
-        "//stratum/hal/lib/tdi:tdi_extern_manager",
         "//stratum/hal/lib/tdi:tdi_resource_handler",
         "//stratum/hal/lib/tdi:tdi_sde_interface",
         "//stratum/hal/lib/tdi:tdi_table_helpers",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
@@ -410,5 +412,7 @@ stratum_cc_library(
         ":es2k_direct_pkt_mod_meter_handler",
         ":es2k_pkt_mod_meter_handler",
         "//stratum/hal/lib/tdi:tdi_resource_mapper",
+        "@com_github_google_glog//:glog",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
     ],
 )

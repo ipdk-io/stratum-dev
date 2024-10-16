@@ -19,12 +19,12 @@ namespace tdi {
 using namespace stratum::hal::tdi::helpers;
 
 Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
-    TdiSdeInterface* sde_interface, TdiExternManager* tdi_extern_manager,
+    TdiSdeInterface* sde_interface, Es2kExternManager* extern_manager,
     absl::Mutex& lock, int device)
     : TdiResourceHandler("DirectPktModMeter",
                          ::p4::config::v1::P4Ids::DIRECT_PACKET_MOD_METER),
       tdi_sde_interface_(sde_interface),
-      tdi_extern_manager_(tdi_extern_manager),
+      extern_manager_(extern_manager),
       lock_(lock),
       device_(device) {}
 
@@ -49,8 +49,8 @@ util::Status Es2kDirectPktModMeterHandler::WriteMeterEntry(
   {
     absl::ReaderMutexLock l(&lock_);
     ::idpf::PacketModMeter meter;
-    ASSIGN_OR_RETURN(meter, tdi_extern_manager_->FindPktModMeterByID(
-                                meter_entry.meter_id()));
+    ASSIGN_OR_RETURN(
+        meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
     RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
   }
 
