@@ -25,6 +25,19 @@ class Es2kExternManager : public TdiExternManager {
  public:
   typedef std::shared_ptr<TdiResourceHandler> ResourceHandler;
 
+  struct HandlerParams {
+    HandlerParams()
+        : sde_interface(nullptr),
+          p4_info_manager(nullptr),
+          lock(nullptr),
+          device(0) {}
+
+    TdiSdeInterface* sde_interface;  // not owned by this class
+    P4InfoManager* p4_info_manager;  // not owned by this class
+    absl::Mutex* lock;               // not owned by this class
+    int device;
+  };
+
   Es2kExternManager();
   virtual ~Es2kExternManager() = default;
 
@@ -86,11 +99,8 @@ class Es2kExternManager : public TdiExternManager {
 
   absl::flat_hash_map<uint32, ResourceHandler> resource_handler_map_;
 
-  TdiSdeInterface* tdi_sde_interface_;    // not owned by this class
-  P4InfoManager* p4_info_manager_;        // not owned by this class
-  TdiExternManager* tdi_extern_manager_;  // not owned by this class
-  absl::Mutex* lock_;                     // not owned by this class
-  int device_;
+  // Parameters shared with the resource handlers.
+  HandlerParams params_;
 };
 
 }  // namespace tdi

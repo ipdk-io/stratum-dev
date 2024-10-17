@@ -115,10 +115,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   VLOG(1) << "SDE version: " << sde_wrapper->GetSdeVersion();
   VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
 
-  Es2kTargetFactory es2k_target_factory;
+  Es2kTargetFactory target_factory;
 
   auto table_manager = TdiTableManager::CreateInstance(
-      mode, sde_wrapper, es2k_target_factory, device_id);
+      mode, sde_wrapper, target_factory, device_id);
 
   auto fixed_function_manager =
       TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);

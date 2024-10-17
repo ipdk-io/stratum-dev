@@ -75,7 +75,7 @@ TEST_F(Es2kExternManagerTest, TestCreateInstance) {
 }
 
 TEST_F(Es2kExternManagerTest, TestInitialize) {
-  es2k_extern_manager_->Initialize(p4info_, preamble_cb_);
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
   EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
   EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
 }

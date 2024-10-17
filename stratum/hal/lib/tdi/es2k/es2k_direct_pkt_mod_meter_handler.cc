@@ -19,16 +19,30 @@ namespace tdi {
 using namespace stratum::hal::tdi::helpers;
 
 Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
-    TdiSdeInterface* sde_interface, Es2kExternManager* extern_manager,
-    absl::Mutex& lock, int device)
+    Es2kExternManager* extern_manager)
     : TdiResourceHandler("DirectPktModMeter",
                          ::p4::config::v1::P4Ids::DIRECT_PACKET_MOD_METER),
-      tdi_sde_interface_(sde_interface),
-      extern_manager_(extern_manager),
-      lock_(lock),
-      device_(device) {}
+      extern_manager_(extern_manager) {}
 
 Es2kDirectPktModMeterHandler::~Es2kDirectPktModMeterHandler() {}
+
+::util::Status Es2kDirectPktModMeterHandler::DoBuildTableData(
+    const ::p4::v1::TableEntry& table_entry,
+    TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
+  if (table_entry.has_meter_config()) {
+    bool units_in_packets;  // or bytes
+    ASSIGN_OR_RETURN(auto meter,
+                     extern_manager_->FindDirectPktModMeterByID(resource_id));
+    RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
+
+    TdiPktModMeterConfig config;
+    SetPktModMeterConfig(config, table_entry);
+    config.isPktModMeter = units_in_packets;
+
+    RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
+  }
+  return ::util::OkStatus();
+}
 
 util::Status Es2kDirectPktModMeterHandler::DoReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
@@ -37,43 +51,6 @@ util::Status Es2kDirectPktModMeterHandler::DoReadDirectMeterEntry(
   TdiPktModMeterConfig cfg;
   RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
   SetDirectMeterEntry(result, cfg);
-  return ::util::OkStatus();
-}
-
-util::Status Es2kDirectPktModMeterHandler::DoWriteMeterEntry(
-    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
-    uint32 meter_id) {
-  bool units_in_packets;
-  {
-    absl::ReaderMutexLock l(&lock_);
-    ::idpf::PacketModMeter meter;
-    ASSIGN_OR_RETURN(
-        meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
-    RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
-  }
-
-  absl::optional<uint32> meter_index;
-  if (meter_entry.has_index()) {
-    meter_index = meter_entry.index().index();
-  } else {
-    return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
-  }
-
-  if (meter_entry.has_config()) {
-    TdiPktModMeterConfig config;
-    SetPktModMeterConfig(config, meter_entry);
-    config.isPktModMeter = units_in_packets;
-
-    RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-        device_, session, meter_id, meter_index, config));
-  }
-
-  if (type == ::p4::v1::Update::DELETE) {
-    RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
-        device_, session, meter_id, meter_index));
-  }
-
   return ::util::OkStatus();
 }
 

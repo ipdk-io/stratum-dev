@@ -17,16 +17,14 @@ namespace tdi {
 
 using namespace stratum::hal::tdi::helpers;
 
+using HandlerParams = Es2kExternManager::HandlerParams;
+
 Es2kPktModMeterHandler::Es2kPktModMeterHandler(
-    TdiSdeInterface* sde_interface, P4InfoManager* p4_info_manager,
-    Es2kExternManager* extern_manager, absl::Mutex& lock, int device)
+    const HandlerParams& params, Es2kExternManager* extern_manager)
     : TdiResourceHandler("PktModMeter",
                          ::p4::config::v1::P4Ids::PACKET_MOD_METER),
-      tdi_sde_interface_(sde_interface),
-      p4_info_manager_(p4_info_manager),
-      extern_manager_(extern_manager),
-      lock_(lock),
-      device_(device) {}
+      params_(params),
+      extern_manager_(extern_manager) {}
 
 Es2kPktModMeterHandler::~Es2kPktModMeterHandler() {}
 
@@ -36,7 +34,7 @@ util::Status Es2kPktModMeterHandler::DoReadMeterEntry(
     WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
   bool units_in_packets;
   {
-    absl::ReaderMutexLock l(&lock_);
+    absl::ReaderMutexLock l(params_.lock);
     ::idpf::PacketModMeter meter;
     ASSIGN_OR_RETURN(
         meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
@@ -52,8 +50,9 @@ util::Status Es2kPktModMeterHandler::DoReadMeterEntry(
   std::vector<uint32> meter_indices;
   std::vector<TdiPktModMeterConfig> cfg;
 
-  RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
-      device_, session, table_id, optional_meter_index, &meter_indices, cfg));
+  RETURN_IF_ERROR(params_.sde_interface->ReadPktModMeters(
+      params_.device, session, table_id, optional_meter_index, &meter_indices,
+      cfg));
 
   ::p4::v1::ReadResponse resp;
   for (size_t i = 0; i < meter_indices.size(); ++i) {
@@ -78,7 +77,7 @@ util::Status Es2kPktModMeterHandler::DoWriteMeterEntry(
     uint32 meter_id) {
   bool units_in_packets;
   {
-    absl::ReaderMutexLock l(&lock_);
+    absl::ReaderMutexLock l(params_.lock);
     ::idpf::PacketModMeter meter;
     ASSIGN_OR_RETURN(
         meter, extern_manager_->FindPktModMeterByID(meter_entry.meter_id()));
@@ -97,13 +96,13 @@ util::Status Es2kPktModMeterHandler::DoWriteMeterEntry(
     SetPktModMeterConfig(config, meter_entry);
     config.isPktModMeter = units_in_packets;
 
-    RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-        device_, session, meter_id, meter_index, config));
+    RETURN_IF_ERROR(params_.sde_interface->WritePktModMeter(
+        params_.device, session, meter_id, meter_index, config));
   }
 
   if (type == ::p4::v1::Update::DELETE) {
-    RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
-        device_, session, meter_id, meter_index));
+    RETURN_IF_ERROR(params_.sde_interface->DeletePktModMeterConfig(
+        params_.device, session, meter_id, meter_index));
   }
 
   return ::util::OkStatus();

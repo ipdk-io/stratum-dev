@@ -19,12 +19,12 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+using HandlerParams = Es2kExternManager::HandlerParams;
+
 class Es2kPktModMeterHandler : public TdiResourceHandler {
  public:
-  Es2kPktModMeterHandler(TdiSdeInterface* sde_interface,
-                         P4InfoManager* p4_info_manager,
-                         Es2kExternManager* extern_manager, absl::Mutex& lock,
-                         int device);
+  Es2kPktModMeterHandler(const HandlerParams& params,
+                         Es2kExternManager* extern_manager);
 
   virtual ~Es2kPktModMeterHandler();
 
@@ -40,11 +40,8 @@ class Es2kPktModMeterHandler : public TdiResourceHandler {
       const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) override;
 
  protected:
-  TdiSdeInterface* tdi_sde_interface_;  // not owned by this class
-  P4InfoManager* p4_info_manager_;      // not owned by this class
-  Es2kExternManager* extern_manager_;   // not owned by this class
-  absl::Mutex& lock_;                   // not owned by this class
-  const int device_;
+  const HandlerParams& params_;        // not owned by this class
+  Es2kExternManager* extern_manager_;  // not owned by this class
 };
 
 }  // namespace tdi

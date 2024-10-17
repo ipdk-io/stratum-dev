@@ -22,27 +22,22 @@ namespace tdi {
 
 class Es2kDirectPktModMeterHandler : public TdiResourceHandler {
  public:
-  Es2kDirectPktModMeterHandler(TdiSdeInterface* sde_interface,
-                               Es2kExternManager* extern_manager,
-                               absl::Mutex& lock, int device);
+  Es2kDirectPktModMeterHandler(Es2kExternManager* extern_manager);
 
   virtual ~Es2kDirectPktModMeterHandler();
+
+  ::util::Status DoBuildTableData(
+      const ::p4::v1::TableEntry& table_entry,
+      TdiSdeInterface::TableDataInterface* table_data,
+      uint32 resource_id) override;
 
   util::Status DoReadDirectMeterEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry,
       ::p4::v1::DirectMeterEntry& result) override;
 
-  util::Status DoWriteMeterEntry(
-      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      const ::p4::v1::Update::Type type,
-      const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) override;
-
  protected:
-  TdiSdeInterface* tdi_sde_interface_;  // not owned by this class
-  Es2kExternManager* extern_manager_;   // not owned by this class
-  absl::Mutex& lock_;                   // not owned by this class
-  const int device_;
+  Es2kExternManager* extern_manager_;  // not owned by this class
 };
 
 }  // namespace tdi

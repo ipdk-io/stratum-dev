@@ -4,7 +4,7 @@
 
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 
-#define USE_EXTERN_MANAGER 1
+//#define LEGACY_CODE 1
 
 #include <algorithm>
 #include <set>
@@ -15,15 +15,15 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
-#if !defined(USE_EXTERN_MANAGER)
+#if defined(LEGACY_CODE)
 #include "idpf/p4info.pb.h"  // ES2K
 #endif
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/p4/utils.h"
-#if !defined(USE_EXTERN_MANAGER)
-#include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"  // ES2K
+#if defined(LEGACY_CODE)
+#include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
 #endif
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
@@ -275,7 +275,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
             table_entry.counter_data().packet_count()));
       }
     }
-#if !defined(USE_EXTERN_MANAGER)
+#if defined(LEGACY_CODE)
     else if (resource_type == "DirectPacketModMeter") {
       if (table_entry.has_meter_config()) {
         auto es2k_extern_manager =
@@ -295,7 +295,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
         RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
       }
     }
-#else   // USE_EXTERN_MANAGER
+#else   // !LEGACY_CODE
     else {
       auto resource_handler =
           tdi_extern_manager_->FindResourceHandler(resource_id);
@@ -304,7 +304,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
             table_entry, table_data, resource_id));
       }
     }
-#endif  // USE_EXTERN_MANAGER
+#endif  // LEGACY_CODE
   }
 
   return ::util::OkStatus();
@@ -1067,7 +1067,7 @@ TdiTableManager::ReadDirectMeterEntry(
       return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
     }
   }
-#if !defined(USE_EXTERN_MANAGER)
+#if defined(LEGACY_CODE)
   else if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
@@ -1108,7 +1108,7 @@ TdiTableManager::ReadDirectMeterEntry(
       return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
     }
   }
-#else   // USE_EXTERN_MANAGER
+#else   // !LEGACY_CODE
   else {
     auto resource_handler = tdi_extern_manager_->FindResourceHandler(table_id);
     if (resource_handler) {
@@ -1116,7 +1116,7 @@ TdiTableManager::ReadDirectMeterEntry(
                                                          writer, table_id));
     }
   }
-#endif  // USE_EXTERN_MANAGER
+#endif  // LEGACY_CODE
   return ::util::OkStatus();
 }
 
@@ -1161,7 +1161,7 @@ TdiTableManager::ReadDirectMeterEntry(
           meter_entry.config().pir(), meter_entry.config().pburst()));
     }
   }
-#if !defined(USE_EXTERN_MANAGER)
+#if defined(LEGACY_CODE)
   else if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
@@ -1197,7 +1197,7 @@ TdiTableManager::ReadDirectMeterEntry(
           device_, session, meter_id, meter_index));
     }
   }
-#else   // USE_EXTERN_MANAGER
+#else   // !LEGACY_CODE
   else {
     auto resource_handler = tdi_extern_manager_->FindResourceHandler(meter_id);
     if (resource_handler) {
@@ -1205,7 +1205,7 @@ TdiTableManager::ReadDirectMeterEntry(
           session, type, meter_entry, meter_id));
     }
   }
-#endif  // USE_EXTERN_MANAGER
+#endif  // LEGACY_CODE
   return ::util::OkStatus();
 }
 

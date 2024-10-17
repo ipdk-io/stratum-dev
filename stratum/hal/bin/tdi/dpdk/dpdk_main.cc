@@ -110,10 +110,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
   /* ========== */
 
-  TdiTargetFactory tdi_target_factory;
+  TdiTargetFactory target_factory;
 
   auto table_manager = TdiTableManager::CreateInstance(
-      mode, sde_wrapper, tdi_target_factory, device_id);
+      mode, sde_wrapper, target_factory, device_id);
 
   auto action_profile_manager =
       TdiActionProfileManager::CreateInstance(sde_wrapper, device_id);

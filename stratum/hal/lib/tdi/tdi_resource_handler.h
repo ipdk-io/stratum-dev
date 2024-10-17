@@ -34,21 +34,6 @@ class TdiResourceHandler {
     return ::util::OkStatus();
   }
 
-  // DirectMeter, DirectCounter
-  virtual ::util::Status DoBuildP4TableEntry(
-      const TdiSdeInterface::TableDataInterface* table_data,
-      const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
-      uint32 resource_id) {
-    return ::util::OkStatus();
-  }
-
-  // DirectMeter
-  virtual ::util::Status DoWriteDirectMeterEntry(
-      const ::p4::v1::DirectMeterEntry& direct_meter_entry,
-      TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
-    return ::util::OkStatus();
-  }
-
   // DirectMeter, DirectPacketModMeter
   virtual ::util::Status DoReadDirectMeterEntry(
       const TdiSdeInterface::TableDataInterface* table_data,

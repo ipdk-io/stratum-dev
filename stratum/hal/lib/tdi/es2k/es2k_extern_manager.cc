@@ -13,19 +13,15 @@ namespace tdi {
 
 Es2kExternManager::Es2kExternManager()
     : pkt_mod_meter_map_("PacketModMeter"),
-      direct_pkt_mod_meter_map_("DirectPacketModMeter"),
-      tdi_sde_interface_(nullptr),
-      p4_info_manager_(nullptr),
-      lock_(nullptr),
-      device_(0) {}
+      direct_pkt_mod_meter_map_("DirectPacketModMeter") {}
 
 void Es2kExternManager::Initialize(TdiSdeInterface* sde_interface,
                                    P4InfoManager* p4_info_manager,
                                    absl::Mutex* lock, int device) {
-  tdi_sde_interface_ = sde_interface;
-  p4_info_manager_ = p4_info_manager;
-  lock_ = lock;
-  device_ = device;
+  params_.sde_interface = sde_interface;
+  params_.p4_info_manager = p4_info_manager;
+  params_.lock = lock;
+  params_.device = device;
 }
 
 void Es2kExternManager::RegisterExterns(const ::p4::config::v1::P4Info& p4info,
@@ -83,8 +79,8 @@ void Es2kExternManager::RegisterPacketModMeters(
   const auto& instances = p4extern.instances();
   if (!instances.empty()) {
     // Instantiate a PktModMeter resource handler.
-    ResourceHandler resource_handler = std::make_shared<Es2kPktModMeterHandler>(
-        tdi_sde_interface_, p4_info_manager_, this, *lock_, device_);
+    ResourceHandler resource_handler =
+        std::make_shared<Es2kPktModMeterHandler>(params_, this);
 
     for (const auto& extern_instance : instances) {
       // Add item to resource map.
@@ -117,8 +113,7 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
   if (!instances.empty()) {
     // Instantiate a DirectPacketModMeter resource handler.
     ResourceHandler resource_handler =
-        std::make_shared<Es2kDirectPktModMeterHandler>(tdi_sde_interface_, this,
-                                                       *lock_, device_);
+        std::make_shared<Es2kDirectPktModMeterHandler>(this);
 
     for (const auto& extern_instance : instances) {
       // Add an entry to the resource map.

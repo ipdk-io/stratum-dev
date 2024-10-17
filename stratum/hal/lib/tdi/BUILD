@@ -49,6 +49,11 @@ target_sdk_headers = select({
     "//conditions:default": [],
 })
 
+TABLE_MANAGER_DEPS = [
+#   "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",
+#   "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+]
+
 stratum_cc_library(
     name = "tdi_sde_interface",
     hdrs = ["tdi_sde_interface.h"],
@@ -304,20 +309,18 @@ stratum_cc_library(
         "//stratum/hal/lib/common:writer_interface",
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:utils",
-        "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",  # ES2K
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",  # ES2K
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_googleapis//google/rpc:status_cc_proto",
-    ],
+    ] + TABLE_MANAGER_DEPS,
 )
 
 stratum_cc_test(
