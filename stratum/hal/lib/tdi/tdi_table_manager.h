@@ -19,7 +19,6 @@
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
-#include "stratum/hal/lib/tdi/tdi_resource_mapper.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tdi_target_factory.h"
 
@@ -174,15 +173,11 @@ class TdiTableManager {
   // to all feature managers.
   std::unique_ptr<P4InfoManager> p4_info_manager_ GUARDED_BY(lock_);
 
-  // Factory object to create object variants that are appropriate to the
-  // TDI target.
+  // Factory to create polymorphic objects for the TDI target.
   TdiTargetFactory& tdi_target_factory_;
 
   // Helper class to manage P4 Externs.
   std::unique_ptr<TdiExternManager> tdi_extern_manager_ GUARDED_BY(lock_);
-
-  // Helper class to manage P4 resource handlers.
-  std::unique_ptr<TdiResourceMapper> tdi_resource_mapper_ GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

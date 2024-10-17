@@ -24,6 +24,7 @@ class TdiResourceHandler {
  public:
   TdiResourceHandler(const std::string& resource_type, uint32 type_id)
       : resource_type_(resource_type), type_id_(type_id) {}
+
   virtual ~TdiResourceHandler() = default;
 
   // DirectMeter, DirectCounter, DirectPacketModMeter

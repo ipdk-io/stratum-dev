@@ -334,6 +334,15 @@ stratum_cc_library(
 stratum_cc_library(
     name = "es2k_extern_manager",
     srcs = ["es2k_extern_manager.cc"],
+    deps = [
+        ":es2k_direct_pkt_mod_meter_handler",
+        ":es2k_extern_manager_hdrs",
+        ":es2k_pkt_mod_meter_handler",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_extern_manager_hdrs",
     hdrs = ["es2k_extern_manager.h"],
     deps = [
         "//stratum/glue:integral_types",
@@ -341,8 +350,10 @@ stratum_cc_library(
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
         "//stratum/hal/lib/tdi:tdi_extern_manager",
+        "//stratum/hal/lib/tdi:tdi_resource_handler",
         "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -363,7 +374,6 @@ stratum_cc_library(
     hdrs = ["es2k_target_factory.h"],
     deps = [
         ":es2k_extern_manager",
-        ":es2k_resource_mapper",
         "//stratum/hal/lib/tdi:tdi_target_factory",
     ],
 )
@@ -373,7 +383,7 @@ stratum_cc_library(
     srcs = ["es2k_direct_pkt_mod_meter_handler.cc"],
     hdrs = ["es2k_direct_pkt_mod_meter_handler.h"],
     deps = [
-        ":es2k_extern_manager",
+        ":es2k_extern_manager_hdrs",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
@@ -391,7 +401,7 @@ stratum_cc_library(
     srcs = ["es2k_pkt_mod_meter_handler.cc"],
     hdrs = ["es2k_pkt_mod_meter_handler.h"],
     deps = [
-        ":es2k_extern_manager",
+        ":es2k_extern_manager_hdrs",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:status_macros",
@@ -401,18 +411,5 @@ stratum_cc_library(
         "//stratum/hal/lib/tdi:tdi_table_helpers",
         "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
-    ],
-)
-
-stratum_cc_library(
-    name = "es2k_resource_mapper",
-    srcs = ["es2k_resource_mapper.cc"],
-    hdrs = ["es2k_resource_mapper.h"],
-    deps = [
-        ":es2k_direct_pkt_mod_meter_handler",
-        ":es2k_pkt_mod_meter_handler",
-        "//stratum/hal/lib/tdi:tdi_resource_mapper",
-        "@com_github_google_glog//:glog",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
     ],
 )

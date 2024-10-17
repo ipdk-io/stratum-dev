@@ -14,8 +14,9 @@ class P4ExternManager {
  public:
   virtual ~P4ExternManager() = default;
 
-  virtual void Initialize(const ::p4::config::v1::P4Info& p4info,
-                          const PreambleCallback& preamble_pb) = 0;
+  // Called by P4InfoManager to register P4Extern resources.
+  virtual void RegisterExterns(const ::p4::config::v1::P4Info& p4info,
+                               const PreambleCallback& preamble_pb) = 0;
 
  protected:
   // Default constructor.

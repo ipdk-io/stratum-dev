@@ -95,7 +95,7 @@ P4InfoManager::~P4InfoManager() {}
       status, digest_map_.BuildMaps(p4_info_.digests(), preamble_cb));
 
   if (extern_manager != nullptr) {
-    extern_manager->Initialize(p4_info_, preamble_cb);
+    extern_manager->RegisterExterns(p4_info_, preamble_cb);
   }
 
   APPEND_STATUS_IF_ERROR(status, VerifyTableXrefs());

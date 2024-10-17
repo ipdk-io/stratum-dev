@@ -691,6 +691,7 @@ stratum_cc_library(
     name = "tdi_extern_manager",
     hdrs = ["tdi_extern_manager.h"],
     deps = [
+        ":tdi_resource_handler",
         "//stratum/hal/lib/p4:p4_extern_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
@@ -724,7 +725,6 @@ stratum_cc_library(
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",
-        ":tdi_resource_mapper",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -740,73 +740,5 @@ stratum_cc_library(
         "//stratum/hal/lib/common:writer_interface",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
         "@com_google_absl//absl/memory",
-    ],
-)
-
-stratum_cc_library(
-    name = "tdi_resource_mapper",
-    srcs = ["tdi_resource_mapper.cc"],
-    hdrs = ["tdi_resource_mapper.h"],
-    deps = [
-        ":tdi_direct_counter_handler",
-        ":tdi_direct_meter_handler",
-        ":tdi_meter_handler",
-        ":tdi_resource_handler",
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status",
-        "//stratum/hal/lib/p4:p4_info_manager",
-        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
-        "@com_google_absl//absl/memory",
-    ],
-)
-
-stratum_cc_library(
-    name = "tdi_direct_counter_handler",
-    srcs = ["tdi_direct_counter_handler.cc"],
-    hdrs = ["tdi_direct_counter_handler.h"],
-    deps = [
-        ":tdi_resource_handler",
-        ":tdi_sde_interface",
-        ":tdi_table_helpers",
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/common:writer_interface",
-        "//stratum/hal/lib/p4:p4_info_manager",
-        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
-    ],
-)
-
-stratum_cc_library(
-    name = "tdi_direct_meter_handler",
-    srcs = ["tdi_direct_meter_handler.cc"],
-    hdrs = ["tdi_direct_meter_handler.h"],
-    deps = [
-        ":tdi_resource_handler",
-        ":tdi_sde_interface",
-        ":tdi_table_helpers",
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/p4:p4_info_manager",
-        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
-    ],
-)
-
-stratum_cc_library(
-    name = "tdi_meter_handler",
-    srcs = ["tdi_meter_handler.cc"],
-    hdrs = ["tdi_meter_handler.h"],
-    deps = [
-        ":tdi_resource_handler",
-        ":tdi_sde_interface",
-        ":tdi_table_helpers",
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status",
-        "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/p4:p4_info_manager",
-        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )

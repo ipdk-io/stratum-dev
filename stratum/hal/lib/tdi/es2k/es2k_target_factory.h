@@ -8,7 +8,6 @@
 #include <utility>
 
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_resource_mapper.h"
 #include "stratum/hal/lib/tdi/tdi_target_factory.h"
 
 namespace stratum {
@@ -23,11 +22,6 @@ class Es2kTargetFactory : public TdiTargetFactory {
   std::unique_ptr<TdiExternManager> CreateTdiExternManager() override {
     auto es2kPtr = Es2kExternManager::CreateInstance();
     return std::unique_ptr<TdiExternManager>(std::move(es2kPtr));
-  }
-
-  std::unique_ptr<TdiResourceMapper> CreateTdiResourceMapper() override {
-    auto es2kPtr = Es2kResourceMapper::CreateInstance();
-    return std::unique_ptr<TdiResourceMapper>(std::move(es2kPtr));
   }
 };
 

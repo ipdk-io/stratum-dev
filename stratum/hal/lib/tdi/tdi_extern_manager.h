@@ -8,6 +8,7 @@
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/hal/lib/p4/p4_extern_manager.h"
 #include "stratum/hal/lib/p4/p4_resource_map.h"
+#include "stratum/hal/lib/tdi/tdi_resource_handler.h"
 
 namespace stratum {
 namespace hal {
@@ -18,12 +19,25 @@ class TdiExternManager : public P4ExternManager {
   TdiExternManager() {}
   virtual ~TdiExternManager() = default;
 
+  // Called by TdiTargetFactory.
   static std::unique_ptr<TdiExternManager> CreateInstance() {
     return absl::make_unique<TdiExternManager>();
   }
 
-  void Initialize(const ::p4::config::v1::P4Info& p4info,
-                  const PreambleCallback& preamble_cb) override {}
+  // Performs basic initialization. Called by TdiTableManager.
+  virtual void Initialize(TdiSdeInterface* sde_interface,
+                          P4InfoManager* p4_info_manager, absl::Mutex* lock,
+                          int device) {}
+
+  // Registers P4Extern resources. Called by P4InfoManager.
+  void RegisterExterns(const ::p4::config::v1::P4Info& p4info,
+                       const PreambleCallback& preamble_cb) override {}
+
+  // Returns the handler for the P4 resource with the specified ID,
+  // or null if the resource is not registered.
+  virtual TdiResourceHandler* FindResourceHandler(uint32 resource_id) {
+    return nullptr;
+  }
 };
 
 }  // namespace tdi

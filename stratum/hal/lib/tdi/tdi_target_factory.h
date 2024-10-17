@@ -7,7 +7,6 @@
 #include <memory>
 
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
-#include "stratum/hal/lib/tdi/tdi_resource_mapper.h"
 
 namespace stratum {
 namespace hal {
@@ -20,10 +19,6 @@ class TdiTargetFactory {
 
   virtual std::unique_ptr<TdiExternManager> CreateTdiExternManager() {
     return TdiExternManager::CreateInstance();
-  }
-
-  virtual std::unique_ptr<TdiResourceMapper> CreateTdiResourceMapper() {
-    return TdiResourceMapper::CreateInstance();
   }
 };
 
