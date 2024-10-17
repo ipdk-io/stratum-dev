@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <map>
@@ -28,6 +28,7 @@
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
+#include "stratum/hal/lib/tdi/tdi_target_factory.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 
@@ -109,8 +110,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
   /* ========== */
 
-  auto table_manager =
-      TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
+  TdiTargetFactory target_factory;
+
+  auto table_manager = TdiTableManager::CreateInstance(
+      mode, sde_wrapper, target_factory, device_id);
 
   auto action_profile_manager =
       TdiActionProfileManager::CreateInstance(sde_wrapper, device_id);
