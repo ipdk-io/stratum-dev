@@ -4,6 +4,8 @@
 
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
 
+#define USE_RESOURCE_HANDLERS 1
+
 #include <algorithm>
 #include <set>
 #include <string>
@@ -13,11 +15,15 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
+#ifndef USE_RESOURCE_HANDLERS
 #include "idpf/p4info.pb.h"  // ES2K
+#endif
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
+#ifndef USE_RESOURCE_HANDLERS
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"  // ES2K
+#endif
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
@@ -80,6 +86,15 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       absl::make_unique<P4InfoManager>(p4_info);
   auto extern_manager = tdi_target_factory_.CreateTdiExternManager();
   RETURN_IF_ERROR(p4_info_manager->InitializeAndVerify(extern_manager.get()));
+
+#if defined(USE_RESOURCE_HANDLERS)
+  auto resource_mapper = tdi_target_factory_.CreateTdiResourceMapper();
+  RETURN_IF_ERROR(
+      resource_mapper->Initialize(tdi_sde_interface_, p4_info_manager.get(),
+                                  extern_manager.get(), &lock_, device_));
+  tdi_resource_mapper_ = std::move(resource_mapper);
+#endif
+
   p4_info_manager_ = std::move(p4_info_manager);
   tdi_extern_manager_ = std::move(extern_manager);
 
@@ -240,12 +255,12 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
 
   for (const auto& resource_id : table.direct_resource_ids()) {
-#ifdef TDI_RESOURCE_HANDLER
-    ASSIGN_OR_RETURN(resource_handler,
+#ifdef USE_RESOURCE_HANDLERS
+    ASSIGN_OR_RETURN(auto resource_handler,
                      tdi_resource_mapper_->FindResourceHandler(resource_id));
     if (resource_handler) {
-      RETURN_IF_ERROR(resource_handler->BuildTableData(table_entry, table_data,
-                                                       resource_id));
+      RETURN_IF_ERROR(resource_handler->DoBuildTableData(
+          table_entry, table_data, resource_id));
     }
 #else
     ASSIGN_OR_RETURN(auto resource_type,
@@ -284,7 +299,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
       RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
     }
-#endif  // TDI_RESOURCE_HANDLER
+#endif  // USE_RESOURCE_HANDLERS
   }
 
   return ::util::OkStatus();
@@ -479,6 +494,14 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   }
 
   for (const auto& resource_id : table.direct_resource_ids()) {
+#ifdef USE_RESOURCE_HANDLERS
+    ASSIGN_OR_RETURN(auto resource_handler,
+                     tdi_resource_mapper_->FindResourceHandler(resource_id));
+    if (resource_handler) {
+      RETURN_IF_ERROR(resource_handler->DoBuildP4TableEntry(
+          table_data, request, result, resource_id));
+    }
+#else
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter" && request.has_meter_config()) {
@@ -506,6 +529,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       result.mutable_counter_data()->set_byte_count(bytes);
       result.mutable_counter_data()->set_packet_count(packets);
     }
+#endif  // USE_RESOURCE_HANDLERS
   }
 
   return result;
@@ -773,6 +797,14 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
 
   for (const auto& resource_id : table.direct_resource_ids()) {
+#ifdef USE_RESOURCE_HANDLERS
+    ASSIGN_OR_RETURN(auto resource_handler,
+                     tdi_resource_mapper_->FindResourceHandler(resource_id));
+    if (resource_handler) {
+      RETURN_IF_ERROR(resource_handler->DoWriteDirectMeterEntry(
+          direct_meter_entry, table_data.get(), resource_id));
+    }
+#else
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
     if (resource_type == "Direct-Meter") {
@@ -788,6 +820,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           direct_meter_entry.config().pburst()));
       break;
     }
+#endif  // USE_RESOURCE_HANDLERS
   }
 
   RETURN_IF_ERROR(tdi_sde_interface_->ModifyTableEntry(
@@ -871,6 +904,14 @@ TdiTableManager::ReadDirectMeterEntry(
   for (const auto& resource_id : table.direct_resource_ids()) {
     ASSIGN_OR_RETURN(auto resource_type,
                      p4_info_manager_->FindResourceTypeByID(resource_id));
+#ifdef USE_RESOURCE_HANDLERS
+    ASSIGN_OR_RETURN(auto resource_handler,
+                     tdi_resource_mapper_->FindResourceHandler(resource_id));
+    if (resource_handler) {
+      RETURN_IF_ERROR(resource_handler->DoReadDirectMeterEntry(
+          table_data.get(), table_entry, result));
+    }
+#else
     if (resource_type == "Direct-Meter" && table_entry.has_meter_config()) {
       // build response entry from returned data
       uint64 cir = 0;
@@ -890,6 +931,7 @@ TdiTableManager::ReadDirectMeterEntry(
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
       SetDirectMeterEntry(result, cfg);
     }
+#endif  // USE_RESOURCE_HANDLERS
   }
 
   return result;
@@ -985,6 +1027,14 @@ TdiTableManager::ReadDirectMeterEntry(
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
+#ifdef USE_RESOURCE_HANDLERS
+  ASSIGN_OR_RETURN(auto resource_handler,
+                   tdi_resource_mapper_->FindResourceHandler(table_id));
+  if (resource_handler) {
+    RETURN_IF_ERROR(resource_handler->DoReadMeterEntry(session, meter_entry,
+                                                       writer, table_id));
+  }
+#else
   ASSIGN_OR_RETURN(auto resource_type,
                    p4_info_manager_->FindResourceTypeByID(table_id));
 
@@ -1072,7 +1122,7 @@ TdiTableManager::ReadDirectMeterEntry(
       return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
     }
   }
-
+#endif  // USE_RESOURCE_HANDLERS
   return ::util::OkStatus();
 }
 
@@ -1091,6 +1141,14 @@ TdiTableManager::ReadDirectMeterEntry(
   ASSIGN_OR_RETURN(uint32 meter_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
+#ifdef USE_RESOURCE_HANDLERS
+  ASSIGN_OR_RETURN(auto resource_handler,
+                   tdi_resource_mapper_->FindResourceHandler(meter_id));
+  if (resource_handler) {
+    RETURN_IF_ERROR(resource_handler->DoWriteMeterEntry(session, type,
+                                                        meter_entry, meter_id));
+  }
+#else
   ASSIGN_OR_RETURN(auto resource_type,
                    p4_info_manager_->FindResourceTypeByID(meter_id));
 
@@ -1151,7 +1209,7 @@ TdiTableManager::ReadDirectMeterEntry(
           device_, session, meter_id, meter_index));
     }
   }
-
+#endif  // USE_RESOURCE_HANDLERS
   return ::util::OkStatus();
 }
 

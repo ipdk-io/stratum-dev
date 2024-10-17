@@ -26,13 +26,13 @@ class TdiMeterHandler : public TdiResourceHandler {
 
   virtual ~TdiMeterHandler();
 
-  util::Status ReadMeterEntry(
+  util::Status DoReadMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-      uint32 resource_id) override;
+      WriterInterface<::p4::v1::ReadResponse>* writer,
+      uint32 table_id) override;
 
-  ::util::Status WriteMeterEntry(
+  ::util::Status DoWriteMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) override;

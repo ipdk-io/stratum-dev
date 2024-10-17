@@ -21,7 +21,7 @@ TdiDirectCounterHandler::TdiDirectCounterHandler(P4InfoManager* p4_info_manager)
                          ::p4::config::v1::P4Ids::DIRECT_COUNTER),
       p4_info_manager_(p4_info_manager) {}
 
-::util::Status TdiDirectCounterHandler::BuildTableData(
+::util::Status TdiDirectCounterHandler::DoBuildTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
   if (table_entry.has_counter_data()) {
@@ -32,8 +32,7 @@ TdiDirectCounterHandler::TdiDirectCounterHandler(P4InfoManager* p4_info_manager)
   return ::util::OkStatus();
 }
 
-::util::StatusOr<::p4::v1::TableEntry>
-TdiDirectCounterHandler::BuildP4TableEntry(
+::util::Status TdiDirectCounterHandler::DoBuildP4TableEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
     const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
     uint32 resource_id) {

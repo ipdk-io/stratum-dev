@@ -24,21 +24,22 @@ class TdiDirectMeterHandler : public TdiResourceHandler {
   TdiDirectMeterHandler(P4InfoManager* p4_info_manager);
   virtual ~TdiDirectMeterHandler() = default;
 
-  ::util::Status BuildTableData(const ::p4::v1::TableEntry& table_entry,
-                                TdiSdeInterface::TableDataInterface* table_data,
-                                uint32 resource_id) override;
+  ::util::Status DoBuildTableData(
+      const ::p4::v1::TableEntry& table_entry,
+      TdiSdeInterface::TableDataInterface* table_data,
+      uint32 resource_id) override;
 
-  ::util::StatusOr<::p4::v1::TableEntry> BuildP4TableEntry(
+  ::util::Status DoBuildP4TableEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
       uint32 resource_id) override;
 
-  ::util::StatusOr<::p4::v1::DirectMeterEntry> ReadDirectMeterEntry(
+  ::util::Status DoReadDirectMeterEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry,
       ::p4::v1::DirectMeterEntry& result) override;
 
-  ::util::Status WriteDirectMeterEntry(
+  ::util::Status DoWriteDirectMeterEntry(
       const ::p4::v1::DirectMeterEntry& direct_meter_entry,
       TdiSdeInterface::TableDataInterface* table_data,
       uint32 resource_id) override;

@@ -20,7 +20,7 @@ TdiDirectMeterHandler::TdiDirectMeterHandler(P4InfoManager* p4_info_manager)
     : TdiResourceHandler("DirectMeter", ::p4::config::v1::P4Ids::DIRECT_METER),
       p4_info_manager_(p4_info_manager) {}
 
-::util::Status TdiDirectMeterHandler::BuildTableData(
+::util::Status TdiDirectMeterHandler::DoBuildTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
   if (table_entry.has_meter_config()) {
@@ -38,7 +38,7 @@ TdiDirectMeterHandler::TdiDirectMeterHandler(P4InfoManager* p4_info_manager)
   return ::util::OkStatus();
 }
 
-::util::StatusOr<::p4::v1::TableEntry> TdiDirectMeterHandler::BuildP4TableEntry(
+::util::Status TdiDirectMeterHandler::DoBuildP4TableEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
     const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
     uint32 resource_id) {
@@ -69,8 +69,7 @@ TdiDirectMeterHandler::TdiDirectMeterHandler(P4InfoManager* p4_info_manager)
   return ::util::OkStatus();
 }
 
-::util::StatusOr<::p4::v1::DirectMeterEntry>
-TdiDirectMeterHandler::ReadDirectMeterEntry(
+::util::Status TdiDirectMeterHandler::DoReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
     const ::p4::v1::TableEntry& table_entry,
     ::p4::v1::DirectMeterEntry& result) {
@@ -92,7 +91,7 @@ TdiDirectMeterHandler::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-::util::Status TdiDirectMeterHandler::WriteDirectMeterEntry(
+::util::Status TdiDirectMeterHandler::DoWriteDirectMeterEntry(
     const ::p4::v1::DirectMeterEntry& direct_meter_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
   ASSIGN_OR_RETURN(auto meter,

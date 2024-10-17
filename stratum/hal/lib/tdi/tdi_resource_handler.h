@@ -27,14 +27,14 @@ class TdiResourceHandler {
   virtual ~TdiResourceHandler() = default;
 
   // DirectMeter, DirectCounter, DirectPacketModMeter
-  virtual ::util::Status BuildTableData(
+  virtual ::util::Status DoBuildTableData(
       const ::p4::v1::TableEntry& table_entry,
       TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
     return ::util::OkStatus();
   }
 
   // DirectMeter, DirectCounter
-  virtual ::util::StatusOr<::p4::v1::TableEntry> BuildP4TableEntry(
+  virtual ::util::Status DoBuildP4TableEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
       uint32 resource_id) {
@@ -42,14 +42,14 @@ class TdiResourceHandler {
   }
 
   // DirectMeter
-  virtual ::util::Status WriteDirectMeterEntry(
+  virtual ::util::Status DoWriteDirectMeterEntry(
       const ::p4::v1::DirectMeterEntry& direct_meter_entry,
       TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
     return ::util::OkStatus();
   }
 
   // DirectMeter, DirectPacketModMeter
-  virtual ::util::StatusOr<::p4::v1::DirectMeterEntry> ReadDirectMeterEntry(
+  virtual ::util::Status DoReadDirectMeterEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry,
       ::p4::v1::DirectMeterEntry& result) {
@@ -57,16 +57,15 @@ class TdiResourceHandler {
   }
 
   // Meter, PacketModMeter
-  virtual ::util::Status ReadMeterEntry(
+  virtual ::util::Status DoReadMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-      uint32 meter_id) {
+      WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
     return ::util::OkStatus();
   }
 
   // Meter, PacketModMeter
-  virtual ::util::Status WriteMeterEntry(
+  virtual ::util::Status DoWriteMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) {

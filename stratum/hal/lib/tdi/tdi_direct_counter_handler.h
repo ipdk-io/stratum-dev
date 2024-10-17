@@ -24,11 +24,12 @@ class TdiDirectCounterHandler : public TdiResourceHandler {
   TdiDirectCounterHandler(P4InfoManager* p4_info_manager);
   virtual ~TdiDirectCounterHandler() = default;
 
-  ::util::Status BuildTableData(const ::p4::v1::TableEntry& table_entry,
-                                TdiSdeInterface::TableDataInterface* table_data,
-                                uint32 resource_id) override;
+  ::util::Status DoBuildTableData(
+      const ::p4::v1::TableEntry& table_entry,
+      TdiSdeInterface::TableDataInterface* table_data,
+      uint32 resource_id) override;
 
-  ::util::StatusOr<::p4::v1::TableEntry> BuildP4TableEntry(
+  ::util::Status DoBuildP4TableEntry(
       const TdiSdeInterface::TableDataInterface* table_data,
       const ::p4::v1::TableEntry& table_entry, ::p4::v1::TableEntry& result,
       uint32 resource_id) override;

@@ -30,11 +30,10 @@ Es2kPktModMeterHandler::Es2kPktModMeterHandler(
 
 Es2kPktModMeterHandler::~Es2kPktModMeterHandler() {}
 
-util::Status Es2kPktModMeterHandler::ReadMeterEntry(
+util::Status Es2kPktModMeterHandler::DoReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
-    WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-    uint32 meter_id) {
+    WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
   bool units_in_packets;
   {
     absl::ReaderMutexLock l(&lock_);
@@ -73,7 +72,7 @@ util::Status Es2kPktModMeterHandler::ReadMeterEntry(
   return ::util::OkStatus();
 }
 
-util::Status Es2kPktModMeterHandler::WriteMeterEntry(
+util::Status Es2kPktModMeterHandler::DoWriteMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
     uint32 meter_id) {

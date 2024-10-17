@@ -30,8 +30,7 @@ Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
 
 Es2kDirectPktModMeterHandler::~Es2kDirectPktModMeterHandler() {}
 
-util::StatusOr<::p4::v1::DirectMeterEntry>
-Es2kDirectPktModMeterHandler::ReadDirectMeterEntry(
+util::Status Es2kDirectPktModMeterHandler::DoReadDirectMeterEntry(
     const TdiSdeInterface::TableDataInterface* table_data,
     const ::p4::v1::TableEntry& table_entry,
     ::p4::v1::DirectMeterEntry& result) {
@@ -41,7 +40,7 @@ Es2kDirectPktModMeterHandler::ReadDirectMeterEntry(
   return ::util::OkStatus();
 }
 
-util::Status Es2kDirectPktModMeterHandler::WriteMeterEntry(
+util::Status Es2kDirectPktModMeterHandler::DoWriteMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
     uint32 meter_id) {

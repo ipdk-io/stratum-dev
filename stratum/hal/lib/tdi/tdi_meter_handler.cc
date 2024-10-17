@@ -28,12 +28,10 @@ TdiMeterHandler::TdiMeterHandler(TdiSdeInterface* sde_interface,
 
 TdiMeterHandler::~TdiMeterHandler() {}
 
-util::Status TdiMeterHandler::ReadMeterEntry(
+util::Status TdiMeterHandler::DoReadMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
-    WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id,
-    // TODO(derek): resource_id not used.
-    uint32 resource_id) {
+    WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
   {
     absl::ReaderMutexLock l(&lock_);
     ASSIGN_OR_RETURN(auto meter,
@@ -80,7 +78,7 @@ util::Status TdiMeterHandler::ReadMeterEntry(
   return ::util::OkStatus();
 }
 
-::util::Status TdiMeterHandler::WriteMeterEntry(
+::util::Status TdiMeterHandler::DoWriteMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
     uint32 meter_id) {
