@@ -20,7 +20,7 @@ using namespace stratum::hal::tdi::helpers;
 
 Es2kDirectPktModMeterHandler::Es2kDirectPktModMeterHandler(
     Es2kExternManager* extern_manager)
-    : TdiResourceHandler("DirectPktModMeter",
+    : TdiResourceHandler("DirectPacketModMeter",
                          ::p4::config::v1::P4Ids::DIRECT_PACKET_MOD_METER),
       extern_manager_(extern_manager) {}
 

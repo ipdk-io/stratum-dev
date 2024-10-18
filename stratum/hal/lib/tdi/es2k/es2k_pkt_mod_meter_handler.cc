@@ -21,7 +21,7 @@ using HandlerParams = Es2kExternManager::HandlerParams;
 
 Es2kPktModMeterHandler::Es2kPktModMeterHandler(
     const HandlerParams& params, Es2kExternManager* extern_manager)
-    : TdiResourceHandler("PktModMeter",
+    : TdiResourceHandler("PacketModMeter",
                          ::p4::config::v1::P4Ids::PACKET_MOD_METER),
       params_(params),
       extern_manager_(extern_manager) {}
