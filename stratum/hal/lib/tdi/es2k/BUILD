@@ -338,6 +338,8 @@ stratum_cc_library(
         ":es2k_direct_pkt_mod_meter_handler",
         ":es2k_extern_manager_hdrs",
         ":es2k_pkt_mod_meter_handler",
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/p4:utils",
     ],
 )
 
@@ -364,7 +366,11 @@ stratum_cc_test(
     deps = [
         ":es2k_extern_manager",
         ":test_main",
+        "//stratum/hal/lib/p4:p4_info_manager_mock",
+        "//stratum/hal/lib/tdi:tdi_sde_mock",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
     ],
 )

@@ -25,9 +25,11 @@ class TdiExternManager : public P4ExternManager {
   }
 
   // Performs basic initialization. Called by TdiTableManager.
-  virtual void Initialize(TdiSdeInterface* sde_interface,
-                          P4InfoManager* p4_info_manager, absl::Mutex* lock,
-                          int device) {}
+  virtual ::util::Status Initialize(TdiSdeInterface* sde_interface,
+                                    P4InfoManager* p4_info_manager,
+                                    absl::Mutex* lock, int device) {
+    return ::util::OkStatus();
+  }
 
   // Registers P4Extern resources. Called by P4InfoManager.
   void RegisterExterns(const ::p4::config::v1::P4Info& p4info,

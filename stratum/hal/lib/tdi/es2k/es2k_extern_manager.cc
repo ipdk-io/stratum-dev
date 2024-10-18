@@ -4,8 +4,10 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
 
 #include "stratum/glue/logging.h"
+#include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_direct_pkt_mod_meter_handler.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_pkt_mod_meter_handler.h"
+#include "stratum/hal/lib/p4/utils.h"
 
 namespace stratum {
 namespace hal {
@@ -15,13 +17,19 @@ Es2kExternManager::Es2kExternManager()
     : pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter") {}
 
-void Es2kExternManager::Initialize(TdiSdeInterface* sde_interface,
-                                   P4InfoManager* p4_info_manager,
-                                   absl::Mutex* lock, int device) {
+::util::Status Es2kExternManager::Initialize(TdiSdeInterface* sde_interface,
+                                             P4InfoManager* p4_info_manager,
+                                             absl::Mutex* lock, int device) {
+  RET_CHECK(sde_interface != nullptr);
+  RET_CHECK(p4_info_manager != nullptr);
+  RET_CHECK(lock != nullptr);
+
   params_.sde_interface = sde_interface;
   params_.p4_info_manager = p4_info_manager;
   params_.lock = lock;
   params_.device = device;
+
+  return ::util::OkStatus();
 }
 
 void Es2kExternManager::RegisterExterns(const ::p4::config::v1::P4Info& p4info,
@@ -36,7 +44,8 @@ void Es2kExternManager::RegisterExterns(const ::p4::config::v1::P4Info& p4info,
           RegisterDirectPacketModMeters(p4extern, preamble_cb);
           break;
         default:
-          LOG(INFO) << "Unrecognized p4_info extern type: "
+          ++stats_.unknown_extern_id;
+          LOG(INFO) << "Unrecognized P4Extern type: "
                     << p4extern.extern_type_id() << " (ignored)";
           break;
       }
@@ -79,16 +88,19 @@ void Es2kExternManager::RegisterPacketModMeters(
   const auto& instances = p4extern.instances();
   if (!instances.empty()) {
     // Instantiate a PktModMeter resource handler.
-    ResourceHandler resource_handler =
+    ResourceHandler handler =
         std::make_shared<Es2kPktModMeterHandler>(params_, this);
 
     for (const auto& extern_instance : instances) {
-      // Add item to resource map.
-      RegisterResource(extern_instance.preamble(), resource_handler);
+      const auto& preamble = extern_instance.preamble();
+      if (!ValidatePreamble(preamble, handler).ok()) continue;
+
+      // Add an entry to the resource map.
+      if (!RegisterResource(preamble, handler).ok()) continue;
 
       // Create a PacketModMeter configuration object.
       ::idpf::PacketModMeter pkt_mod_meter;
-      *pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+      *pkt_mod_meter.mutable_preamble() = preamble;
 
       p4::config::v1::MeterSpec meter_spec;
       meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
@@ -97,7 +109,7 @@ void Es2kExternManager::RegisterPacketModMeters(
       pkt_mod_meter.set_size(1024);
       pkt_mod_meter.set_index_width(20);
 
-      // Add configuration object to list.
+      // Add PacketModMeter object to list.
       meter_objects_.Add(std::move(pkt_mod_meter));
     }
 
@@ -112,16 +124,19 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
   const auto& instances = p4extern.instances();
   if (!instances.empty()) {
     // Instantiate a DirectPacketModMeter resource handler.
-    ResourceHandler resource_handler =
+    ResourceHandler handler =
         std::make_shared<Es2kDirectPktModMeterHandler>(this);
 
     for (const auto& extern_instance : instances) {
+      const auto& preamble = extern_instance.preamble();
+      if (!ValidatePreamble(preamble, handler).ok()) continue;
+
       // Add an entry to the resource map.
-      RegisterResource(extern_instance.preamble(), resource_handler);
+      if (!RegisterResource(preamble, handler).ok()) continue;
 
       // Create a DirectPacketModMeter configuration object.
       ::idpf::DirectPacketModMeter direct_pkt_mod_meter;
-      *direct_pkt_mod_meter.mutable_preamble() = extern_instance.preamble();
+      *direct_pkt_mod_meter.mutable_preamble() = preamble;
 
       p4::config::v1::MeterSpec meter_spec;
       meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
@@ -136,22 +151,35 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
   }
 }
 
-void Es2kExternManager::RegisterResource(
+::util::Status Es2kExternManager::ValidatePreamble(
     const ::p4::config::v1::Preamble& preamble,
-    ResourceHandler resource_handler) {
-  if (preamble.id() == 0 || preamble.name().empty()) {
-    LOG(WARNING) << "Invalid " << resource_handler->resource_type()
-                 << "instance: id " << preamble.id() << ", name "
-                 << preamble.name();
-    return;
+    const ResourceHandler& handler) {
+  if (preamble.id() == 0) {
+    ++stats_.zero_resource_id;
+    return MAKE_ERROR(ERR_INVALID_P4_INFO)
+           << "P4Extern " << handler->resource_type()
+           << " requires a non-zero ID in preamble";
   }
-  auto result = resource_handler_map_.emplace(preamble.id(), resource_handler);
+
+  if (preamble.name().empty()) {
+    ++stats_.empty_resource_name;
+    return MAKE_ERROR(ERR_INVALID_P4_INFO)
+           << "P4Extern " << handler->resource_type()
+           << " requires a non-empty name in preamble";
+  }
+  return ::util::OkStatus();
+}
+
+::util::Status Es2kExternManager::RegisterResource(
+    const ::p4::config::v1::Preamble& preamble,
+    const ResourceHandler& handler) {
+  auto result = resource_handler_map_.emplace(preamble.id(), handler);
   if (!result.second) {
-    LOG(WARNING) << "Duplicate " << resource_handler->resource_type()
-                 << "instance: id " << preamble.id() << ", name "
-                 << preamble.name();
-    return;
+    ++stats_.duplicate_resource_id;
+    return MAKE_ERROR(ERR_INVALID_P4_INFO)
+           << "Duplicate P4 object ID " << PrintP4ObjectID(preamble.id());
   }
+  return ::util::OkStatus();
 }
 
 }  // namespace tdi

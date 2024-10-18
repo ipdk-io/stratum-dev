@@ -9,9 +9,13 @@
 #include <memory>
 #include <string>
 
+#include "absl/memory/memory.h"
+#include "absl/synchronization/mutex.h"
 #include "gtest/gtest.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/hal/lib/p4/p4_info_manager_mock.h"
+#include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/lib/utils.h"
 
 namespace stratum {
@@ -41,9 +45,12 @@ class Es2kExternManagerTest : public testing::Test {
   void SetUpPacketModMeters();
   void SetUpPacketModMeterTest();
 
+  std::unique_ptr<TdiSdeMock> sde_mock_;
+  std::unique_ptr<P4InfoManagerMock> info_manager_mock_;
   std::unique_ptr<Es2kExternManager> es2k_extern_manager_;
   PreambleCallback preamble_cb_;
   ::p4::config::v1::P4Info p4info_;
+  std::unique_ptr<absl::Mutex> lock_;
 };
 
 void Es2kExternManagerTest::SetUpPreambleCallback() {
@@ -71,11 +78,33 @@ TEST_F(Es2kExternManagerTest, TestCreateInstance) {
 }
 
 TEST_F(Es2kExternManagerTest, TestInitialize) {
+  SetUpPreambleCallback();
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 0);
   EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
   EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
+
+  sde_mock_ = absl::make_unique<TdiSdeMock>();
+  info_manager_mock_ = absl::make_unique<P4InfoManagerMock>();
+  lock_ = absl::make_unique<absl::Mutex>();
+
+  auto initialized = es2k_extern_manager_->Initialize(
+      sde_mock_.get(), info_manager_mock_.get(), lock_.get(), 0);
+  EXPECT_TRUE(initialized.ok());
+}
+
+TEST_F(Es2kExternManagerTest, TestInitializeFailure) {
+  SetUpPreambleCallback();
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
+
+  EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 0);
+  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
+  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
+
+  auto initialized =
+      es2k_extern_manager_->Initialize(nullptr, nullptr, nullptr, 0);
+  ASSERT_FALSE(initialized.ok());
 }
 
 //----------------------------------------------------------------------
@@ -358,6 +387,90 @@ TEST_F(Es2kExternManagerTest, TestFindAbsentResourceHandler) {
 
   auto handler = es2k_extern_manager_->FindResourceHandler(0);
   ASSERT_TRUE(handler == nullptr);
+}
+
+//----------------------------------------------------------------------
+// Error tests
+//----------------------------------------------------------------------
+
+TEST_F(Es2kExternManagerTest, TestUnknownExternType) {
+  auto p4extern = p4info_.add_externs();
+  p4extern->set_extern_type_id(0);
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
+
+  auto stats = es2k_extern_manager_->Statistics();
+  EXPECT_EQ(stats.unknown_extern_id, 1);
+}
+
+constexpr char kZeroPreambleIdText[] = R"pb(
+  extern_type_id: 134
+  extern_type_name: "DirectPacketModMeter"
+  instances {
+    preamble {
+      id: 0
+      name: "my_control.meter3"
+      alias: "meter3"
+    }
+  }
+)pb";
+
+TEST_F(Es2kExternManagerTest, TestZeroPreambleID) {
+  auto p4extern = p4info_.add_externs();
+  ASSERT_TRUE(ParseProtoFromString(kZeroPreambleIdText, p4extern).ok());
+  SetUpPreambleCallback();
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
+
+  auto stats = es2k_extern_manager_->Statistics();
+  EXPECT_EQ(stats.zero_resource_id, 1);
+}
+
+constexpr char kEmptyPreambleNameText[] = R"pb(
+  extern_type_id: 134
+  extern_type_name: "DirectPacketModMeter"
+  instances {
+    preamble {
+      id: 5
+      name: ""
+    }
+  }
+)pb";
+
+TEST_F(Es2kExternManagerTest, TestEmptyPreambleName) {
+  auto p4extern = p4info_.add_externs();
+  ASSERT_TRUE(ParseProtoFromString(kEmptyPreambleNameText, p4extern).ok());
+  SetUpPreambleCallback();
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
+
+  auto stats = es2k_extern_manager_->Statistics();
+  EXPECT_EQ(stats.empty_resource_name, 1);
+}
+
+const std::string kDuplicateResourceIdText = R"pb(
+  extern_type_id: 133
+  extern_type_name: "PacketModMeter"
+  instances {
+    preamble {
+      id: 2244878476
+      name: "my_control.meter1"
+    }
+  }
+  instances {
+    preamble {
+      id: 2244878476
+      name: "my_control.meter2"
+      alias: "meter2"
+    }
+  }
+)pb";
+
+TEST_F(Es2kExternManagerTest, TestDuplicateResourceId) {
+  auto p4extern = p4info_.add_externs();
+  ASSERT_TRUE(ParseProtoFromString(kDuplicateResourceIdText, p4extern).ok());
+  SetUpPreambleCallback();
+  es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
+
+  auto stats = es2k_extern_manager_->Statistics();
+  EXPECT_EQ(stats.duplicate_resource_id, 1);
 }
 
 }  // namespace tdi
