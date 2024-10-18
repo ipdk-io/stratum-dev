@@ -278,6 +278,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 #if defined(LEGACY_CODE)
     else if (resource_type == "DirectPacketModMeter") {
       if (table_entry.has_meter_config()) {
+        // Downcast TdiExternManager to Es2kExternManager so we can
+        // call the es2k-specific FindDirectPktModMeterByID() method.
         auto es2k_extern_manager =
             dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
         CHECK(es2k_extern_manager != nullptr);
@@ -1071,6 +1073,8 @@ TdiTableManager::ReadDirectMeterEntry(
   else if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
+      // Downcast TdiExternManager to Es2kExternManager so we can
+      // call the es2k-specific FindPktModMeterByID() method.
       auto es2k_extern_manager =
           dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
       CHECK(es2k_extern_manager != nullptr);
@@ -1165,6 +1169,8 @@ TdiTableManager::ReadDirectMeterEntry(
   else if (resource_type == "PacketModMeter") {
     bool units_in_packets;
     {
+      // Downcast TdiExternManager to Es2kExternManager so we can
+      // call the es2k-specific FindPktModMeterByID() method.
       auto es2k_extern_manager =
           dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
       CHECK(es2k_extern_manager != nullptr);
