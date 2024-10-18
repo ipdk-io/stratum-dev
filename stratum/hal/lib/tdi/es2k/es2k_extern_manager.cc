@@ -5,9 +5,9 @@
 
 #include "stratum/glue/logging.h"
 #include "stratum/glue/status/status_macros.h"
+#include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_direct_pkt_mod_meter_handler.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_pkt_mod_meter_handler.h"
-#include "stratum/hal/lib/p4/utils.h"
 
 namespace stratum {
 namespace hal {
