@@ -683,3 +683,59 @@ stratum_cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+stratum_cc_library(
+    name = "tdi_extern_manager",
+    hdrs = ["tdi_extern_manager.h"],
+    deps = [
+        ":tdi_resource_handler",
+        "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_pkt_mod_meter_config",
+    hdrs = ["tdi_pkt_mod_meter_config.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_table_helpers",
+    srcs = ["tdi_table_helpers.cc"],
+    hdrs = ["tdi_table_helpers.h"],
+    deps = [
+        ":tdi_pkt_mod_meter_config",
+        "//stratum/glue/status:status_macros",
+        "//stratum/public/proto:error_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_target_factory",
+    hdrs = ["tdi_target_factory.h"],
+    deps = [
+        ":tdi_extern_manager",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_resource_handler",
+    hdrs = ["tdi_resource_handler.h"],
+    deps = [
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:writer_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)
