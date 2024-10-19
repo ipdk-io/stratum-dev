@@ -65,7 +65,9 @@ class Es2kExternManager : public TdiExternManager {
   uint32 pkt_mod_meter_map_size() const { return pkt_mod_meter_map_.size(); }
 
   // Returns the number of entries in the resource handler map.
-  uint32 resource_handler_map_size() const { return resource_handler_map_.size(); }
+  uint32 resource_handler_map_size() const {
+    return resource_handler_map_.size();
+  }
 
   // Returns a reference to the Es2kExternManager statistics.
   const struct Statistics& statistics() { return stats_; }

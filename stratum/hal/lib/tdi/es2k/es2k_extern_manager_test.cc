@@ -4,12 +4,7 @@
 // Unit test for Es2kExternManager.
 
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_target_factory.h"
 
-#include <iostream>
-#include <typeinfo>
-
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -19,6 +14,7 @@
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status.h"
 #include "stratum/hal/lib/p4/p4_info_manager_mock.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_target_factory.h"
 #include "stratum/hal/lib/tdi/tdi_sde_mock.h"
 #include "stratum/lib/utils.h"
 
