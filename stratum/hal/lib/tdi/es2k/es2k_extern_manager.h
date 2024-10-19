@@ -24,7 +24,7 @@ namespace tdi {
 class Es2kExternManager : public TdiExternManager {
  public:
   typedef std::shared_ptr<TdiResourceHandler> ResourceHandler;
-  struct ExternStatistics;
+  struct Statistics;
 
   Es2kExternManager();
   virtual ~Es2kExternManager() = default;
@@ -60,17 +60,17 @@ class Es2kExternManager : public TdiExternManager {
   FindDirectPktModMeterByName(const std::string& meter_name) const;
 
   // Returns the number of entries in the PacketModMeter map.
-  uint32 PktModMeterMapSize() const { return pkt_mod_meter_map_.size(); }
+  uint32 pkt_mod_meter_map_size() const { return pkt_mod_meter_map_.size(); }
 
   // Returns the number of entries in the DirectPacketModMeter map.
-  uint32 DirectPktModMeterMapSize() const {
+  uint32 direct_pkt_mod_meter_size() const {
     return direct_pkt_mod_meter_map_.size();
   }
 
   // Returns a reference to the Es2kExternManager statistics.
-  const struct ExternStatistics& Statistics() { return stats_; }
+  const struct Statistics& statistics() { return stats_; }
 
-  // Parameters shared with the resource handlers.
+  // Resource handler parameters.
   struct HandlerParams {
     HandlerParams()
         : sde_interface(nullptr),
@@ -84,17 +84,17 @@ class Es2kExternManager : public TdiExternManager {
   };
 
   // Es2kExternManager statistics.
-  struct ExternStatistics {
-    ExternStatistics()
+  struct Statistics {
+    Statistics()
         : unknown_extern_id(0),
           zero_resource_id(0),
           empty_resource_name(0),
           duplicate_resource_id(0) {}
-    // Number of unrecognized extern type IDs.
+    // Number of externs with unrecognized type IDs.
     uint32 unknown_extern_id;
-    // Number of instances with a zero resource ID in the preamble.
+    // Number of instances with a resource ID of zero.
     uint32 zero_resource_id;
-    // Number of instances with an empty name in the preamble.
+    // Number of instances with an empty name.
     uint32 empty_resource_name;
     // Number of instances with a duplicate resource ID.
     uint32 duplicate_resource_id;
@@ -124,7 +124,7 @@ class Es2kExternManager : public TdiExternManager {
   absl::flat_hash_map<uint32, ResourceHandler> resource_handler_map_;
 
   HandlerParams params_;
-  ExternStatistics stats_;
+  Statistics stats_;
 };
 
 }  // namespace tdi

@@ -93,6 +93,7 @@ void Es2kExternManager::RegisterPacketModMeters(
 
     for (const auto& extern_instance : instances) {
       const auto& preamble = extern_instance.preamble();
+
       if (!ValidatePreamble(preamble, handler).ok()) continue;
 
       // Add an entry to the resource map.
@@ -109,7 +110,7 @@ void Es2kExternManager::RegisterPacketModMeters(
       pkt_mod_meter.set_size(1024);
       pkt_mod_meter.set_index_width(20);
 
-      // Add PacketModMeter object to list.
+      // Add to vector of objects of this type.
       meter_objects_.Add(std::move(pkt_mod_meter));
     }
 
@@ -129,6 +130,7 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
 
     for (const auto& extern_instance : instances) {
       const auto& preamble = extern_instance.preamble();
+
       if (!ValidatePreamble(preamble, handler).ok()) continue;
 
       // Add an entry to the resource map.
@@ -142,7 +144,7 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
       meter_spec.set_unit(p4::config::v1::MeterSpec::BYTES);
       *direct_pkt_mod_meter.mutable_spec() = meter_spec;
 
-      // Add configuration object to list.
+      // Add to vector of objects of this type.
       direct_meter_objects_.Add(std::move(direct_pkt_mod_meter));
     }
 
@@ -157,15 +159,15 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
   if (preamble.id() == 0) {
     ++stats_.zero_resource_id;
     return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "P4Extern " << handler->resource_type()
-           << " requires a non-zero ID in preamble";
+           << "P4Info " << handler->resource_type()
+           << " preamble requires a non-zero ID.";
   }
 
   if (preamble.name().empty()) {
     ++stats_.empty_resource_name;
     return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "P4Extern " << handler->resource_type()
-           << " requires a non-empty name in preamble";
+           << "P4Info " << handler->resource_type()
+           << " preamble requires a non-empty name.";
   }
   return ::util::OkStatus();
 }
@@ -177,7 +179,8 @@ void Es2kExternManager::RegisterDirectPacketModMeters(
   if (!result.second) {
     ++stats_.duplicate_resource_id;
     return MAKE_ERROR(ERR_INVALID_P4_INFO)
-           << "Duplicate P4 object ID " << PrintP4ObjectID(preamble.id());
+           << "Duplicate P4 object ID " << PrintP4ObjectID(preamble.id())
+           << ".";
   }
   return ::util::OkStatus();
 }

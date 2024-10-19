@@ -82,8 +82,8 @@ TEST_F(Es2kExternManagerTest, TestInitialize) {
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 0);
-  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
-  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 0);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 0);
 
   sde_mock_ = absl::make_unique<TdiSdeMock>();
   info_manager_mock_ = absl::make_unique<P4InfoManagerMock>();
@@ -99,8 +99,8 @@ TEST_F(Es2kExternManagerTest, TestInitializeFailure) {
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 0);
-  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
-  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 0);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 0);
 
   auto initialized =
       es2k_extern_manager_->Initialize(nullptr, nullptr, nullptr, 0);
@@ -177,8 +177,8 @@ TEST_F(Es2kExternManagerTest, TestParseDirectPacketModMeters) {
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 2);
-  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 2);
-  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 0);
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 2);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 0);
 }
 
 TEST_F(Es2kExternManagerTest, TestFindDirectPacketModMeterByID) {
@@ -290,8 +290,8 @@ TEST_F(Es2kExternManagerTest, TestParsePacketModMeters) {
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 2);
-  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 0);
-  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 2);
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 0);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 2);
 }
 
 TEST_F(Es2kExternManagerTest, TestFindPacketModMeterByID) {
@@ -351,8 +351,8 @@ TEST_F(Es2kExternManagerTest, TestParseBothExternMeterTypes) {
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
   EXPECT_EQ(es2k_extern_manager_->ResourceHandlerMapSize(), 4);
-  EXPECT_EQ(es2k_extern_manager_->DirectPktModMeterMapSize(), 2);
-  EXPECT_EQ(es2k_extern_manager_->PktModMeterMapSize(), 2);
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 2);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 2);
 }
 
 TEST_F(Es2kExternManagerTest, TestFindResourceHandler) {
@@ -398,7 +398,7 @@ TEST_F(Es2kExternManagerTest, TestUnknownExternType) {
   p4extern->set_extern_type_id(0);
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
-  auto stats = es2k_extern_manager_->Statistics();
+  auto stats = es2k_extern_manager_->statistics();
   EXPECT_EQ(stats.unknown_extern_id, 1);
 }
 
@@ -420,7 +420,7 @@ TEST_F(Es2kExternManagerTest, TestZeroPreambleID) {
   SetUpPreambleCallback();
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
-  auto stats = es2k_extern_manager_->Statistics();
+  auto stats = es2k_extern_manager_->statistics();
   EXPECT_EQ(stats.zero_resource_id, 1);
 }
 
@@ -441,7 +441,7 @@ TEST_F(Es2kExternManagerTest, TestEmptyPreambleName) {
   SetUpPreambleCallback();
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
-  auto stats = es2k_extern_manager_->Statistics();
+  auto stats = es2k_extern_manager_->statistics();
   EXPECT_EQ(stats.empty_resource_name, 1);
 }
 
@@ -469,7 +469,7 @@ TEST_F(Es2kExternManagerTest, TestDuplicateResourceId) {
   SetUpPreambleCallback();
   es2k_extern_manager_->RegisterExterns(p4info_, preamble_cb_);
 
-  auto stats = es2k_extern_manager_->Statistics();
+  auto stats = es2k_extern_manager_->statistics();
   EXPECT_EQ(stats.duplicate_resource_id, 1);
 }
 
