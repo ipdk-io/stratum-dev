@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load("//bazel:rules.bzl", "HOST_ARCHES", "stratum_cc_binary")
@@ -36,7 +36,13 @@ stratum_cc_binary(
     ],
     deps = [
         "//stratum/hal/bin/tdi:main",
+        "//stratum/hal/lib/tdi:tdi_action_profile_manager",
+        "//stratum/hal/lib/tdi:tdi_counter_manager",
+        "//stratum/hal/lib/tdi:tdi_pre_manager",
+        "//stratum/hal/lib/tdi:tdi_sde_wrapper",
+        "//stratum/hal/lib/tdi:tdi_table_manager",
         "//stratum/hal/lib/tdi/es2k:es2k_chassis_manager",
+        "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",
         "//stratum/hal/lib/tdi/es2k:es2k_hal",
         "//stratum/hal/lib/tdi/es2k:es2k_node",
         "//stratum/hal/lib/tdi/es2k:es2k_port_manager",
@@ -44,10 +50,6 @@ stratum_cc_binary(
         "//stratum/hal/lib/tdi/es2k:es2k_sde_utils",
         "//stratum/hal/lib/tdi/es2k:es2k_sde_wrapper",
         "//stratum/hal/lib/tdi/es2k:es2k_switch",
-        "//stratum/hal/lib/tdi:tdi_action_profile_manager",
-        "//stratum/hal/lib/tdi:tdi_counter_manager",
-        "//stratum/hal/lib/tdi:tdi_pre_manager",
-        "//stratum/hal/lib/tdi:tdi_sde_wrapper",
-        "//stratum/hal/lib/tdi:tdi_table_manager",
+        "//stratum/hal/lib/tdi/es2k:es2k_target_factory",
     ] + stratum_es2k_common_deps,
 )

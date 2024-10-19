@@ -49,14 +49,17 @@ target_sdk_headers = select({
     "//conditions:default": [],
 })
 
+TABLE_MANAGER_DEPS = [
+#   "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",
+#   "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+]
+
 stratum_cc_library(
     name = "tdi_sde_interface",
-    hdrs = [
-        "tdi_pkt_mod_meter_config.h",
-        "tdi_sde_interface.h",
-    ],
+    hdrs = ["tdi_sde_interface.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_pkt_mod_meter_config",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -291,7 +294,11 @@ stratum_cc_library(
     hdrs = ["tdi_table_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_extern_manager",
+        ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
+        ":tdi_table_helpers",
+        ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -307,20 +314,19 @@ stratum_cc_library(
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_googleapis//google/rpc:status_cc_proto",
-    ],
+    ] + TABLE_MANAGER_DEPS,
 )
 
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
-#   tags = ["broken"],  # disabled 3 test cases
+    #   tags = ["broken"],  # disabled 3 test cases
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",
@@ -681,5 +687,61 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_extern_manager",
+    hdrs = ["tdi_extern_manager.h"],
+    deps = [
+        ":tdi_resource_handler",
+        "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_pkt_mod_meter_config",
+    hdrs = ["tdi_pkt_mod_meter_config.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_table_helpers",
+    srcs = ["tdi_table_helpers.cc"],
+    hdrs = ["tdi_table_helpers.h"],
+    deps = [
+        ":tdi_pkt_mod_meter_config",
+        "//stratum/glue/status:status_macros",
+        "//stratum/public/proto:error_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_target_factory",
+    hdrs = ["tdi_target_factory.h"],
+    deps = [
+        ":tdi_extern_manager",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_resource_handler",
+    hdrs = ["tdi_resource_handler.h"],
+    deps = [
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:writer_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
