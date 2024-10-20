@@ -82,7 +82,7 @@ struct TdiPktModMeterConfig {
     GetMeterCounterData(meter_entry->mutable_counter_data());
   }
 
-  inline void SetMeterEntry(::p4::v1::MeterEntry* meter_entry) {
+  inline void GetMeterEntry(::p4::v1::MeterEntry* meter_entry) {
     GetPolicerMeterConfig(
         meter_entry->mutable_config()->mutable_policer_meter_config());
     GetMeterCounterData(meter_entry->mutable_counter_data());
