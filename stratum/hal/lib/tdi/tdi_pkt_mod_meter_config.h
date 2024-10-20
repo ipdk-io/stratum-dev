@@ -52,7 +52,7 @@ struct TdiPktModMeterConfig {
   uint64 redBytes;       // Red Byte counter
   uint64 redPackets;     // Red Packet counter
 
-  bool isPktModMeter;    // Flag to check direct or indirect PacketModMeter
+  bool isPktModMeter;  // Flag to check direct or indirect PacketModMeter
 
   // 'Set' methods retrieve data from the specified object and store it in
   // the configuration. The parameter is always a const reference.
