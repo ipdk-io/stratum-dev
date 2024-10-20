@@ -4,7 +4,7 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_PKT_MOD_METER_CONFIG_
 #define STRATUM_HAL_LIB_TDI_TDI_PKT_MOD_METER_CONFIG_
 
-#include "p4/config/v1/p4runtime.pb.h"
+#include "p4/v1/p4runtime.pb.h"
 #include "stratum/glue/integral_types.h"
 
 namespace stratum {
@@ -61,7 +61,7 @@ struct TdiPktModMeterConfig {
   void SetMeterCounterData(const ::p4::v1::MeterCounterData& counter_data);
 
   inline void SetMeterEntry(const ::p4::v1::MeterEntry& meter_entry) {
-    SetPolicerMeterConfig(meter_entry.config().policer_meter_config);
+    SetPolicerMeterConfig(meter_entry.config().policer_meter_config());
     SetMeterCounterData(meter_entry.counter_data());
   }
 
