@@ -330,3 +330,50 @@ stratum_cc_library(
         "@com_google_googletest//:gtest",
     ],
 )
+
+stratum_cc_library(
+    name = "es2k_extern_manager",
+    srcs = ["es2k_extern_manager.cc"],
+    deps = [
+        ":es2k_extern_manager_hdrs",
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/p4:utils",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_extern_manager_hdrs",
+    hdrs = ["es2k_extern_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_resource_map",
+        "//stratum/hal/lib/tdi:tdi_extern_manager",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_test(
+    name = "es2k_extern_manager_test",
+    srcs = ["es2k_extern_manager_test.cc"],
+    deps = [
+        ":es2k_extern_manager",
+        ":es2k_target_factory",
+        ":test_main",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_target_factory",
+    hdrs = ["es2k_target_factory.h"],
+    deps = [
+        ":es2k_extern_manager",
+        "//stratum/hal/lib/tdi:tdi_target_factory",
+    ],
+)
