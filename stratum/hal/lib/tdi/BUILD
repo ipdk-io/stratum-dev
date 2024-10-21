@@ -51,12 +51,10 @@ target_sdk_headers = select({
 
 stratum_cc_library(
     name = "tdi_sde_interface",
-    hdrs = [
-        "tdi_pkt_mod_meter_config.h",
-        "tdi_sde_interface.h",
-    ],
+    hdrs = ["tdi_sde_interface.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_pkt_mod_meter_config",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -291,7 +289,10 @@ stratum_cc_library(
     hdrs = ["tdi_table_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_extern_manager",
+        ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
+        ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -300,6 +301,7 @@ stratum_cc_library(
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/common:writer_interface",
+        "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",   # ES2K
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:utils",
         "//stratum/lib:constants",
@@ -307,7 +309,7 @@ stratum_cc_library(
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",  # ES2K
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -320,7 +322,6 @@ stratum_cc_library(
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
-#   tags = ["broken"],  # disabled 3 test cases
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",

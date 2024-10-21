@@ -147,6 +147,7 @@ stratum_cc_library(
     srcs = ["p4_info_manager.cc"],
     hdrs = ["p4_info_manager.h"],
     deps = [
+        ":p4_extern_manager",
         ":p4_resource_map",
         ":utils",
         "//stratum/glue:logging",

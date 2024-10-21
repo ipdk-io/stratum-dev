@@ -347,6 +347,7 @@ stratum_cc_library(
     deps = [
         "//stratum/glue:integral_types",
         "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
         "//stratum/hal/lib/tdi:tdi_extern_manager",
         "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
