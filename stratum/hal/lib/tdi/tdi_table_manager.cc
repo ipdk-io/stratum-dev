@@ -18,6 +18,7 @@
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/hal/lib/tdi/tdi_constants.h"
+#include "stratum/hal/lib/tdi/tdi_get_meter_units.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
@@ -46,28 +47,6 @@ DEFINE_uint32(
 namespace stratum {
 namespace hal {
 namespace tdi {
-
-namespace {
-
-// Sets a Boolean variable to indicate whether the specified meter is
-// configured to measure traffic in packets (true) or bytes (false).
-template <typename T>
-::util::Status GetMeterUnitsInPackets(const T& meter, bool& units_in_packets) {
-  switch (meter.spec().unit()) {
-    case ::p4::config::v1::MeterSpec::BYTES:
-      units_in_packets = false;
-      break;
-    case ::p4::config::v1::MeterSpec::PACKETS:
-      units_in_packets = true;
-      break;
-    default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                           << meter.ShortDebugString() << ".";
-  }
-  return ::util::OkStatus();
-}
-
-}  // namespace
 
 TdiTableManager::TdiTableManager(OperationMode mode,
                                  TdiSdeInterface* tdi_sde_interface, int device)
