@@ -698,9 +698,11 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "tdi_pkt_mod_meter_config",
+    srcs = ["tdi_pkt_mod_meter_config.cc"],
     hdrs = ["tdi_pkt_mod_meter_config.h"],
     deps = [
         "//stratum/glue:integral_types",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
 
