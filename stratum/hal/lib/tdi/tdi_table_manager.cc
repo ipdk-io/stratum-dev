@@ -21,6 +21,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"  // ES2K
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
+#include "stratum/hal/lib/tdi/tdi_get_meter_units.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
@@ -52,22 +53,94 @@ namespace tdi {
 
 namespace {
 
-// Sets a Boolean variable to indicate whether the specified meter is
-// configured to measure traffic in packets (true) or bytes (false).
-template <typename T>
-::util::Status GetMeterUnitsInPackets(const T& meter, bool& units_in_packets) {
-  switch (meter.spec().unit()) {
-    case ::p4::config::v1::MeterSpec::BYTES:
-      units_in_packets = false;
-      break;
-    case ::p4::config::v1::MeterSpec::PACKETS:
-      units_in_packets = true;
-      break;
-    default:
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Unsupported meter spec on meter "
-                                           << meter.ShortDebugString() << ".";
-  }
-  return ::util::OkStatus();
+// Sets a meter configuration variable from a pair of PolicerMeterConfig
+// and MeterCounterData protobufs.
+void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                          const ::p4::v1::PolicerMeterConfig& meter_config,
+                          const ::p4::v1::MeterCounterData& counter_data) {
+  config.meter_prof_id = meter_config.policer_meter_prof_id();
+  config.cir_unit = meter_config.policer_spec_cir_unit();
+  config.cburst_unit = meter_config.policer_spec_cbs_unit();
+  config.pir_unit = meter_config.policer_spec_eir_unit();
+  config.pburst_unit = meter_config.policer_spec_ebs_unit();
+  config.cir = meter_config.policer_spec_cir();
+  config.cburst = meter_config.policer_spec_cbs();
+  config.pir = meter_config.policer_spec_eir();
+  config.pburst = meter_config.policer_spec_ebs();
+
+  config.greenBytes = counter_data.green().byte_count();
+  config.greenPackets = counter_data.green().packet_count();
+  config.yellowBytes = counter_data.yellow().byte_count();
+  config.yellowPackets = counter_data.yellow().packet_count();
+  config.redBytes = counter_data.red().byte_count();
+  config.redPackets = counter_data.red().packet_count();
+}
+
+// Convenience function to set a meter configuration variable from a
+// MeterEntry protobuf.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::MeterEntry& meter_entry) {
+  return SetPktModMeterConfig(config,
+                              meter_entry.config().policer_meter_config(),
+                              meter_entry.counter_data());
+}
+
+// Convenience function to set a meter configuration variable from a
+// TableEntry protobuf.
+inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
+                                 const ::p4::v1::TableEntry& table_entry) {
+  return SetPktModMeterConfig(config,
+                              table_entry.meter_config().policer_meter_config(),
+                              table_entry.meter_counter_data());
+}
+
+// Sets a PolicerMeterConfig protobuf from a meter configuration variable.
+void SetPolicerMeterConfig(::p4::v1::PolicerMeterConfig* meter_config,
+                           const TdiPktModMeterConfig& cfg) {
+  meter_config->set_policer_meter_prof_id(
+      static_cast<int64>(cfg.meter_prof_id));
+  meter_config->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
+  meter_config->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
+  meter_config->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
+  meter_config->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
+  meter_config->set_policer_spec_cir(static_cast<int64>(cfg.cir));
+  meter_config->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
+  meter_config->set_policer_spec_eir(static_cast<int64>(cfg.pir));
+  meter_config->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
+}
+
+// Sets a MeterCounterData protobuf from a meter configuration variable.
+void SetCounterData(::p4::v1::MeterCounterData* counter_data,
+                    const TdiPktModMeterConfig& cfg) {
+  counter_data->mutable_green()->set_byte_count(
+      static_cast<int64>(cfg.greenBytes));
+  counter_data->mutable_green()->set_packet_count(
+      static_cast<int64>(cfg.greenPackets));
+  counter_data->mutable_yellow()->set_byte_count(
+      static_cast<int64>(cfg.yellowBytes));
+  counter_data->mutable_yellow()->set_packet_count(
+      static_cast<int64>(cfg.yellowPackets));
+  counter_data->mutable_red()->set_byte_count(static_cast<int64>(cfg.redBytes));
+  counter_data->mutable_red()->set_packet_count(
+      static_cast<int64>(cfg.redPackets));
+}
+
+// Convenience function to set a DirectMeterEntry protobuf from a meter
+// configuration variable.
+inline void SetDirectMeterEntry(::p4::v1::DirectMeterEntry& meter_entry,
+                                const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
+}
+
+// Convenience function to set a MeterEntry protobuf from a meter
+// configuration variable.
+inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
+                          const TdiPktModMeterConfig& cfg) {
+  SetPolicerMeterConfig(
+      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
+  SetCounterData(meter_entry.mutable_counter_data(), cfg);
 }
 
 }  // namespace

@@ -290,6 +290,7 @@ stratum_cc_library(
     deps = [
         ":tdi_cc_proto",
         ":tdi_extern_manager",
+        ":tdi_get_meter_units",
         ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
         ":tdi_target_factory",
@@ -712,5 +713,14 @@ stratum_cc_library(
     deps = [
         ":tdi_extern_manager",
         "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_get_meter_units",
+    hdrs = ["tdi_get_meter_units.h"],
+    deps = [
+        "//stratum/glue/status:status_macros",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
     ],
 )
