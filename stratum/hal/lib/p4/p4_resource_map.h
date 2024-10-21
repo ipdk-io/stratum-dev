@@ -91,8 +91,9 @@ class P4ResourceMap {
     }
   }
 
-  // Accessor.
+  // Accessors.
   const std::string& resource_type() const { return resource_type_; }
+  uint32 size() const { return id_to_resource_map_.size(); }
 
  private:
   // The next two methods create lookup map entries for the input resource.

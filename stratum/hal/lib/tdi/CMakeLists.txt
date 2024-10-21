@@ -14,6 +14,7 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_status.h
     tdi_counter_manager.cc
     tdi_counter_manager.h
+    tdi_extern_manager.h
     tdi_global_vars.cc
     tdi_global_vars.h
     tdi_id_mapper.cc
@@ -48,6 +49,7 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_wrapper.h
     tdi_table_manager.cc
     tdi_table_manager.h
+    tdi_target_factory.h
     utils.cc
     utils.h
 )
