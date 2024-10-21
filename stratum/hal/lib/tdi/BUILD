@@ -291,6 +291,7 @@ stratum_cc_library(
     hdrs = ["tdi_table_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_get_meter_units",
         ":tdi_sde_interface",
         ":utils",
         "//stratum/glue:integral_types",
@@ -681,5 +682,14 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_get_meter_units",
+    hdrs = ["tdi_get_meter_units.h"],
+    deps = [
+        "//stratum/glue/status:status_macros",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
     ],
 )
