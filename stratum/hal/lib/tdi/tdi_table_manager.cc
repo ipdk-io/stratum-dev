@@ -13,16 +13,13 @@
 #include "absl/strings/match.h"
 #include "absl/synchronization/notification.h"
 #include "gflags/gflags.h"
-#include "idpf/p4info.pb.h"  // ES2K
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/p4/utils.h"
-#include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"  // ES2K
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_get_meter_units.h"
-#include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
 
@@ -50,100 +47,6 @@ DEFINE_uint32(
 namespace stratum {
 namespace hal {
 namespace tdi {
-
-namespace {
-
-// Sets a meter configuration variable from a pair of PolicerMeterConfig
-// and MeterCounterData protobufs.
-void SetPktModMeterConfig(TdiPktModMeterConfig& config,
-                          const ::p4::v1::PolicerMeterConfig& meter_config,
-                          const ::p4::v1::MeterCounterData& counter_data) {
-  config.meter_prof_id = meter_config.policer_meter_prof_id();
-  config.cir_unit = meter_config.policer_spec_cir_unit();
-  config.cburst_unit = meter_config.policer_spec_cbs_unit();
-  config.pir_unit = meter_config.policer_spec_eir_unit();
-  config.pburst_unit = meter_config.policer_spec_ebs_unit();
-  config.cir = meter_config.policer_spec_cir();
-  config.cburst = meter_config.policer_spec_cbs();
-  config.pir = meter_config.policer_spec_eir();
-  config.pburst = meter_config.policer_spec_ebs();
-
-  config.greenBytes = counter_data.green().byte_count();
-  config.greenPackets = counter_data.green().packet_count();
-  config.yellowBytes = counter_data.yellow().byte_count();
-  config.yellowPackets = counter_data.yellow().packet_count();
-  config.redBytes = counter_data.red().byte_count();
-  config.redPackets = counter_data.red().packet_count();
-}
-
-// Convenience function to set a meter configuration variable from a
-// MeterEntry protobuf.
-inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
-                                 const ::p4::v1::MeterEntry& meter_entry) {
-  return SetPktModMeterConfig(config,
-                              meter_entry.config().policer_meter_config(),
-                              meter_entry.counter_data());
-}
-
-// Convenience function to set a meter configuration variable from a
-// TableEntry protobuf.
-inline void SetPktModMeterConfig(TdiPktModMeterConfig& config,
-                                 const ::p4::v1::TableEntry& table_entry) {
-  return SetPktModMeterConfig(config,
-                              table_entry.meter_config().policer_meter_config(),
-                              table_entry.meter_counter_data());
-}
-
-// Sets a PolicerMeterConfig protobuf from a meter configuration variable.
-void SetPolicerMeterConfig(::p4::v1::PolicerMeterConfig* meter_config,
-                           const TdiPktModMeterConfig& cfg) {
-  meter_config->set_policer_meter_prof_id(
-      static_cast<int64>(cfg.meter_prof_id));
-  meter_config->set_policer_spec_cir_unit(static_cast<int64>(cfg.cir_unit));
-  meter_config->set_policer_spec_cbs_unit(static_cast<int64>(cfg.cburst_unit));
-  meter_config->set_policer_spec_eir_unit(static_cast<int64>(cfg.pir_unit));
-  meter_config->set_policer_spec_ebs_unit(static_cast<int64>(cfg.pburst_unit));
-  meter_config->set_policer_spec_cir(static_cast<int64>(cfg.cir));
-  meter_config->set_policer_spec_cbs(static_cast<int64>(cfg.cburst));
-  meter_config->set_policer_spec_eir(static_cast<int64>(cfg.pir));
-  meter_config->set_policer_spec_ebs(static_cast<int64>(cfg.pburst));
-}
-
-// Sets a MeterCounterData protobuf from a meter configuration variable.
-void SetCounterData(::p4::v1::MeterCounterData* counter_data,
-                    const TdiPktModMeterConfig& cfg) {
-  counter_data->mutable_green()->set_byte_count(
-      static_cast<int64>(cfg.greenBytes));
-  counter_data->mutable_green()->set_packet_count(
-      static_cast<int64>(cfg.greenPackets));
-  counter_data->mutable_yellow()->set_byte_count(
-      static_cast<int64>(cfg.yellowBytes));
-  counter_data->mutable_yellow()->set_packet_count(
-      static_cast<int64>(cfg.yellowPackets));
-  counter_data->mutable_red()->set_byte_count(static_cast<int64>(cfg.redBytes));
-  counter_data->mutable_red()->set_packet_count(
-      static_cast<int64>(cfg.redPackets));
-}
-
-// Convenience function to set a DirectMeterEntry protobuf from a meter
-// configuration variable.
-inline void SetDirectMeterEntry(::p4::v1::DirectMeterEntry& meter_entry,
-                                const TdiPktModMeterConfig& cfg) {
-  SetPolicerMeterConfig(
-      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
-  SetCounterData(meter_entry.mutable_counter_data(), cfg);
-}
-
-// Convenience function to set a MeterEntry protobuf from a meter
-// configuration variable.
-inline void SetMeterEntry(::p4::v1::MeterEntry& meter_entry,
-                          const TdiPktModMeterConfig& cfg) {
-  SetPolicerMeterConfig(
-      meter_entry.mutable_config()->mutable_policer_meter_config(), cfg);
-  SetCounterData(meter_entry.mutable_counter_data(), cfg);
-}
-
-}  // namespace
 
 TdiTableManager::TdiTableManager(OperationMode mode,
                                  TdiSdeInterface* tdi_sde_interface,
@@ -177,8 +80,13 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
 
   RETURN_IF_ERROR(p4_info_manager->InitializeAndVerify(extern_manager.get()));
 
+  auto table_helper = tdi_target_factory_.CreateTdiTableHelper();
+  RETURN_IF_ERROR(table_helper->Initialize(
+      extern_manager.get(), tdi_sde_interface_, &lock_, device_));
+
   p4_info_manager_ = std::move(p4_info_manager);
   tdi_extern_manager_ = std::move(extern_manager);
+  tdi_table_helper_ = std::move(table_helper);
 
   return ::util::OkStatus();
 }
@@ -355,25 +263,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
           table_entry.counter_data().byte_count(),
           table_entry.counter_data().packet_count()));
     }
-    if (resource_type == "DirectPacketModMeter" &&
-        table_entry.has_meter_config()) {
-      // Downcast TdiExternManager to Es2kExternManager so we can
-      // call the es2k-specific FindDirectPktModMeterByID() method.
-      auto es2k_extern_manager =
-          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
-      CHECK(es2k_extern_manager != nullptr);
-
-      bool units_in_packets;  // or bytes
-      ASSIGN_OR_RETURN(
-          auto meter,
-          es2k_extern_manager->FindDirectPktModMeterByID(resource_id));
-      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
-
-      TdiPktModMeterConfig config;
-      config.SetTableEntry(table_entry);
-      config.isPktModMeter = units_in_packets;
-
-      RETURN_IF_ERROR(table_data->SetPktModMeterConfig(config));
+    if (resource_type == "DirectPacketModMeter") {
+      RETURN_IF_ERROR(tdi_table_helper_->BuildDirPktModTableData(
+          table_entry, table_data, resource_id));
     }
   }
 
@@ -975,10 +867,8 @@ TdiTableManager::ReadDirectMeterEntry(
       result.mutable_config()->set_pburst(static_cast<int64>(pburst));
     }
     if (resource_type == "DirectPacketModMeter") {
-      // build response entry from returned data
-      TdiPktModMeterConfig cfg;
-      RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
-      cfg.GetDirectMeterEntry(&result);
+      RETURN_IF_ERROR(
+          tdi_table_helper_->ReadDirPktModMeterEntry(table_data.get(), result));
     }
   }
 
@@ -1123,46 +1013,8 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   else if (resource_type == "PacketModMeter") {
-    bool units_in_packets;
-    {
-      // Downcast TdiExternManager to Es2kExternManager so we can
-      // call the es2k-specific FindPktModMeterByID() method.
-      auto es2k_extern_manager =
-          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
-      CHECK(es2k_extern_manager != nullptr);
-
-      absl::ReaderMutexLock l(&lock_);
-      ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(meter, es2k_extern_manager->FindPktModMeterByID(
-                                  meter_entry.meter_id()));
-      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
-    }
-
-    // Index 0 is a valid value and not a wildcard.
-    absl::optional<uint32> optional_meter_index;
-    if (meter_entry.has_index()) {
-      optional_meter_index = meter_entry.index().index();
-    }
-
-    std::vector<uint32> meter_indices;
-    std::vector<TdiPktModMeterConfig> cfg;
-
-    RETURN_IF_ERROR(tdi_sde_interface_->ReadPktModMeters(
-        device_, session, table_id, optional_meter_index, &meter_indices, cfg));
-
-    ::p4::v1::ReadResponse resp;
-    for (size_t i = 0; i < meter_indices.size(); ++i) {
-      ::p4::v1::MeterEntry result;
-      result.set_meter_id(meter_entry.meter_id());
-      result.mutable_index()->set_index(meter_indices[i]);
-      cfg[i].GetMeterEntry(&result);
-      *resp.add_entities()->mutable_meter_entry() = result;
-    }
-
-    VLOG(1) << "ReadMeterEntry resp " << resp.DebugString();
-    if (!writer->Write(resp)) {
-      return MAKE_ERROR(ERR_INTERNAL) << "Write to stream for failed.";
-    }
+    RETURN_IF_ERROR(tdi_table_helper_->ReadPktModMeterEntry(
+        session, meter_entry, writer, table_id));
   }
 
   return ::util::OkStatus();
@@ -1209,41 +1061,8 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   if (resource_type == "PacketModMeter") {
-    bool units_in_packets;
-    {
-      // Downcast TdiExternManager to Es2kExternManager so we can
-      // call the es2k-specific FindPktModMeterByID() method.
-      auto es2k_extern_manager =
-          dynamic_cast<Es2kExternManager*>(tdi_extern_manager_.get());
-      CHECK(es2k_extern_manager != nullptr);
-
-      absl::ReaderMutexLock l(&lock_);
-      ::idpf::PacketModMeter meter;
-      ASSIGN_OR_RETURN(meter, es2k_extern_manager->FindPktModMeterByID(
-                                  meter_entry.meter_id()));
-      RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
-    }
-
-    absl::optional<uint32> meter_index;
-    if (meter_entry.has_index()) {
-      meter_index = meter_entry.index().index();
-    } else {
-      return MAKE_ERROR(ERR_INVALID_PARAM) << "Invalid meter entry index";
-    }
-
-    if (meter_entry.has_config()) {
-      TdiPktModMeterConfig config;
-      config.SetMeterEntry(meter_entry);
-      config.isPktModMeter = units_in_packets;
-
-      RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-          device_, session, meter_id, meter_index, config));
-    }
-
-    if (type == ::p4::v1::Update::DELETE) {
-      RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
-          device_, session, meter_id, meter_index));
-    }
+    RETURN_IF_ERROR(tdi_table_helper_->WritePktModMeterEntry(
+        session, type, meter_entry, meter_id));
   }
 
   return ::util::OkStatus();

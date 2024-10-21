@@ -7,11 +7,13 @@
 #include <memory>
 
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
+#include "stratum/hal/lib/tdi/tdi_table_helper.h"
 
 namespace stratum {
 namespace hal {
 namespace tdi {
 
+// Creates target-specific instances of polymorphic classes.
 class TdiTargetFactory {
  public:
   TdiTargetFactory() {}
@@ -19,6 +21,10 @@ class TdiTargetFactory {
 
   virtual std::unique_ptr<TdiExternManager> CreateTdiExternManager() {
     return TdiExternManager::CreateInstance();
+  }
+
+  virtual std::unique_ptr<TdiTableHelper> CreateTdiTableHelper() {
+    return TdiTableHelper::CreateInstance();
   }
 };
 

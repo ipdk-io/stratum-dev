@@ -375,6 +375,21 @@ stratum_cc_library(
     hdrs = ["es2k_target_factory.h"],
     deps = [
         ":es2k_extern_manager",
+        ":es2k_table_helper",
         "//stratum/hal/lib/tdi:tdi_target_factory",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_table_helper",
+    srcs = ["es2k_table_helper.cc"],
+    hdrs = ["es2k_table_helper.h"],
+    deps = [
+        ":es2k_extern_manager",
+        "//stratum/glue:logging",
+        "//stratum/hal/lib/tdi:tdi_get_meter_units",
+        "//stratum/hal/lib/tdi:tdi_pkt_mod_meter_config",
+        "//stratum/hal/lib/tdi:tdi_table_helper",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
     ],
 )

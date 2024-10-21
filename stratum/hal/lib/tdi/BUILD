@@ -302,7 +302,6 @@ stratum_cc_library(
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/common:writer_interface",
-        "//stratum/hal/lib/tdi/es2k:es2k_extern_manager",   # ES2K
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:utils",
         "//stratum/lib:constants",
@@ -310,7 +309,6 @@ stratum_cc_library(
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",  # ES2K
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -712,6 +710,7 @@ stratum_cc_library(
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",
+        ":tdi_table_helper",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -722,5 +721,19 @@ stratum_cc_library(
     deps = [
         "//stratum/glue/status:status_macros",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_table_helper",
+    hdrs = ["tdi_table_helper.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/hal/lib/common:writer_interface",
+        "//stratum/hal/lib/tdi:tdi_extern_manager",
+        "//stratum/hal/lib/tdi:tdi_sde_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
