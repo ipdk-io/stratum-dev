@@ -68,3 +68,6 @@ __pycache__/
 # SSL certificates
 tools/tls/certs/
 .srl
+
+# Code coverage
+coverage/
