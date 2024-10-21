@@ -57,6 +57,7 @@ stratum_cc_library(
     ],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_pkt_mod_meter_config",
         "//stratum/glue:integral_types",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
@@ -681,5 +682,15 @@ stratum_cc_test(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_pkt_mod_meter_config",
+    srcs = ["tdi_pkt_mod_meter_config.cc"],
+    hdrs = ["tdi_pkt_mod_meter_config.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
