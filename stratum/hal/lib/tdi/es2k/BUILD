@@ -365,3 +365,16 @@ stratum_cc_library(
         "//stratum/hal/lib/tdi:tdi_target_factory",
     ],
 )
+
+stratum_cc_test(
+    name = "es2k_extern_manager_test",
+    srcs = ["es2k_extern_manager_test.cc"],
+    deps = [
+        ":es2k_extern_manager",
+        ":es2k_target_factory",
+        ":test_main",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest",
+    ],
+)
