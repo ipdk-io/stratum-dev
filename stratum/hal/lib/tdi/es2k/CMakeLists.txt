@@ -11,6 +11,8 @@
 target_sources(stratum_tdi_target_o PRIVATE
     es2k_chassis_manager.cc
     es2k_chassis_manager.h
+    es2k_extern_manager.cc
+    es2k_extern_manager.h
     es2k_hal.cc
     es2k_hal.h
     es2k_node.cc
@@ -24,4 +26,5 @@ target_sources(stratum_tdi_target_o PRIVATE
     es2k_sde_wrapper.cc
     es2k_switch.cc
     es2k_switch.h
+    es2k_target_factory.h
 )
