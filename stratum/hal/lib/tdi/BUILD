@@ -704,3 +704,12 @@ stratum_cc_library(
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
     ],
 )
+
+stratum_cc_library(
+    name = "tdi_target_factory",
+    hdrs = ["tdi_target_factory.h"],
+    deps = [
+        ":tdi_extern_manager",
+        "@com_google_absl//absl/memory",
+    ],
+)
