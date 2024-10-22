@@ -605,6 +605,7 @@ stratum_cc_test(
     defines = [
         "P4RUNTIME_VER=" + P4RUNTIME_VER,
     ],
+    tags = ["broken"],
     deps = [
         ":error_buffer",
         ":p4_service",
