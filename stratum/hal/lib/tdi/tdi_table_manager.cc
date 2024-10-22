@@ -20,24 +20,9 @@
 #include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_get_meter_units.h"
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
+#include "stratum/hal/lib/tdi/tdi_soft_error.h"
 #include "stratum/hal/lib/tdi/utils.h"
 #include "stratum/lib/utils.h"
-
-// Special version of RETURN_IF_ERROR() that logs an abbreviated message
-// if the status code is ALREADY_EXISTS.
-#define MATCH_FIELD_RETURN_IF_ERROR(expr)                                    \
-  do {                                                                       \
-    /* Using _status below to avoid capture problems if expr is "status". */ \
-    const ::util::Status _status = (expr);                                   \
-    if (ABSL_PREDICT_FALSE(!_status.ok())) {                                 \
-      if (_status.error_code() == ::util::error::Code::ALREADY_EXISTS) {     \
-        LOG(INFO) << "Duplicate table entry (may not be an error)";          \
-        return _status;                                                      \
-      }                                                                      \
-      LOG(ERROR) << "Return Error: " << #expr << " failed with " << _status; \
-      return _status;                                                        \
-    }                                                                        \
-  } while (0)
 
 DEFINE_uint32(
     tdi_table_sync_timeout_ms,
@@ -357,7 +342,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     match.set_field_id(expected_match_field.id());
     switch (expected_match_field.match_type()) {
       case ::p4::config::v1::MatchField::EXACT: {
-        MATCH_FIELD_RETURN_IF_ERROR(table_key->GetExact(
+        RETURN_IF_ERROR_WITH_FILTERING(table_key->GetExact(
             expected_match_field.id(), match.mutable_exact()->mutable_value()));
         if (!IsDontCareMatch(match.exact())) {
           *result.add_match() = match;
@@ -367,7 +352,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::TERNARY: {
         has_priority_field = true;
         std::string value, mask;
-        MATCH_FIELD_RETURN_IF_ERROR(
+        RETURN_IF_ERROR_WITH_FILTERING(
             table_key->GetTernary(expected_match_field.id(), &value, &mask));
         match.mutable_ternary()->set_value(value);
         match.mutable_ternary()->set_mask(mask);
@@ -379,8 +364,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::LPM: {
         std::string prefix;
         uint16 prefix_length = 0;
-        MATCH_FIELD_RETURN_IF_ERROR(table_key->GetLpm(expected_match_field.id(),
-                                                      &prefix, &prefix_length));
+        RETURN_IF_ERROR_WITH_FILTERING(table_key->GetLpm(
+            expected_match_field.id(), &prefix, &prefix_length));
         match.mutable_lpm()->set_value(prefix);
         match.mutable_lpm()->set_prefix_len(prefix_length);
         if (!IsDontCareMatch(match.lpm())) {
@@ -391,7 +376,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       case ::p4::config::v1::MatchField::RANGE: {
         has_priority_field = true;
         std::string low, high;
-        MATCH_FIELD_RETURN_IF_ERROR(
+        RETURN_IF_ERROR_WITH_FILTERING(
             table_key->GetRange(expected_match_field.id(), &low, &high));
         match.mutable_range()->set_low(low);
         match.mutable_range()->set_high(high);
@@ -497,7 +482,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    tdi_sde_interface_->CreateTableData(
                        table_id, table_entry.action().action().action_id()));
   RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
   ASSIGN_OR_RETURN(
       ::p4::v1::TableEntry result,
@@ -565,7 +550,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
                    tdi_sde_interface_->GetTdiRtId(table_entry.table_id()));
   std::vector<std::unique_ptr<TdiSdeInterface::TableKeyInterface>> keys;
   std::vector<std::unique_ptr<TdiSdeInterface::TableDataInterface>> datas;
-  RETURN_IF_ERROR(tdi_sde_interface_->GetAllTableEntries(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetAllTableEntries(
       device_, session, table_id, &keys, &datas));
   ::p4::v1::ReadResponse resp;
   for (size_t i = 0; i < keys.size(); ++i) {
@@ -684,7 +669,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   // request does not provide the action ID and data, but we have to provide the
   // current values in the later modify call to the SDE, else we would modify
   // the table entry.
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
   // P4RT spec requires that the referenced table entry must exist. Therefore we
@@ -733,7 +718,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
   // request does not provide the action ID and data, but we have to provide the
   // current values in the later modify call to the SDE, else we would modify
   // the table entry.
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
   // P4RT spec requires that the referenced table entry must exist. Therefore we
@@ -798,7 +783,7 @@ TdiTableManager::ReadDirectCounterEntry(
       device_, session, table_id,
       absl::Milliseconds(FLAGS_tdi_table_sync_timeout_ms)));
 
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
   // TODO(max): build response entry from returned data
@@ -836,7 +821,7 @@ TdiTableManager::ReadDirectMeterEntry(
     RETURN_IF_ERROR(BuildTableKey(table_entry, table_key.get()));
   }
 
-  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+  RETURN_IF_ERROR_WITH_FILTERING(tdi_sde_interface_->GetTableEntry(
       device_, session, table_id, table_key.get(), table_data.get()));
 
   ASSIGN_OR_RETURN(auto table, p4_info_manager_->FindTableByID(table_id));

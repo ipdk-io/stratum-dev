@@ -52,6 +52,7 @@ stratum_cc_library(
     hdrs = ["es2k_node.h"],
     deps = [
         "//stratum/hal/lib/tdi:tdi_node",
+        "//stratum/hal/lib/tdi:tdi_soft_error",
         "@com_github_gflags_gflags//:gflags",
     ],
 )
@@ -313,6 +314,7 @@ stratum_cc_test(
     srcs = ["es2k_tdi_status_test.cc"],
     deps = [
         ":test_main",
+        "//stratum/hal/lib/tdi:tdi_soft_error",
         "//stratum/hal/lib/tdi:tdi_status",
         "@com_google_googletest//:gtest",
         "@local_es2k_bin//:es2k_hdrs",

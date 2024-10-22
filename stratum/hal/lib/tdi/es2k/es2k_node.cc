@@ -19,6 +19,7 @@
 #include "stratum/hal/lib/tdi/tdi_node.h"
 #include "stratum/hal/lib/tdi/tdi_pipeline_utils.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_soft_error.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/utils.h"
 #include "stratum/public/proto/error.pb.h"
@@ -168,25 +169,21 @@ std::unique_ptr<Es2kNode> Es2kNode::CreateInstance(
   RETURN_IF_ERROR(session->EndBatch());
 
   if (!success) {
-    // Tally up the number of ALREADY_EXISTS errors.
-    int already_exists_errors = 0;
+    // Tally up the number of soft errors.
+    int soft_errors = 0;
     for (const ::util::Status& status : *results) {
-      if (status.error_code() == ::util::error::Code::ALREADY_EXISTS) {
-        ++already_exists_errors;
+      if (IsSoftError(status.error_code())) {
+        ++soft_errors;
       } else if (!status.ok()) {
-        already_exists_errors = 0;
+        soft_errors = 0;
         break;
       }
     }
-    if (already_exists_errors) {
-      // If all the errors are ALREADY_EXISTS, downgrade severity to INFO
-      // and set the description to something less likely to alarm the
-      // customer.
-      const char* entries = (already_exists_errors == 1) ? "entry" : "entries";
+    if (soft_errors) {
       return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
-                 .severity(INFO)
+                 .severity(WARNING)
                  .without_logging()
-             << "Duplicate table " << entries << " (may not be an error)";
+             << "One or more write operations had soft errors.";
 
     } else {
       return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED).without_logging()
