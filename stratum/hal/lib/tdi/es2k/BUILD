@@ -356,3 +356,12 @@ stratum_cc_library(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+stratum_cc_library(
+    name = "es2k_target_factory",
+    hdrs = ["es2k_target_factory.h"],
+    deps = [
+        ":es2k_extern_manager",
+        "//stratum/hal/lib/tdi:tdi_target_factory",
+    ],
+)
