@@ -9,27 +9,29 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+constexpr char kNotSupported[] = " not supported for this target.";
+
 // Retrieve a PacketModMeter configuration.
 ::util::StatusOr<const ::idpf::PacketModMeter>
 TdiExternManager::FindPktModMeterByID(uint32 meter_id) const {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << " not implemented.";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << kNotSupported;
 }
 
 ::util::StatusOr<const ::idpf::PacketModMeter>
 TdiExternManager::FindPktModMeterByName(const std::string& meter_name) const {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << " not implemented.";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << kNotSupported;
 }
 
 // Retrieve a DirectPacketModMeter configuration.
 ::util::StatusOr<const ::idpf::DirectPacketModMeter>
 TdiExternManager::FindDirectPktModMeterByID(uint32 meter_id) const {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << " not implemented.";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << kNotSupported;
 }
 
 ::util::StatusOr<const ::idpf::DirectPacketModMeter>
 TdiExternManager::FindDirectPktModMeterByName(
     const std::string& meter_name) const {
-  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << " not implemented.";
+  return MAKE_ERROR(ERR_UNIMPLEMENTED) << __func__ << kNotSupported;
 }
 
 }  // namespace tdi
