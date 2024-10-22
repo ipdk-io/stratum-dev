@@ -134,10 +134,20 @@ stratum_cc_test(
 )
 
 stratum_cc_library(
+    name = "p4_extern_manager",
+    hdrs = ["p4_extern_manager.h"],
+    deps = [
+        ":p4_resource_map",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
     name = "p4_info_manager",
     srcs = ["p4_info_manager.cc"],
     hdrs = ["p4_info_manager.h"],
     deps = [
+        ":p4_extern_manager",
         ":p4_resource_map",
         ":utils",
         "//stratum/glue:logging",

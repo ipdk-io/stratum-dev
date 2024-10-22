@@ -65,16 +65,19 @@ P4InfoManager::~P4InfoManager() {}
 // Since P4InfoManager can be used in a verify role, it attempts to continue
 // processing after most errors in order to describe every problem it
 // encounters in p4_info_.
-::util::Status P4InfoManager::InitializeAndVerify() {
+::util::Status P4InfoManager::InitializeAndVerify(
+    P4ExternManager* extern_manager) {
   if (!all_resource_ids_.empty() || !all_resource_names_.empty()) {
     return MAKE_ERROR(ERR_INTERNAL) << "P4Info is already initialized";
   }
 
-  ::util::Status status = ::util::OkStatus();
-  APPEND_STATUS_IF_ERROR(status, VerifyRequiredObjects());
   PreambleCallback preamble_cb =
       std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
                 std::placeholders::_2);
+
+  ::util::Status status = ::util::OkStatus();
+  APPEND_STATUS_IF_ERROR(status, VerifyRequiredObjects());
+
   APPEND_STATUS_IF_ERROR(status,
                          table_map_.BuildMaps(p4_info_.tables(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
@@ -95,6 +98,11 @@ P4InfoManager::~P4InfoManager() {}
       status, register_map_.BuildMaps(p4_info_.registers(), preamble_cb));
   APPEND_STATUS_IF_ERROR(
       status, digest_map_.BuildMaps(p4_info_.digests(), preamble_cb));
+
+  if (extern_manager != nullptr) {
+    // Invoke external manager if one is provided.
+    extern_manager->RegisterExterns(p4_info_, preamble_cb);
+  }
 
   // This code depends on a proposed change to the P4Runtime specification,
   // and is provisional.
