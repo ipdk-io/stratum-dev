@@ -32,17 +32,17 @@ class Es2kExternManager : public TdiExternManager {
 
   // Retrieve a PacketModMeter configuration.
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
-      uint32 meter_id) const;
+      uint32 meter_id) const override;
 
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByName(
-      const std::string& meter_name) const;
+      const std::string& meter_name) const override;
 
   // Retrieve a DirectPacketModMeter configuration.
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
-  FindDirectPktModMeterByID(uint32 meter_id) const;
+  FindDirectPktModMeterByID(uint32 meter_id) const override;
 
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
-  FindDirectPktModMeterByName(const std::string& meter_name) const;
+  FindDirectPktModMeterByName(const std::string& meter_name) const override;
 
   // Returns the number of entries in the DirectPacketModMeter map.
   uint32 direct_pkt_mod_meter_size() const {

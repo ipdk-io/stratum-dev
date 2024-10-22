@@ -688,10 +688,13 @@ stratum_cc_test(
 
 stratum_cc_library(
     name = "tdi_extern_manager",
+    srcs = ["tdi_extern_manager.cc"],
     hdrs = ["tdi_extern_manager.h"],
     deps = [
         "//stratum/hal/lib/p4:p4_extern_manager",
+        "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/memory",
     ],
