@@ -31,12 +31,6 @@ class TdiExternManager : public P4ExternManager {
   void RegisterExterns(const ::p4::config::v1::P4Info& p4info,
                        const PreambleCallback& preamble_cb) override {}
 
-  // Returns the handler for the P4 resource with the specified ID,
-  // or null if the resource is not registered.
-  virtual TdiResourceHandler* FindResourceHandler(uint32 resource_id) {
-    return nullptr;
-  }
-
   // Retrieve a PacketModMeter configuration.
   virtual ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
       uint32 meter_id) const;
