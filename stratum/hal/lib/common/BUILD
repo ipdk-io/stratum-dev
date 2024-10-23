@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -599,6 +599,7 @@ stratum_cc_library(
 
 stratum_cc_test(
     name = "p4_service_test",
+    timeout = moderate,
     srcs = [
         "p4_service_test.cc",
     ],
