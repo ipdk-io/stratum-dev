@@ -599,7 +599,7 @@ stratum_cc_library(
 
 stratum_cc_test(
     name = "p4_service_test",
-    timeout = moderate,
+    size = "medium",
     srcs = [
         "p4_service_test.cc",
     ],
