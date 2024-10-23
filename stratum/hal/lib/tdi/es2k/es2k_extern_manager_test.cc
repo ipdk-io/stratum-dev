@@ -9,9 +9,11 @@
 #include <string>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/substitute.h"
 #include "gtest/gtest.h"
 #include "p4/config/v1/p4info.pb.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_target_factory.h"
 #include "stratum/lib/utils.h"
 
@@ -32,33 +34,74 @@ class Es2kExternManagerTest : public testing::Test {
  protected:
   Es2kExternManagerTest() : es2k_extern_manager_(new Es2kExternManager) {}
 
-  ::util::Status ProcessPreamble(const ::p4::config::v1::Preamble& preamble,
-                                 const std::string& resource_type);
-
-  void SetUpPreambleCallback();
-
   void SetUpDirectPacketModMeters();
   void SetUpDirectPacketModMeterTest();
   void SetUpPacketModMeters();
   void SetUpPacketModMeterTest();
 
+  //----------------------------------------------------
+
+  void SetUpPreambleCallback() {
+    preamble_cb_ = std::bind(&Es2kExternManagerTest::ProcessPreamble, this,
+                             std::placeholders::_1, std::placeholders::_2);
+  }
+
+  // Dummy preamble processing callback function.
+  ::util::Status ProcessPreamble(const ::p4::config::v1::Preamble& preamble,
+                                 const std::string& resource_type) {
+    return ::util::OkStatus();
+  }
+
+  //----------------------------------------------------
+
+  // The following code was lifted from p4_info_manager_test.
+
+  static const int kNumTestTables = 2;
+  static const int kNumActionsPerTable = 3;
+  static const int kFirstActionID = 10000;
+
+  void SetUpTestTables(bool need_actions = true) {
+    int32 dummy_action_id = kFirstActionID;
+
+    // Each table entry is assigned an ID and name in the preamble.  Each table
+    // optionally gets a set of action IDs.
+    for (int t = 1; t <= kNumTestTables; ++t) {
+      ::p4::config::v1::Table* new_table = p4info_.add_tables();
+      new_table->mutable_preamble()->set_id(t);
+      new_table->mutable_preamble()->set_name(absl::Substitute("Table-$0", t));
+      for (int a = 0; need_actions && a < kNumActionsPerTable; ++a) {
+        auto action_ref = new_table->add_action_refs();
+        action_ref->set_id(dummy_action_id++);
+      }
+    }
+  }
+
+  void SetUpTestActions() {
+    const int kNumTestActions = kNumTestTables * kNumActionsPerTable;
+    const int kNumParamsPerAction = 2;
+    int32 dummy_param_id = 100000;
+
+    for (int a = 0; a < kNumTestActions; ++a) {
+      ::p4::config::v1::Action* new_action = p4info_.add_actions();
+      new_action->mutable_preamble()->set_id(a + kFirstActionID);
+      new_action->mutable_preamble()->set_name(
+          absl::Substitute("Action-$0", a));
+      for (int p = 0; p < kNumParamsPerAction; ++p) {
+        auto new_param = new_action->add_params();
+        new_param->set_id(dummy_param_id);
+        new_param->set_name(
+            absl::Substitute("Action-Param-$0", dummy_param_id++));
+      }
+    }
+  }
+
+  //----------------------------------------------------
+
+  // Test fixture variables.
   std::unique_ptr<Es2kExternManager> es2k_extern_manager_;
   PreambleCallback preamble_cb_;
   ::p4::config::v1::P4Info p4info_;
-  std::unique_ptr<absl::Mutex> lock_;
 };
-
-void Es2kExternManagerTest::SetUpPreambleCallback() {
-  preamble_cb_ = std::bind(&Es2kExternManagerTest::ProcessPreamble, this,
-                           std::placeholders::_1, std::placeholders::_2);
-}
-
-// Dummy preamble processing callback function.
-::util::Status Es2kExternManagerTest::ProcessPreamble(
-    const ::p4::config::v1::Preamble& preamble,
-    const std::string& resource_type) {
-  return ::util::OkStatus();
-}
 
 //----------------------------------------------------------------------
 // Setup tests
@@ -336,17 +379,33 @@ TEST_F(Es2kExternManagerTest, TestUnknownExternType) {
   EXPECT_EQ(stats.unknown_extern_id, 1);
 }
 
-constexpr char kZeroPreambleIdText[] = R"pb(
-  extern_type_id: 134
-  extern_type_name: "DirectPacketModMeter"
-  instances {
-    preamble {
-      id: 0
-      name: "my_control.meter3"
-      alias: "meter3"
-    }
-  }
-)pb";
+// An ES2K-specific method should return error status when invoked on a
+// TdiExternManager object.
+TEST_F(Es2kExternManagerTest, TestUnsupportedMethod) {
+  auto tdi_extern_manager = TdiExternManager::CreateInstance();
+  auto meter = tdi_extern_manager->FindPktModMeterByID(kPacketModMeterID1);
+  EXPECT_FALSE(meter.ok());
+  EXPECT_EQ(meter.status().error_code(), ERR_UNIMPLEMENTED);
+}
+
+//----------------------------------------------------------------------
+// P4InfoManager integration test
+//----------------------------------------------------------------------
+
+TEST_F(Es2kExternManagerTest, TestP4InfoManagerIntegration) {
+  SetUpTestTables();
+  SetUpTestActions();
+  SetUpPacketModMeters();
+  SetUpDirectPacketModMeters();
+
+  auto p4_info_manager = absl::make_unique<P4InfoManager>(p4info_);
+  auto status =
+      p4_info_manager->InitializeAndVerify(es2k_extern_manager_.get());
+  EXPECT_TRUE(status.ok());
+
+  EXPECT_EQ(es2k_extern_manager_->direct_pkt_mod_meter_size(), 2);
+  EXPECT_EQ(es2k_extern_manager_->pkt_mod_meter_map_size(), 2);
+}
 
 }  // namespace tdi
 }  // namespace hal
