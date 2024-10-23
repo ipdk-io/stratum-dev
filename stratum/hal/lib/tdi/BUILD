@@ -51,10 +51,7 @@ target_sdk_headers = select({
 
 stratum_cc_library(
     name = "tdi_sde_interface",
-    hdrs = [
-        "tdi_pkt_mod_meter_config.h",
-        "tdi_sde_interface.h",
-    ],
+    hdrs = ["tdi_sde_interface.h"],
     deps = [
         ":tdi_cc_proto",
         ":tdi_pkt_mod_meter_config",
@@ -292,8 +289,11 @@ stratum_cc_library(
     hdrs = ["tdi_table_manager.h"],
     deps = [
         ":tdi_cc_proto",
+        ":tdi_extern_manager",
         ":tdi_get_meter_units",
+        ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
+        ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
         "//stratum/glue:logging",
@@ -309,7 +309,6 @@ stratum_cc_library(
         "//stratum/lib:timer_daemon",
         "//stratum/lib:utils",
         "//stratum/public/proto:error_cc_proto",
-        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_grpc",
         "@com_google_absl//absl/container:flat_hash_map",
