@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_target_factory.h"
 
 namespace stratum {
 namespace hal {
@@ -101,13 +102,15 @@ class TdiTableManager {
 
   // Creates a table manager instance.
   static std::unique_ptr<TdiTableManager> CreateInstance(
-      OperationMode mode, TdiSdeInterface* tdi_sde_interface, int device);
+      OperationMode mode, TdiSdeInterface* tdi_sde_interface,
+      TdiTargetFactory& tdi_target_factory, int device);
 
  private:
   // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
   explicit TdiTableManager(OperationMode mode,
-                           TdiSdeInterface* tdi_sde_interface, int device);
+                           TdiSdeInterface* tdi_sde_interface,
+                           TdiTargetFactory& tdi_target_factory, int device);
 
   ::util::Status BuildTableKey(const ::p4::v1::TableEntry& table_entry,
                                TdiSdeInterface::TableKeyInterface* table_key)
@@ -169,6 +172,12 @@ class TdiTableManager {
   // TODO(max): Maybe this manager should be created in the node and passed down
   // to all feature managers.
   std::unique_ptr<P4InfoManager> p4_info_manager_ GUARDED_BY(lock_);
+
+  // Factory to create polymorphic objects for the TDI target.
+  TdiTargetFactory& tdi_target_factory_;
+
+  // Helper class to manage P4 Externs.
+  std::unique_ptr<TdiExternManager> tdi_extern_manager_ GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.
