@@ -332,19 +332,21 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "es2k_extern_manager",
-    srcs = ["es2k_extern_manager.cc"],
+    name = "es2k_target_factory",
+    hdrs = ["es2k_target_factory.h"],
     deps = [
-        ":es2k_extern_manager_hdrs",
-        "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/p4:utils",
+        ":es2k_extern_manager",
+        "//stratum/hal/lib/tdi:tdi_target_factory",
     ],
 )
 
 stratum_cc_library(
-    name = "es2k_extern_manager_hdrs",
+    name = "es2k_extern_manager",
+    srcs = ["es2k_extern_manager.cc"],
     hdrs = ["es2k_extern_manager.h"],
     deps = [
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/p4:utils",
         "//stratum/glue:integral_types",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/p4:p4_info_manager",
