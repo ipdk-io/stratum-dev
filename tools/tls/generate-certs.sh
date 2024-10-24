@@ -1,5 +1,6 @@
 #!/bin/bash
 # Copyright 2020-present Open Networking Foundation
+# Copyright 2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 set -e
 THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
