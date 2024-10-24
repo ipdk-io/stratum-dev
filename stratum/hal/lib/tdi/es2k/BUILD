@@ -346,15 +346,28 @@ stratum_cc_library(
     hdrs = ["es2k_extern_manager.h"],
     deps = [
         "//stratum/glue/status:status_macros",
-        "//stratum/hal/lib/p4:utils",
-        "//stratum/glue:integral_types",
         "//stratum/glue/status:statusor",
+        "//stratum/glue:integral_types",
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
+        "//stratum/hal/lib/p4:utils",
         "//stratum/hal/lib/tdi:tdi_extern_manager",
         "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
         "@com_github_p4lang_p4runtime//:p4info_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+stratum_cc_test(
+    name = "es2k_extern_manager_test",
+    srcs = ["es2k_extern_manager_test.cc"],
+    deps = [
+        ":es2k_extern_manager",
+        ":es2k_target_factory",
+        ":test_main",
+        "@com_github_p4lang_p4runtime//:p4info_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest",
     ],
 )
