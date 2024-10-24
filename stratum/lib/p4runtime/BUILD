@@ -24,7 +24,7 @@ config_setting(
 )
 
 IPDK_ROLE_FIX = select({
-    ":es2k_target": ["IPDK_ROLE_FIX"],
+#   ":es2k_target": ["IPDK_ROLE_FIX"],
     "//conditions:default": [],
 })
 

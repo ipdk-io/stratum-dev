@@ -22,6 +22,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
+#include "stratum/hal/lib/p4/p4_extern_manager.h"
 #include "stratum/hal/lib/p4/p4_resource_map.h"
 #include "stratum/hal/lib/p4/utils.h"
 #include "stratum/lib/macros.h"
@@ -65,7 +66,8 @@ class P4InfoManager {
   // verify the overall correctness of its P4Info.  For example, it confirms
   // that all header field and action ID references in table definitions refer
   // to validly defined P4 resources.
-  virtual ::util::Status InitializeAndVerify();
+  virtual ::util::Status InitializeAndVerify(
+      P4ExternManager* extern_manager = nullptr);
 
   // These methods look up P4 resource information that corresponds to the input
   // ID or name.  A successful lookup returns a copy of the resource data
