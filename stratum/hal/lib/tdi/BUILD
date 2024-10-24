@@ -321,7 +321,7 @@ stratum_cc_library(
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
-#   tags = ["broken"],  # disabled 3 test cases
+    #   tags = ["broken"],  # disabled 3 test cases
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",
@@ -715,6 +715,21 @@ stratum_cc_library(
     deps = [
         "//stratum/glue:integral_types",
         "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_table_annex",
+    hdrs = ["tdi_table_annex.h"],
+    deps = [
+        ":tdi_extern_manager",
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/hal/lib/common:writer_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

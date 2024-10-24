@@ -358,6 +358,21 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "es2k_table_annex",
+    srcs = ["es2k_table_annex.cc"],
+    hdrs = ["es2k_table_annex.h"],
+    deps = [
+        ":es2k_extern_manager",
+        "//stratum/glue:logging",
+        "//stratum/glue/status:status_macros",
+        "//stratum/hal/lib/tdi:tdi_get_meter_units",
+        "//stratum/hal/lib/tdi:tdi_pkt_mod_meter_config",
+        "//stratum/hal/lib/tdi:tdi_table_annex",
+        "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
     name = "es2k_target_factory",
     hdrs = ["es2k_target_factory.h"],
     deps = [
