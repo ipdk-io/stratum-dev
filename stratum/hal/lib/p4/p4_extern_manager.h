@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Intel Corporation
+// Copyright 2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_P4_P4_EXTERN_MANAGER_H_
@@ -16,7 +16,7 @@ class P4ExternManager {
 
   // Called by P4InfoManager to register P4Extern resources.
   virtual void RegisterExterns(const ::p4::config::v1::P4Info& p4info,
-                               const PreambleCallback& preamble_pb) = 0;
+                               const PreambleCallback& preamble_cb) = 0;
 
  protected:
   // Default constructor.
