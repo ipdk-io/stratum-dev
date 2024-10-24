@@ -5,6 +5,7 @@
 #
 
 add_library(stratum_hal_lib_p4_o OBJECT
+    p4_extern_manager.h
     p4_info_manager.cc
     p4_info_manager.h
     p4_resource_map.h
