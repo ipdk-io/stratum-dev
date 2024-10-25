@@ -333,9 +333,11 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_target_factory",
+    srcs = ["es2k_target_factory.cc"],
     hdrs = ["es2k_target_factory.h"],
     deps = [
         ":es2k_extern_manager",
+        ":es2k_table_annex",
         "//stratum/hal/lib/tdi:tdi_target_factory",
     ],
 )

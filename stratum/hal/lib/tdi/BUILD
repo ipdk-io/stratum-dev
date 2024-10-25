@@ -738,6 +738,7 @@ stratum_cc_library(
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",
+        ":tdi_table_annex",
         "@com_google_absl//absl/memory",
     ],
 )
