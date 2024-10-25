@@ -260,6 +260,8 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
+//    RETURN_IF_ERROR(tdi_table_annex_->BuildDirPktModTableData(
+//        table_entry, table_data, resource_id));
       bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(
           auto meter,
@@ -872,6 +874,8 @@ TdiTableManager::ReadDirectMeterEntry(
       result.mutable_config()->set_pburst(static_cast<int64>(pburst));
     }
     if (resource_type == "DirectPacketModMeter") {
+//    RETURN_IF_ERROR(
+//        tdi_table_annex_->ReadDirPktModMeterEntry(table_data.get(), result));
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
@@ -1020,6 +1024,8 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   else if (resource_type == "PacketModMeter") {
+//  RETURN_IF_ERROR(tdi_table_annex_->ReadPktModMeterEntry(session, meter_entry,
+//                                                         writer, table_id));
     bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
@@ -1100,6 +1106,8 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   if (resource_type == "PacketModMeter") {
+//  RETURN_IF_ERROR(tdi_table_annex_->WritePktModMeterEntry(
+//      session, type, meter_entry, meter_id));
     bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
