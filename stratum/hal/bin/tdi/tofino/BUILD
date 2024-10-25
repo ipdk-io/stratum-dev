@@ -49,6 +49,7 @@ stratum_cc_binary(
         "//stratum/hal/lib/tdi:tdi_pre_manager",
         "//stratum/hal/lib/tdi:tdi_sde_wrapper",
         "//stratum/hal/lib/tdi:tdi_table_manager",
+        "//stratum/hal/lib/tdi:tdi_target_factory",
     ] + stratum_common_deps,
 )
 

@@ -24,6 +24,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_target_factory.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
@@ -114,8 +115,10 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   VLOG(1) << "SDE version: " << sde_wrapper->GetSdeVersion();
   VLOG(1) << "Switch SKU: " << sde_wrapper->GetChipType(device_id);
 
-  auto table_manager =
-      TdiTableManager::CreateInstance(mode, sde_wrapper, device_id);
+  Es2kTargetFactory target_factory;
+
+  auto table_manager = TdiTableManager::CreateInstance(
+      mode, sde_wrapper, target_factory, device_id);
 
   auto fixed_function_manager =
       TdiFixedFunctionManager::CreateInstance(mode, sde_wrapper, device_id);

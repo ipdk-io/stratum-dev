@@ -345,9 +345,9 @@ stratum_cc_library(
     srcs = ["es2k_extern_manager.cc"],
     hdrs = ["es2k_extern_manager.h"],
     deps = [
+        "//stratum/glue:integral_types",
         "//stratum/glue/status:status_macros",
         "//stratum/glue/status:statusor",
-        "//stratum/glue:integral_types",
         "//stratum/hal/lib/p4:p4_info_manager",
         "//stratum/hal/lib/p4:p4_resource_map",
         "//stratum/hal/lib/p4:utils",
