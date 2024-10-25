@@ -39,26 +39,29 @@ class TdiTableAnnex {
     return ::util::OkStatus();
   }
 
+  // Supports BuildTableData() on a DirectPacketModMeter.
   virtual ::util::Status BuildDirPktModTableData(
       const ::p4::v1::TableEntry& table_entry,
       TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
     return ::util::OkStatus();
   }
 
+  // Supports ReadDirectMeterEntry on a DirectPacketModMeter.
   virtual ::util::Status ReadDirPktModMeterEntry(
       TdiSdeInterface::TableDataInterface* table_data,
       ::p4::v1::DirectMeterEntry result) {
     return ::util::OkStatus();
   }
 
+  // Supports ReadMeterEntry on a PacketModMeter.
   virtual ::util::Status ReadPktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer,
-      TdiSdeInterface::TableDataInterface* table_data, uint32 table_id) {
+      WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
     return ::util::OkStatus();
   }
 
+  // Supports WriteMeterEntry on a PacketModMeter.
   virtual ::util::Status WritePktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,

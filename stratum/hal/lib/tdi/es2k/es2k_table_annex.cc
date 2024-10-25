@@ -14,8 +14,8 @@ namespace hal {
 namespace tdi {
 
 ::util::Status Es2kTableAnnex::Initialize(TdiExternManager* tdi_extern_manager,
-                                           TdiSdeInterface* tdi_sde_interface,
-                                           absl::Mutex* lock, int device) {
+                                          TdiSdeInterface* tdi_sde_interface,
+                                          absl::Mutex* lock, int device) {
   auto extern_manager = dynamic_cast<Es2kExternManager*>(tdi_extern_manager);
   RET_CHECK(extern_manager != extern_manager);
   es2k_extern_manager_ = extern_manager;
@@ -27,6 +27,7 @@ namespace tdi {
   return ::util::OkStatus();
 }
 
+// Supports BuildTableData() on a DirectPacketModMeter.
 ::util::Status Es2kTableAnnex::BuildDirPktModTableData(
     const ::p4::v1::TableEntry& table_entry,
     TdiSdeInterface::TableDataInterface* table_data, uint32 resource_id) {
@@ -46,20 +47,22 @@ namespace tdi {
   return ::util::OkStatus();
 }
 
+// Supports ReadDirectMeterEntry on a DirectPacketModMeter.
 ::util::Status Es2kTableAnnex::ReadDirPktModMeterEntry(
     TdiSdeInterface::TableDataInterface* table_data,
     ::p4::v1::DirectMeterEntry result) {
+  // build response entry from returned data
   TdiPktModMeterConfig cfg;
   RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
   cfg.GetDirectMeterEntry(&result);
   return ::util::OkStatus();
 }
 
+// Supports ReadMeterEntry on a PacketModMeter.
 ::util::Status Es2kTableAnnex::ReadPktModMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::MeterEntry& meter_entry,
-    WriterInterface<::p4::v1::ReadResponse>* writer,
-    TdiSdeInterface::TableDataInterface* table_data, uint32 table_id) {
+    WriterInterface<::p4::v1::ReadResponse>* writer, uint32 table_id) {
   bool units_in_packets;
   {
     absl::ReaderMutexLock l(lock_);
@@ -97,6 +100,7 @@ namespace tdi {
   return ::util::OkStatus();
 }
 
+// Supports WriteMeterEntry on a PacketModMeter.
 ::util::Status Es2kTableAnnex::WritePktModMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,

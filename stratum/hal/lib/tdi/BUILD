@@ -293,6 +293,7 @@ stratum_cc_library(
         ":tdi_get_meter_units",
         ":tdi_pkt_mod_meter_config",
         ":tdi_sde_interface",
+        ":tdi_table_annex",
         ":tdi_target_factory",
         ":utils",
         "//stratum/glue:integral_types",
@@ -687,7 +688,6 @@ stratum_cc_test(
 
 stratum_cc_library(
     name = "tdi_extern_manager",
-    srcs = ["tdi_extern_manager.cc"],
     hdrs = ["tdi_extern_manager.h"],
     deps = [
         "//stratum/hal/lib/p4:p4_extern_manager",

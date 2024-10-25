@@ -38,22 +38,25 @@ class Es2kTableAnnex : public TdiTableAnnex {
                             TdiSdeInterface* tdi_sde_interface,
                             absl::Mutex* lock, int device) override;
 
+  // Supports BuildTableData() on a DirectPacketModMeter.
   ::util::Status BuildDirPktModTableData(
       const ::p4::v1::TableEntry& table_entry,
       TdiSdeInterface::TableDataInterface* table_data,
       uint32 resource_id) override;
 
+  // Supports ReadDirectMeterEntry on a DirectPacketModMeter.
   ::util::Status ReadDirPktModMeterEntry(
       TdiSdeInterface::TableDataInterface* table_data,
       ::p4::v1::DirectMeterEntry result) override;
 
+  // Supports ReadMeterEntry on a PacketModMeter.
   ::util::Status ReadPktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      TdiSdeInterface::TableDataInterface* table_data,
       uint32 table_id) override;
 
+  // Supports WriteMeterEntry on a PacketModMeter.
   ::util::Status WritePktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,

@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/p4/p4_info_manager.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
+#include "stratum/hal/lib/tdi/tdi_table_annex.h"
 #include "stratum/hal/lib/tdi/tdi_target_factory.h"
 
 namespace stratum {
@@ -178,6 +179,10 @@ class TdiTableManager {
 
   // Helper class to manage P4 Externs.
   std::unique_ptr<TdiExternManager> tdi_extern_manager_ GUARDED_BY(lock_);
+
+  // Pointer to an object that provides support for target-specific P4
+  // resources.
+  std::unique_ptr<TdiTableAnnex> tdi_table_annex_ GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.
