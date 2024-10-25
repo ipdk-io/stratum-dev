@@ -11,9 +11,11 @@
 add_library(stratum_tdi_common_o OBJECT
     tdi_action_profile_manager.cc
     tdi_action_profile_manager.h
-    tdi_status.h
     tdi_counter_manager.cc
     tdi_counter_manager.h
+    tdi_extern_manager.cc
+    tdi_extern_manager.h
+    tdi_get_meter_units.h
     tdi_global_vars.cc
     tdi_global_vars.h
     tdi_id_mapper.cc
@@ -24,6 +26,8 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_packetio_manager.h
     tdi_pipeline_utils.cc
     tdi_pipeline_utils.h
+    tdi_pkt_mod_meter_config.cc
+    tdi_pkt_mod_meter_config.h
     tdi_port_manager.cc
     tdi_port_manager.h
     tdi_pre_manager.cc
@@ -46,8 +50,10 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_utils.h
     tdi_sde_wrapper.cc
     tdi_sde_wrapper.h
+    tdi_status.h
     tdi_table_manager.cc
     tdi_table_manager.h
+    tdi_target_factory.h
     utils.cc
     utils.h
 )

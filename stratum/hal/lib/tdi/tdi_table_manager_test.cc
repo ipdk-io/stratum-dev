@@ -43,7 +43,8 @@ class TdiTableManagerTest : public ::testing::Test {
   void SetUp() override {
     tdi_sde_wrapper_mock_ = absl::make_unique<NiceMock<TdiSdeMock>>();
     tdi_table_manager_ = TdiTableManager::CreateInstance(
-        OPERATION_MODE_STANDALONE, tdi_sde_wrapper_mock_.get(), kDevice1);
+        OPERATION_MODE_STANDALONE, tdi_sde_wrapper_mock_.get(),
+        tdi_target_factory_, kDevice1);
   }
 
   ::util::Status PushTestConfig() {
@@ -142,6 +143,7 @@ class TdiTableManagerTest : public ::testing::Test {
 
   static constexpr int kDevice1 = 0;
 
+  TdiTargetFactory tdi_target_factory_;
   std::unique_ptr<TdiSdeMock> tdi_sde_wrapper_mock_;
   std::unique_ptr<TdiTableManager> tdi_table_manager_;
 };
