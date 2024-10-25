@@ -51,6 +51,7 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_wrapper.cc
     tdi_sde_wrapper.h
     tdi_status.h
+    tdi_table_annex.h
     tdi_table_manager.cc
     tdi_table_manager.h
     tdi_target_factory.h
