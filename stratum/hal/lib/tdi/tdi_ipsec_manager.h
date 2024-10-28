@@ -55,7 +55,7 @@ class TdiIpsecManager {
   virtual ::util::Status GetSpiData(uint32& fetched_spi)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
-  virtual ::util::Status WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
+  virtual ::util::Status WriteConfigSadbEntry(const IPsecSadbConfigOp op_type,
                                               IPsecSADBConfig& msg)
       SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
@@ -78,7 +78,7 @@ class TdiIpsecManager {
     return ::util::OkStatus();
   }
 
-  void SendSADExpireNotificationEvent(uint32_t dev_id, uint32_t ipsec_sa_spi,
+  void SendSadExpireNotificationEvent(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                       bool soft_lifetime_expire,
                                       uint8_t ipsec_sa_protocol,
                                       char* ipsec_sa_dest_address, bool ipv4);
