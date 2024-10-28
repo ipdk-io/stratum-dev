@@ -379,15 +379,6 @@ TEST_F(Es2kExternManagerTest, TestUnknownExternType) {
   EXPECT_EQ(stats.unknown_extern_id, 1);
 }
 
-// An ES2K-specific method should return error status when invoked on a
-// TdiExternManager object.
-TEST_F(Es2kExternManagerTest, TestUnsupportedMethod) {
-  auto tdi_extern_manager = TdiExternManager::CreateInstance();
-  auto meter = tdi_extern_manager->FindPktModMeterByID(kPacketModMeterID1);
-  EXPECT_FALSE(meter.ok());
-  EXPECT_EQ(meter.status().error_code(), ERR_UNIMPLEMENTED);
-}
-
 //----------------------------------------------------------------------
 // P4InfoManager integration test
 //----------------------------------------------------------------------

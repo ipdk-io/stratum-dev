@@ -21,7 +21,11 @@ namespace tdi {
 
 class Es2kExternManager : public TdiExternManager {
  public:
-  struct Statistics;
+  struct Statistics {
+    Statistics() : unknown_extern_id(0) {}
+    // Number of externs with unrecognized type IDs.
+    uint32 unknown_extern_id;
+  };
 
   Es2kExternManager();
   virtual ~Es2kExternManager() = default;
@@ -30,19 +34,21 @@ class Es2kExternManager : public TdiExternManager {
   void RegisterExterns(const ::p4::config::v1::P4Info& p4info,
                        const PreambleCallback& preamble_cb) override;
 
+  //--------------------------------------------------------------------
+
   // Retrieve a PacketModMeter configuration.
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByID(
-      uint32 meter_id) const override;
+      uint32 meter_id) const;
 
   ::util::StatusOr<const ::idpf::PacketModMeter> FindPktModMeterByName(
-      const std::string& meter_name) const override;
+      const std::string& meter_name) const;
 
   // Retrieve a DirectPacketModMeter configuration.
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
-  FindDirectPktModMeterByID(uint32 meter_id) const override;
+  FindDirectPktModMeterByID(uint32 meter_id) const;
 
   ::util::StatusOr<const ::idpf::DirectPacketModMeter>
-  FindDirectPktModMeterByName(const std::string& meter_name) const override;
+  FindDirectPktModMeterByName(const std::string& meter_name) const;
 
   // Returns the number of entries in the DirectPacketModMeter map.
   uint32 direct_pkt_mod_meter_size() const {
@@ -55,12 +61,7 @@ class Es2kExternManager : public TdiExternManager {
   // Returns a reference to the Es2kExternManager statistics.
   const struct Statistics& statistics() { return stats_; }
 
-  // Es2kExternManager statistics.
-  struct Statistics {
-    Statistics() : unknown_extern_id(0) {}
-    // Number of externs with unrecognized type IDs.
-    uint32 unknown_extern_id;
-  };
+  //--------------------------------------------------------------------
 
  private:
   void RegisterPacketModMeters(const p4::config::v1::Extern& p4extern,
