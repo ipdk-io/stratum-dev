@@ -1,0 +1,49 @@
+@startuml
+hide empty attributes
+hide empty methods
+hide circle
+
+class TdiTableAnnex {
+    {static} + CreateInstance()
+    + Initialize()
+    ..
+    + BuildDirPktModTableData()
+    + ReadDirPktModMeterEntry()
+    + ReadPktModMeterEntry()
+    + WritePktModMeterEntry()
+}
+class Es2kTableAnnex {
+    {static} + CreateInstance()
+    + Initialize()
+    ..
+    + BuildDirPktModTableData()
+    + ReadDirPktModMeterEntry()
+    + ReadPktModMeterEntry()
+    + WritePktModMeterEntry()
+}
+TdiTableAnnex <|-- Es2kTableAnnex
+'TdiTableAnnex ..> TdiExternManager
+Es2kTableAnnex -> Es2kExternManager
+
+TdiExternManager <|-- Es2kExternManager
+
+class TdiTableManager
+TdiTableManager --> TdiExternManager
+TdiTableManager --> TdiTableAnnex
+TdiTableManager --> TdiTargetFactory
+
+class TdiTargetFactory {
+    '+ CreateTdiExternManager()
+    + CreateTdiTableAnnex()
+}
+class Es2kTargetFactory {
+    '+ CreateTdiExternManager()
+    + CreateTdiTableAnnex()
+}
+TdiTargetFactory <|-- Es2kTargetFactory
+TdiTargetFactory -> TdiTableAnnex
+'TdiTargetFactory -> TdiExternManager
+Es2kTargetFactory -> Es2kTableAnnex
+'Es2kTargetFactory -> Es2kExternManager
+
+@enduml
