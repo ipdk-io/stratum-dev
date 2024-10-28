@@ -90,7 +90,7 @@ class Es2kSwitch : public SwitchInterface {
   Es2kSwitch(Es2kSwitch&&) = delete;
   Es2kSwitch& operator=(Es2kSwitch&&) = delete;
 
-  TdiIpsecManager* GetIPsecManager() LOCKS_EXCLUDED(chassis_lock) {
+  TdiIpsecManager* GetIpsecManager() LOCKS_EXCLUDED(chassis_lock) {
     return ipsec_manager_;
   }
 
