@@ -39,22 +39,6 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "dpdk_port_manager_dummy",
-    testonly = True,
-    srcs = ["dpdk_port_manager_dummy.cc"],
-    hdrs = ["dpdk_port_manager.h"],
-    deps = [
-        "//stratum/glue:integral_types",
-        "//stratum/glue/status",
-        "//stratum/glue/status:statusor",
-        "//stratum/hal/lib/common:common_cc_proto",
-        "//stratum/hal/lib/tdi:tdi_port_manager",
-        "//stratum/lib/channel",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
-stratum_cc_library(
     name = "dpdk_port_manager_interface",
     hdrs = ["dpdk_port_manager.h"],
     deps = [
@@ -64,10 +48,17 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "dpdk_port_manager_mock",
-    testonly = 1,
+    testonly = True,
+    srcs = ["dpdk_port_manager_mock.cc"],
     hdrs = ["dpdk_port_manager_mock.h"],
     deps = [
-        ":dpdk_port_manager_dummy",
+        ":dpdk_port_manager_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_port_manager",
+        "@com_google_absl//absl/synchronization",
         "@com_google_googletest//:gtest",
     ],
 )
