@@ -1,0 +1,76 @@
+@startuml
+hide empty attributes
+hide empty methods
+hide circle
+
+class P4InfoManager {
+    + InitializeAndVerify()
+    + FindResourceTypeByID()
+    ..
+    - ProcessPreamble()
+    ..
+    - all_resource_ids_
+    - all_resource_names_
+    - id_to_resource_type_map
+}
+
+class P4ExternManager {
+    + RegisterExterns()
+}
+class TdiExternManager {
+    {static}+ CreateInstance()
+    + RegisterExterns()
+    ..
+    + FindPktModMeterByID()
+    + FindPktModMeterByName()
+    + FindDirectPktModMeterByID()
+    + FindDirectPktModMeterByName()
+    }
+class Es2kExternManager {
+    {static}+ CreateInstance()
+    + RegisterExterns()
+    ..
+    + FindPktModMeterByID()
+    + FindPktModMeterByName()
+    + FindDirectPktModMeterByID()
+    + FindDirectPktModMeterByName()
+    ..
+    + direct_pkt_mod_meter_map_size()
+    + pkt_mod_meter_map_size()
+    + statistics()
+    ..
+    - direct_pkt_mod_meter_map_
+    - pkt_mod_meter_map_
+}
+P4ExternManager <|-- TdiExternManager
+TdiExternManager <|-- Es2kExternManager
+P4InfoManager --> P4ExternManager
+Es2kExternManager ..> "callback" P4InfoManager
+
+class P4ResourceMap <<template>> {
+    + BuildMaps()
+    + FindByID()
+    + FindByName()
+    ..
+    + resource_type()
+    + size()
+}
+P4InfoManager *-- P4ResourceMap
+Es2kExternManager *-- P4ResourceMap
+
+class TdiTableManager
+TdiTableManager -> P4InfoManager
+TdiTableManager --> TdiExternManager
+
+class TdiTargetFactory {
+    + CreateTdiExternManager()
+}
+class Es2kTargetFactory {
+    + CreateTdiExternManager()
+}
+TdiTargetFactory <|-- Es2kTargetFactory
+TdiTableManager -> TdiTargetFactory
+TdiTargetFactory .> "creates" TdiExternManager
+Es2kTargetFactory .>  "creates" Es2kExternManager
+
+@enduml
