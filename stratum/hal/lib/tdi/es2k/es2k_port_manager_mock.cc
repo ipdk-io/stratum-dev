@@ -2,19 +2,15 @@
 // Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Dummy implementation of ES2K Port Manager.
+// Dummy implemementation of Es2kPortManager for use with
+// Es2PortManagerMock.
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
-#include "stratum/glue/logging.h"
 #include "stratum/glue/status/status.h"
-#include "stratum/glue/status/status_macros.h"
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
-#include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
-#include "stratum/hal/lib/tdi/tdi_status.h"
-#include "stratum/lib/channel/channel.h"
 
 namespace stratum {
 namespace hal {
@@ -100,7 +96,7 @@ bool Es2kPortManager::IsValidPort(int device, int port) { return true; }
 // TODO: Check with Sandeep: Is this required?
 ::util::StatusOr<uint32> Es2kPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
-  return 43;
+  return 42;
 }
 
 }  // namespace tdi
