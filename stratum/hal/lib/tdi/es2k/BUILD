@@ -137,19 +137,17 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
-    name = "es2k_port_manager_dummy",
+    name = "es2k_port_manager_mock",
     testonly = True,
-    srcs = ["es2k_port_manager_dummy.cc"],
-    hdrs = ["es2k_port_manager.h"],
+    srcs = ["es2k_port_manager_mock.cc"],
+    hdrs = ["es2k_port_manager_mock.h"],
     deps = [
+        ":es2k_port_manager_interface",
         "//stratum/glue:integral_types",
-        "//stratum/glue:logging",
         "//stratum/glue/status",
         "//stratum/glue/status:statusor",
         "//stratum/hal/lib/common:common_cc_proto",
         "//stratum/hal/lib/tdi:tdi_sde_headers",
-        "//stratum/lib/channel",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -159,16 +157,6 @@ stratum_cc_library(
     hdrs = ["es2k_port_manager.h"],
     deps = [
         "//stratum/hal/lib/tdi:tdi_port_manager",
-    ],
-)
-
-stratum_cc_library(
-    name = "es2k_port_manager_mock",
-    testonly = True,
-    hdrs = ["es2k_port_manager_mock.h"],
-    deps = [
-        ":es2k_port_manager_dummy",
-        "@com_google_googletest//:gtest",
     ],
 )
 
