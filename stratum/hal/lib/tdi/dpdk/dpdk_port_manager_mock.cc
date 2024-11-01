@@ -1,8 +1,9 @@
 // Copyright 2019-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2024 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Dummy implementation of DPDK port manager.
+// Dummy implementation of DpdkPortManager for use with
+// DpdkPortManagerMock.
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
@@ -10,7 +11,6 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/dpdk/dpdk_port_manager.h"
-#include "stratum/lib/channel/channel.h"
 
 namespace stratum {
 namespace hal {
@@ -102,7 +102,7 @@ bool DpdkPortManager::IsValidPort(int device, int port) { return true; }
 
 ::util::StatusOr<uint32> DpdkPortManager::GetPortIdFromPortKey(
     int device, const PortKey& port_key) {
-  return 43;
+  return 42;
 }
 
 }  // namespace tdi
