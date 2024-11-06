@@ -719,10 +719,26 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_table_annex",
+    hdrs = ["tdi_table_annex.h"],
+    deps = [
+        ":tdi_extern_manager",
+        ":tdi_sde_interface",
+        "//stratum/glue:integral_types",
+        "//stratum/glue/status",
+        "//stratum/hal/lib/common:writer_interface",
+        "@com_github_p4lang_p4runtime//:p4runtime_cc_proto",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_target_factory",
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",
+        ":tdi_table_annex",
         "@com_google_absl//absl/memory",
     ],
 )

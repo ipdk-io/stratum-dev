@@ -260,6 +260,7 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
     }
     if (resource_type == "DirectPacketModMeter" &&
         table_entry.has_meter_config()) {
+      // BuildDirPktModTableData
       bool units_in_packets;  // or bytes
       ASSIGN_OR_RETURN(
           auto meter,
@@ -472,6 +473,9 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       ASSIGN_OR_RETURN(auto meter,
                        p4_info_manager_->FindDirectMeterByID(resource_id));
       {
+        // GetMeterUnitsInPackets() returns error status if the meter units
+        // are neither PACKETS nor BYTES. This code appears to be using the
+        // function to validate the meter configuration.
         bool units_in_packets;
         RETURN_IF_ERROR(GetMeterUnitsInPackets(meter, units_in_packets));
       }
@@ -872,6 +876,7 @@ TdiTableManager::ReadDirectMeterEntry(
       result.mutable_config()->set_pburst(static_cast<int64>(pburst));
     }
     if (resource_type == "DirectPacketModMeter") {
+      // ReadDirPktModMeterEntry
       // build response entry from returned data
       TdiPktModMeterConfig cfg;
       RETURN_IF_ERROR(table_data->GetPktModMeterConfig(cfg));
@@ -1020,6 +1025,7 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   else if (resource_type == "PacketModMeter") {
+    // ReadPktModMeterEntry
     bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
@@ -1065,7 +1071,7 @@ TdiTableManager::ReadDirectMeterEntry(
     const ::p4::v1::MeterEntry& meter_entry) {
   RET_CHECK(type == ::p4::v1::Update::MODIFY ||
             type == ::p4::v1::Update::DELETE)
-      << "Update type of RegisterEntry " << meter_entry.ShortDebugString()
+      << "Update type of MeterEntry " << meter_entry.ShortDebugString()
       << " must be MODIFY or DELETE.";
   RET_CHECK(meter_entry.meter_id() != 0)
       << "Missing meter id in MeterEntry " << meter_entry.ShortDebugString()
@@ -1100,6 +1106,7 @@ TdiTableManager::ReadDirectMeterEntry(
   }
 
   if (resource_type == "PacketModMeter") {
+    // WritePktModMeterEntry
     bool units_in_packets;
     {
       absl::ReaderMutexLock l(&lock_);
