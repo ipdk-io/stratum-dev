@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Dummy implementation of DpdkPortManager for use with
-// DpdkPortManagerMock.
+// DpdkPortManagerMock. Linking this instead of DpdkPortManager
+// when we're using the mock removes the dependency on the SDE.
 
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/integral_types.h"
