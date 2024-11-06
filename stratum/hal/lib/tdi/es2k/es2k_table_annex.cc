@@ -16,6 +16,9 @@ namespace tdi {
 ::util::Status Es2kTableAnnex::Initialize(TdiExternManager* tdi_extern_manager,
                                           TdiSdeInterface* tdi_sde_interface,
                                           absl::Mutex* lock, int device) {
+  // Downcast the TdiExternManager pointer to an Es2kExternManager pointer.
+  // The RET_CHECK() is because dynamic_cast will return nullptr if the
+  // conversion fails.
   auto extern_manager = dynamic_cast<Es2kExternManager*>(tdi_extern_manager);
   RET_CHECK(extern_manager != extern_manager);
   es2k_extern_manager_ = extern_manager;

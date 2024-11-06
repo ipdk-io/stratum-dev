@@ -13,6 +13,20 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
+// TdiTargetFactory is a polymorphic class that provides Factory Methods
+// which TdiTableManager can use to create instances of other polymorphic
+// classes.
+//
+// - TdiTargetFactory creates TdiExternManager and TdiTableAnnex
+//   objects, for use by the DPDK and Tofino targets.
+//
+// - Es2kTargetFactory creates Es2kExternManager and Es2kTableAnnex
+//   objects, for use by the ES2K target.
+//
+// Its purpose is to insulate TdiTableManager from target-specific
+// dependencies, such as the P4Runtime extensions that support the
+// PacketModMeter and DirectPacketModMeter resources.
+//
 class TdiTargetFactory {
  public:
   TdiTargetFactory() {}
