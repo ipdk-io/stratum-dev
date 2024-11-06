@@ -271,7 +271,7 @@ Es2kSwitch::~Es2kSwitch() {}
         auto op_type = req.ipsec_offload_config().ipsec_sadb_config_op();
         auto payload = const_cast<IPsecSADBConfig&>(
             req.ipsec_offload_config().ipsec_sadb_config_info());
-        status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
+        status.Update(ipsec_manager_->WriteConfigSadbEntry(op_type, payload));
         break;
       }
       default:

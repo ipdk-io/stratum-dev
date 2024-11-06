@@ -17,7 +17,7 @@ class IPsecManagerMock : public TdiIpsecManager {
 
   MOCK_METHOD(::util::Status, GetSpiData, (uint32 & fetched_spi));
 
-  MOCK_METHOD(::util::Status, WriteConfigSADBEntry,
+  MOCK_METHOD(::util::Status, WriteConfigSadbEntry,
               (const IPsecSadbConfigOp op_type, IPsecSADBConfig& msg));
 
   MOCK_METHOD(::util::Status, RegisterEventNotifyWriter,
@@ -25,7 +25,7 @@ class IPsecManagerMock : public TdiIpsecManager {
 
   MOCK_METHOD(::util::Status, UnregisterEventNotifyWriter, ());
 
-  MOCK_METHOD(void, SendSADExpireNotificationEvent,
+  MOCK_METHOD(void, SendSadExpireNotificationEvent,
               (uint32_t dev_id, uint32_t ipsec_sa_spi,
                bool soft_lifetime_expire, uint8_t ipsec_sa_protocol,
                char* ipsec_sa_dest_address, bool ipv4));

@@ -43,7 +43,7 @@ static void ipsec_notification_callback(uint32_t dev_id, uint32_t ipsec_sa_spi,
                                         char* ipsec_sa_dest_address, bool ipv4,
                                         void* cookie) {
   auto ipsec_mgr_hdl = reinterpret_cast<TdiIpsecManager*>(cookie);
-  ipsec_mgr_hdl->SendSADExpireNotificationEvent(
+  ipsec_mgr_hdl->SendSadExpireNotificationEvent(
       dev_id, ipsec_sa_spi, soft_lifetime_expire, ipsec_sa_protocol,
       ipsec_sa_dest_address, ipv4);
 }
@@ -94,7 +94,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   return ::util::OkStatus();
 }
 
-::util::Status TdiIpsecManager::WriteConfigSADBEntry(
+::util::Status TdiIpsecManager::WriteConfigSadbEntry(
     const IPsecSadbConfigOp op_type, IPsecSADBConfig& msg) {
   // TODO (5abeel): Initializing the notification callback on FetchSPI because
   // TDI layer is not initialized until 'set-pipe' is completed by user via P4RT
@@ -127,7 +127,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   return ::util::OkStatus();
 }
 
-void TdiIpsecManager::SendSADExpireNotificationEvent(
+void TdiIpsecManager::SendSadExpireNotificationEvent(
     uint32_t dev_id, uint32_t ipsec_sa_spi, bool soft_lifetime_expire,
     uint8_t ipsec_sa_protocol, char* ipsec_sa_dest_address, bool ipv4) {
   absl::ReaderMutexLock l(&gnmi_event_lock_);
