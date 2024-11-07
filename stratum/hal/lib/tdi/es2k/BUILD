@@ -350,6 +350,16 @@ stratum_cc_library(
     ],
 )
 
+stratum_cc_library(
+    name = "es2k_extern_manager_mock",
+    testonly = yes,
+    hdrs = ["es2k_extern_manager_mock.h"],
+    deps = [
+        ":es2k_extern_manager",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 stratum_cc_test(
     name = "es2k_extern_manager_test",
     srcs = ["es2k_extern_manager_test.cc"],
@@ -375,5 +385,15 @@ stratum_cc_library(
         "//stratum/hal/lib/tdi:tdi_pkt_mod_meter_config",
         "//stratum/hal/lib/tdi:tdi_table_annex",
         "@com_github_p4lang_p4runtime//:idpf_p4info_cc_proto",
+    ],
+)
+
+stratum_cc_library(
+    name = "es2k_table_annex_mock",
+    testonly = yes,
+    hdrs = ["es2k_table_annex_mock.h"],
+    deps = [
+        ":es2k_table_annex",
+        "@com_google_googletest//:gtest",
     ],
 )
