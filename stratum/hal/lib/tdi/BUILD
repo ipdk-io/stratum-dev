@@ -709,6 +709,17 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "tdi_hal_flags",
+    srcs = ["tdi_hal_flags.cc"],
+    hdrs = ["tdi_hal_flags.h"],
+    deps = [
+        "//stratum/lib:constants",
+        "@com_github_gflags_gflags//:gflags",
+        "@com_github_google_glog//:glog",
+    ],
+)
+
+stratum_cc_library(
     name = "tdi_pkt_mod_meter_config",
     srcs = ["tdi_pkt_mod_meter_config.cc"],
     hdrs = ["tdi_pkt_mod_meter_config.h"],
