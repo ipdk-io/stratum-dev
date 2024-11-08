@@ -4,8 +4,6 @@
 #ifndef STRATUM_HAL_LIB_TDI_TDI_TARGET_FACTORY_H_
 #define STRATUM_HAL_LIB_TDI_TDI_TARGET_FACTORY_H_
 
-#include <memory>
-
 #include "stratum/hal/lib/tdi/tdi_extern_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_annex.h"
 
@@ -32,13 +30,8 @@ class TdiTargetFactory {
   TdiTargetFactory() {}
   virtual ~TdiTargetFactory() = default;
 
-  virtual std::unique_ptr<TdiExternManager> CreateTdiExternManager() {
-    return TdiExternManager::CreateInstance();
-  }
-
-  virtual std::unique_ptr<TdiTableAnnex> CreateTdiTableAnnex() {
-    return TdiTableAnnex::CreateInstance();
-  }
+  virtual std::unique_ptr<TdiExternManager> CreateTdiExternManager();
+  virtual std::unique_ptr<TdiTableAnnex> CreateTdiTableAnnex();
 };
 
 }  // namespace tdi

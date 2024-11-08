@@ -4,8 +4,6 @@
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_ES2K_TARGET_FACTORY_H_
 #define STRATUM_HAL_LIB_TDI_ES2K_ES2K_TARGET_FACTORY_H_
 
-#include <memory>
-
 #include "stratum/hal/lib/tdi/es2k/es2k_extern_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_table_annex.h"
 #include "stratum/hal/lib/tdi/tdi_target_factory.h"
