@@ -332,6 +332,16 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "es2k_target_factory_mock",
+    testonly = True,
+    hdrs = ["es2k_target_factory_mock.h"],
+    deps = [
+        ":es2k_target_factory",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+stratum_cc_library(
     name = "es2k_extern_manager",
     srcs = ["es2k_extern_manager.cc"],
     hdrs = ["es2k_extern_manager.h"],
@@ -352,7 +362,7 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_extern_manager_mock",
-    testonly = yes,
+    testonly = True,
     hdrs = ["es2k_extern_manager_mock.h"],
     deps = [
         ":es2k_extern_manager",
@@ -390,7 +400,7 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "es2k_table_annex_mock",
-    testonly = yes,
+    testonly = True,
     hdrs = ["es2k_table_annex_mock.h"],
     deps = [
         ":es2k_table_annex",

@@ -321,7 +321,6 @@ stratum_cc_library(
 stratum_cc_test(
     name = "tdi_table_manager_test",
     srcs = ["tdi_table_manager_test.cc"],
-#   tags = ["broken"],  # disabled 3 test cases
     deps = [
         ":tdi_sde_mock",
         ":tdi_table_manager",
@@ -746,10 +745,21 @@ stratum_cc_library(
 
 stratum_cc_library(
     name = "tdi_target_factory",
+    srcs = ["tdi_target_factory.cc"],
     hdrs = ["tdi_target_factory.h"],
     deps = [
         ":tdi_extern_manager",
         ":tdi_table_annex",
         "@com_google_absl//absl/memory",
+    ],
+)
+
+stratum_cc_library(
+    name = "tdi_target_factory_mock",
+    testonly = True,
+    hdrs = ["tdi_target_factory_mock.h"],
+    deps = [
+        ":tdi_target_factory",
+        "@com_google_googletest//:gtest",
     ],
 )
