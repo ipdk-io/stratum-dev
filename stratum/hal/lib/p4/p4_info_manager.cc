@@ -340,6 +340,13 @@ void P4InfoManager::DumpNamesToIDs() const {
   digest_map_.DumpNamesToIDs();
 }
 
+void P4InfoManager::DumpIDsToResourceTypes() const {
+  for (auto iter : id_to_resource_type_map_) {
+    LOG(INFO) << "ID " << iter.first << ": " << PrintP4ObjectID(iter.first)
+              << " has resource_type " << iter.second;
+  }
+}
+
 ::util::Status P4InfoManager::VerifyRequiredObjects() {
   if (FLAGS_skip_p4_min_objects_check) return ::util::OkStatus();
 
