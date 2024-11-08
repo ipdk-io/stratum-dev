@@ -89,6 +89,7 @@ class P4InfoManagerMock : public P4InfoManager {
       ::util::StatusOr<P4Annotation>(const std::string& p4_object_name));
 
   MOCK_CONST_METHOD0(DumpNamesToIDs, void());
+  MOCK_CONST_METHOD0(DumpIDsToResourceTypes, void());
   MOCK_CONST_METHOD0(p4_info, const ::p4::config::v1::P4Info&());
   MOCK_METHOD0(VerifyRequiredObjects, ::util::Status());
 };
