@@ -264,7 +264,6 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
       session_mock, ::p4::v1::Update::MODIFY, entry));
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
 TEST_F(TdiTableManagerTest, WriteIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   constexpr int kP4MeterId = 55555;
