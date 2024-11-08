@@ -265,7 +265,7 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
 }
 
 // See https://github.com/ipdk-io/stratum-dev/issues/306.
-TEST_F(TdiTableManagerTest, DISABLED_WriteIndirectMeterEntryTest) {
+TEST_F(TdiTableManagerTest, WriteIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   constexpr int kP4MeterId = 55555;
   constexpr int kTdiRtTableId = 11111;
