@@ -324,7 +324,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryModifyWithoutMeterId) {
   EXPECT_THAT(ret.error_message(), HasSubstr("Missing meter id"));
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
+// See https://github.com/ipdk-io/stratum-dev/issues/314.
 TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
@@ -357,7 +357,7 @@ TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
   EXPECT_EQ(ERR_INVALID_PARAM, ret.error_code());
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
+// See https://github.com/ipdk-io/stratum-dev/issues/315.
 TEST_F(TdiTableManagerTest, DISABLED_ReadSingleIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
