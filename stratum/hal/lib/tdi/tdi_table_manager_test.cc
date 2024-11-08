@@ -264,20 +264,7 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
       session_mock, ::p4::v1::Update::MODIFY, entry));
 }
 
-// clang-format off
-//[ RUN      ] TdiTableManagerTest.WriteIndirectMeterEntryTest
-//E20241008 22:01:52.255509    12 p4_info_manager.cc:297] StratumErrorSpace::ERR_INVALID_P4_INFO: P4Info ID UNSPECIFIED/0x2b67 (0x2b67) is not found
-//E20241008 22:01:52.255726    12 tdi_table_manager.cc:1257] Return Error: p4_info_manager_->FindResourceTypeByID(meter_id) at stratum/hal/lib/tdi/tdi_table_manager.cc:1257
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:294: Failure
-//Value of: tdi_table_manager_->WriteMeterEntry( session_mock, ::p4::v1::Update::MODIFY, entry)
-//Expected: is OK
-//  Actual: StratumErrorSpace::ERR_INVALID_P4_INFO: P4Info ID UNSPECIFIED/0x2b67 (0x2b67) is not found (of type util::Status)
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:274: Failure
-//Actual function call count doesn't match EXPECT_CALL(*tdi_sde_wrapper_mock_, WriteIndirectMeter(kDevice1, _, kTdiRtTableId, Optional(kMeterIndex), false, 1, 100, 2, 200))...
-//         Expected: to be called once
-//           Actual: never called - unsatisfied and active
-//[  FAILED  ] TdiTableManagerTest.WriteIndirectMeterEntryTest (1 ms)
-// clang-format on
+// See https://github.com/ipdk-io/stratum-dev/issues/306.
 TEST_F(TdiTableManagerTest, DISABLED_WriteIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   constexpr int kP4MeterId = 55555;
@@ -338,18 +325,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryModifyWithoutMeterId) {
   EXPECT_THAT(ret.error_message(), HasSubstr("Missing meter id"));
 }
 
-// clang-format off
-//[ RUN      ] TdiTableManagerTest.RejectMeterEntryInsertDelete
-//E20241008 22:00:27.954881    12 tdi_table_manager.cc:1246] StratumErrorSpace::ERR_INVALID_PARAM: RET_CHECK failure (stratum/hal/lib/tdi/tdi_table_manager.cc:1246) 'type == ::p4::v1::Update::MODIFY || type == ::p4::v1::Update::DELETE' is false. Update type of RegisterEntry meter_id: 55555 index { index: 12345 } config { cir: 1 cburst: 100 pir: 2 pburst: 200 } must be MODIFY or DELETE.
-//E20241008 22:00:27.954906    12 tdi_table_manager.cc:1254] Return Error: tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()) at stratum/hal/lib/tdi/tdi_table_manager.cc:1254
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:353: Failure
-//Expected equality of these values:
-//  ERR_INVALID_PARAM
-//    Which is: 503
-//  ret.error_code()
-//    Which is: 2
-//[  FAILED  ] TdiTableManagerTest.RejectMeterEntryInsertDelete (0 ms)
-// clang-format on
+// See https://github.com/ipdk-io/stratum-dev/issues/306.
 TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
@@ -382,24 +358,7 @@ TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
   EXPECT_EQ(ERR_INVALID_PARAM, ret.error_code());
 }
 
-// clang-format off
-//[ RUN      ] TdiTableManagerTest.ReadSingleIndirectMeterEntryTest
-//E20241008 21:45:59.952771    12 p4_info_manager.cc:297] StratumErrorSpace::ERR_INVALID_P4_INFO: P4Info ID UNSPECIFIED/0x2b67 (0x2b67) is not found
-//E20241008 21:45:59.952782    12 tdi_table_manager.cc:1081] Return Error: p4_info_manager_->FindResourceTypeByID(table_id) at stratum/hal/lib/tdi/tdi_table_manager.cc:1081
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:411: Failure
-//Value of: tdi_table_manager_->ReadMeterEntry(session_mock, entry, &writer_mock)
-//Expected: is OK
-//  Actual: StratumErrorSpace::ERR_INVALID_P4_INFO: P4Info ID UNSPECIFIED/0x2b67 (0x2b67) is not found (of type util::Status)
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:399: Failure
-//Actual function call count doesn't match EXPECT_CALL(writer_mock, Write(EqualsProto(resp)))...
-//         Expected: to be called once
-//           Actual: never called - unsatisfied and active
-//stratum/hal/lib/tdi/tdi_table_manager_test.cc:374: Failure
-//Actual function call count doesn't match EXPECT_CALL(*tdi_sde_wrapper_mock_, ReadIndirectMeters(kDevice1, _, kTdiRtTableId, Optional(kMeterIndex), _, _, _, _, _, _))...
-//         Expected: to be called once
-//           Actual: never called - unsatisfied and active
-//[  FAILED  ] TdiTableManagerTest.ReadSingleIndirectMeterEntryTest (0 ms)
-// clang-format on
+// See https://github.com/ipdk-io/stratum-dev/issues/306.
 TEST_F(TdiTableManagerTest, DISABLED_ReadSingleIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
