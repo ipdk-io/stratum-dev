@@ -977,8 +977,8 @@ TdiTableManager::ReadDirectMeterEntry(
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
-  ASSIGN_OR_RETURN(auto resource_type,
-                   p4_info_manager_->FindResourceTypeByID(table_id));
+  ASSIGN_OR_RETURN(auto resource_type, p4_info_manager_->FindResourceTypeByID(
+                                           meter_entry.meter_id()));
 
   if (resource_type == "Meter") {
     {

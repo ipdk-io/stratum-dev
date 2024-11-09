@@ -358,8 +358,7 @@ TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
   EXPECT_EQ(ERR_INVALID_PARAM, ret.error_code());
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
-TEST_F(TdiTableManagerTest, DISABLED_ReadSingleIndirectMeterEntryTest) {
+TEST_F(TdiTableManagerTest, ReadSingleIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
   constexpr int kP4MeterId = 55555;
