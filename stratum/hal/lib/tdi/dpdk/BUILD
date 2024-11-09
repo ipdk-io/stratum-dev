@@ -2,7 +2,7 @@
 
 # Copyright 2018 Google LLC
 # Copyright 2018-present Open Networking Foundation
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 load(
@@ -235,6 +235,7 @@ stratum_cc_library(
         "//stratum/hal/lib/common:p4_service",
         "//stratum/hal/lib/common:switch_interface",
         "//stratum/hal/lib/common:target_options",
+        "//stratum/hal/lib/tdi:tdi_hal_flags",
         "//stratum/lib:constants",
         "//stratum/lib:macros",
         "//stratum/lib:utils",

@@ -17,6 +17,8 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_get_meter_units.h
     tdi_global_vars.cc
     tdi_global_vars.h
+    tdi_hal_flags.cc
+    tdi_hal_flags.h
     tdi_id_mapper.cc
     tdi_id_mapper.h
     tdi_node.cc
@@ -53,6 +55,7 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_table_annex.h
     tdi_table_manager.cc
     tdi_table_manager.h
+    tdi_target_factory.cc
     tdi_target_factory.h
     utils.cc
     utils.h

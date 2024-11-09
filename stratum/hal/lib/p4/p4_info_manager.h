@@ -158,6 +158,10 @@ class P4InfoManager {
   // entities.
   virtual void DumpNamesToIDs() const;
 
+  // Outputs LOG messages with ID to resource_type translations for all
+  // p4_info_ entities.
+  virtual void DumpIDsToResourceTypes() const;
+
   // Accesses the P4Info - virtual for mock access.
   virtual const ::p4::config::v1::P4Info& p4_info() const { return p4_info_; }
 
