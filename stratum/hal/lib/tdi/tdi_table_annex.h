@@ -65,7 +65,7 @@ class TdiTableAnnex {
   virtual ::util::Status WritePktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) {
+      const ::p4::v1::MeterEntry& meter_entry, uint32 meter_rt_id) {
     return ::util::OkStatus();
   }
 };

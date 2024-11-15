@@ -60,7 +60,7 @@ class Es2kTableAnnex : public TdiTableAnnex {
   ::util::Status WritePktModMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::MeterEntry& meter_entry, uint32 meter_id) override;
+      const ::p4::v1::MeterEntry& meter_entry, uint32 meter_rt_id) override;
 
  protected:
   Es2kExternManager* es2k_extern_manager_;
