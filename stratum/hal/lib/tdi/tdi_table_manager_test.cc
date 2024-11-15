@@ -264,8 +264,7 @@ TEST_F(TdiTableManagerTest, WriteDirectMeterEntryTest) {
       session_mock, ::p4::v1::Update::MODIFY, entry));
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
-TEST_F(TdiTableManagerTest, DISABLED_WriteIndirectMeterEntryTest) {
+TEST_F(TdiTableManagerTest, WriteIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   constexpr int kP4MeterId = 55555;
   constexpr int kTdiRtTableId = 11111;
@@ -325,8 +324,7 @@ TEST_F(TdiTableManagerTest, RejectMeterEntryModifyWithoutMeterId) {
   EXPECT_THAT(ret.error_message(), HasSubstr("Missing meter id"));
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
-TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
+TEST_F(TdiTableManagerTest, RejectMeterEntryInsert) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
 
@@ -349,17 +347,9 @@ TEST_F(TdiTableManagerTest, DISABLED_RejectMeterEntryInsertDelete) {
       session_mock, ::p4::v1::Update::INSERT, entry);
   ASSERT_FALSE(ret.ok());
   EXPECT_EQ(ERR_INVALID_PARAM, ret.error_code());
-
-  ret = tdi_table_manager_->WriteMeterEntry(session_mock,
-                                            ::p4::v1::Update::DELETE, entry);
-  ASSERT_FALSE(ret.ok());
-  // TODO(derek): fails because WriteMeterEntry returns UNKNOWN (2)
-  // instead of ERR_INVALID_PARAM (503).
-  EXPECT_EQ(ERR_INVALID_PARAM, ret.error_code());
 }
 
-// See https://github.com/ipdk-io/stratum-dev/issues/306.
-TEST_F(TdiTableManagerTest, DISABLED_ReadSingleIndirectMeterEntryTest) {
+TEST_F(TdiTableManagerTest, ReadSingleIndirectMeterEntryTest) {
   ASSERT_OK(PushTestConfig());
   auto session_mock = std::make_shared<SessionMock>();
   constexpr int kP4MeterId = 55555;

@@ -107,7 +107,7 @@ namespace tdi {
 ::util::Status Es2kTableAnnex::WritePktModMeterEntry(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     const ::p4::v1::Update::Type type, const ::p4::v1::MeterEntry& meter_entry,
-    uint32 meter_id) {
+    uint32 meter_rt_id) {
   bool units_in_packets;
   {
     absl::ReaderMutexLock l(lock_);
@@ -130,12 +130,12 @@ namespace tdi {
     config.isPktModMeter = units_in_packets;
 
     RETURN_IF_ERROR(tdi_sde_interface_->WritePktModMeter(
-        device_, session, meter_id, meter_index, config));
+        device_, session, meter_rt_id, meter_index, config));
   }
 
   if (type == ::p4::v1::Update::DELETE) {
     RETURN_IF_ERROR(tdi_sde_interface_->DeletePktModMeterConfig(
-        device_, session, meter_id, meter_index));
+        device_, session, meter_rt_id, meter_index));
   }
   return ::util::OkStatus();
 }

@@ -969,8 +969,8 @@ TdiTableManager::ReadDirectMeterEntry(
   ASSIGN_OR_RETURN(uint32 table_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
-  ASSIGN_OR_RETURN(auto resource_type,
-                   p4_info_manager_->FindResourceTypeByID(table_id));
+  ASSIGN_OR_RETURN(auto resource_type, p4_info_manager_->FindResourceTypeByID(
+                                           meter_entry.meter_id()));
 
   if (resource_type == "Meter") {
     {
@@ -1036,11 +1036,11 @@ TdiTableManager::ReadDirectMeterEntry(
       << "Missing meter id in MeterEntry " << meter_entry.ShortDebugString()
       << ".";
 
-  ASSIGN_OR_RETURN(uint32 meter_id,
+  ASSIGN_OR_RETURN(uint32 meter_rt_id,
                    tdi_sde_interface_->GetTdiRtId(meter_entry.meter_id()));
 
-  ASSIGN_OR_RETURN(auto resource_type,
-                   p4_info_manager_->FindResourceTypeByID(meter_id));
+  ASSIGN_OR_RETURN(auto resource_type, p4_info_manager_->FindResourceTypeByID(
+                                           meter_entry.meter_id()));
 
   if (resource_type == "Meter" && meter_entry.has_config()) {
     bool units_in_packets;  // or bytes
@@ -1059,14 +1059,14 @@ TdiTableManager::ReadDirectMeterEntry(
     }
 
     RETURN_IF_ERROR(tdi_sde_interface_->WriteIndirectMeter(
-        device_, session, meter_id, meter_index, units_in_packets,
+        device_, session, meter_rt_id, meter_index, units_in_packets,
         meter_entry.config().cir(), meter_entry.config().cburst(),
         meter_entry.config().pir(), meter_entry.config().pburst()));
   }
 
   if (resource_type == "PacketModMeter") {
     RETURN_IF_ERROR(tdi_table_annex_->WritePktModMeterEntry(
-        session, type, meter_entry, meter_id));
+        session, type, meter_entry, meter_rt_id));
   }
 
   return ::util::OkStatus();

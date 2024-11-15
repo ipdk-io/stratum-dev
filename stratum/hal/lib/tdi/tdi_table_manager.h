@@ -106,6 +106,12 @@ class TdiTableManager {
       OperationMode mode, TdiSdeInterface* tdi_sde_interface,
       TdiTargetFactory& tdi_target_factory, int device);
 
+  // Returns a read-only pointer to the P4InfoManager object.
+  // For medicinal purposes only.
+  const P4InfoManager* GetP4InfoManager() const {
+    return p4_info_manager_.get();
+  }
+
  private:
   // Private constructor, we can create the instance by using `CreateInstance`
   // function only.
