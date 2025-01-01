@@ -33,7 +33,7 @@ jobs:
   # dpdk_build_and_test
   #---------------------------------------------------------------------
   dpdk_build_and_test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Clone stratum repository
@@ -73,7 +73,7 @@ jobs:
   # bcm_unit_tests
   #---------------------------------------------------------------------
   bcm_unit_tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Clone stratum repository
@@ -99,7 +99,7 @@ jobs:
   # cdlang_tests (gNMI)
   #---------------------------------------------------------------------
   cdlang_tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Clone stratum repository
