@@ -18,10 +18,10 @@ target_link_libraries(gnmi_cli PUBLIC
     gflags::gflags_shared
     gRPC::grpc
     gRPC::grpc++
-    gRPC::re2
     protobuf::libprotobuf
     pthread
     google_rpc_proto
+    re2::re2
 )
 
 if(HAVE_POSIX_AIO)
