@@ -1564,6 +1564,15 @@ message IPsecOffloadInfo {
   int32 spi = 1;
 }
 
+// VirtualPortInfo is used in DataRequest and DataResponse to retrieve the
+// values from target.
+message VirtualPortInfo {
+  uint32 global_resource_id = 1;
+  uint32 vsi = 2;
+  OperStatus oper_status = 3;
+}
+
+
 // DataRequest is a message used internally to request data about a component
 // or a set of components through SwitchInterface. It is specifically used in
 // ConfigMonitoringService, as part of gNMI Get/Subscribe RPC implementation.
@@ -1618,6 +1627,8 @@ message DataRequest {
       Port sdn_port_id = 22;
       Port target_dp_id = 23;
       IPsecOffloadInfo ipsec_offload_info = 24;
+      VirtualPortInfo vport_vsi = 25;
+      VirtualPortInfo vport_oper_status = 26;
     }
   }
   repeated Request requests = 1;
@@ -1664,6 +1675,8 @@ message DataResponse {
     TargetDatapathId target_dp_id = 34;
     PacketDirValue packet_dir = 35;
     IPsecOffloadInfo ipsec_offload_info = 36;
+    VirtualPortInfo vport_vsi = 37;
+    VirtualPortInfo vport_oper_status = 38;
   }
 }
 

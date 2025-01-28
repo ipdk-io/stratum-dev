@@ -24,7 +24,6 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////
 // /virtual-ports/virtual-port/state/vsi
 void SetUpVirtualPortFetchVSI(TreeNode* node, YangParseTree* tree) {
-
   auto poll_functor = [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                              GnmiSubscribeStream* stream) {
     // Create a data retrieval request.

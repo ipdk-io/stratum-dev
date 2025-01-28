@@ -244,6 +244,17 @@ Es2kSwitch::~Es2kSwitch() {}
         }
         break;
       }
+      // VirtualPort data request
+      case DataRequest::Request::kVportVsi:
+      case DataRequest::Request::kVportOperStatus: {
+//        auto vport_data = chassis_manager_->GetPortData(req);
+//        if (!vport_data.ok()) {
+//          status.Update(vport_data.status());
+//        } else {
+//          resp = vport_data.ConsumeValueOrDie();
+//        }
+        break;
+      }
       default:
         status =
             MAKE_ERROR(ERR_UNIMPLEMENTED)
