@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_virtual_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
@@ -38,7 +39,8 @@ constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;
 constexpr int Es2kChassisManager::kMaxXcvrEventDepth;
 
 Es2kChassisManager::Es2kChassisManager(OperationMode mode,
-                                       Es2kPortManager* es2k_port_manager)
+                                       Es2kPortManager* es2k_port_manager,
+                                       Es2kVirtualPortManager* es2k_virtual_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -52,7 +54,8 @@ Es2kChassisManager::Es2kChassisManager(OperationMode mode,
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      es2k_port_manager_(ABSL_DIE_IF_NULL(es2k_port_manager)) {}
+      es2k_port_manager_(ABSL_DIE_IF_NULL(es2k_port_manager)),
+      es2k_virtual_port_manager_(ABSL_DIE_IF_NULL(es2k_virtual_port_manager)) {}
 
 Es2kChassisManager::Es2kChassisManager()
     : mode_(OPERATION_MODE_STANDALONE),
@@ -68,7 +71,8 @@ Es2kChassisManager::Es2kChassisManager()
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      es2k_port_manager_(nullptr) {}
+      es2k_port_manager_(nullptr),
+      es2k_virtual_port_manager_(nullptr) {}
 
 Es2kChassisManager::~Es2kChassisManager() = default;
 
@@ -863,8 +867,12 @@ Es2kChassisManager::GetNodeIdToDeviceMap() const {
 }
 
 std::unique_ptr<Es2kChassisManager> Es2kChassisManager::CreateInstance(
-    OperationMode mode, Es2kPortManager* es2k_port_manager) {
-  return absl::WrapUnique(new Es2kChassisManager(mode, es2k_port_manager));
+    OperationMode mode,
+    Es2kPortManager* es2k_port_manager,
+    Es2kVirtualPortManager* es2k_virtual_port_manager) {
+  return absl::WrapUnique(new Es2kChassisManager(mode,
+                                                 es2k_port_manager,
+                                                 es2k_virtual_port_manager));
 }
 
 void Es2kChassisManager::SendPortOperStateGnmiEvent(

@@ -1,6 +1,6 @@
 # Build file for //stratum/hal/lib/tdi/es2k
 #
-# Copyright 2022-2023 Intel Corporation
+# Copyright 2022-2023,2025 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -24,4 +24,6 @@ target_sources(stratum_tdi_target_o PRIVATE
     es2k_sde_wrapper.cc
     es2k_switch.cc
     es2k_switch.h
+    es2k_virtual_port_manager.cc
+    es2k_virtual_port_manager.h
 )

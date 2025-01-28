@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2024 Intel Corporation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <exception>
@@ -31,6 +31,7 @@
 #include "stratum/hal/lib/tdi/tdi_packetio_manager.h"
 #include "stratum/hal/lib/tdi/tdi_pre_manager.h"
 #include "stratum/hal/lib/tdi/tdi_table_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_virtual_port_manager.h"
 #include "stratum/lib/macros.h"
 #include "stratum/lib/security/auth_policy_checker.h"
 #include "stratum/lib/security/credentials_manager.h"
@@ -142,7 +143,11 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto port_manager = Es2kPortManager::CreateSingleton();
 
-  auto chassis_manager = Es2kChassisManager::CreateInstance(mode, port_manager);
+  auto virtual_port_manager = Es2kVirtualPortManager::CreateSingleton();
+
+  auto chassis_manager = Es2kChassisManager::CreateInstance(mode,
+                                                            port_manager,
+                                                            virtual_port_manager);
 
   auto ipsec_manager = TdiIpsecManager::CreateInstance(
       sde_wrapper, fixed_function_manager.get());
