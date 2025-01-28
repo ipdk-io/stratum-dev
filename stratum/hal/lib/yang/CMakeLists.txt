@@ -1,6 +1,6 @@
 # Build file for //stratum/hal/lib/yang
 #
-# Copyright 2022-2024 Intel Corporation
+# Copyright 2022-2025 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -25,6 +25,7 @@ add_library(stratum_yang_parse_tree_o OBJECT
     yang_parse_tree_paths.h
     yang_parse_tree_singleton.cc
     yang_parse_tree_system.cc
+    yang_parse_tree_virtual_port.cc
 )
 
 if(NOT DPDK_TARGET)

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_H_
@@ -461,6 +462,9 @@ class YangParseTree {
 
   // Add supported leaf handles for IPsec.
   void AddSubtreeIPsec() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+
+  // Add supported leaf handles for VirtualPort.
+  void AddSubtreeVirtualPort() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Configure the root element.
   void AddRoot() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
