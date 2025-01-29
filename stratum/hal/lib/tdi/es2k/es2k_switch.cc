@@ -246,13 +246,14 @@ Es2kSwitch::~Es2kSwitch() {}
       }
       // VirtualPort data request
       case DataRequest::Request::kVportVsi:
-      case DataRequest::Request::kVportOperStatus: {
-//        auto vport_data = chassis_manager_->GetPortData(req);
-//        if (!vport_data.ok()) {
-//          status.Update(vport_data.status());
-//        } else {
-//          resp = vport_data.ConsumeValueOrDie();
-//        }
+      case DataRequest::Request::kVportOperStatus:
+      case DataRequest::Request::kVportMacAddress: {
+        auto vport_data = chassis_manager_->GetVirtualPortData(req);
+        if (!vport_data.ok()) {
+          status.Update(vport_data.status());
+        } else {
+          resp = vport_data.ConsumeValueOrDie();
+        }
         break;
       }
       default:

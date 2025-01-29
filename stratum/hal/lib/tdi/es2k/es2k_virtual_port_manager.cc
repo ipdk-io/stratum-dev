@@ -47,9 +47,11 @@ ipu_status_t sde_port_status_callback(ipu_dev_id_t device,
                                       ipu_dev_port_t dev_port, bool up,
                                       void* cookie) {
   absl::Time timestamp = absl::Now();
-  Es2kVirtualPortManager* es2k_port_manager = Es2kVirtualPortManager::GetSingleton();
+  Es2kVirtualPortManager* es2k_port_manager =
+      Es2kVirtualPortManager::GetSingleton();
   if (!es2k_port_manager) {
-    LOG(ERROR) << "Es2kVirtualPortManager singleton instance is not initialized.";
+    LOG(ERROR)
+        << "Es2kVirtualPortManager singleton instance is not initialized.";
     return IPU_INTERNAL_ERROR;
   }
   // Forward the event.
@@ -75,21 +77,30 @@ Es2kVirtualPortManager* Es2kVirtualPortManager::GetSingleton() {
   return singleton_;
 }
 
-::util::StatusOr<PortState> Es2kVirtualPortManager::GetPortState(int device,
-                                                          int port) {
-  // Unsupported. Returns PORT_STATE_DOWN if called.
+::util::StatusOr<uint32> Es2kVirtualPortManager::GetVSI(
+    uint32 global_resource_id) {
+  // TODO: Retrieve vport VSI from SDE
+  uint32 vsi = 432;
+  return vsi;
+}
+
+::util::StatusOr<PortState> Es2kVirtualPortManager::GetPortState(
+    uint32 global_resource_id) {
+  // TODO: Retrieve vport oper-status from SDE
   return PORT_STATE_DOWN;
 }
 
-::util::Status Es2kVirtualPortManager::GetPortCounters(int device, int port,
-                                                PortCounters* counters) {
-  uint64_t stats[TDI_PORT_NUM_COUNTERS] = {0};
-
-  return ::util::OkStatus();
+// Stratum's common.proto uses uint64 for MacAddress
+::util::StatusOr<uint64> Es2kVirtualPortManager::GetMacAddress(
+    uint32 global_resource_id) {
+  // TODO: Retrieve vport mac-address from SDE
+  uint64 kDummyMacAddress = 0x112233445566ull;
+  return kDummyMacAddress;
 }
 
-::util::Status Es2kVirtualPortManager::OnPortStatusEvent(int device, int port, bool up,
-                                                  absl::Time timestamp) {
+::util::Status Es2kVirtualPortManager::OnPortStatusEvent(int device, int port,
+                                                         bool up,
+                                                         absl::Time timestamp) {
   // Create PortStatusEvent message.
   PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
   PortStatusEvent event = {device, port, state, timestamp};
@@ -101,96 +112,6 @@ Es2kVirtualPortManager* Es2kVirtualPortManager::GetSingleton() {
     }
     return port_status_event_writer_->Write(event, kWriteTimeout);
   }
-}
-
-::util::Status Es2kVirtualPortManager::GetPortInfo(int device, int port,
-                                            TargetDatapathId* target_dp_id) {
-  return ::util::OkStatus();
-}
-
-// TODO: Check with Sandeep which Add port is applicable or do we really
-// need it since we don't add port for MEV
-::util::Status Es2kVirtualPortManager::AddPort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::AddPort(int device, int port, uint64 speed_bps,
-                                        FecMode fec_mode) {
-  auto port_attrs = absl::make_unique<port_attributes_t>();
-  RETURN_IF_TDI_ERROR(ipu_pal_port_add(static_cast<ipu_dev_id_t>(device),
-                                       static_cast<ipu_dev_port_t>(port),
-                                       port_attrs.get()));
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::DeletePort(int device, int port) {
-  RETURN_IF_TDI_ERROR(ipu_pal_port_del(static_cast<ipu_dev_id_t>(device),
-                                       static_cast<ipu_dev_port_t>(port)));
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::EnablePort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::DisablePort(int device, int port) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::EnablePortShaping(int device, int port,
-                                                  TriState enable) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::SetPortAutonegPolicy(int device, int port,
-                                                     TriState autoneg) {
-  return ::util::OkStatus();
-}
-
-::util::Status Es2kVirtualPortManager::SetPortMtu(int device, int port, int32 mtu) {
-  return ::util::OkStatus();
-}
-
-bool Es2kVirtualPortManager::IsValidPort(int device, int port) { return IPU_SUCCESS; }
-
-::util::Status Es2kVirtualPortManager::SetPortLoopbackMode(
-    int device, int port, LoopbackState loopback_mode) {
-  if (loopback_mode == LOOPBACK_STATE_UNKNOWN) {
-    // Do nothing if we try to set loopback mode to the default one (UNKNOWN).
-    return ::util::OkStatus();
-  }
-  return ::util::OkStatus();
-}
-
-// TODO: Check with Sandeep: Is this required?
-::util::StatusOr<uint32> Es2kVirtualPortManager::GetPortIdFromPortKey(
-    int device, const PortKey& port_key) {
-  const int port = port_key.port;
-  RET_CHECK(port >= 0) << "Port ID must be non-negative. Attempted to get port "
-                       << port << " on dev " << device << ".";
-
-  // PortKey uses three possible values for channel:
-  //     > 0: port is channelized (first channel is 1)
-  //     0: port is not channelized
-  //     < 0: port channel is not important (e.g. for port groups)
-  // BF SDK expects the first channel to be 0
-  //     Convert base-1 channel to base-0 channel if port is channelized
-  //     Otherwise, port is already 0 in the non-channelized case
-  const int channel =
-      (port_key.channel > 0) ? port_key.channel - 1 : port_key.channel;
-  RET_CHECK(channel >= 0) << "Channel must be set for port " << port
-                          << " on dev " << device << ".";
-
-  char port_string[MAX_PORT_HDL_STRING_LEN];
-  int r = snprintf(port_string, sizeof(port_string), "%d/%d", port, channel);
-  RET_CHECK(r > 0 && r < sizeof(port_string))
-      << "Failed to build port string for port " << port << " channel "
-      << channel << " on dev " << device << ".";
-
-  ipu_dev_port_t dev_port;
-  RETURN_IF_TDI_ERROR(ipu_pal_port_str_to_dev_port_map(
-      static_cast<ipu_dev_id_t>(device), port_string, &dev_port));
-  return static_cast<uint32>(dev_port);
 }
 
 }  // namespace tdi

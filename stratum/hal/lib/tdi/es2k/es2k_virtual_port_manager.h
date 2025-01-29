@@ -26,31 +26,10 @@ class Es2kVirtualPortManager : public TdiVirtualPortManager {
   Es2kVirtualPortManager() {}
   virtual ~Es2kVirtualPortManager() {}
 
-  // ---------- Common public methods ----------
-
-  ::util::Status GetPortInfo(int device, int port,
-                             TargetDatapathId* target_dp_id);
-  ::util::StatusOr<PortState> GetPortState(int device, int port);
-  ::util::Status GetPortCounters(int device, int port, PortCounters* counters);
-  ::util::StatusOr<uint32> GetPortIdFromPortKey(int device,
-                                                const PortKey& port_key);
-  bool IsValidPort(int device, int port);
-  ::util::Status AddPort(int device, int port);
-  ::util::Status DeletePort(int device, int port);
-  ::util::Status EnablePort(int device, int port);
-  ::util::Status DisablePort(int device, int port);
-
-  // ---------- ES2K-specific public methods ----------
-
-  virtual ::util::Status AddPort(int device, int port, uint64 speed_bps,
-                                 FecMode fec_mode);
-  virtual ::util::Status EnablePortShaping(int device, int port,
-                                           TriState enable);
-  virtual ::util::Status SetPortAutonegPolicy(int device, int port,
-                                              TriState autoneg);
-  virtual ::util::Status SetPortMtu(int device, int port, int32 mtu);
-  virtual ::util::Status SetPortLoopbackMode(int uint, int port,
-                                             LoopbackState loopback_mode);
+  ::util::StatusOr<uint32> GetVSI(uint32 global_resource_id);
+  ::util::StatusOr<PortState> GetPortState(uint32 global_resource_id);
+  // Stratum's common.proto uses uint64 for MacAddress
+  ::util::StatusOr<uint64> GetMacAddress(uint32 global_resource_id);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.

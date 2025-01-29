@@ -38,9 +38,9 @@ constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;
 /* static */
 constexpr int Es2kChassisManager::kMaxXcvrEventDepth;
 
-Es2kChassisManager::Es2kChassisManager(OperationMode mode,
-                                       Es2kPortManager* es2k_port_manager,
-                                       Es2kVirtualPortManager* es2k_virtual_port_manager)
+Es2kChassisManager::Es2kChassisManager(
+    OperationMode mode, Es2kPortManager* es2k_port_manager,
+    Es2kVirtualPortManager* es2k_virtual_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -720,6 +720,45 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return resp;
 }
 
+::util::StatusOr<DataResponse> Es2kChassisManager::GetVirtualPortData(
+    const DataRequest::Request& request) {
+  if (!initialized_) {
+    return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
+  }
+  DataResponse resp;
+  using Request = DataRequest::Request;
+  switch (request.request_case()) {
+    case Request::kVportVsi: {
+      ASSIGN_OR_RETURN(auto vsi, es2k_virtual_port_manager_->GetVSI(
+                                     request.vport_vsi().global_resource_id()));
+      resp.mutable_vport_vsi()->set_vsi(vsi);
+      break;
+    }
+    case Request::kVportOperStatus: {
+      ASSIGN_OR_RETURN(auto oper_status,
+                       es2k_virtual_port_manager_->GetPortState(
+                           request.vport_oper_status().global_resource_id()));
+      resp.mutable_oper_status()->set_state(oper_status);
+      break;
+    }
+    case Request::kVportMacAddress: {
+      ASSIGN_OR_RETURN(auto mac_address,
+                       es2k_virtual_port_manager_->GetMacAddress(
+                           request.vport_oper_status().global_resource_id()));
+      resp.mutable_mac_address()->set_mac_address(mac_address);
+      break;
+    }
+    default:
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "DataRequest field "
+             << request.descriptor()
+                    ->FindFieldByNumber(request.request_case())
+                    ->name()
+             << " is not supported yet!";
+  }
+  return resp;
+}
+
 ::util::StatusOr<PortState> Es2kChassisManager::GetPortState(
     uint64 node_id, uint32 port_id) const {
   if (!initialized_) {
@@ -867,11 +906,9 @@ Es2kChassisManager::GetNodeIdToDeviceMap() const {
 }
 
 std::unique_ptr<Es2kChassisManager> Es2kChassisManager::CreateInstance(
-    OperationMode mode,
-    Es2kPortManager* es2k_port_manager,
+    OperationMode mode, Es2kPortManager* es2k_port_manager,
     Es2kVirtualPortManager* es2k_virtual_port_manager) {
-  return absl::WrapUnique(new Es2kChassisManager(mode,
-                                                 es2k_port_manager,
+  return absl::WrapUnique(new Es2kChassisManager(mode, es2k_port_manager,
                                                  es2k_virtual_port_manager));
 }
 

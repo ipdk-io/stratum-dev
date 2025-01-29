@@ -1564,14 +1564,13 @@ message IPsecOffloadInfo {
   int32 spi = 1;
 }
 
-// VirtualPortInfo is used in DataRequest and DataResponse to retrieve the
-// values from target.
 message VirtualPortInfo {
-  uint32 global_resource_id = 1;
-  uint32 vsi = 2;
-  OperStatus oper_status = 3;
+  oneof value { 
+    uint32 vsi = 1;
+    // OperStatus oper_status = 2;
+    // MacAddress mac_address = 3;
+  }
 }
-
 
 // DataRequest is a message used internally to request data about a component
 // or a set of components through SwitchInterface. It is specifically used in
@@ -1603,6 +1602,11 @@ message DataRequest {
     message IPsecOffloadInfo {
       int32 spi = 1;
     }
+    // Defines data required to get vport.
+    // Req will only contain global_resource_id to index on
+    message VirtualPort {
+      uint32 global_resource_id = 1;
+    }
     oneof request {
       Port oper_status = 1;
       Port admin_status = 2;
@@ -1627,8 +1631,9 @@ message DataRequest {
       Port sdn_port_id = 22;
       Port target_dp_id = 23;
       IPsecOffloadInfo ipsec_offload_info = 24;
-      VirtualPortInfo vport_vsi = 25;
-      VirtualPortInfo vport_oper_status = 26;
+      VirtualPort vport_vsi = 25;
+      VirtualPort vport_oper_status = 26;
+      VirtualPort vport_mac_address = 27;
     }
   }
   repeated Request requests = 1;
@@ -1676,7 +1681,6 @@ message DataResponse {
     PacketDirValue packet_dir = 35;
     IPsecOffloadInfo ipsec_offload_info = 36;
     VirtualPortInfo vport_vsi = 37;
-    VirtualPortInfo vport_oper_status = 38;
   }
 }
 

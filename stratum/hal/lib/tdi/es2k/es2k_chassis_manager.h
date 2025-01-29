@@ -54,6 +54,9 @@ class Es2kChassisManager {
   virtual ::util::StatusOr<DataResponse> GetPortData(
       const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
 
+  virtual ::util::StatusOr<DataResponse> GetVirtualPortData(
+      const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
+
   virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(uint64 node_id,
                                                               uint32 port_id)
       SHARED_LOCKS_REQUIRED(chassis_lock);
@@ -73,8 +76,7 @@ class Es2kChassisManager {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kChassisManager> CreateInstance(
-      OperationMode mode,
-      Es2kPortManager* es2k_port_manager,
+      OperationMode mode, Es2kPortManager* es2k_port_manager,
       Es2kVirtualPortManager* es2k_virtual_port_manager);
 
   // Es2kChassisManager is neither copyable nor movable.
@@ -115,8 +117,7 @@ class Es2kChassisManager {
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  Es2kChassisManager(OperationMode mode,
-                     Es2kPortManager* es2k_port_manager,
+  Es2kChassisManager(OperationMode mode, Es2kPortManager* es2k_port_manager,
                      Es2kVirtualPortManager* es2k_virtual_port_manager);
 
   ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
@@ -259,8 +260,10 @@ class Es2kChassisManager {
   // Pointer to an Es2kPortManager implementation that wraps the SDE calls.
   Es2kPortManager* es2k_port_manager_;  // not owned by this class.
 
-  // Pointer to an Es2kVirtualPortManager implementation that wraps the SDE calls.
-  Es2kVirtualPortManager* es2k_virtual_port_manager_;  // not owned by this class.
+  // Pointer to an Es2kVirtualPortManager implementation that wraps the SDE
+  // calls.
+  Es2kVirtualPortManager*
+      es2k_virtual_port_manager_;  // not owned by this class.
 
   friend class Es2kChassisManagerTest;
 };

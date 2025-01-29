@@ -17,7 +17,8 @@ constexpr absl::Duration TdiVirtualPortManager::kWriteTimeout;
 
 ABSL_CONST_INIT absl::Mutex TdiVirtualPortManager::init_lock_(absl::kConstInit);
 
-TdiVirtualPortManager::TdiVirtualPortManager() : port_status_event_writer_(nullptr) {}
+TdiVirtualPortManager::TdiVirtualPortManager()
+    : port_status_event_writer_(nullptr) {}
 
 ::util::Status TdiVirtualPortManager::RegisterPortStatusEventWriter(
     std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) {

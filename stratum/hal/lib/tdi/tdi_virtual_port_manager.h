@@ -42,36 +42,6 @@ class TdiVirtualPortManager {
   // Unregisters the port status writer.
   virtual ::util::Status UnregisterPortStatusEventWriter();
 
-  // Gets Port Info
-  virtual ::util::Status GetPortInfo(int device, int port,
-                                     TargetDatapathId* target_dp_id) = 0;
-
-  // Gets the operational state of a port.
-  virtual ::util::StatusOr<PortState> GetPortState(int device, int port) = 0;
-
-  // Gets the port counters of a port.
-  virtual ::util::Status GetPortCounters(int device, int port,
-                                         PortCounters* counters) = 0;
-
-  // Returns the SDE device port ID for the given PortKey.
-  virtual ::util::StatusOr<uint32> GetPortIdFromPortKey(
-      int device, const PortKey& port_key) = 0;
-
-  // Checks if a port is valid.
-  virtual bool IsValidPort(int device, int port) = 0;
-
-  // Adds a new port.
-  virtual ::util::Status AddPort(int device, int port) = 0;
-
-  // Deletes a port.
-  virtual ::util::Status DeletePort(int device, int port) = 0;
-
-  // Enables a port.
-  virtual ::util::Status EnablePort(int device, int port) = 0;
-
-  // Disables a port.
-  virtual ::util::Status DisablePort(int device, int port) = 0;
-
  protected:
   // RW mutex lock for protecting the singleton instance initialization and
   // reading it back from other threads. Unlike other singleton classes, we
