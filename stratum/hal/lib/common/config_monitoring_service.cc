@@ -373,6 +373,22 @@ bool ContainsUniqueNames(const T& values) {
           });
       // Check if the path is supported.
       ::util::Status status;
+
+      // In some cases such as vports yang tree nodes, we use a single node leaf
+      // to process for all vports. Instead of using a SubscriptionHandler and
+      // calling HandlePoll(), this will use a simple GET and pass the key
+      // from the yangpath so that the functor can use that data for interacting
+      // with SDE/TDI layer and access the correct vport info.
+      std::vector<std::string> keys;
+      if (gnmi_publisher_.IsPathSupportedVirtualPorts(path, keys)) {
+        if (!(status = gnmi_publisher_.HandleGet(path, keys, &stream)).ok()) {
+          return ::grpc::Status(ToGrpcCode(status.CanonicalCode()),
+                                status.error_message());
+        }
+        return ::grpc::Status::OK;
+      }
+      // else (not vport)...continue with subscribe + handlePoll()
+
       if ((status = gnmi_publisher_.SubscribePoll(path, &stream, &h)).ok()) {
         // Get the value(s) represented by the path.
         if (!(status = gnmi_publisher_.HandlePoll(h)).ok()) {
