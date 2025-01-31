@@ -19,7 +19,6 @@
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
-#include "stratum/hal/lib/tdi/tdi_virtual_port_manager.h"
 #include "stratum/lib/channel/channel.h"
 
 namespace stratum {

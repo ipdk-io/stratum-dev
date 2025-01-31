@@ -13,7 +13,6 @@
 #include "absl/synchronization/mutex.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
-#include "stratum/hal/lib/tdi/tdi_virtual_port_manager.h"
 
 // Suppress clang errors
 #undef LOCKS_EXCLUDED
@@ -23,7 +22,7 @@ namespace stratum {
 namespace hal {
 namespace tdi {
 
-class Es2kVirtualPortManager : public TdiVirtualPortManager {
+class Es2kVirtualPortManager {
  public:
   Es2kVirtualPortManager() {}
   virtual ~Es2kVirtualPortManager() {}
@@ -47,6 +46,11 @@ class Es2kVirtualPortManager : public TdiVirtualPortManager {
   static Es2kVirtualPortManager* GetSingleton() LOCKS_EXCLUDED(init_lock_);
 
  protected:
+  // RW mutex lock for protecting the singleton instance initialization and
+  // reading it back from other threads. Unlike other singleton classes, we
+  // use RW lock as we need the pointer to class to be returned.
+  static absl::Mutex init_lock_;
+
   // The singleton instance.
   static Es2kVirtualPortManager* singleton_ GUARDED_BY(init_lock_);
 

@@ -1,6 +1,6 @@
 # Build file for //stratum/hal/lib/tdi
 #
-# Copyright 2022-2025 Intel Corporation
+# Copyright 2022-2024 Intel Corporation
 # SPDX-License-Identifier: Apache 2.0
 #
 
@@ -48,8 +48,6 @@ add_library(stratum_tdi_common_o OBJECT
     tdi_sde_wrapper.h
     tdi_table_manager.cc
     tdi_table_manager.h
-    tdi_virtual_port_manager.cc
-    tdi_virtual_port_manager.h
     utils.cc
     utils.h
 )

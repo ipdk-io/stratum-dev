@@ -44,6 +44,8 @@ namespace tdi {
 
 Es2kVirtualPortManager* Es2kVirtualPortManager::singleton_ = nullptr;
 
+ABSL_CONST_INIT absl::Mutex Es2kVirtualPortManager::init_lock_(absl::kConstInit);
+
 Es2kVirtualPortManager* Es2kVirtualPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
