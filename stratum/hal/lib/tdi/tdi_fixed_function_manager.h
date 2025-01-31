@@ -1,4 +1,4 @@
-// Copyright 2023 Intel Corporation
+// Copyright 2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_FIXED_FUNCTION_MANAGER_H_
@@ -9,6 +9,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/tdi/tdi.pb.h"
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 
 namespace stratum {
@@ -34,6 +35,12 @@ class TdiFixedFunctionManager {
   ::util::Status FetchSpi(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       std::string table_name, uint32* spi) LOCKS_EXCLUDED(lock_);
+
+  // Fetch value from the TDI table
+  ::util::Status FetchVportTableData(
+      std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      std::string table_name, uint32 global_resource_id, const char* param_name,
+      uint64* data) LOCKS_EXCLUDED(lock_);
 
   // Creates a Fixed function table manager instance.
   static std::unique_ptr<TdiFixedFunctionManager> CreateInstance(

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_H_
@@ -40,6 +41,9 @@ using TreeNodeDeleteHandler = std::function<::util::Status(
 using TreeNodeDeleteWithValHandler = std::function<::util::Status(
     const ::gnmi::Path& path, const std::vector<std::string>& val,
     CopyOnWriteChassisConfig* config)>;
+using TreeNodeGetWithValHandler = std::function<::util::Status(
+    const ::gnmi::Path& path, const std::vector<std::string>& val,
+    GnmiSubscribeStream* stream)>;
 
 using EventHandlerRecordPtr = std::weak_ptr<EventHandlerRecord>;
 using TreeNodeEventRegistration =
@@ -117,6 +121,14 @@ class TreeNode {
       const TreeNodeDeleteWithValHandler& handler) {
     on_delete_with_val_handler_ = handler;
     supports_on_delete_ = true;
+    return this;
+  }
+
+  // Overrides the default-not-supported handler procedure called when
+  // a get request is processed with a user-specified one.
+  TreeNode* SetOnGetWithValHandler(const TreeNodeGetWithValHandler& handler) {
+    on_get_with_val_handler_ = handler;
+    // supports_on_poll_ = true; // TODO(5abeel): do we need a new type?
     return this;
   }
 
@@ -246,6 +258,14 @@ class TreeNode {
     return [this](const ::gnmi::Path& path, const std::vector<std::string>& val,
                   CopyOnWriteChassisConfig* config) {
       return on_delete_with_val_handler_(path, val, config);
+    };
+  }
+
+  // Returns a functor that will execute handlers of this node.
+  GnmiGetWithValHandler GetOnGetWithValHandler() const {
+    return [this](const ::gnmi::Path& path, const std::vector<std::string>& val,
+                  GnmiSubscribeStream* stream) {
+      return on_get_with_val_handler_(path, val, stream);
     };
   }
 
@@ -380,6 +400,15 @@ class TreeNode {
     return MAKE_ERROR() << "unsupported mode: DELETE(-with-val) for: '"
                         << path.ShortDebugString() << "'";
   };
+  // Special delete handler (developed for vport feature) with a
+  // vector<string> argument
+  TreeNodeGetWithValHandler on_get_with_val_handler_ =
+      [](const ::gnmi::Path&, const std::vector<std::string>&,
+         GnmiSubscribeStream* stream) {
+        // Intermediate node. No real processing but needs to
+        // return OK so its children are processed.
+        return ::util::OkStatus();
+      };
   const TreeNode* parent_;
   std::string name_;
   // Some nodes are mapped to ::gnmi::PathElem 'name' key value. This variable
@@ -461,6 +490,9 @@ class YangParseTree {
 
   // Add supported leaf handles for IPsec.
   void AddSubtreeIPsec() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+
+  // Add supported leaf handles for VirtualPort.
+  void AddSubtreeVirtualPort() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Configure the root element.
   void AddRoot() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);

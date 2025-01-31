@@ -1,6 +1,6 @@
 // Copyright 2018-2019 Barefoot Networks, Inc.
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2024 Intel Corporation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <exception>
@@ -24,6 +24,7 @@
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_sde_wrapper.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_virtual_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_action_profile_manager.h"
 #include "stratum/hal/lib/tdi/tdi_counter_manager.h"
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
@@ -142,7 +143,16 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
 
   auto port_manager = Es2kPortManager::CreateSingleton();
 
-  auto chassis_manager = Es2kChassisManager::CreateInstance(mode, port_manager);
+  auto virtual_port_manager = Es2kVirtualPortManager::CreateSingleton();
+
+  auto chassis_manager = Es2kChassisManager::CreateInstance(
+      mode, port_manager, virtual_port_manager);
+
+  // Es2kVirtualPortManager needs reference to SetTdiSdeInterface &
+  // TdiFixedFunctionManager
+  virtual_port_manager->SetTdiSdeInterface(sde_wrapper);
+  virtual_port_manager->SetTdiFixedFunctionManager(
+      fixed_function_manager.get());
 
   auto ipsec_manager = TdiIpsecManager::CreateInstance(
       sde_wrapper, fixed_function_manager.get());

@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_TDI_CONSTANTS_H_
@@ -61,6 +61,12 @@ constexpr char kIpsecSadbEspKeylen[] = "key-len";
 constexpr char kIpsecSaLtHard[] = "sa-lifetime-hard";
 constexpr char kIpsecSaLtSoft[] = "sa-lifetime-soft";
 constexpr char kIpsecFetchSpi[] = "rx-spi";
+
+// vport related consts used in fixed functions
+constexpr char kGlobalResourceId[] = "global-resource-id";
+constexpr char kVsi[] = "vsi";
+constexpr char kOperStatus[] = "oper-status";
+constexpr char kMacAddress[] = "mac-address";
 
 // TNA specific limits
 constexpr uint16 kMaxCloneSessionId = 1015;

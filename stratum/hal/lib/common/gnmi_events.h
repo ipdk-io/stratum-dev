@@ -613,6 +613,10 @@ using GnmiDeleteWithValHandler = std::function<::util::Status(
     const ::gnmi::Path& path, const std::vector<std::string>& val,
     CopyOnWriteChassisConfig* config)>;
 
+using GnmiGetWithValHandler = std::function<::util::Status(
+    const ::gnmi::Path& path, const std::vector<std::string>& val,
+    GnmiSubscribeStream* stream)>;
+
 // A class used to keep information about a subscription.
 class EventHandlerRecord {
  public:

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_YANG_YANG_PARSE_TREE_PATHS_H_
@@ -52,8 +53,12 @@ class YangParseTreePaths {
   static void AddSubtreeSystem(YangParseTree* tree)
       EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);
 
-  // Adds all supported paths for the specified system.
+  // Adds all supported paths for the specified IPsec.
   static void AddSubtreeIPsec(YangParseTree* tree)
+      EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);
+
+  // Adds all supported paths for the specified VirtualPort.
+  static void AddSubtreeVirtualPort(YangParseTree* tree)
       EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_);
 
   // Adds all supported wildcard interface-related paths.

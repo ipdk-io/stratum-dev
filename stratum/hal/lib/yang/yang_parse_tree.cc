@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
@@ -179,6 +180,8 @@ void YangParseTree::ProcessPushedConfig(
   AddSubtreeSystem();
   // Add all IPsec-related gNMI paths.
   AddSubtreeIPsec();
+  // Add all VirtualPort-related gNMI paths.
+  AddSubtreeVirtualPort();
   // Add all node-related gNMI paths.
   for (const auto& node : change.new_config_.nodes()) {
     AddSubtreeNode(node);
@@ -328,6 +331,10 @@ void YangParseTree::AddSubtreeSystem() {
 
 void YangParseTree::AddSubtreeIPsec() {
   YangParseTreePaths::AddSubtreeIPsec(this);
+}
+
+void YangParseTree::AddSubtreeVirtualPort() {
+  YangParseTreePaths::AddSubtreeVirtualPort(this);
 }
 
 void YangParseTree::AddSubtreeAllInterfaces() {

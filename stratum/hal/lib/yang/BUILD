@@ -78,6 +78,7 @@ stratum_cc_library(
         "yang_parse_tree_paths.cc",
         "yang_parse_tree_singleton.cc",
         "yang_parse_tree_system.cc",
+        "yang_parse_tree_virtual_port.cc",
     ],
     hdrs = [
         "yang_parse_tree.h",

@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_TDI_ES2K_CHASSIS_MANAGER_H_
@@ -26,6 +26,7 @@ namespace hal {
 namespace tdi {
 
 class Es2kPortManager;
+class Es2kVirtualPortManager;
 
 // Lock which protects chassis state across the entire switch.
 extern absl::Mutex chassis_lock;
@@ -52,6 +53,9 @@ class Es2kChassisManager {
   virtual ::util::StatusOr<DataResponse> GetPortData(
       const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
 
+  virtual ::util::StatusOr<DataResponse> GetVirtualPortData(
+      const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
+
   virtual ::util::StatusOr<absl::Time> GetPortTimeLastChanged(uint64 node_id,
                                                               uint32 port_id)
       SHARED_LOCKS_REQUIRED(chassis_lock);
@@ -71,7 +75,8 @@ class Es2kChassisManager {
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kChassisManager> CreateInstance(
-      OperationMode mode, Es2kPortManager* es2k_port_manager);
+      OperationMode mode, Es2kPortManager* es2k_port_manager,
+      Es2kVirtualPortManager* es2k_virtual_port_manager);
 
   // Es2kChassisManager is neither copyable nor movable.
   Es2kChassisManager(const Es2kChassisManager&) = delete;
@@ -111,7 +116,8 @@ class Es2kChassisManager {
 
   // Private constructor. Use CreateInstance() to create an instance of this
   // class.
-  Es2kChassisManager(OperationMode mode, Es2kPortManager* es2k_port_manager);
+  Es2kChassisManager(OperationMode mode, Es2kPortManager* es2k_port_manager,
+                     Es2kVirtualPortManager* es2k_virtual_port_manager);
 
   ::util::StatusOr<const PortConfig*> GetPortConfig(uint64 node_id,
                                                     uint32 port_id) const
@@ -252,6 +258,11 @@ class Es2kChassisManager {
 
   // Pointer to an Es2kPortManager implementation that wraps the SDE calls.
   Es2kPortManager* es2k_port_manager_;  // not owned by this class.
+
+  // Pointer to an Es2kVirtualPortManager implementation that wraps the SDE
+  // calls.
+  Es2kVirtualPortManager*
+      es2k_virtual_port_manager_;  // not owned by this class.
 
   friend class Es2kChassisManagerTest;
 };

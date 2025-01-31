@@ -1,5 +1,5 @@
 // Copyright 2020-present Open Networking Foundation
-// Copyright 2022-2024 Intel Corporation
+// Copyright 2022-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
@@ -241,6 +241,18 @@ Es2kSwitch::~Es2kSwitch() {}
         } else {
           auto* info = resp.mutable_ipsec_offload_info();
           info->set_spi(fetched_spi);
+        }
+        break;
+      }
+      // VirtualPort data request
+      case DataRequest::Request::kVportVsi:
+      case DataRequest::Request::kVportOperStatus:
+      case DataRequest::Request::kVportMacAddress: {
+        auto vport_data = chassis_manager_->GetVirtualPortData(req);
+        if (!vport_data.ok()) {
+          status.Update(vport_data.status());
+        } else {
+          resp = vport_data.ConsumeValueOrDie();
         }
         break;
       }

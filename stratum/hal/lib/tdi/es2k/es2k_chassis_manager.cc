@@ -1,5 +1,5 @@
 // Copyright 2018-present Barefoot Networks, Inc.
-// Copyright 2022-2023 Intel Corporation
+// Copyright 2022-2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/es2k/es2k_chassis_manager.h"
@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/common/utils.h"
 #include "stratum/hal/lib/common/writer_interface.h"
 #include "stratum/hal/lib/tdi/es2k/es2k_port_manager.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_virtual_port_manager.h"
 #include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/lib/channel/channel.h"
 #include "stratum/lib/constants.h"
@@ -37,8 +38,9 @@ constexpr int Es2kChassisManager::kMaxPortStatusEventDepth;
 /* static */
 constexpr int Es2kChassisManager::kMaxXcvrEventDepth;
 
-Es2kChassisManager::Es2kChassisManager(OperationMode mode,
-                                       Es2kPortManager* es2k_port_manager)
+Es2kChassisManager::Es2kChassisManager(
+    OperationMode mode, Es2kPortManager* es2k_port_manager,
+    Es2kVirtualPortManager* es2k_virtual_port_manager)
     : mode_(mode),
       initialized_(false),
       port_status_event_channel_(nullptr),
@@ -52,7 +54,8 @@ Es2kChassisManager::Es2kChassisManager(OperationMode mode,
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      es2k_port_manager_(ABSL_DIE_IF_NULL(es2k_port_manager)) {}
+      es2k_port_manager_(ABSL_DIE_IF_NULL(es2k_port_manager)),
+      es2k_virtual_port_manager_(ABSL_DIE_IF_NULL(es2k_virtual_port_manager)) {}
 
 Es2kChassisManager::Es2kChassisManager()
     : mode_(OPERATION_MODE_STANDALONE),
@@ -68,7 +71,8 @@ Es2kChassisManager::Es2kChassisManager()
       node_id_to_port_id_to_sdk_port_id_(),
       node_id_to_sdk_port_id_to_port_id_(),
       xcvr_port_key_to_xcvr_state_(),
-      es2k_port_manager_(nullptr) {}
+      es2k_port_manager_(nullptr),
+      es2k_virtual_port_manager_(nullptr) {}
 
 Es2kChassisManager::~Es2kChassisManager() = default;
 
@@ -716,6 +720,45 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
   return resp;
 }
 
+::util::StatusOr<DataResponse> Es2kChassisManager::GetVirtualPortData(
+    const DataRequest::Request& request) {
+  if (!initialized_) {
+    return MAKE_ERROR(ERR_NOT_INITIALIZED) << "Not initialized!";
+  }
+  DataResponse resp;
+  using Request = DataRequest::Request;
+  switch (request.request_case()) {
+    case Request::kVportVsi: {
+      ASSIGN_OR_RETURN(auto vsi, es2k_virtual_port_manager_->GetVSI(
+                                     request.vport_vsi().global_resource_id()));
+      resp.mutable_vport_vsi()->set_vsi(vsi);
+      break;
+    }
+    case Request::kVportOperStatus: {
+      ASSIGN_OR_RETURN(auto oper_status,
+                       es2k_virtual_port_manager_->GetPortState(
+                           request.vport_oper_status().global_resource_id()));
+      resp.mutable_oper_status()->set_state(oper_status);
+      break;
+    }
+    case Request::kVportMacAddress: {
+      ASSIGN_OR_RETURN(auto mac_address,
+                       es2k_virtual_port_manager_->GetMacAddress(
+                           request.vport_mac_address().global_resource_id()));
+      resp.mutable_mac_address()->set_mac_address(mac_address);
+      break;
+    }
+    default:
+      return MAKE_ERROR(ERR_UNIMPLEMENTED)
+             << "DataRequest field "
+             << request.descriptor()
+                    ->FindFieldByNumber(request.request_case())
+                    ->name()
+             << " is not supported yet!";
+  }
+  return resp;
+}
+
 ::util::StatusOr<PortState> Es2kChassisManager::GetPortState(
     uint64 node_id, uint32 port_id) const {
   if (!initialized_) {
@@ -863,8 +906,10 @@ Es2kChassisManager::GetNodeIdToDeviceMap() const {
 }
 
 std::unique_ptr<Es2kChassisManager> Es2kChassisManager::CreateInstance(
-    OperationMode mode, Es2kPortManager* es2k_port_manager) {
-  return absl::WrapUnique(new Es2kChassisManager(mode, es2k_port_manager));
+    OperationMode mode, Es2kPortManager* es2k_port_manager,
+    Es2kVirtualPortManager* es2k_virtual_port_manager) {
+  return absl::WrapUnique(new Es2kChassisManager(mode, es2k_port_manager,
+                                                 es2k_virtual_port_manager));
 }
 
 void Es2kChassisManager::SendPortOperStateGnmiEvent(

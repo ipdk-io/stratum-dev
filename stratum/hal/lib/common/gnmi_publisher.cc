@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023-2024 Intel Corporation
+// Copyright 2023-2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/common/gnmi_publisher.h"
@@ -130,6 +130,25 @@ GnmiPublisher::~GnmiPublisher() {}
     RETURN_IF_ERROR((*handler)(event));
   }
   return ::util::OkStatus();
+}
+
+::util::Status GnmiPublisher::HandleGet(const ::gnmi::Path& path,
+                                        const std::vector<std::string>& val,
+                                        GnmiSubscribeStream* stream) {
+  absl::WriterMutexLock l(&access_lock_);
+
+  // Map the input path to the supported one - walk the tree of known elements
+  // element by element starting from the root and if the element is found the
+  // move to the next one. If not found, return an error.
+  const TreeNode* node = parse_tree_.FindNodeOrNull(path);
+  if (node == nullptr) {
+    // Ooops... This path is not supported.
+    return MAKE_ERROR(ERR_INVALID_PARAM)
+           << "The path (" << path.ShortDebugString() << ") is unsupported!";
+  }
+
+  // Call the GetWithVal handler and pass the keys
+  return node->GetOnGetWithValHandler()(path, val, stream);
 }
 
 ::util::Status GnmiPublisher::HandlePoll(const SubscriptionHandle& handle) {
@@ -369,6 +388,34 @@ bool GnmiPublisher::IsPathSupportedIPsec(const ::gnmi::Path& path,
         keys.push_back(*search2);
       } else if (search3 != nullptr) {
         keys.push_back(*search3);
+      }
+    }
+
+    ++element;
+  }
+  return true;
+}
+
+bool GnmiPublisher::IsPathSupportedVirtualPorts(
+    const ::gnmi::Path& path, std::vector<std::string>& keys) const {
+  std::vector<std::string> supported_path;
+  supported_path.push_back("virtual-ports");
+  supported_path.push_back("virtual-port");
+
+  int element = 0;
+  std::vector<std::string>::iterator iter;
+  for (iter = supported_path.begin(); iter != supported_path.end(); ++iter) {
+    if (path.elem(element).name() != *iter) {
+      return false;
+    }
+
+    // This block extracts the key from the path
+    if (element == 1) {  // virtual-port
+      // get the key
+      auto* search1 =
+          gtl::FindOrNull(path.elem(element).key(), "global-resource-id");
+      if (search1 != nullptr) {
+        keys.push_back(*search1);
       }
     }
 

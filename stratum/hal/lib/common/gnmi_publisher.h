@@ -1,6 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
-// Copyright 2023 Intel Corporation
+// Copyright 2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_GNMI_PUBLISHER_H_
@@ -96,6 +96,14 @@ class GnmiPublisher {
   ::util::Status HandleChange(const GnmiEvent& event)
       LOCKS_EXCLUDED(access_lock_);
 
+  // A simple GET routine to process gNMI requests without making a
+  // subscription and poll handle calls
+  // The second argument allows the yangpath keys to be passed to the functor
+  virtual ::util::Status HandleGet(const ::gnmi::Path& path,
+                                   const std::vector<std::string>& val,
+                                   GnmiSubscribeStream* stream)
+      LOCKS_EXCLUDED(access_lock_);
+
   virtual ::util::Status HandlePoll(const SubscriptionHandle& handle)
       LOCKS_EXCLUDED(access_lock_);
 
@@ -144,11 +152,22 @@ class GnmiPublisher {
   // stateless and scale is too high to maintain tree nodes in memory -- tens of
   // millions of entries). Instead, a single tree node is maintained without any
   // keys that services all gnmi SET/DELETE requests. The tree node is
-  // initialized to to be at /ipsec-offload/sad/sad-entr/config. The contents of
-  // the message will contain the key, which is subsequently handled at lower
+  // initialized to to be at /ipsec-offload/sad/sad-entry/config. The contents
+  // of the message will contain the key, which is subsequently handled at lower
   // layers.
   virtual bool IsPathSupportedIPsec(const ::gnmi::Path& path,
                                     std::vector<std::string>& keys) const
+      LOCKS_EXCLUDED(access_lock_);
+
+  // virtual-ports is a special use-case, since yang tree nodes are not
+  // initialized and maintained for each key of yang list.
+  // Instead, a single tree node (for each leaf node type) is maintained without
+  // any keys that services all gnmi SET/GET requests. The tree node is
+  // initialized to to be at /virtual-ports/virtual-port/... The contents of
+  // the message will contain the key, which is subsequently handled at lower
+  // layers.
+  virtual bool IsPathSupportedVirtualPorts(const ::gnmi::Path& path,
+                                           std::vector<std::string>& keys) const
       LOCKS_EXCLUDED(access_lock_);
 
  private:
