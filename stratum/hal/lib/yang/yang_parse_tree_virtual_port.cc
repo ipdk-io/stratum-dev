@@ -32,14 +32,13 @@ void SetUpVirtualPortFetchVSI(TreeNode* node, YangParseTree* tree) {
     auto* request = req.add_requests()->mutable_vport_vsi();
     ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
 
-    // std::cout << "path=" << path_ptr->DebugString() << std::endl;
-    uint32 glort_id = static_cast<uint32>(
+    uint32 global_resource_id = static_cast<uint32>(
         std::stoul(val.at(0)));  // only one will be present at index 0
-    request->set_global_resource_id(glort_id);
+    request->set_global_resource_id(global_resource_id);
 
     // In-place definition of method retrieving data from generic response
     // and saving into 'resp' local variable.
-    uint32 resp{};
+    uint64 resp{};
     DataResponseWriter writer([&resp](const DataResponse& in) {
       if (!in.has_vport_vsi()) return false;
       resp = in.vport_vsi().vsi();
@@ -68,14 +67,14 @@ void SetUpVirtualPortFetchOperStatus(TreeNode* node, YangParseTree* tree) {
                             const std::vector<std::string>& val,
                             GnmiSubscribeStream* stream) {
     DataRequest req;
-    auto* request = req.add_requests()->mutable_vport_vsi();
+    auto* request = req.add_requests()->mutable_vport_oper_status();
     ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
 
-    uint32 glort_id = static_cast<uint32>(
+    uint32 global_resource_id = static_cast<uint32>(
         std::stoul(val.at(0)));  // only one will be present at index 0
-    request->set_global_resource_id(glort_id);
+    request->set_global_resource_id(global_resource_id);
 
-    uint32 resp{};
+    uint64 resp{};
     DataResponseWriter writer([&resp](const DataResponse& in) {
       if (!in.has_oper_status()) return false;
       resp = in.oper_status().state();
@@ -101,14 +100,14 @@ void SetUpVirtualPortFetchMacAddress(TreeNode* node, YangParseTree* tree) {
                             const std::vector<std::string>& val,
                             GnmiSubscribeStream* stream) {
     DataRequest req;
-    auto* request = req.add_requests()->mutable_vport_vsi();
+    auto* request = req.add_requests()->mutable_vport_mac_address();
     ::gnmi::Path* path_ptr = const_cast<::gnmi::Path*>(&path);
 
-    uint32 glort_id = static_cast<uint32>(
+    uint32 global_resource_id = static_cast<uint32>(
         std::stoul(val.at(0)));  // only one will be present at index 0
-    request->set_global_resource_id(glort_id);
+    request->set_global_resource_id(global_resource_id);
 
-    uint32 resp{};
+    uint64 resp{};
     DataResponseWriter writer([&resp](const DataResponse& in) {
       if (!in.has_mac_address()) return false;
       resp = in.mac_address().mac_address();

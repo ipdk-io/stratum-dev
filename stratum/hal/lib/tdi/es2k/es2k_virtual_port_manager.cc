@@ -25,6 +25,7 @@
 #include "stratum/glue/status/statusor.h"
 #include "stratum/hal/lib/common/common.pb.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/tdi/tdi_constants.h"
 #include "stratum/hal/lib/tdi/tdi_sde_common.h"
 #include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
@@ -34,12 +35,16 @@ extern "C" {
 #include "ipu_types/ipu_types.h"
 }
 
+#define VPORT_STATE_TABLE_NAME \
+  "openconfig-virtual-ports.virtual-ports.virtual-port.state"
+
 namespace stratum {
 namespace hal {
 namespace tdi {
 
 Es2kVirtualPortManager* Es2kVirtualPortManager::singleton_ = nullptr;
 
+#if 0
 namespace {
 
 // A callback function executed in SDE port state change thread context.
@@ -63,6 +68,8 @@ ipu_status_t sde_port_status_callback(ipu_dev_id_t device,
 
 }  // namespace
 
+#endif
+
 Es2kVirtualPortManager* Es2kVirtualPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
@@ -77,25 +84,59 @@ Es2kVirtualPortManager* Es2kVirtualPortManager::GetSingleton() {
   return singleton_;
 }
 
+void Es2kVirtualPortManager::SetTdiSdeInterface(TdiSdeInterface* tdi_sde_intf) {
+  tdi_sde_interface_ = tdi_sde_intf;
+}
+
+void Es2kVirtualPortManager::SetTdiFixedFunctionManager(
+    TdiFixedFunctionManager* tdi_fixed_func_mgr) {
+  tdi_fixed_function_manager_ = tdi_fixed_func_mgr;
+}
+
 ::util::StatusOr<uint32> Es2kVirtualPortManager::GetVSI(
     uint32 global_resource_id) {
-  // TODO: Retrieve vport VSI from SDE
-  uint32 vsi = 432;
-  return vsi;
+  uint64 data;
+  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+  auto status = tdi_fixed_function_manager_->FetchVportTableData(
+      session, VPORT_STATE_TABLE_NAME, global_resource_id, kVsi, &data);
+  if (!status.ok()) {
+    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
+           << "One or more read operations failed.";
+  }
+  return static_cast<uint32>(data);
 }
 
 ::util::StatusOr<PortState> Es2kVirtualPortManager::GetPortState(
     uint32 global_resource_id) {
-  // TODO: Retrieve vport oper-status from SDE
-  return PORT_STATE_DOWN;
+  uint64 data;
+  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+  auto status = tdi_fixed_function_manager_->FetchVportTableData(
+      session, VPORT_STATE_TABLE_NAME, global_resource_id, kOperStatus, &data);
+  if (!status.ok()) {
+    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
+           << "One or more read operations failed.";
+  }
+  return static_cast<PortState>(data);
 }
 
 // Stratum's common.proto uses uint64 for MacAddress
 ::util::StatusOr<uint64> Es2kVirtualPortManager::GetMacAddress(
     uint32 global_resource_id) {
-  // TODO: Retrieve vport mac-address from SDE
-  uint64 kDummyMacAddress = 0x112233445566ull;
-  return kDummyMacAddress;
+  uint64 data;
+  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+  auto status = tdi_fixed_function_manager_->FetchVportTableData(
+      session, VPORT_STATE_TABLE_NAME, global_resource_id, kMacAddress, &data);
+  if (!status.ok()) {
+    return MAKE_ERROR(ERR_AT_LEAST_ONE_OPER_FAILED)
+           << "One or more read operations failed.";
+  }
+
+  // Return mac-address with correct byte order
+  uint64 swapped_mac = ((data & 0xFF) << 40) | ((data & 0xFF00) << 24) |
+                       ((data & 0xFF0000) << 8) | ((data & 0xFF000000) >> 8) |
+                       ((data & 0xFF00000000) >> 24) |
+                       ((data & 0xFF0000000000) >> 40);
+  return swapped_mac;
 }
 
 ::util::Status Es2kVirtualPortManager::OnPortStatusEvent(int device, int port,

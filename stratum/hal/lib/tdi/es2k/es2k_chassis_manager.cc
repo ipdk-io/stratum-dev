@@ -744,7 +744,7 @@ Es2kChassisManager::GetPortConfig(uint64 node_id, uint32 port_id) const {
     case Request::kVportMacAddress: {
       ASSIGN_OR_RETURN(auto mac_address,
                        es2k_virtual_port_manager_->GetMacAddress(
-                           request.vport_oper_status().global_resource_id()));
+                           request.vport_mac_address().global_resource_id()));
       resp.mutable_mac_address()->set_mac_address(mac_address);
       break;
     }

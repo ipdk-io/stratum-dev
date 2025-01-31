@@ -11,6 +11,8 @@
 #include <vector>
 
 #include "absl/synchronization/mutex.h"
+#include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
+#include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 #include "stratum/hal/lib/tdi/tdi_virtual_port_manager.h"
 
 // Suppress clang errors
@@ -25,6 +27,9 @@ class Es2kVirtualPortManager : public TdiVirtualPortManager {
  public:
   Es2kVirtualPortManager() {}
   virtual ~Es2kVirtualPortManager() {}
+
+  void SetTdiSdeInterface(TdiSdeInterface* tdi_sde_intf);
+  void SetTdiFixedFunctionManager(TdiFixedFunctionManager* tdi_fixed_func_mgr);
 
   ::util::StatusOr<uint32> GetVSI(uint32 global_resource_id);
   ::util::StatusOr<PortState> GetPortState(uint32 global_resource_id);
@@ -51,6 +56,13 @@ class Es2kVirtualPortManager : public TdiVirtualPortManager {
  protected:
   // The singleton instance.
   static Es2kVirtualPortManager* singleton_ GUARDED_BY(init_lock_);
+
+ private:
+  // Pointer to TdiSdeInterface implementation.
+  TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.
+
+  // Pointer to FixedFunctionManager. (not owned by this class)
+  TdiFixedFunctionManager* tdi_fixed_function_manager_;
 };
 
 }  // namespace tdi

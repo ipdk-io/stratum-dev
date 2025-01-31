@@ -1,4 +1,4 @@
-// Copyright 2023 Intel Corporation
+// Copyright 2023,2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "stratum/hal/lib/tdi/tdi_fixed_function_manager.h"
@@ -56,6 +56,10 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
   return absl::WrapUnique(
       new TdiFixedFunctionManager(mode, tdi_sde_interface, device));
 }
+
+//////////////////////////////////
+// IPsec fixed-function TDI calls
+//////////////////////////////////
 
 ::util::Status TdiFixedFunctionManager::InitNotificationTableWithCallback(
     std::string table_name,
@@ -166,6 +170,28 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
     RETURN_IF_ERROR(table_data->SetParam(
         kIpsecSaLtSoft, sadb_config.sa_soft_lifetime().bytes()));
   }
+  return ::util::OkStatus();
+}
+
+//////////////////////////////////////////
+// Virtual-ports fixed-function TDI calls
+//////////////////////////////////////////
+::util::Status TdiFixedFunctionManager::FetchVportTableData(
+    std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    std::string table_name, uint32 global_resource_id, const char* param_name,
+    uint64* data) {
+  absl::ReaderMutexLock l(&lock_);
+
+  ASSIGN_OR_RETURN(uint32 table_id, tdi_sde_interface_->GetTableId(table_name));
+  ASSIGN_OR_RETURN(auto table_key,
+                   tdi_sde_interface_->CreateTableKey(table_id));
+  RETURN_IF_ERROR(table_key->SetExact(kGlobalResourceId, global_resource_id));
+  ASSIGN_OR_RETURN(auto table_data,
+                   tdi_sde_interface_->CreateTableData(table_id, 0));
+  RETURN_IF_ERROR(tdi_sde_interface_->GetTableEntry(
+      device_, session, table_id, table_key.get(), table_data.get()));
+  RETURN_IF_ERROR(table_data->GetParam(std::string(param_name), data));
+
   return ::util::OkStatus();
 }
 
