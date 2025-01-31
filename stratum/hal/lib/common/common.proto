@@ -1567,8 +1567,6 @@ message IPsecOffloadInfo {
 message VirtualPortInfo {
   oneof value { 
     uint32 vsi = 1;
-    // OperStatus oper_status = 2;
-    // MacAddress mac_address = 3;
   }
 }
 
