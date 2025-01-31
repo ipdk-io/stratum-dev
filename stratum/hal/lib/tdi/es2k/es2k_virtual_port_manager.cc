@@ -44,32 +44,6 @@ namespace tdi {
 
 Es2kVirtualPortManager* Es2kVirtualPortManager::singleton_ = nullptr;
 
-#if 0
-namespace {
-
-// A callback function executed in SDE port state change thread context.
-ipu_status_t sde_port_status_callback(ipu_dev_id_t device,
-                                      ipu_dev_port_t dev_port, bool up,
-                                      void* cookie) {
-  absl::Time timestamp = absl::Now();
-  Es2kVirtualPortManager* es2k_port_manager =
-      Es2kVirtualPortManager::GetSingleton();
-  if (!es2k_port_manager) {
-    LOG(ERROR)
-        << "Es2kVirtualPortManager singleton instance is not initialized.";
-    return IPU_INTERNAL_ERROR;
-  }
-  // Forward the event.
-  auto status =
-      es2k_port_manager->OnPortStatusEvent(device, dev_port, up, timestamp);
-
-  return status.ok() ? IPU_SUCCESS : IPU_INTERNAL_ERROR;
-}
-
-}  // namespace
-
-#endif
-
 Es2kVirtualPortManager* Es2kVirtualPortManager::CreateSingleton() {
   absl::WriterMutexLock l(&init_lock_);
   if (!singleton_) {
@@ -137,22 +111,6 @@ void Es2kVirtualPortManager::SetTdiFixedFunctionManager(
                        ((data & 0xFF00000000) >> 24) |
                        ((data & 0xFF0000000000) >> 40);
   return swapped_mac;
-}
-
-::util::Status Es2kVirtualPortManager::OnPortStatusEvent(int device, int port,
-                                                         bool up,
-                                                         absl::Time timestamp) {
-  // Create PortStatusEvent message.
-  PortState state = up ? PORT_STATE_UP : PORT_STATE_DOWN;
-  PortStatusEvent event = {device, port, state, timestamp};
-
-  {
-    absl::ReaderMutexLock l(&port_status_event_writer_lock_);
-    if (!port_status_event_writer_) {
-      return ::util::OkStatus();
-    }
-    return port_status_event_writer_->Write(event, kWriteTimeout);
-  }
 }
 
 }  // namespace tdi
