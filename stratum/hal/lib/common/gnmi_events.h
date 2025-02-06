@@ -105,6 +105,23 @@ class IPsecNotificationEvent : public GnmiEventProcess<IPsecNotificationEvent> {
   IPsecNotification notif_;
 };
 
+// Virtual port state change notification event.
+class VportStateNotificationEvent
+    : public GnmiEventProcess<VportStateNotificationEvent> {
+ public:
+  VportStateNotificationEvent(const VportStateNotification& notif)
+      : notif_(notif) {}
+
+  VportStateNotificationEvent(uint32_t glort, bool state) {
+    notif_.set_global_resource_id(glort);
+    notif_.set_state(state);
+  }
+
+  VportStateNotification GetNotification() const { return notif_; }
+
+ private:
+  VportStateNotification notif_;
+};
 // An event signaling that an alarm has been triggered.
 class AlarmEvent : public GnmiEventProcess<AlarmEvent> {
  public:

@@ -1564,6 +1564,13 @@ message IPsecOffloadInfo {
   int32 spi = 1;
 }
 
+// VportStateNotification message is sent from Stratum to gNMI-client based on a
+// target-originated event.
+message VportStateNotification {
+  uint32 global_resource_id = 1;
+  bool state = 2;
+}
+
 message VirtualPortInfo {
   oneof value { 
     uint32 vsi = 1;
