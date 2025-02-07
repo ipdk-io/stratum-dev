@@ -398,14 +398,16 @@ TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTest) {
       .WillOnce(Return(kTdiRtTableId));
 
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
-      .WillOnce(Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
-          std::move(table_key_mock)))));
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
+              std::move(table_key_mock)))));
 
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, 0))
-      .WillOnce(Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
-          std::move(table_data_mock)))));
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
+              std::move(table_data_mock)))));
 
-  EXPECT_CALL(*sde_wrapper_mock_, 
+  EXPECT_CALL(*sde_wrapper_mock_,
               GetTableEntry(kDevice1, _, kTdiRtTableId, _, _))
       .WillOnce(Return(::util::OkStatus()));
 
@@ -438,26 +440,25 @@ TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTestFailure) {
       .WillOnce(Return(kTdiRtTableId));
 
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
-      .WillOnce(Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
-          std::move(table_key_mock)))));
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
+              std::move(table_key_mock)))));
 
   EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, 0))
-      .WillOnce(Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
-          std::move(table_data_mock)))));
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
+              std::move(table_data_mock)))));
 
-  EXPECT_CALL(*sde_wrapper_mock_, 
+  EXPECT_CALL(*sde_wrapper_mock_,
               GetTableEntry(kDevice1, _, kTdiRtTableId, _, _))
       .WillOnce(Return(::util::OkStatus()));
 
   // Execute test
-  EXPECT_THAT(
-      fixed_function_manager_->FetchVportTableData(
-          session_mock, table_name, glort_id, kVsi, &fetched_data),
-      DerivedFromStatus(DefaultError()));
+  EXPECT_THAT(fixed_function_manager_->FetchVportTableData(
+                  session_mock, table_name, glort_id, kVsi, &fetched_data),
+              DerivedFromStatus(DefaultError()));
   EXPECT_EQ(fetched_data, 0);
 }
-
-
 
 }  // namespace tdi
 }  // namespace hal
