@@ -44,8 +44,14 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
       LOCKS_EXCLUDED(data_lock_);
   ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      const std::string& table_name, notification_table_callback_t callback,
-      void* cookie) const override LOCKS_EXCLUDED(data_lock_);
+      const std::string& table_name,
+      ipsec_notification_table_callback_t callback, void* cookie) const override
+      LOCKS_EXCLUDED(data_lock_);
+  ::util::Status InitNotificationTableWithCallback(
+      int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const std::string& table_name,
+      vport_notification_table_callback_t callback, void* cookie) const override
+      LOCKS_EXCLUDED(data_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.

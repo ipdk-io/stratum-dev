@@ -25,6 +25,11 @@ class TdiFixedFunctionManager {
                              void*),
       void* cookie) LOCKS_EXCLUDED(lock_);
 
+  ::util::Status InitNotificationTableWithCallback(
+      std::string table_name,
+      void (*vport_state_notif_cb)(uint32_t, uint32_t, uint8_t, void*),
+      void* cookie) LOCKS_EXCLUDED(lock_);
+
   // Writes IPsec SADB  table entry.
   ::util::Status WriteSadbEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,

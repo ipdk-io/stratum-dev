@@ -19,13 +19,16 @@
 #include "stratum/hal/lib/tdi/tdi_pkt_mod_meter_config.h"
 #include "stratum/lib/channel/channel.h"
 
-typedef void (*notification_table_callback_t)(uint32_t dev_id,
-                                              uint32_t ipsec_sa_api,
-                                              bool soft_lifetime_expire,
-                                              uint8_t ipsec_sa_protocol,
-                                              char* ipsec_sa_dest_address,
-                                              bool ipv4, void* cke);
+typedef void (*ipsec_notification_table_callback_t)(uint32_t dev_id,
+                                                    uint32_t ipsec_sa_api,
+                                                    bool soft_lifetime_expire,
+                                                    uint8_t ipsec_sa_protocol,
+                                                    char* ipsec_sa_dest_address,
+                                                    bool ipv4, void* cke);
 
+typedef void (*vport_notification_table_callback_t)(uint32_t dev_id,
+                                                    uint32_t glort_id,
+                                                    uint8_t state, void* cke);
 namespace stratum {
 namespace hal {
 namespace tdi {
@@ -495,8 +498,13 @@ class TdiSdeInterface {
   // Initializes and sets callback for notifications.
   virtual ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      const std::string& table_name, notification_table_callback_t callback,
-      void* cookie) const = 0;
+      const std::string& table_name,
+      ipsec_notification_table_callback_t callback, void* cookie) const = 0;
+
+  virtual ::util::Status InitNotificationTableWithCallback(
+      int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+      const std::string& table_name,
+      vport_notification_table_callback_t callback, void* cookie) const = 0;
 
   // Sets the PacketIo configuration.
   virtual ::util::Status SetPacketIoConfig(
