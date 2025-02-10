@@ -382,6 +382,7 @@ TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTest) {
   std::string table_name = vportStateTableName;
   uint64 fetched_data;
   uint32 glort_id = 5678;
+  uint32 expected_vsi_val = 12;
 
   auto session_mock = std::make_shared<SessionMock>();
   auto table_key_mock = absl::make_unique<TableKeyMock>();
@@ -391,7 +392,8 @@ TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTest) {
   EXPECT_CALL(*table_key_mock, SetExact(kGlobalResourceId, glort_id))
       .WillOnce(Return(::util::OkStatus()));
   EXPECT_CALL(*table_data_mock, GetParam(kVsi, _))
-      .WillOnce(DoAll(SetArgPointee<1>(12), Return(::util::OkStatus())));
+      .WillOnce(DoAll(SetArgPointee<1>(expected_vsi_val),
+                      Return(::util::OkStatus())));
 
   // Configure SDE wrapper AFTER setting mock expectations
   EXPECT_CALL(*sde_wrapper_mock_, GetTableId(table_name))
@@ -414,7 +416,7 @@ TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTest) {
   // Execute test
   EXPECT_OK(fixed_function_manager_->FetchVportTableData(
       session_mock, table_name, glort_id, kVsi, &fetched_data));
-  EXPECT_EQ(fetched_data, 12);
+  EXPECT_EQ(fetched_data, expected_vsi_val);
 }
 
 /*
