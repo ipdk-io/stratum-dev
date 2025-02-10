@@ -30,11 +30,6 @@
 #include "stratum/hal/lib/tdi/tdi_status.h"
 #include "stratum/lib/channel/channel.h"
 
-extern "C" {
-#include "ipu_pal/port_intf.h"
-#include "ipu_types/ipu_types.h"
-}
-
 #define VPORT_STATE_TABLE_NAME \
   "openconfig-virtual-ports.virtual-ports.virtual-port.state"
 

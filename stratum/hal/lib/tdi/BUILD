@@ -447,6 +447,16 @@ stratum_cc_library(
     ],
 )
 
+stratum_cc_library(
+    name = "tdi_fixed_function_manager_mock",
+    testonly = True,
+    hdrs = ["tdi_fixed_function_manager_mock.h"],
+    deps = [
+        ":tdi_fixed_function_manager",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 stratum_cc_test(
     name = "tdi_fixed_function_manager_test",
     srcs = ["tdi_fixed_function_manager_test.cc"],

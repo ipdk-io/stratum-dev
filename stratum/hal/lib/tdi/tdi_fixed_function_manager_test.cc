@@ -46,6 +46,8 @@ constexpr char ipsecConfigSadbTableName[] =
     "ipsec-offload.ipsec-offload.sad.sad-entry.ipsec-sa-config";
 constexpr char ipsecFetchSpiTableName[] =
     "ipsec-offload.ipsec-offload.ipsec-spi";
+constexpr char vportStateTableName[] =
+    "openconfig-virtual-ports.virtual-ports.virtual-port.state";
 
 class TdiFixedFunctionManagerTest : public ::testing::Test {
  protected:
@@ -372,6 +374,94 @@ TEST_F(TdiFixedFunctionManagerTest, WriteSadbEntryTestFailure) {
                                                       op_type, sadb_config),
               DerivedFromStatus(DefaultError()));
 }
+
+/*
+ * Validates FetchVportTableData method.
+ */
+TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTest) {
+  std::string table_name = vportStateTableName;
+  uint64 fetched_data;
+  uint32 glort_id = 5678;
+  uint32 expected_vsi_val = 12;
+
+  auto session_mock = std::make_shared<SessionMock>();
+  auto table_key_mock = absl::make_unique<TableKeyMock>();
+  auto table_data_mock = absl::make_unique<TableDataMock>();
+
+  // Set expectations BEFORE moving mocks
+  EXPECT_CALL(*table_key_mock, SetExact(kGlobalResourceId, glort_id))
+      .WillOnce(Return(::util::OkStatus()));
+  EXPECT_CALL(*table_data_mock, GetParam(kVsi, _))
+      .WillOnce(DoAll(SetArgPointee<1>(expected_vsi_val),
+                      Return(::util::OkStatus())));
+
+  // Configure SDE wrapper AFTER setting mock expectations
+  EXPECT_CALL(*sde_wrapper_mock_, GetTableId(table_name))
+      .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
+              std::move(table_key_mock)))));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, 0))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
+              std::move(table_data_mock)))));
+
+  EXPECT_CALL(*sde_wrapper_mock_,
+              GetTableEntry(kDevice1, _, kTdiRtTableId, _, _))
+      .WillOnce(Return(::util::OkStatus()));
+
+  // Execute test
+  EXPECT_OK(fixed_function_manager_->FetchVportTableData(
+      session_mock, table_name, glort_id, kVsi, &fetched_data));
+  EXPECT_EQ(fetched_data, expected_vsi_val);
+}
+
+/*
+ * Validates FetchVportTableData method error handling.
+ */
+TEST_F(TdiFixedFunctionManagerTest, FetchVportTableDataTestFailure) {
+  std::string table_name = vportStateTableName;
+  uint64 fetched_data = 0;
+  uint32 glort_id = 5678;
+
+  auto session_mock = std::make_shared<SessionMock>();
+  auto table_key_mock = absl::make_unique<TableKeyMock>();
+  auto table_data_mock = absl::make_unique<TableDataMock>();
+
+  // Set expectations BEFORE moving mocks
+  EXPECT_CALL(*table_key_mock, SetExact(kGlobalResourceId, glort_id))
+      .WillOnce(Return(::util::OkStatus()));
+  EXPECT_CALL(*table_data_mock, GetParam(kVsi, _))
+      .WillOnce(Return(DefaultError()));
+
+  // Configure SDE wrapper AFTER setting mock expectations
+  EXPECT_CALL(*sde_wrapper_mock_, GetTableId(table_name))
+      .WillOnce(Return(kTdiRtTableId));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableKey(kTdiRtTableId))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableKeyInterface>>(
+              std::move(table_key_mock)))));
+
+  EXPECT_CALL(*sde_wrapper_mock_, CreateTableData(kTdiRtTableId, 0))
+      .WillOnce(
+          Return(ByMove(::util::StatusOr<std::unique_ptr<TableDataInterface>>(
+              std::move(table_data_mock)))));
+
+  EXPECT_CALL(*sde_wrapper_mock_,
+              GetTableEntry(kDevice1, _, kTdiRtTableId, _, _))
+      .WillOnce(Return(::util::OkStatus()));
+
+  // Execute test
+  EXPECT_THAT(fixed_function_manager_->FetchVportTableData(
+                  session_mock, table_name, glort_id, kVsi, &fetched_data),
+              DerivedFromStatus(DefaultError()));
+  EXPECT_EQ(fetched_data, 0);
+}
+
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum
