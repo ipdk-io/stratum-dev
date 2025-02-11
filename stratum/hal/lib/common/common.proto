@@ -1567,8 +1567,9 @@ message IPsecOffloadInfo {
 // VportStateNotification message is sent from Stratum to gNMI-client based on a
 // target-originated event.
 message VportStateNotification {
-  uint32 global_resource_id = 1;
-  bool state = 2;
+  uint32 device_id = 1;
+  uint32 global_resource_id = 2;
+  bool state = 3;
 }
 
 message VirtualPortInfo {
