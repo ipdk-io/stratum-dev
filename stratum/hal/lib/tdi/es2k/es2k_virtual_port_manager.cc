@@ -37,6 +37,8 @@ extern "C" {
 
 #define VPORT_STATE_TABLE_NAME \
   "openconfig-virtual-ports.virtual-ports.virtual-port.state"
+#define VPORT_CONFIG_TABLE_NAME \
+  "openconfig-virtual-ports.virtual-ports.virtual-port.config"
 
 namespace stratum {
 namespace hal {
@@ -151,12 +153,13 @@ void Es2kVirtualPortManager::SendVportStateNotificationEvent(uint32_t dev_id,
 
 ::util::Status Es2kVirtualPortManager::InitializeNotificationCallback() {
   auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
-      VPORT_STATE_TABLE_NAME, &vport_state_notification_callback, this);
+      VPORT_CONFIG_TABLE_NAME, &vport_state_notification_callback, this);
 
   if (!status.ok()) {
-    LOG(ERROR) << "Failed to register IPsec notification callback";
+    LOG(ERROR)
+        << "Failed to register virtual port state change notification callback";
   }
-  return ::util::OkStatus();
+  return status;
 }
 
 }  // namespace tdi

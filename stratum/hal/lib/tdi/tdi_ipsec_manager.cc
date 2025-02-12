@@ -71,7 +71,7 @@ TdiIpsecManager::~TdiIpsecManager() = default;
   if (!status.ok()) {
     LOG(ERROR) << "Failed to register IPsec notification callback";
   }
-  return ::util::OkStatus();
+  return status;
 }
 
 ::util::Status TdiIpsecManager::GetSpiData(uint32& fetched_spi) {
