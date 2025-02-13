@@ -28,7 +28,8 @@ namespace tdi {
 
 class Es2kVirtualPortManager {
  public:
-  Es2kVirtualPortManager() : notif_initialized_(false) {}
+  Es2kVirtualPortManager()
+      : notif_initialized_(false), gnmi_event_writer_(nullptr) {}
   virtual ~Es2kVirtualPortManager() {}
 
   void SetTdiSdeInterface(TdiSdeInterface* tdi_sde_intf);

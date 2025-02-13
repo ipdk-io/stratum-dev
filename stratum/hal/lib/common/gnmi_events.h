@@ -112,7 +112,7 @@ class VportStateNotificationEvent
   VportStateNotificationEvent(const VportStateNotification& notif)
       : notif_(notif) {}
 
-  VportStateNotificationEvent(uint32_t dev_id, uint32_t glort, bool state) {
+  VportStateNotificationEvent(uint32_t dev_id, uint32_t glort, uint32_t state) {
     notif_.set_device_id(dev_id);
     notif_.set_global_resource_id(glort);
     notif_.set_state(state);
