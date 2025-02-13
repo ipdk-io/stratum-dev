@@ -1569,7 +1569,7 @@ message IPsecOffloadInfo {
 message VportStateNotification {
   uint32 device_id = 1;
   uint32 global_resource_id = 2;
-  bool state = 3;
+  uint32 state = 3;
 }
 
 message VirtualPortInfo {

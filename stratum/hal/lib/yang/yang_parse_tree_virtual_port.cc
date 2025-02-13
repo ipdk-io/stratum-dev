@@ -10,6 +10,7 @@
 #include "stratum/hal/lib/common/gnmi_events.h"
 #include "stratum/hal/lib/common/gnmi_publisher.h"
 #include "stratum/hal/lib/common/utils.h"
+#include "stratum/hal/lib/tdi/es2k/es2k_switch.h"
 #include "stratum/hal/lib/yang/yang_parse_tree.h"
 #include "stratum/hal/lib/yang/yang_parse_tree_helpers.h"
 #include "stratum/hal/lib/yang/yang_parse_tree_paths.h"
@@ -129,14 +130,24 @@ void SetUpVirtualPortFetchMacAddress(TreeNode* node, YangParseTree* tree) {
 // Notification message that is sent to gnmi-client
 std::string ConvertVportStateToString(const VportStateNotification& notif) {
   std::stringstream ss;
-  ss << "global-resource-id: " << notif.global_resource_id();
+  ss << "device-id: " << notif.device_id();
+  ss << ", global-resource-id: " << notif.global_resource_id();
   ss << ", state: " << notif.state();
   return ss.str();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// /virtual-ports/oper-status-change
 void SetUpVportNotification(TreeNode* node, YangParseTree* tree) {
   auto unsupported_functor = UnsupportedFunc();
-  auto register_functor = RegisterFunc<VportStateNotificationEvent>();
+  auto register_functor = [tree](const EventHandlerRecordPtr& record) {
+    // On register notification callback needs to be set in the underlying SDE.
+    // If it was already enabled it will be a no-op call.
+    auto switch_if = dynamic_cast<tdi::Es2kSwitch*>(tree->GetSwitchInterface());
+    switch_if->GetVportManager()->InitializeNotificationCallback();
+    return EventHandlerList<VportStateNotificationEvent>::GetInstance()
+        ->Register(record);
+  };
   auto on_change_functor = GetOnChangeFunctor(
       &VportStateNotificationEvent::GetNotification, ConvertVportStateToString);
   node->SetOnTimerHandler(unsupported_functor)
@@ -161,7 +172,7 @@ void YangParseTreePaths::AddSubtreeVirtualPort(YangParseTree* tree) {
       GetPath("virtual-ports")("virtual-port")("state")("mac-address")());
   SetUpVirtualPortFetchMacAddress(node, tree);
   node = tree->AddNode(GetPath("virtual-ports")(
-      "oper-status-expire")());  // Port state (Up/Down) change notification
+      "oper-status-change")());  // Port state (Up/Down) change notification
   SetUpVportNotification(node, tree);
 }
 

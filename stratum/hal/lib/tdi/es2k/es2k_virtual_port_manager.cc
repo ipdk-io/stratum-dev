@@ -39,6 +39,7 @@ extern "C" {
   "openconfig-virtual-ports.virtual-ports.virtual-port.state"
 #define VPORT_CONFIG_TABLE_NAME \
   "openconfig-virtual-ports.virtual-ports.virtual-port.config"
+//  "openconfig-virtual-ports"
 
 namespace stratum {
 namespace hal {
@@ -87,14 +88,6 @@ void Es2kVirtualPortManager::SetTdiFixedFunctionManager(
 
 ::util::StatusOr<PortState> Es2kVirtualPortManager::GetPortState(
     uint32 global_resource_id) {
-  // TODO: Refactor initialization/callback logic.
-  if (!notif_initialized_) {
-    auto status = InitializeNotificationCallback();
-    if (status.ok()) {
-      notif_initialized_ = true;
-    }
-  }
-
   uint64 data;
   ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
   auto status = tdi_fixed_function_manager_->FetchVportTableData(
@@ -131,12 +124,12 @@ static void vport_state_notification_callback(uint32_t dev_id,
                                               uint32_t glort_id, uint8_t state,
                                               void* cookie) {
   auto vport_mgr = reinterpret_cast<Es2kVirtualPortManager*>(cookie);
-  vport_mgr->SendVportStateNotificationEvent(dev_id, glort_id, !!state);
+  vport_mgr->SendVportStateNotificationEvent(dev_id, glort_id, state);
 }
 
 void Es2kVirtualPortManager::SendVportStateNotificationEvent(uint32_t dev_id,
                                                              uint32_t glort_id,
-                                                             bool state) {
+                                                             uint32_t state) {
   absl::ReaderMutexLock l(&gnmi_event_lock_);
   if (!gnmi_event_writer_) return;
   // Allocate and initialize an VportStateNotificationEvent event and pass it to
@@ -152,12 +145,18 @@ void Es2kVirtualPortManager::SendVportStateNotificationEvent(uint32_t dev_id,
 }
 
 ::util::Status Es2kVirtualPortManager::InitializeNotificationCallback() {
+  if (notif_initialized_) {
+    return ::util::OkStatus();
+  }
+
   auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
       VPORT_CONFIG_TABLE_NAME, &vport_state_notification_callback, this);
 
   if (!status.ok()) {
     LOG(ERROR)
         << "Failed to register virtual port state change notification callback";
+  } else {
+    notif_initialized_ = true;
   }
   return status;
 }

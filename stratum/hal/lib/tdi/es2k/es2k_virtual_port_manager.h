@@ -34,7 +34,7 @@ class Es2kVirtualPortManager {
   void SetTdiSdeInterface(TdiSdeInterface* tdi_sde_intf);
   void SetTdiFixedFunctionManager(TdiFixedFunctionManager* tdi_fixed_func_mgr);
   void SendVportStateNotificationEvent(uint32 dev_id, uint32 glort_id,
-                                       bool state);
+                                       uint32 state);
 
   ::util::StatusOr<uint32> GetVSI(uint32 global_resource_id);
   ::util::StatusOr<PortState> GetPortState(uint32 global_resource_id);
@@ -63,6 +63,7 @@ class Es2kVirtualPortManager {
     gnmi_event_writer_ = nullptr;
     return ::util::OkStatus();
   }
+  ::util::Status InitializeNotificationCallback();
 
  protected:
   // RW mutex lock for protecting the singleton instance initialization and
@@ -80,7 +81,6 @@ class Es2kVirtualPortManager {
   // Pointer to FixedFunctionManager. (not owned by this class)
   TdiFixedFunctionManager* tdi_fixed_function_manager_;
   bool notif_initialized_;
-  ::util::Status InitializeNotificationCallback();
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
