@@ -143,8 +143,21 @@ void SetUpVportNotification(TreeNode* node, YangParseTree* tree) {
   auto register_functor = [tree](const EventHandlerRecordPtr& record) {
     // On register notification callback needs to be set in the underlying SDE.
     // If it was already enabled it will be a no-op call.
-    auto switch_if = dynamic_cast<tdi::Es2kSwitch*>(tree->GetSwitchInterface());
-    switch_if->GetVportManager()->InitializeNotificationCallback();
+
+    // Create a set request.
+    SetRequest req;
+    auto* request = req.add_requests()->mutable_node();
+    request->set_enable_vport_status_notif(true);
+
+    std::vector<::util::Status> details;
+    tree->GetSwitchInterface()
+        ->SetValue(/*node_id*/ 0, req, &details)
+        .IgnoreError();
+    // Return status of the operation.
+    if (details.at(0) != ::util::OkStatus()) {
+      // Log error
+    }
+
     return EventHandlerList<VportStateNotificationEvent>::GetInstance()
         ->Register(record);
   };

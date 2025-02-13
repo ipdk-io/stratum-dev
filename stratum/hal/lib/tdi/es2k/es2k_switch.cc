@@ -290,6 +290,14 @@ Es2kSwitch::~Es2kSwitch() {}
         status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
         break;
       }
+      case SetRequest::Request::RequestCase::kNode: {
+        absl::WriterMutexLock l(&chassis_lock);
+        auto vport_notif_enable = req.node().enable_vport_status_notif();
+        if (vport_notif_enable) {
+          status.Update(vport_manager_->InitializeNotificationCallback());
+        }
+        break;
+      }
       default:
         status = MAKE_ERROR(ERR_INTERNAL)
                  << req.ShortDebugString() << " Not supported yet!";

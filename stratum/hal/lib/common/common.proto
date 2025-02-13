@@ -1744,7 +1744,8 @@ message SetRequest {
     }
     // Data required to set info for a specific node.
     message Node {
-      // TODO(unknown): Add this.
+      // Used to enable status change notifications in the Switch.
+      bool enable_vport_status_notif = 1;
     }
     // Data required to set info for a specific chassis.
     message Chassis {
