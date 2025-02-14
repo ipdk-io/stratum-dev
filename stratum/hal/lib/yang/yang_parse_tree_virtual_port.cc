@@ -129,9 +129,8 @@ void SetUpVirtualPortFetchMacAddress(TreeNode* node, YangParseTree* tree) {
 // Notification message that is sent to gnmi-client
 std::string ConvertVportStateToString(const VportStateNotification& notif) {
   std::stringstream ss;
-  ss << "device-id: " << notif.device_id();
-  ss << ", global-resource-id: " << notif.global_resource_id();
-  ss << ", state: " << notif.state();
+  ss << "global-resource-id: " << notif.global_resource_id();
+  ss << ", oper-status: " << notif.state();
   return ss.str();
 }
 
