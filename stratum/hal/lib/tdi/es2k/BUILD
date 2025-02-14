@@ -137,6 +137,26 @@ stratum_cc_library(
 )
 
 stratum_cc_library(
+    name = "es2k_virtual_port_manager",
+    srcs = ["es2k_virtual_port_manager.cc"],
+    hdrs = ["es2k_virtual_port_manager.h"],
+    deps = [
+        "//stratum/glue:integral_types",
+        "//stratum/glue:logging",
+        "//stratum/glue/status",
+        "//stratum/glue/status:statusor",
+        "//stratum/hal/lib/common:common_cc_proto",
+        "//stratum/hal/lib/tdi:tdi_fixed_function_manager",
+        "//stratum/hal/lib/tdi:tdi_sde_common",
+        "//stratum/hal/lib/tdi:tdi_status",
+        "//stratum/lib/channel",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+stratum_cc_library(
     name = "es2k_port_manager_dummy",
     testonly = True,
     srcs = ["es2k_port_manager_dummy.cc"],
