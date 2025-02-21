@@ -275,7 +275,7 @@ class AttributeGroupInternal : public AttributeGroup,
 
   absl::Mutex registered_query_lock_;
   absl::node_hash_map<AttributeGroupQuery*, RegisteredQuery> registered_queries_
-      GUARDED_BY(registered_query_lock_);
+      ABSL_GUARDED_BY(registered_query_lock_);
 };
 }  // namespace
 

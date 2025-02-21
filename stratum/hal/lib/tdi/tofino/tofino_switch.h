@@ -17,8 +17,8 @@
 #include "stratum/hal/lib/tdi/tofino/tofino_chassis_manager.h"
 
 // Suppress clang errors
-#undef LOCKS_EXCLUDED
-#define LOCKS_EXCLUDED(...)
+#undef ABSL_LOCKS_EXCLUDED
+#define ABSL_LOCKS_EXCLUDED(...)
 
 namespace stratum {
 namespace hal {
@@ -30,52 +30,52 @@ class TofinoSwitch : public SwitchInterface {
 
   // SwitchInterface public methods.
   ::util::Status PushChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status VerifyChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status PushForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status SaveForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status CommitForwardingPipelineConfig(uint64 node_id) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status VerifyForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config) override
-      LOCKS_EXCLUDED(chassis_lock);
-  ::util::Status Shutdown() override LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
+  ::util::Status Shutdown() override ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status Freeze() override;
   ::util::Status Unfreeze() override;
   ::util::Status WriteForwardingEntries(const ::p4::v1::WriteRequest& req,
                                         std::vector<::util::Status>* results)
-      override LOCKS_EXCLUDED(chassis_lock);
+      override ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
       std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status RegisterStreamMessageResponseWriter(
       uint64 node_id,
       std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer)
-      override LOCKS_EXCLUDED(chassis_lock);
+      override ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status UnregisterStreamMessageResponseWriter(uint64 node_id) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status HandleStreamMessageRequest(
       uint64 node_id, const ::p4::v1::StreamMessageRequest& request) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status UnregisterEventNotifyWriter() override
-      LOCKS_EXCLUDED(chassis_lock) LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock) ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status RetrieveValue(uint64 node_id, const DataRequest& requests,
                                WriterInterface<DataResponse>* writer,
                                std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::Status SetValue(uint64 node_id, const SetRequest& request,
                           std::vector<::util::Status>* details) override
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
   ::util::StatusOr<std::vector<std::string>> VerifyState() override;
 
   // Factory function for creating the instance of the class.

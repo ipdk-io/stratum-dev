@@ -31,19 +31,19 @@ class BfrtPreManager {
 
   // Pushes a ForwardingPipelineConfig.
   virtual ::util::Status PushForwardingPipelineConfig(
-      const BfrtDeviceConfig& config) LOCKS_EXCLUDED(lock_);
+      const BfrtDeviceConfig& config) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes a PRE entry.
   virtual ::util::Status WritePreEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type, const PreEntry& entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads a PRE entry.
   virtual ::util::Status ReadPreEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const PreEntry& entry, WriterInterface<::p4::v1::ReadResponse>* writer)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   static std::unique_ptr<BfrtPreManager> CreateInstance(
       BfSdeInterface* bf_sde_interface,
@@ -67,33 +67,33 @@ class BfrtPreManager {
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type,
       const ::p4::v1::MulticastGroupEntry& entry)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Insert/Modify/Delete a clone session entry.
   ::util::Status WriteCloneSessionEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type,
-      const ::p4::v1::CloneSessionEntry& entry) EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      const ::p4::v1::CloneSessionEntry& entry) ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Reads a multicast group entry.
   ::util::Status ReadMulticastGroupEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::MulticastGroupEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Reads a clone session entry.
   ::util::Status ReadCloneSessionEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::CloneSessionEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Insert new multicast nodes of a given multicast group.
   ::util::StatusOr<std::vector<uint32>> InsertMulticastNodes(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::MulticastGroupEntry& entry)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Reader-writer lock used to protect access to pipeline state.
   mutable absl::Mutex lock_;

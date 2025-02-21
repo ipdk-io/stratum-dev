@@ -72,7 +72,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
   tree->AddNode(GetPath("interfaces")("interface", "*")("state")("id")())
       ->SetOnChangeRegistration(
           [tree](const EventHandlerRecordPtr& record)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Subscribing to a wildcard node means that all matching nodes
                 // have to be registered for received events.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -88,7 +88,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
       ->SetOnPollHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -106,7 +106,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
   tree->AddNode(GetPath("interfaces")("interface", "*")("state")("ifindex")())
       ->SetOnChangeRegistration(
           [tree](const EventHandlerRecordPtr& record)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Subscribing to a wildcard node means that all matching nodes
                 // have to be registered for received events.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -123,7 +123,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
       ->SetOnPollHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -141,7 +141,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
   tree->AddNode(GetPath("interfaces")("interface", "*")("state")("name")())
       ->SetOnChangeRegistration(
           [tree](const EventHandlerRecordPtr& record)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Subscribing to a wildcard node means that all matching nodes
                 // have to be registered for received events.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -158,7 +158,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
       ->SetOnPollHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -176,7 +176,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
   tree->AddNode(GetPath("interfaces")("interface", "*")("state")("counters")())
       ->SetOnChangeRegistration(
           [tree](const EventHandlerRecordPtr& record)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Subscribing to a wildcard node means that all matching nodes
                 // have to be registered for received events.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -193,7 +193,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
       ->SetOnPollHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -210,7 +210,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
       ->SetOnTimerHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -227,7 +227,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
 
   auto interfaces_on_chage_reg =
       [tree](const EventHandlerRecordPtr& record)
-          EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+          ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
             // Subscribing to a wildcard node means that all matching nodes
             // have to be registered for received events.
             auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -241,7 +241,7 @@ void YangParseTreePaths::AddSubtreeAllInterfaces(YangParseTree* tree) {
   auto interfaces_on_poll =
       [tree](const GnmiEvent& event, const ::gnmi::Path& path,
              GnmiSubscribeStream* stream)
-          EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+          ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
             // Polling a wildcard node means that all matching nodes have to
             // be polled.
             auto status = tree->PerformActionForAllNonWildcardNodes(
@@ -276,7 +276,7 @@ void YangParseTreePaths::AddSubtreeAllComponents(YangParseTree* tree) {
   auto on_poll_names =
       [tree](const GnmiEvent& event, const ::gnmi::Path& path,
              GnmiSubscribeStream* stream)
-          EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+          ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
             // Execute OnPollHandler and send to the stream.
             auto execute_poll = [&event, &stream](const TreeNode& leaf) {
               return (leaf.GetOnPollHandler())(event, stream);
@@ -303,7 +303,7 @@ void YangParseTreePaths::AddSubtreeAllComponents(YangParseTree* tree) {
   auto on_poll_all_components =
       [tree](const GnmiEvent& event, const ::gnmi::Path& path,
              GnmiSubscribeStream* stream)
-          EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+          ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
             // Execute OnPollHandler and send to the stream.
             auto execute_poll = [&event, &stream](const TreeNode& leaf) {
               return (leaf.GetOnPollHandler())(event, stream);
@@ -334,7 +334,7 @@ void YangParseTreePaths::AddSubtreeAllComponents(YangParseTree* tree) {
       ->SetOnPollHandler(
           [tree](const GnmiEvent& event, const ::gnmi::Path& path,
                  GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(tree->root_access_lock_) {
                 // Polling a wildcard node means that all matching nodes have to
                 // be polled.
                 auto status = tree->PerformActionForAllNonWildcardNodes(

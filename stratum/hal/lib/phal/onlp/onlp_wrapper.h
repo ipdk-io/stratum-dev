@@ -291,7 +291,7 @@ class OnlpWrapper : public OnlpInterface {
   OnlpFunctions onlp_functions_;
 
   // The singleton instance.
-  static OnlpWrapper* singleton_ GUARDED_BY(init_lock_);
+  static OnlpWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace onlp

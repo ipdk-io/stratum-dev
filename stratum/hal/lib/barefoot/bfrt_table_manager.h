@@ -32,115 +32,115 @@ class BfrtTableManager {
 
   // Pushes the pipline info.
   virtual ::util::Status PushForwardingPipelineConfig(
-      const BfrtDeviceConfig& config) LOCKS_EXCLUDED(lock_);
+      const BfrtDeviceConfig& config) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Verifies a P4-based forwarding pipeline configuration intended for this
   // manager.
   virtual ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config) const
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Performs coldboot shutdown. Note that there is no public Initialize().
   // Initialization is done as part of PushForwardingPipelineConfig() if the
   // class is not initialized by the time we push config.
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes a table entry.
   virtual ::util::Status WriteTableEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::TableEntry& table_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::TableEntry& table_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 TableEntry(s) matched by the given table entry.
   virtual ::util::Status ReadTableEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the counter data of a table entry.
   virtual ::util::Status WriteDirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the data of a register entry.
   virtual ::util::Status WriteRegisterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::RegisterEntry& register_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::RegisterEntry& register_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the data of a meter entry.
   virtual ::util::Status WriteMeterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::MeterEntry& meter_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::MeterEntry& meter_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes a digest entry.
   virtual ::util::Status WriteDigestEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::DigestEntry& table_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::DigestEntry& table_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile member.
   virtual ::util::Status WriteActionProfileMember(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileMember& action_profile_member)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 ActionProfileMember(s) matched by the given entry.
   virtual ::util::Status ReadActionProfileMember(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::ActionProfileMember& action_profile_member,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile group.
   virtual ::util::Status WriteActionProfileGroup(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileGroup& action_profile_group)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 ActionProfileGroup(s) matched by the given entry.
   virtual ::util::Status ReadActionProfileGroup(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::ActionProfileGroup& action_profile_group,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the counter data of a table entry.
   virtual ::util::StatusOr<::p4::v1::DirectCounterEntry> ReadDirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the data of a register entry.
   virtual ::util::Status ReadRegisterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::RegisterEntry& register_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the data of a meter entry.
   virtual ::util::Status ReadMeterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the data of a digest entry.
   virtual ::util::Status ReadDigestEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::DigestEntry& digest_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Registers a writer to be invoked when we receive a digest lst from the
   // ASIC.
   virtual ::util::Status RegisterDigestListWriter(
       const std::shared_ptr<WriterInterface<::p4::v1::DigestList>>& writer)
-      LOCKS_EXCLUDED(digest_list_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(digest_list_writer_lock_);
 
   // Unregisters the digest list writer.
   virtual ::util::Status UnregisterDigestListWriter()
-      LOCKS_EXCLUDED(digest_list_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(digest_list_writer_lock_);
 
   // Creates a table manager instance.
   static std::unique_ptr<BfrtTableManager> CreateInstance(
@@ -161,7 +161,7 @@ class BfrtTableManager {
 
   ::util::Status BuildTableKey(const ::p4::v1::TableEntry& table_entry,
                                BfSdeInterface::TableKeyInterface* table_key)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status BuildTableActionData(
       const ::p4::v1::Action& action,
@@ -176,19 +176,19 @@ class BfrtTableManager {
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status ReadDefaultTableEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status ReadAllTableEntries(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Construct a P4RT table entry from a table entry request, table key and
   // table data.
@@ -196,16 +196,16 @@ class BfrtTableManager {
       const ::p4::v1::TableEntry& request,
       const BfSdeInterface::TableKeyInterface* table_key,
       const BfSdeInterface::TableDataInterface* table_data)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Construct a P4RT digest list from a list of learn data.
   ::util::StatusOr<::p4::v1::DigestList> BuildP4DigestList(
-      const BfSdeInterface::DigestList& digest_list) LOCKS_EXCLUDED(lock_);
+      const BfSdeInterface::DigestList& digest_list) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Handles received digest lists, converts them to P4Runtime and hands them
   // over the registered receive writer.
   ::util::Status HandleDigestList()
-      LOCKS_EXCLUDED(lock_, digest_list_writer_lock_, chassis_lock);
+      ABSL_LOCKS_EXCLUDED(lock_, digest_list_writer_lock_, chassis_lock);
 
   // Digest list handle thread function.
   static void* DigestListThreadFunc(void* arg);
@@ -228,19 +228,19 @@ class BfrtTableManager {
 
   // Stores the registered writer for DigestList.
   std::shared_ptr<WriterInterface<::p4::v1::DigestList>> digest_list_writer_
-      GUARDED_BY(digest_list_writer_lock_);
+      ABSL_GUARDED_BY(digest_list_writer_lock_);
 
   // Stores the bfrt session used in digest list callbacks. We don't use this
   // session to modify anything, but it is still required to be valid.
   std::shared_ptr<BfSdeInterface::SessionInterface> digest_list_session_
-      GUARDED_BY(lock_);
+      ABSL_GUARDED_BY(lock_);
 
   // Buffer channel for digest lists coming from the SDE to this manager.
   std::shared_ptr<Channel<BfSdeInterface::DigestList>>
-      digest_list_receive_channel_ GUARDED_BY(lock_);
+      digest_list_receive_channel_ ABSL_GUARDED_BY(lock_);
 
   // The ID of the RX thread which handles incoming digest lists from the SDE.
-  pthread_t digest_rx_thread_id_ GUARDED_BY(lock_);
+  pthread_t digest_rx_thread_id_ ABSL_GUARDED_BY(lock_);
 
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   BfSdeInterface* bf_sde_interface_ = nullptr;  // not owned by this class.
@@ -252,7 +252,7 @@ class BfrtTableManager {
   // Helper class to validate the P4Info and requests against it.
   // TODO(max): Maybe this manager should be created in the node and passed down
   // to all feature managers.
-  std::unique_ptr<P4InfoManager> p4_info_manager_ GUARDED_BY(lock_);
+  std::unique_ptr<P4InfoManager> p4_info_manager_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

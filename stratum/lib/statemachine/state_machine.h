@@ -51,14 +51,14 @@ class StateMachine {
 
   // Entry actions are executed in the order they are added.
   void AddEntryAction(State state, CallbackType callback)
-      LOCKS_EXCLUDED(state_machine_mutex_) {
+      ABSL_LOCKS_EXCLUDED(state_machine_mutex_) {
     absl::MutexLock lock(&state_machine_mutex_);
     entry_actions_[state].push_back(callback);
   }
 
   // Exit actions are executed in the order they are added.
   void AddExitAction(State state, CallbackType callback)
-      LOCKS_EXCLUDED(state_machine_mutex_) {
+      ABSL_LOCKS_EXCLUDED(state_machine_mutex_) {
     absl::MutexLock lock(&state_machine_mutex_);
     exit_actions_[state].push_back(callback);
   }
@@ -68,7 +68,7 @@ class StateMachine {
   // event was added to the StateMachine.
   ::util::Status ProcessEvent(Event event, absl::string_view reason,
                               Event* recovery_event)
-      LOCKS_EXCLUDED(state_machine_mutex_) {
+      ABSL_LOCKS_EXCLUDED(state_machine_mutex_) {
     absl::MutexLock lock(&state_machine_mutex_);
     return ProcessEventUnlocked(event, reason, recovery_event);
   }
@@ -79,7 +79,7 @@ class StateMachine {
   // Performs the actions of ProcessEvent.
   ::util::Status ProcessEventUnlocked(Event event, absl::string_view reason,
                                       Event* recovery_event)
-      EXCLUSIVE_LOCKS_REQUIRED(state_machine_mutex_) {
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(state_machine_mutex_) {
     // Do not change states if the transition is invalid.
     ASSIGN_OR_RETURN(State next_state, NextState(current_state_, event));
     // FIXME: Wait for ASSIGN_OR_RETURN impl with error message
@@ -133,10 +133,10 @@ class StateMachine {
   absl::Mutex state_machine_mutex_;
   // A vector of actions that are executed upon entry to any given state.
   absl::flat_hash_map<State, std::vector<CallbackType>> entry_actions_
-      GUARDED_BY(state_machine_mutex_);
+      ABSL_GUARDED_BY(state_machine_mutex_);
   // A vector of actions that are executed upon exit from any given state.
   absl::flat_hash_map<State, std::vector<CallbackType>> exit_actions_
-      GUARDED_BY(state_machine_mutex_);
+      ABSL_GUARDED_BY(state_machine_mutex_);
 };
 
 }  // namespace state_machine

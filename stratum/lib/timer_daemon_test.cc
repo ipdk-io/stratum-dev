@@ -54,7 +54,7 @@ class TimerDaemonTest : public ::testing::Test {
   // checks if the 'count_' has expected value and then increments it.
   // This simple mechanism allows for checking if all timers are handled as
   // expected.
-  int count_ GUARDED_BY(access_lock_);
+  int count_ ABSL_GUARDED_BY(access_lock_);
   // A Mutex used to guard access to the 'count_'.
   mutable absl::Mutex access_lock_;
 

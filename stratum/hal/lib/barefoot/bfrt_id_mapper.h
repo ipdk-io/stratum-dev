@@ -30,23 +30,23 @@ class BfrtIdMapper {
   // This function creates a mapping between P4Info and BfRt
   ::util::Status PushForwardingPipelineConfig(const BfrtDeviceConfig& config,
                                               const bfrt::BfRtInfo* bfrt_info)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Maps a P4Info ID to a BfRt ID
   ::util::StatusOr<uint32> GetBfRtId(uint32 p4info_id) const
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Maps a BfRt ID to a P4Info ID
   ::util::StatusOr<uint32> GetP4InfoId(bf_rt_id_t bfrt_id) const
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Gets the action selector ID of an action profile.
   ::util::StatusOr<bf_rt_id_t> GetActionSelectorBfRtId(
-      bf_rt_id_t action_profile_id) const LOCKS_EXCLUDED(lock_);
+      bf_rt_id_t action_profile_id) const ABSL_LOCKS_EXCLUDED(lock_);
 
   // Gets the action profile ID of an action selector.
   ::util::StatusOr<bf_rt_id_t> GetActionProfileBfRtId(
-      bf_rt_id_t action_selector_id) const LOCKS_EXCLUDED(lock_);
+      bf_rt_id_t action_selector_id) const ABSL_LOCKS_EXCLUDED(lock_);
 
   // Creates a table manager instance for a specific device.
   static std::unique_ptr<BfrtIdMapper> CreateInstance();
@@ -58,7 +58,7 @@ class BfrtIdMapper {
 
   ::util::Status BuildMapping(uint32 p4info_id, std::string p4info_name,
                               const bfrt::BfRtInfo* bfrt_info)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Scan context.json file and build mappings for ActionProfile and
   // ActionSelector.
@@ -66,22 +66,22 @@ class BfrtIdMapper {
   // in the future.
   ::util::Status BuildActionProfileMapping(
       const p4::config::v1::P4Info& p4info, const bfrt::BfRtInfo* bfrt_info,
-      const std::string& context_json_content) SHARED_LOCKS_REQUIRED(lock_);
+      const std::string& context_json_content) ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Reader-writer lock used to protect access to mapping.
   mutable absl::Mutex lock_;
 
   // Maps from bfrt ID to P4Runtime ID and vice versa.
-  absl::flat_hash_map<bf_rt_id_t, uint32> bfrt_to_p4info_id_ GUARDED_BY(lock_);
-  absl::flat_hash_map<uint32, bf_rt_id_t> p4info_to_bfrt_id_ GUARDED_BY(lock_);
+  absl::flat_hash_map<bf_rt_id_t, uint32> bfrt_to_p4info_id_ ABSL_GUARDED_BY(lock_);
+  absl::flat_hash_map<uint32, bf_rt_id_t> p4info_to_bfrt_id_ ABSL_GUARDED_BY(lock_);
 
   // Map for getting an ActionSelector BfRt ID from an ActionProfile BfRt ID.
   absl::flat_hash_map<bf_rt_id_t, bf_rt_id_t> act_profile_to_selector_mapping_
-      GUARDED_BY(lock_);
+      ABSL_GUARDED_BY(lock_);
 
   // Map for getting an ActionProfile BfRt ID from an ActionSelector BfRt ID.
   absl::flat_hash_map<bf_rt_id_t, bf_rt_id_t> act_selector_to_profile_mapping_
-      GUARDED_BY(lock_);
+      ABSL_GUARDED_BY(lock_);
 };
 
 }  // namespace barefoot

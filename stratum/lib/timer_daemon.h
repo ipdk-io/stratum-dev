@@ -88,16 +88,16 @@ class TimerDaemon final {
   using DescriptorPtr = std::shared_ptr<Descriptor>;
 
   // Starts the timer service. Creates a thread that calls Execute() every 1ms.
-  static ::util::Status Start() LOCKS_EXCLUDED(access_lock_);
+  static ::util::Status Start() ABSL_LOCKS_EXCLUDED(access_lock_);
   // Stops the timer service. Notifies the timer thread to exit and waits until
   // it joins.
-  static ::util::Status Stop() LOCKS_EXCLUDED(access_lock_);
+  static ::util::Status Stop() ABSL_LOCKS_EXCLUDED(access_lock_);
   // The 'worker' of the timer service. Is called every 1ms and checks if the
   // first timer to be executed should be executed. If so, the action is
   // executed and then if the timer is periodic the timer is updated and
   // re-inserted into the heap with timers. It also takes care of all expired
   // timers.
-  static bool Execute() LOCKS_EXCLUDED(access_lock_);
+  static bool Execute() ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // Creates a one-shot timer that will execute 'action' 'delay_ms' milliseconds
   // from now.
@@ -129,17 +129,17 @@ class TimerDaemon final {
   // Internal method creating requested timer.
   ::util::Status RequestTimer(bool repeat, uint64 delay_ms, uint64 period_ms,
                               Action action, DescriptorPtr* desc)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A Mutex used to guard access to the list of pointers to timer requests and
   // the started_ flag.
   mutable absl::Mutex access_lock_;
 
-  std::vector<DescriptorWeakPtr> timers_ GUARDED_BY(access_lock_);
+  std::vector<DescriptorWeakPtr> timers_ ABSL_GUARDED_BY(access_lock_);
 
   pthread_t tid_ = 0;  // will not be destroyed before the thread is joined.
 
-  bool started_ GUARDED_BY(access_lock_);
+  bool started_ ABSL_GUARDED_BY(access_lock_);
 
   friend class TimerDaemonTest;
 };

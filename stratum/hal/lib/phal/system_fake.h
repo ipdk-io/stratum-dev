@@ -85,9 +85,9 @@ class SystemFake : public SystemInterface {
   mutable absl::Mutex udev_mutex_;
   std::map<std::pair<std::string, std::string>,
            std::pair<UdevSequenceNumber, std::string>>
-      udev_state_ GUARDED_BY(udev_mutex_);
+      udev_state_ ABSL_GUARDED_BY(udev_mutex_);
   mutable std::map<std::string, std::set<std::string>> updated_udev_devices_
-      GUARDED_BY(udev_mutex_);
+      ABSL_GUARDED_BY(udev_mutex_);
 };
 
 }  // namespace phal

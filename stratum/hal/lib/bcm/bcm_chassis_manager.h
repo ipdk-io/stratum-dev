@@ -69,7 +69,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   // 5- Saves or updates an internal copy of the ChassisConfig proto which has
   //    the most updated configuration of all the chassis/nodes/ports.
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Verifies the part of ChassisConfig proto that this class cares about:
   // 1- Calls GenerateBcmChassisMapFromConfig() to make sure we can generate
@@ -79,70 +79,70 @@ class BcmChassisManager : public BcmChassisRoInterface {
   //    bcm_chassis_map matches the applied_bcm_chassis_map_, otherwise return
   //    'reboot required'.
   virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Performs coldboot shutdown sequence (detaching all attached unit and
   // clearing the maps). Note that there is no public Initialize().
   // Initialization is done as part of PushChassisConfig() if the class is not
   // initialized when we push the chassis config.
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(chassis_lock);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Initializes the unit -> BcmNode* map. This is not part of the constructor
   // as a pointer to the BcmChassisManager instance is given to all of the
   // BcmNode instances on creation.
   virtual void SetUnitToBcmNodeMap(
       const std::map<int, BcmNode*>& unit_to_bcm_node)
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Registers a WriterInterface<GnmiEventPtr> for sending gNMI events.
   virtual ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer)
-      LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   // Unregisters a previously registered WriterInterface<GnmiEventPtr>.
   virtual ::util::Status UnregisterEventNotifyWriter()
-      LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   // BcmChassisRoInterface functions.
   ::util::StatusOr<BcmChip> GetBcmChip(int unit) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<BcmPort> GetBcmPort(int slot, int port,
                                        int channel) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<BcmPort> GetBcmPort(uint64 node_id,
                                        uint32 port_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<std::map<uint64, int>> GetNodeIdToUnitMap() const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<int> GetUnitFromNodeId(uint64 node_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<std::map<uint32, SdkPort>> GetPortIdToSdkPortMap(
-      uint64 node_id) const override SHARED_LOCKS_REQUIRED(chassis_lock);
+      uint64 node_id) const override ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<std::map<uint32, SdkTrunk>> GetTrunkIdToSdkTrunkMap(
-      uint64 node_id) const override SHARED_LOCKS_REQUIRED(chassis_lock);
+      uint64 node_id) const override ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<PortState> GetPortState(uint64 node_id,
                                            uint32 port_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<PortState> GetPortState(const SdkPort& sdk_port)
-      const override SHARED_LOCKS_REQUIRED(chassis_lock);
+      const override ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<TrunkState> GetTrunkState(uint64 node_id,
                                              uint32 trunk_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<std::set<uint32>> GetTrunkMembers(
       uint64 node_id, uint32 trunk_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<uint32> GetParentTrunkId(uint64 node_id,
                                             uint32 port_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<AdminState> GetPortAdminState(uint64 node_id,
                                                  uint32 port_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::StatusOr<LoopbackState> GetPortLoopbackState(
       uint64 node_id, uint32 port_id) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::Status GetPortCounters(uint64 node_id, uint32 port_id,
                                  PortCounters* pc) const override
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Sets the block state of a trunk member on a node specified by node_id. The
   // id of the member is given by port_id. The ID of the trunk which the port is
@@ -164,7 +164,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
                                                   uint32 trunk_id,
                                                   uint32 port_id,
                                                   TrunkMemberBlockState state)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Sets the admin state of a port, as requested by the SDN controller. This
   // method:
@@ -173,7 +173,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   //    (node_id, port_id), only if step 1 is successful.
   virtual ::util::Status SetPortAdminState(uint64 node_id, uint32 port_id,
                                            AdminState state)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Sets the health state of a port, as requested by the SDN controller. This
   // method:
@@ -185,7 +185,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   //    if setting LED color/state fails.
   virtual ::util::Status SetPortHealthState(uint64 node_id, uint32 port_id,
                                             HealthState state)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Sets the loopback state of a port, as requested by the SDN controller. This
   // method:
@@ -194,7 +194,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   //    (node_id, port_id), only if step 1 is successful.
   virtual ::util::Status SetPortLoopbackState(uint64 node_id, uint32 port_id,
                                               LoopbackState state)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<BcmChassisManager> CreateInstance(
@@ -271,7 +271,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   // (Re-)syncs the internal state based the pushed chassis config. Called as
   // part of each chassis config push to regenerate all the internal port maps.
   ::util::Status SyncInternalState(const ChassisConfig& config)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Registers/Unregisters all the event Writers (if not done yet).
   ::util::Status RegisterEventWriters();
@@ -322,7 +322,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   // first accesses the internal structures of a class below BcmChassisManager
   // as this may result in deadlock.
   void LinkscanEventHandler(int unit, int logical_port, PortState new_state)
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Transceiver module insert/removal event handler. This method is executed by
   // a ChannelReader thread which processes transceiver module insert/removal
@@ -331,36 +331,36 @@ class BcmChassisManager : public BcmChassisRoInterface {
   // first accesses the internal structures of a class below BcmChassisManager
   // as this may result in deadlock.
   void TransceiverEventHandler(int slot, int port, HwState new_state)
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Thread function for reading transceiver events from xcvr_event_channel_.
   // Invoked with "this" as the argument in pthread_create.
   static void* TransceiverEventHandlerThreadFunc(void* arg)
-      LOCKS_EXCLUDED(chassis_lock, gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(chassis_lock, gnmi_event_lock_);
 
   // Reads and processes transceiver events using the given ChannelReader.
   // Called by TransceiverEventHandlerThreadFunc.
   void* ReadTransceiverEvents(
       const std::unique_ptr<ChannelReader<PhalInterface::TransceiverEvent>>&
-          reader) LOCKS_EXCLUDED(chassis_lock, gnmi_event_lock_);
+          reader) ABSL_LOCKS_EXCLUDED(chassis_lock, gnmi_event_lock_);
 
   // Thread function for reading linkscan events from linkscan_event_channel_.
   // Invoked with "this" as the argument in pthread_create.
   static void* LinkscanEventHandlerThreadFunc(void* arg)
-      LOCKS_EXCLUDED(chassis_lock);
+      ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Reads and processes linkscan events using the given ChannelReader. Called
   // by LinkscanEventHandlerThreadFunc.
   void* ReadLinkscanEvents(
       const std::unique_ptr<ChannelReader<BcmSdkInterface::LinkscanEvent>>&
-          reader) LOCKS_EXCLUDED(chassis_lock);
+          reader) ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   // Forward PortStatus changed events through the appropriate node's registered
   // ChannelWriter<GnmiEventPtr> object. Called by LinkscanEventHandler and
   // expects chassis_lock to be held.
   void SendPortOperStateGnmiEvent(uint64 node_id, uint32 port_id,
                                   PortState new_state)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   // Sets the speed for a flex port group after a chassis config is pushed. The
   // input is a PortKey encapsulating (slot, port) of the port group. The
@@ -591,7 +591,7 @@ class BcmChassisManager : public BcmChassisRoInterface {
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
-      GUARDED_BY(gnmi_event_lock_);
+      ABSL_GUARDED_BY(gnmi_event_lock_);
 
   // Pointer to a PhalInterface implementation.
   PhalInterface* phal_interface_;  // not owned by this class.

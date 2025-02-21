@@ -314,12 +314,12 @@ class ConcurrentUdevEventHandlerTest : public ::testing::Test {
   absl::CondVar test_counter_cond_var_;
   // Generates unique, increasing numbers. Used for both thread identifiers and
   // udev sequence numbers.
-  int udev_test_counter_ GUARDED_BY(test_counter_lock_) = 1;
+  int udev_test_counter_ ABSL_GUARDED_BY(test_counter_lock_) = 1;
   // Counts the number of successful uses of UdevEventHandler by test threads.
-  int udev_test_results_ GUARDED_BY(test_counter_lock_) = 0;
+  int udev_test_results_ ABSL_GUARDED_BY(test_counter_lock_) = 0;
   // Counts the number of test threads currently running.
   // Stops all test threads when set back to 0.
-  int udev_thread_counter_ GUARDED_BY(test_counter_lock_) = 0;
+  int udev_thread_counter_ ABSL_GUARDED_BY(test_counter_lock_) = 0;
 };
 
 TEST_F(ConcurrentUdevEventHandlerTest, ManyConcurrentCallbacksExecute) {

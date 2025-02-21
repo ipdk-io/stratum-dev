@@ -28,56 +28,56 @@ class DummySwitch : public SwitchInterface {
 
   // Switch Interface methods
   ::util::Status PushChassisConfig(const ChassisConfig& config)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status VerifyChassisConfig(const ChassisConfig& config)
-      LOCKS_EXCLUDED(chassis_lock) override;
-  ::util::Status Shutdown() LOCKS_EXCLUDED(chassis_lock) override;
-  ::util::Status Freeze() LOCKS_EXCLUDED(chassis_lock) override;
-  ::util::Status Unfreeze() LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
+  ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(chassis_lock) override;
+  ::util::Status Freeze() ABSL_LOCKS_EXCLUDED(chassis_lock) override;
+  ::util::Status Unfreeze() ABSL_LOCKS_EXCLUDED(chassis_lock) override;
 
   ::util::Status PushForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status SaveForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status CommitForwardingPipelineConfig(uint64 node_id)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status VerifyForwardingPipelineConfig(
       uint64 node_id, const ::p4::v1::ForwardingPipelineConfig& config)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status WriteForwardingEntries(const ::p4::v1::WriteRequest& req,
                                         std::vector<::util::Status>* results)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
       std::vector<::util::Status>* details)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status RegisterStreamMessageResponseWriter(
       uint64 node_id,
       std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status UnregisterStreamMessageResponseWriter(uint64 node_id)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status HandleStreamMessageRequest(
       uint64 node_id, const ::p4::v1::StreamMessageRequest& request)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
 
   ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status UnregisterEventNotifyWriter()
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status RetrieveValue(uint64 node_id, const DataRequest& requests,
                                WriterInterface<DataResponse>* writer,
                                std::vector<::util::Status>* details)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::Status SetValue(uint64 node_id, const SetRequest& request,
                           std::vector<::util::Status>* details)
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
   ::util::StatusOr<std::vector<std::string>> VerifyState()
-      LOCKS_EXCLUDED(chassis_lock) override;
+      ABSL_LOCKS_EXCLUDED(chassis_lock) override;
 
   // Factory function for creating the instance of the DummySwitch.
   static std::unique_ptr<DummySwitch> CreateInstance(
@@ -95,9 +95,9 @@ class DummySwitch : public SwitchInterface {
 
   // Get a DummyNode based on the Id.
   ::util::StatusOr<DummyNode*> GetDummyNode(uint64 node_id)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  std::vector<DummyNode*> GetDummyNodes() SHARED_LOCKS_REQUIRED(chassis_lock);
+  std::vector<DummyNode*> GetDummyNodes() ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   PhalInterface* phal_interface_;
   DummyChassisManager* chassis_mgr_;

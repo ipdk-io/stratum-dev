@@ -84,10 +84,10 @@ class Es2kHal final {
                                   absl::Notification* ready_sync = nullptr,
                                   absl::Notification* done_sync = nullptr,
                                   const TargetOptions* target_options = nullptr)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
-  static Es2kHal* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Es2kHal* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Es2kHal is neither copyable nor movable.
   Es2kHal(const Es2kHal&) = delete;
@@ -167,7 +167,7 @@ class Es2kHal final {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static Es2kHal* singleton_ GUARDED_BY(init_lock_);
+  static Es2kHal* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace hal

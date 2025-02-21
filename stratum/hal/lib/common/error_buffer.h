@@ -30,20 +30,20 @@ class ErrorBuffer {
   // Adds an error to errors_ in a thread-safe way, while making sure the size
   // never goes above a limit.
   void AddError(const ::util::Status& error, const std::string& msg_to_prepend,
-                gtl::source_location location) LOCKS_EXCLUDED(lock_);
+                gtl::source_location location) ABSL_LOCKS_EXCLUDED(lock_);
 
   // An overloaded version of AddError with no msg_to_prepend.
   void AddError(const ::util::Status& error, gtl::source_location location)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Clears all the blocking errors in a thread-safe way.
-  void ClearErrors() LOCKS_EXCLUDED(lock_);
+  void ClearErrors() ABSL_LOCKS_EXCLUDED(lock_);
 
   // Returns the list of errors.
-  std::vector<::util::Status> GetErrors() const LOCKS_EXCLUDED(lock_);
+  std::vector<::util::Status> GetErrors() const ABSL_LOCKS_EXCLUDED(lock_);
 
   // Whether there is any error saved in the buffer.
-  bool ErrorExists() const LOCKS_EXCLUDED(lock_);
+  bool ErrorExists() const ABSL_LOCKS_EXCLUDED(lock_);
 
   // ErrorBuffer is neither copyable nor movable.
   ErrorBuffer(const ErrorBuffer&) = delete;
@@ -54,7 +54,7 @@ class ErrorBuffer {
   mutable absl::Mutex lock_;
 
   // A vector of all the blocking (aka critical) errors HAL has encountered.
-  std::vector<::util::Status> errors_ GUARDED_BY(lock_);
+  std::vector<::util::Status> errors_ ABSL_GUARDED_BY(lock_);
 };
 
 }  // namespace hal

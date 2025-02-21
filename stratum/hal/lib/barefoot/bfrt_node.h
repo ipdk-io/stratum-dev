@@ -35,34 +35,34 @@ class BfrtNode {
 
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
                                            uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config,
                                              uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status PushForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config);
   virtual ::util::Status SaveForwardingPipelineConfig(
-      const ::p4::v1::ForwardingPipelineConfig& config) LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status CommitForwardingPipelineConfig() LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::ForwardingPipelineConfig& config) ABSL_LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status CommitForwardingPipelineConfig() ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config) const;
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(chassis_lock, lock_);
-  virtual ::util::Status Freeze() LOCKS_EXCLUDED(lock_);
-  virtual ::util::Status Unfreeze() LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(chassis_lock, lock_);
+  virtual ::util::Status Freeze() ABSL_LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status Unfreeze() ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status WriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
+      std::vector<::util::Status>* details) ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status RegisterStreamMessageResponseWriter(
       const std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>>&
-          writer) LOCKS_EXCLUDED(lock_);
+          writer) ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status UnregisterStreamMessageResponseWriter()
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status HandleStreamMessageRequest(
-      const ::p4::v1::StreamMessageRequest& req) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::StreamMessageRequest& req) ABSL_LOCKS_EXCLUDED(lock_);
   // Factory function for creating the instance of the class.
   static std::unique_ptr<BfrtNode> CreateInstance(
       BfrtTableManager* bfrt_table_manager,
@@ -114,13 +114,13 @@ class BfrtNode {
   mutable absl::Mutex rx_writer_lock_;
 
   // Flag indicating whether the pipeline has been pushed.
-  bool pipeline_initialized_ GUARDED_BY(lock_);
+  bool pipeline_initialized_ ABSL_GUARDED_BY(lock_);
 
   // Flag indicating whether the chip is initialized.
-  bool initialized_ GUARDED_BY(lock_);
+  bool initialized_ ABSL_GUARDED_BY(lock_);
 
   // Stores pipeline information for this node.
-  BfrtDeviceConfig bfrt_config_ GUARDED_BY(lock_);
+  BfrtDeviceConfig bfrt_config_ ABSL_GUARDED_BY(lock_);
 
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   // Not owned by this class.
@@ -139,7 +139,7 @@ class BfrtNode {
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
   // lifetime of the class.
-  uint64 node_id_ GUARDED_BY(lock_);
+  uint64 node_id_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based BFRT device_id number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

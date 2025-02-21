@@ -28,19 +28,19 @@ class BfrtCounterManager {
 
   // Pushes the forwarding pipeline config
   virtual ::util::Status PushForwardingPipelineConfig(
-      const BfrtDeviceConfig& config) LOCKS_EXCLUDED(lock_);
+      const BfrtDeviceConfig& config) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an indrect counter entry.
   virtual ::util::Status WriteIndirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::CounterEntry& counter_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::CounterEntry& counter_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads an indirect counter entry.
   virtual ::util::Status ReadIndirectCounterEntry(
       std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const ::p4::v1::CounterEntry& counter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Creates a table manager instance.
   static std::unique_ptr<BfrtCounterManager> CreateInstance(

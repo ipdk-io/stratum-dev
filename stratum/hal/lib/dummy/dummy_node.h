@@ -49,46 +49,46 @@ class DummyNode {
  public:
   // Update node configuration.
   ::util::Status PushChassisConfig(const ChassisConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Verify node configuration but not update the node.
   ::util::Status VerifyChassisConfig(const ChassisConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Push P4 forwarding pipeline config to the node.
   ::util::Status PushForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Verify P4 forwarding pipeline config on the node but
   // not push it to the node.
   ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Shutdown the node.
-  ::util::Status Shutdown() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(node_lock_);
+  ::util::Status Shutdown() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Freeze and Unfreeze the node.
   // Every public method call to the freezed node should be hanged
   // or returns an error state with proper message.
-  ::util::Status Freeze() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(node_lock_);
-  ::util::Status Unfreeze() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(node_lock_);
+  ::util::Status Freeze() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(node_lock_);
+  ::util::Status Unfreeze() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Read and Write forwarding entries to the node.
   // The node should be able to handle tranlation between forwarding entry
   // from P4Runtime and the real binary format of the dataplane.
   ::util::Status WriteForwardingEntries(const ::p4::v1::WriteRequest& req,
                                         std::vector<::util::Status>* results)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
   ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) SHARED_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(node_lock_);
+      std::vector<::util::Status>* details) ABSL_SHARED_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Register/Unregister a packet receive writer.
   // The node should sends P4Runtime PacketIn message to the writer
@@ -96,9 +96,9 @@ class DummyNode {
   // The node may add/remove metadata to/from the packet in message.
   ::util::Status RegisterStreamMessageResponseWriter(
       std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
   ::util::Status UnregisterStreamMessageResponseWriter()
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Handle a StreamMessageRequest from the controller.
   // PacketOuts:
@@ -107,15 +107,15 @@ class DummyNode {
   //    to/from the message.
   ::util::Status HandleStreamMessageRequest(
       const ::p4::v1::StreamMessageRequest& request)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Retrieve port data from this node
   ::util::StatusOr<DataResponse> RetrievePortData(const Request& request)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Retrieve port qus data from this node
   ::util::StatusOr<DataResponse> RetrievePortQosData(const Request& request)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Factory function for creating the instance of the class.
   // The DummyNode instance created by ChassisManager when the
@@ -128,11 +128,11 @@ class DummyNode {
   // Register event notify writer for gNMI events which comes from the node.
   ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Unregister gNMI event notifu writer from the node.
   ::util::Status UnregisterEventNotifyWriter()
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(node_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(node_lock_);
 
   // Accessors
   uint64 Id() const;

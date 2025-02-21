@@ -34,30 +34,30 @@ class NP4ChassisManager {
   virtual ~NP4ChassisManager();
 
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(chassis_lock);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   virtual ::util::Status RegisterEventNotifyWriter(
       const std::shared_ptr<WriterInterface<GnmiEventPtr>>& writer)
-      LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   virtual ::util::Status UnregisterEventNotifyWriter()
-      LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   virtual ::util::StatusOr<DataResponse> GetPortData(
-      const DataRequest::Request& request) SHARED_LOCKS_REQUIRED(chassis_lock);
+      const DataRequest::Request& request) ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::StatusOr<PortState> GetPortState(uint64 node_id,
                                                    uint32 port_id)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   virtual ::util::Status GetPortCounters(uint64 node_id, uint32 port_id,
                                          PortCounters* counters)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<NP4ChassisManager> CreateInstance(
@@ -74,28 +74,28 @@ class NP4ChassisManager {
   // class.
   explicit NP4ChassisManager(PhalInterface* phal_interface);
 
-  ::util::Status RegisterEventWriters() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+  ::util::Status RegisterEventWriters() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
   ::util::Status UnregisterEventWriters()
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Cleans up the internal state. Resets all the internal port maps and
   // deletes the pointers.
-  void CleanupInternalState() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+  void CleanupInternalState() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Forward PortStatus changed events through the appropriate node's registered
   // ChannelWriter<GnmiEventPtr> object.
   void SendPortOperStateGnmiEvent(uint64 node_id, uint32 port_id,
                                   PortState new_state)
-      LOCKS_EXCLUDED(gnmi_event_lock_);
+      ABSL_LOCKS_EXCLUDED(gnmi_event_lock_);
 
   // Thread function for reading and processing port state events.
-  void ReadPortStatusChangeEvents() LOCKS_EXCLUDED(chassis_lock);
+  void ReadPortStatusChangeEvents() ABSL_LOCKS_EXCLUDED(chassis_lock);
 
   ::util::StatusOr<const SingletonPort*> GetSingletonPort(uint64 node_id,
                                                           uint32 port_id) const
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
-  bool initialized_ GUARDED_BY(chassis_lock);
+  bool initialized_ ABSL_GUARDED_BY(chassis_lock);
 
   // Pointer to a PhalInterface implementation.
   PhalInterface* phal_interface_;  // not owned by this class.
@@ -103,7 +103,7 @@ class NP4ChassisManager {
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
-      GUARDED_BY(gnmi_event_lock_);
+      ABSL_GUARDED_BY(gnmi_event_lock_);
 
   // Maximum depth of port status change event channel.
   static constexpr int kMaxPortStatusChangeEventDepth = 1024;
@@ -119,14 +119,14 @@ class NP4ChassisManager {
   // callback synchronously during a port add operation, and the risk of
   // deadlock is high...
   std::shared_ptr<Channel<PortStatusChangeEvent>>
-      port_status_change_event_channel_ GUARDED_BY(chassis_lock);
+      port_status_change_event_channel_ ABSL_GUARDED_BY(chassis_lock);
 
   std::unique_ptr<ChannelReader<PortStatusChangeEvent>>
       port_status_change_event_reader_;
 
   std::unique_ptr<ChannelWriter<PortStatusChangeEvent>>
       port_status_change_event_writer_
-          GUARDED_BY(port_status_change_event_writer_lock_);
+          ABSL_GUARDED_BY(port_status_change_event_writer_lock_);
 
   std::thread port_status_change_event_thread_;
 
@@ -135,12 +135,12 @@ class NP4ChassisManager {
   // Map from node ID to another map from port ID to PortState representing
   // the state of the singleton port uniquely identified by (node ID, port ID).
   std::map<uint64, std::map<uint32, PortState>>
-      node_id_to_port_id_to_port_state_ GUARDED_BY(chassis_lock);
+      node_id_to_port_id_to_port_state_ ABSL_GUARDED_BY(chassis_lock);
 
   // Map from node ID to another map from port ID to SignletonPort representing
   // the config of the singleton port uniquely identified by (node ID, port ID).
   std::map<uint64, std::map<uint32, SingletonPort>>
-      node_id_to_port_id_to_port_config_ GUARDED_BY(chassis_lock);
+      node_id_to_port_id_to_port_config_ ABSL_GUARDED_BY(chassis_lock);
 
   friend class NP4ChassisManagerTest;
 };

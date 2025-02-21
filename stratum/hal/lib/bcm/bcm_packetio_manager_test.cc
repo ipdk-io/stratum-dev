@@ -530,7 +530,7 @@ class BcmPacketioManagerTest : public ::testing::TestWithParam<OperationMode> {
 
   // A boolean showing that the RX handler in the class has received some
   // packets and it is done with validating them.
-  bool rx_complete_ GUARDED_BY(rx_lock_);
+  bool rx_complete_ ABSL_GUARDED_BY(rx_lock_);
 
   // A lock to protect rx_complete_ flag.
   mutable absl::Mutex rx_lock_;

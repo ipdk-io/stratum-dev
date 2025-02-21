@@ -28,8 +28,8 @@ class DummyThreadpool : public ThreadpoolInterface {
 
  private:
   absl::Mutex lock_;
-  std::map<TaskId, std::function<void()>> closures_ GUARDED_BY(lock_){};
-  TaskId id_counter_ GUARDED_BY(lock_) = 0;
+  std::map<TaskId, std::function<void()>> closures_ ABSL_GUARDED_BY(lock_){};
+  TaskId id_counter_ ABSL_GUARDED_BY(lock_) = 0;
 };
 
 }  // namespace phal

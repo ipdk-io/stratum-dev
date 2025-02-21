@@ -113,20 +113,20 @@ class UdevEventHandler {
   // Adds and initializes a new udev monitor that listens for actions
   // that match the given udev filter.
   ::util::Status AddNewUdevMonitor(const std::string& udev_filter)
-      EXCLUSIVE_LOCKS_REQUIRED(udev_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(udev_lock_);
   // Updates the given UdevMonitorInfo to reflect the new event. An update is
   // only performed if this event is the latest event seen for its device
   // (determined by udev sequence numbers). The returned bool is true iff the
   // event is new and an update was performed.
   ::util::StatusOr<bool> UpdateUdevMonitorInfo(UdevMonitorInfo* monitor_info,
                                                Udev::Event event)
-      EXCLUSIVE_LOCKS_REQUIRED(udev_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(udev_lock_);
 
   // This is a helper function for pthread_create.
   static void* RunUdevMonitorLoop(void* udev_event_handler_ptr);
   // Runs the main udev monitor loop. Does not return until
   // udev_monitor_loop_running_ is set to false.
-  void UdevMonitorLoop() LOCKS_EXCLUDED(udev_lock_);
+  void UdevMonitorLoop() ABSL_LOCKS_EXCLUDED(udev_lock_);
   // Searches for an event that has occurred and requires a callback. If no such
   // event is found, returns false. Otherwise, returns true and sets
   // callback_to_execute and action_to_send to the values appropriate for this
@@ -134,24 +134,24 @@ class UdevEventHandler {
   // callback.
   ::util::StatusOr<bool> FindCallbackToExecute(
       UdevEventCallback** callback_to_execute, std::string* action_to_send)
-      LOCKS_EXCLUDED(udev_lock_);
+      ABSL_LOCKS_EXCLUDED(udev_lock_);
   // These two helper functions are called by UdevMonitorLoop.
-  ::util::Status PollUdevMonitors() LOCKS_EXCLUDED(udev_lock_);
-  ::util::Status SendCallbacks() LOCKS_EXCLUDED(udev_lock_);
+  ::util::Status PollUdevMonitors() ABSL_LOCKS_EXCLUDED(udev_lock_);
+  ::util::Status SendCallbacks() ABSL_LOCKS_EXCLUDED(udev_lock_);
 
   const SystemInterface* system_interface_;
 
   absl::Mutex udev_lock_;
   absl::CondVar udev_cond_var_;
-  std::unique_ptr<Udev> udev_ GUARDED_BY(udev_lock_);
+  std::unique_ptr<Udev> udev_ ABSL_GUARDED_BY(udev_lock_);
   absl::flat_hash_map<std::string, UdevMonitorInfo> udev_monitors_
-      GUARDED_BY(udev_lock_);
+      ABSL_GUARDED_BY(udev_lock_);
   std::function<void(::util::Status)> update_callback_ = nullptr;
   // This pointer is set whenever we are currently executing a callback.
   // This lets us freely call (Un)RegisterEventCallback for any callback except
   // the one that is currently executing.
-  UdevEventCallback* executing_callback_ GUARDED_BY(udev_lock_) = nullptr;
-  bool udev_monitor_loop_running_ GUARDED_BY(udev_lock_) = false;
+  UdevEventCallback* executing_callback_ ABSL_GUARDED_BY(udev_lock_) = nullptr;
+  bool udev_monitor_loop_running_ ABSL_GUARDED_BY(udev_lock_) = false;
   pthread_t udev_monitor_loop_thread_id_;
 };
 

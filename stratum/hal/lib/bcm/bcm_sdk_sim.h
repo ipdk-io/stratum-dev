@@ -44,8 +44,8 @@ class BcmSdkSim : public BcmSdkWrapper {
       const std::string& bcm_shell_log_file_path) override;
   ::util::Status FindUnit(int unit, int pci_bus, int pci_slot,
                           BcmChip::BcmChipType chip_type) override
-      LOCKS_EXCLUDED(sim_lock_);
-  ::util::Status ShutdownAllUnits() override LOCKS_EXCLUDED(sim_lock_);
+      ABSL_LOCKS_EXCLUDED(sim_lock_);
+  ::util::Status ShutdownAllUnits() override ABSL_LOCKS_EXCLUDED(sim_lock_);
   ::util::Status StartLinkscan(int unit) override;
   ::util::Status StopLinkscan(int unit) override;
   ::util::Status DeleteL2EntriesByVlan(int unit, int vlan) override;
@@ -73,7 +73,7 @@ class BcmSdkSim : public BcmSdkWrapper {
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
   static BcmSdkSim* CreateSingleton(const std::string& bcm_sdk_sim_bin)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // The following public functions are specific to this class. They are to be
   // called by SDK callbacks or functions defined in the private namespace in
@@ -82,7 +82,7 @@ class BcmSdkSim : public BcmSdkWrapper {
   // Find PCI info for a simulated BDE device. To be called in the SDK method
   // linux_bde_get_pci_info.
   ::util::Status GetPciInfo(int unit, uint32* bus, uint32* slot)
-      LOCKS_EXCLUDED(sim_lock_);
+      ABSL_LOCKS_EXCLUDED(sim_lock_);
 
  protected:
   // Overloaded version of BcmSdkWrapper protected methods for simulator.
@@ -91,17 +91,17 @@ class BcmSdkSim : public BcmSdkWrapper {
  private:
   // Brings up the simulator based on the given chip type.
   ::util::Status InitializeSim(int unit, BcmChip::BcmChipType chip_type)
-      LOCKS_EXCLUDED(sim_lock_);
+      ABSL_LOCKS_EXCLUDED(sim_lock_);
 
   // Kills all the simulator processes. To be called in ShutdownAllUnits.
-  ::util::Status ShutdownAllSimProcesses() LOCKS_EXCLUDED(sim_lock_);
+  ::util::Status ShutdownAllSimProcesses() ABSL_LOCKS_EXCLUDED(sim_lock_);
 
   // RW mutex lock for protecting the internal simulator data structures.
   mutable absl::Mutex sim_lock_;
 
   // An internal map of dev_num of the simulated device (which is identical
   // to unit number) to the BcmSimDeviceInfo holding the info on this device.
-  std::map<int, BcmSimDeviceInfo*> unit_to_dev_info_ GUARDED_BY(sim_lock_);
+  std::map<int, BcmSimDeviceInfo*> unit_to_dev_info_ ABSL_GUARDED_BY(sim_lock_);
 
   // Path to the BCMSIM or PCID binary.
   std::string bcm_sdk_sim_bin_;

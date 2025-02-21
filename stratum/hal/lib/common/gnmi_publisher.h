@@ -82,19 +82,19 @@ class GnmiPublisher {
   virtual ::util::Status HandleUpdate(const ::gnmi::Path& path,
                                       const ::google::protobuf::Message& val,
                                       CopyOnWriteChassisConfig* config)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status HandleReplace(const ::gnmi::Path& path,
                                        const ::google::protobuf::Message& val,
                                        CopyOnWriteChassisConfig* config)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status HandleDelete(const ::gnmi::Path& path,
                                       CopyOnWriteChassisConfig* config)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   ::util::Status HandleChange(const GnmiEvent& event)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A simple GET routine to process gNMI requests without making a
   // subscription and poll handle calls
@@ -102,10 +102,10 @@ class GnmiPublisher {
   virtual ::util::Status HandleGet(const ::gnmi::Path& path,
                                    const std::vector<std::string>& val,
                                    GnmiSubscribeStream* stream)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status HandlePoll(const SubscriptionHandle& handle)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status SubscribePeriodic(const Frequency& freq,
                                            const ::gnmi::Path& path,
@@ -115,12 +115,12 @@ class GnmiPublisher {
   virtual ::util::Status SubscribePoll(const ::gnmi::Path& path,
                                        GnmiSubscribeStream* stream,
                                        SubscriptionHandle* h)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status SubscribeOnChange(const ::gnmi::Path& path,
                                            GnmiSubscribeStream* stream,
                                            SubscriptionHandle* h)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // One of the subscription modes, TARGET_DEFINED, leaves the decision of how
   // to treat the received subscription request to the switch.
@@ -131,21 +131,21 @@ class GnmiPublisher {
   // TARGET_DEFINED.
   virtual ::util::Status UpdateSubscriptionWithTargetSpecificModeSpecification(
       const ::gnmi::Path& path, ::gnmi::Subscription* subscription)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   virtual ::util::Status UnSubscribe(const SubscriptionHandle& h)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // The method sends a gNMI message denoting the end of initial set of values.
   virtual ::util::Status SendSyncResponse(GnmiSubscribeStream* stream);
 
   // Method creating the channel to be used to receive notifications from
   // the switch.
-  virtual ::util::Status RegisterEventWriter() LOCKS_EXCLUDED(access_lock_);
+  virtual ::util::Status RegisterEventWriter() ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A method deleting the channel used to receive notifications from
   // the switch and cleaning-up.
-  virtual ::util::Status UnregisterEventWriter() LOCKS_EXCLUDED(access_lock_);
+  virtual ::util::Status UnregisterEventWriter() ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // IPsec is a special use-case, since yang tree nodes are not initialized and
   // maintained for each key of yang list (the SADConfig messages need to be
@@ -157,7 +157,7 @@ class GnmiPublisher {
   // layers.
   virtual bool IsPathSupportedIPsec(const ::gnmi::Path& path,
                                     std::vector<std::string>& keys) const
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // virtual-ports is a special use-case, since yang tree nodes are not
   // initialized and maintained for each key of yang list.
@@ -168,7 +168,7 @@ class GnmiPublisher {
   // layers.
   virtual bool IsPathSupportedVirtualPorts(const ::gnmi::Path& path,
                                            std::vector<std::string>& keys) const
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
  private:
   // ReaderArgs encapsulates the arguments for a Channel reader thread.
@@ -189,7 +189,7 @@ class GnmiPublisher {
   // handler.
   ::util::Status HandleEvent(const GnmiEvent& event,
                              const EventHandlerRecordPtr& h)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A generic method handling all types of subscriptions. Requires long list of
   // parameters, so, it has been hidden here and specialized methods calling it
@@ -198,38 +198,38 @@ class GnmiPublisher {
                            const GetHandlerFunc& get_handler,
                            const ::gnmi::Path& path,
                            GnmiSubscribeStream* stream, SubscriptionHandle* h)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A handler of events received over the event_channel_ channel.
   void ReadGnmiEvents(
       const std::unique_ptr<ChannelReader<GnmiEventPtr>>& reader)
-      LOCKS_EXCLUDED(access_lock_);
+      ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A code executed by the thread waiting for events transmitted over
   // the event_channel_ channel.
-  static void* ThreadReadGnmiEvents(void* arg) LOCKS_EXCLUDED(access_lock_);
+  static void* ThreadReadGnmiEvents(void* arg) ABSL_LOCKS_EXCLUDED(access_lock_);
 
   // A pointer to implementation of the Switch Interface - the API used to
   // communicate with the switch.
-  SwitchInterface* switch_interface_ GUARDED_BY(access_lock_);
+  SwitchInterface* switch_interface_ ABSL_GUARDED_BY(access_lock_);
 
   // A Mutex used to guard access to the list of pointers to handlers.
   mutable absl::Mutex access_lock_;
 
   // A tree that is used to map a YAML tree path into a functor that handles
   // that node.
-  YangParseTree parse_tree_ GUARDED_BY(access_lock_);
+  YangParseTree parse_tree_ ABSL_GUARDED_BY(access_lock_);
 
   // Channel for receiving transceiver events from the SwitchInterface.
   std::shared_ptr<Channel<GnmiEventPtr>> event_channel_
-      GUARDED_BY(access_lock_);
+      ABSL_GUARDED_BY(access_lock_);
 
   // Special event handler that is called when a ConfigHasBeenPushedEvent event
   // is received.
   std::function<::util::Status(const GnmiEvent&, GnmiSubscribeStream*)>
-      on_config_pushed_func_ GUARDED_BY(access_lock_) =
+      on_config_pushed_func_ ABSL_GUARDED_BY(access_lock_) =
           [this](const GnmiEvent& event_base, GnmiSubscribeStream* stream)
-              EXCLUSIVE_LOCKS_REQUIRED(access_lock_) {
+              ABSL_EXCLUSIVE_LOCKS_REQUIRED(access_lock_) {
                 // Special case - change of configuration.
                 // FIXME(boc) VLOG(1) does not appear to work inside of a lambda
                 // VLOG(1) << "Configuration has changed.";

@@ -103,25 +103,25 @@ class Procmon {
   // process unless force_kill(_all_processes) is true. If a process has already
   // stopped on its own, it will be cleaned up rather than terminated.
   ::util::Status KillProcess(pid_t pid, bool force_kill)
-      LOCKS_EXCLUDED(monitored_process_lock_);
+      ABSL_LOCKS_EXCLUDED(monitored_process_lock_);
   ::util::Status KillAll(bool force_kill_all_processes)
-      LOCKS_EXCLUDED(monitored_process_lock_);
+      ABSL_LOCKS_EXCLUDED(monitored_process_lock_);
 
   // Perform all necessary actions based on the given processes on_death
   // behavior.
   ::util::Status HandleStoppedProcess(pid_t pid);
 
   // Adds an event to the event queue.
-  void AddEvent(const ProcmonEvent& event) LOCKS_EXCLUDED(event_queue_lock_);
+  void AddEvent(const ProcmonEvent& event) ABSL_LOCKS_EXCLUDED(event_queue_lock_);
 
   // Blocks until an event is available, then pops it from the event queue.
-  ProcmonEvent GetEvent() LOCKS_EXCLUDED(event_queue_lock_);
+  ProcmonEvent GetEvent() ABSL_LOCKS_EXCLUDED(event_queue_lock_);
 
   // Add information about a new pid. The monitor thread will start monitoring
   // this pid as soon as AddMonitoredPid returns.
 
   void AddMonitoredPid(pid_t pid, const ProcessInfo& process_info)
-      LOCKS_EXCLUDED(monitored_process_lock_);
+      ABSL_LOCKS_EXCLUDED(monitored_process_lock_);
   // Returns false if the given pid does not exist. Writes the most recent info
   // about the given process to process_info. The monitor thread will no longer
   // collect this process after RemoveMonitoredPid returns, so the caller must
@@ -129,7 +129,7 @@ class Procmon {
   // pass the returned process_info back to AddMonitoredPid.
 
   bool RemoveMonitoredPid(pid_t pid, ProcessInfo* process_info)
-      LOCKS_EXCLUDED(monitored_process_lock_);
+      ABSL_LOCKS_EXCLUDED(monitored_process_lock_);
 
   // A thin wrapper for MonitorThreadFunc(), to be used in calls to
   // pthread_create.
@@ -151,14 +151,14 @@ class Procmon {
   absl::CondVar event_queue_cond_var_;
 
   // This queue stores all events that should be handled by Procmon.
-  std::queue<ProcmonEvent> event_queue_ GUARDED_BY(event_queue_lock_);
+  std::queue<ProcmonEvent> event_queue_ ABSL_GUARDED_BY(event_queue_lock_);
 
   // Mutex lock for protecting the map of processes.
   absl::Mutex monitored_process_lock_;
 
   // Stores information about every process managed by procmon that is
   // currently running or has recently exited.
-  std::map<pid_t, ProcessInfo> processes_ GUARDED_BY(monitored_process_lock_);
+  std::map<pid_t, ProcessInfo> processes_ ABSL_GUARDED_BY(monitored_process_lock_);
 
   // Mutex lock for protecting the monitor_thread_running_ which specifies
   // when monitor thread must exit.
@@ -166,7 +166,7 @@ class Procmon {
 
   // monitor_thread_running_ is constantly read by the process monitor thread.
   // When set to false, the monitor thread will exit its loop and return.
-  bool monitor_thread_running_ GUARDED_BY(monitor_thread_lock_) = false;
+  bool monitor_thread_running_ ABSL_GUARDED_BY(monitor_thread_lock_) = false;
 
   // Monitor thread id.
   pthread_t monitor_thread_id_;

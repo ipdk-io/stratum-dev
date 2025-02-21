@@ -27,9 +27,9 @@ class PINode final {
   ~PINode();
 
   ::util::Status PushChassisConfig(const ChassisConfig& config, uint64 node_id)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   ::util::Status VerifyChassisConfig(const ChassisConfig& config,
-                                     uint64 node_id) LOCKS_EXCLUDED(lock_);
+                                     uint64 node_id) ABSL_LOCKS_EXCLUDED(lock_);
   ::util::Status PushForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config);
   ::util::Status SaveForwardingPipelineConfig(
@@ -48,9 +48,9 @@ class PINode final {
       std::vector<::util::Status>* details);
   ::util::Status RegisterStreamMessageResponseWriter(
       std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> writer)
-      LOCKS_EXCLUDED(rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_writer_lock_);
   ::util::Status UnregisterStreamMessageResponseWriter()
-      LOCKS_EXCLUDED(rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_writer_lock_);
   ::util::Status HandleStreamMessageRequest(
       const ::p4::v1::StreamMessageRequest& request);
 
@@ -76,7 +76,7 @@ class PINode final {
   // Write a response on the registered RX writer.
   void SendStreamMessageResponse(
       const ::p4::v1::StreamMessageResponse& response)
-      LOCKS_EXCLUDED(rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_writer_lock_);
 
   // Reader-writer lock used to protect access to node-specific state.
   mutable absl::Mutex lock_;
@@ -89,16 +89,16 @@ class PINode final {
 
   // RX packet handler.
   std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>> rx_writer_
-      GUARDED_BY(rx_writer_lock_);
+      ABSL_GUARDED_BY(rx_writer_lock_);
 
   const int unit_;
 
-  bool pipeline_initialized_ GUARDED_BY(lock_);
+  bool pipeline_initialized_ ABSL_GUARDED_BY(lock_);
 
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
   // lifetime of the class.
-  uint64 node_id_ GUARDED_BY(lock_);
+  uint64 node_id_ ABSL_GUARDED_BY(lock_);
 };
 
 }  // namespace pi

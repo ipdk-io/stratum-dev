@@ -37,12 +37,12 @@ class SfpAdapter final : public Adapter {
   // See: PhalInterface::RegisterTransceiverEventWriter.
   ::util::StatusOr<int> RegisterSfpEventSubscriber(
       std::unique_ptr<ChannelWriter<PhalInterface::TransceiverEvent>> writer,
-      int priority) LOCKS_EXCLUDED(subscribers_lock_);
+      int priority) ABSL_LOCKS_EXCLUDED(subscribers_lock_);
 
   // Unregisters a subscriber.
   // See: PhalInterface::UnregisterTransceiverEvent.
   ::util::Status UnregisterSfpEventSubscriber(int id)
-      LOCKS_EXCLUDED(subscribers_lock_);
+      ABSL_LOCKS_EXCLUDED(subscribers_lock_);
 
  private:
   // Conservative channel depth to never drop notifications.
@@ -59,9 +59,9 @@ class SfpAdapter final : public Adapter {
   // Helper function to create the subscription for all Sfp state changes. Only
   // set up once per instance.
   ::util::Status SetupSfpDatabaseSubscriptions()
-      EXCLUSIVE_LOCKS_REQUIRED(subscribers_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(subscribers_lock_);
 
-  ::util::Status OneShotUpdate() LOCKS_EXCLUDED(subscribers_lock_);
+  ::util::Status OneShotUpdate() ABSL_LOCKS_EXCLUDED(subscribers_lock_);
 
   // Thread function that reads updates from the attribute database subscription
   // and passes them along the subscribers.
@@ -76,16 +76,16 @@ class SfpAdapter final : public Adapter {
   // managers can be running in different threads. The is sorted based on the
   // the priority of the TransceiverEventWriter intances.
   std::vector<PhalInterface::TransceiverEventWriter> subscribers_
-      GUARDED_BY(subscribers_lock_);
+      ABSL_GUARDED_BY(subscribers_lock_);
 
   // Stores the subscription query to keep it alive.
-  std::unique_ptr<Query> query_ GUARDED_BY(subscribers_lock_);
+  std::unique_ptr<Query> query_ ABSL_GUARDED_BY(subscribers_lock_);
 
   // Stores pointer to the subscription channel to close it on shutdown.
-  std::shared_ptr<Channel<PhalDB>> channel_ GUARDED_BY(subscribers_lock_);
+  std::shared_ptr<Channel<PhalDB>> channel_ ABSL_GUARDED_BY(subscribers_lock_);
 
   // Stores the attribute Db subscription reader thread.
-  std::thread sfp_reader_thread_ GUARDED_BY(subscribers_lock_);
+  std::thread sfp_reader_thread_ ABSL_GUARDED_BY(subscribers_lock_);
 };
 
 }  // namespace phal

@@ -55,7 +55,7 @@ class AttributeDatabase : public AttributeDatabaseInterface {
       std::unique_ptr<AttributeGroup> root_group);
 
   ::util::Status Set(const AttributeValueMap& values) override
-      LOCKS_EXCLUDED(set_lock_);
+      ABSL_LOCKS_EXCLUDED(set_lock_);
   ::util::StatusOr<std::unique_ptr<Query>> MakeQuery(
       const std::vector<Path>& query_paths) override;
 
@@ -91,13 +91,13 @@ class AttributeDatabase : public AttributeDatabaseInterface {
   static void* RunPollingThread(void* attribute_database_ptr);
   // Calculates the next time we should poll the attribute database for
   // streaming query updates.
-  absl::Time GetNextPollingTime() EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
+  absl::Time GetNextPollingTime() ABSL_EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
   // Polls the attribute database to see if any streaming queries
   // should be sent an update.
-  ::util::Status PollQueries() EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
+  ::util::Status PollQueries() ABSL_EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
   // For each streaming query that is marked as updated, sends a message to all
   // subscribers.
-  ::util::Status FlushQueries() EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
+  ::util::Status FlushQueries() ABSL_EXCLUSIVE_LOCKS_REQUIRED(polling_lock_);
 
   // The root node of the attribute tree maintained by this database.
   std::unique_ptr<AttributeGroup> root_;
@@ -120,10 +120,10 @@ class AttributeDatabase : public AttributeDatabaseInterface {
   absl::CondVar polling_condvar_;
   // This boolean is set to true when the polling thread starts. The polling
   // thread will continue running until this is set to false.
-  bool polling_thread_running_ GUARDED_BY(polling_lock_) = false;
+  bool polling_thread_running_ ABSL_GUARDED_BY(polling_lock_) = false;
   // The set of all queries that we may need to poll.
   absl::flat_hash_set<DatabaseQuery*> polling_queries_
-      GUARDED_BY(polling_lock_);
+      ABSL_GUARDED_BY(polling_lock_);
   // A lock to serialize all calls to Set(...).
   absl::Mutex set_lock_;
   // The PhalDb service exposing the database, mainly for debugging.

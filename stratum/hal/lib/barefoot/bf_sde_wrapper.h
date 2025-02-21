@@ -157,9 +157,9 @@ class BfSdeWrapper : public BfSdeInterface {
                                  PortCounters* counters) override;
   ::util::Status RegisterPortStatusEventWriter(
       std::unique_ptr<ChannelWriter<PortStatusEvent>> writer) override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status UnregisterPortStatusEventWriter() override
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(port_status_event_writer_lock_);
   ::util::Status AddPort(int device, int port, uint64 speed_bps,
                          FecMode fec_mode) override;
   ::util::Status DeletePort(int device, int port) override;
@@ -170,7 +170,7 @@ class BfSdeWrapper : public BfSdeInterface {
                                     uint64 rate_per_second) override;
   ::util::Status ConfigureQos(int device,
                               const TofinoConfig::TofinoQosConfig& qos_config)
-      LOCKS_EXCLUDED(data_lock_) override;
+      ABSL_LOCKS_EXCLUDED(data_lock_) override;
   ::util::Status EnablePortShaping(int device, int port,
                                    TriState enable) override;
   ::util::Status SetPortAutonegPolicy(int device, int port,
@@ -196,188 +196,188 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status UnregisterPacketReceiveWriter(int device) override;
   ::util::Status RegisterDigestListWriter(
       int device, std::unique_ptr<ChannelWriter<DigestList>> writer) override
-      LOCKS_EXCLUDED(digest_list_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(digest_list_callback_lock_);
   ::util::Status UnregisterDigestListWriter(int device) override
-      LOCKS_EXCLUDED(digest_list_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(digest_list_callback_lock_);
   ::util::StatusOr<uint32> CreateMulticastNode(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       int mc_replication_id, const std::vector<uint32>& mc_lag_ids,
-      const std::vector<uint32>& ports) override LOCKS_EXCLUDED(data_lock_);
+      const std::vector<uint32>& ports) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<std::vector<uint32>> GetNodesInMulticastGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteMulticastNodes(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetMulticastNode(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 mc_node_id, int* replication_id, std::vector<uint32>* lag_ids,
-      std::vector<uint32>* ports) override LOCKS_EXCLUDED(data_lock_);
+      std::vector<uint32>* ports) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertMulticastGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyMulticastGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteMulticastGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetMulticastGroups(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 group_id, std::vector<uint32>* group_ids,
       std::vector<std::vector<uint32>>* mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int egress_queue, int cos,
-      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
+      int max_pkt_len) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int egress_queue, int cos,
-      int max_pkt_len) override LOCKS_EXCLUDED(data_lock_);
+      int max_pkt_len) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 session_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetCloneSessions(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 session_id, std::vector<uint32>* session_ids,
       std::vector<int>* egress_ports, std::vector<int>* coss,
-      std::vector<int>* max_pkt_lens) override LOCKS_EXCLUDED(data_lock_);
+      std::vector<int>* max_pkt_lens) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteIndirectCounter(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 counter_id, int counter_index, absl::optional<uint64> byte_count,
-      absl::optional<uint64> packet_count) override LOCKS_EXCLUDED(data_lock_);
+      absl::optional<uint64> packet_count) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadIndirectCounter(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 counter_id, absl::optional<uint32> counter_index,
       std::vector<uint32>* counter_indices,
       std::vector<absl::optional<uint64>>* byte_counts,
       std::vector<absl::optional<uint64>>* packet_counts,
-      absl::Duration timeout) override LOCKS_EXCLUDED(data_lock_);
+      absl::Duration timeout) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteRegister(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> register_index,
-      const std::string& register_data) override LOCKS_EXCLUDED(data_lock_);
+      const std::string& register_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadRegisters(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> register_index,
       std::vector<uint32>* register_indices,
       std::vector<uint64>* register_datas, absl::Duration timeout) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteIndirectMeter(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index, bool in_pps,
       uint64 cir, uint64 cburst, uint64 pir, uint64 pburst) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadIndirectMeters(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
       std::vector<uint32>* meter_indices, std::vector<uint64>* cirs,
       std::vector<uint64>* cbursts, std::vector<uint64>* pirs,
       std::vector<uint64>* pbursts, std::vector<bool>* in_pps) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyActionProfileMember(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteActionProfileMember(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 table_id, int member_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id, int member_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetActionProfileMembers(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id, std::vector<int>* member_ids,
       std::vector<std::unique_ptr<TableDataInterface>>* table_datas) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertActionProfileGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyActionProfileGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteActionProfileGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 table_id, int group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id, int group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetActionProfileGroups(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, std::vector<int>* group_ids,
       std::vector<int>* max_group_sizes,
       std::vector<std::vector<uint32>>* member_ids,
       std::vector<std::vector<bool>>* member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status SynchronizeCounters(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetAllTableEntries(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id,
       std::vector<std::unique_ptr<TableKeyInterface>>* table_keys,
       std::vector<std::unique_ptr<TableDataInterface>>* table_datas) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status SetDefaultTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, const TableDataInterface* table_data) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ResetDefaultTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 table_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetDefaultTableEntry(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, TableDataInterface* table_data) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertDigest(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration max_timeout)
-      LOCKS_EXCLUDED(data_lock_) override;
+      ABSL_LOCKS_EXCLUDED(data_lock_) override;
   ::util::Status ModifyDigest(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration max_timeout)
-      LOCKS_EXCLUDED(data_lock_) override;
+      ABSL_LOCKS_EXCLUDED(data_lock_) override;
   ::util::Status DeleteDigest(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
-      uint32 table_id) LOCKS_EXCLUDED(data_lock_) override;
+      uint32 table_id) ABSL_LOCKS_EXCLUDED(data_lock_) override;
   ::util::Status ReadDigests(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, std::vector<uint32>* digest_ids,
-      absl::Duration* max_timeout) override LOCKS_EXCLUDED(data_lock_);
+      absl::Duration* max_timeout) override ABSL_LOCKS_EXCLUDED(data_lock_);
 
   ::util::StatusOr<uint32> GetBfRtId(uint32 p4info_id) const override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetP4InfoId(uint32 bfrt_id) const override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetActionSelectorBfRtId(
-      uint32 action_profile_id) const override LOCKS_EXCLUDED(data_lock_);
+      uint32 action_profile_id) const override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetActionProfileBfRtId(
-      uint32 action_selector_id) const override LOCKS_EXCLUDED(data_lock_);
+      uint32 action_selector_id) const override ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Gets the device target (device id + pipe id) for a specific BfRt
   // primitive (e.g. table).
@@ -386,19 +386,19 @@ class BfSdeWrapper : public BfSdeInterface {
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static BfSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static BfSdeWrapper* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // The following public functions are specific to this class. They are to be
   // called by SDE callbacks only.
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static BfSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static BfSdeWrapper* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Writes a received packet to the registered Rx writer. Called from the SDE
   // callback function.
   ::util::Status HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
                                 bf_pkt_rx_ring_t rx_ring)
-      LOCKS_EXCLUDED(packet_rx_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
   // Writes a received digest list to the registered writer. Called from the SDE
   // callback function.
@@ -407,14 +407,14 @@ class BfSdeWrapper : public BfSdeInterface {
       const std::shared_ptr<bfrt::BfRtSession> session,
       const bfrt::BfRtLearn* learn,
       std::vector<std::unique_ptr<bfrt::BfRtLearnData>>* learn_data)
-      LOCKS_EXCLUDED(digest_list_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(digest_list_callback_lock_);
 
   // Called whenever a port status event is received from SDK. It forwards the
   // port status event to the module who registered a callback by calling
   // RegisterPortStatusEventWriter().
   ::util::Status OnPortStatusEvent(int device, int dev_port, bool up,
                                    absl::Time timestamp)
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
   // BfSdeWrapper is neither copyable nor movable.
   BfSdeWrapper(const BfSdeWrapper&) = delete;
@@ -429,7 +429,7 @@ class BfSdeWrapper : public BfSdeInterface {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static BfSdeWrapper* singleton_ GUARDED_BY(init_lock_);
+  static BfSdeWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Timeout for Write() operations on port status events.
@@ -471,19 +471,19 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status WriteMulticastGroup(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for clone session handling.
   ::util::Status WriteCloneSession(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int egress_queue, int cos,
-      int max_pkt_len, bool insert) SHARED_LOCKS_REQUIRED(data_lock_);
+      int max_pkt_len, bool insert) ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for action profile member handling.
   ::util::Status WriteActionProfileMember(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id, const TableDataInterface* table_data,
-      bool insert) SHARED_LOCKS_REQUIRED(data_lock_);
+      bool insert) ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for action profile group handling.
   ::util::Status WriteActionProfileGroup(
@@ -491,18 +491,18 @@ class BfSdeWrapper : public BfSdeInterface {
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Helper function to find, but not allocate, at free multicast node id.
   // This function is not optimized for speed yet.
   ::util::StatusOr<uint32> GetFreeMulticastNodeId(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Helper to dump the entire PRE table state for debugging. Only runs at v=2.
   ::util::Status DumpPreState(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Synchronizes the driver cached register values with the current hardware
   // state for a given BfRt table.
@@ -510,41 +510,41 @@ class BfSdeWrapper : public BfSdeInterface {
   ::util::Status SynchronizeRegisters(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Internal version SynchronizeCounters without locks.
   // TODO(max): consolidate with SynchronizeRegisters
   ::util::Status DoSynchronizeCounters(
       int device, std::shared_ptr<BfSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<PortStatusEvent>> port_status_event_writer_
-      GUARDED_BY(port_status_event_writer_lock_);
+      ABSL_GUARDED_BY(port_status_event_writer_lock_);
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
-      device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
+      device_to_packet_rx_writer_ ABSL_GUARDED_BY(packet_rx_callback_lock_);
 
   // Map from device ID to digest list receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<DigestList>>>
-      device_to_digest_list_writer_ GUARDED_BY(digest_list_callback_lock_);
+      device_to_digest_list_writer_ ABSL_GUARDED_BY(digest_list_callback_lock_);
 
   // Map from device ID to vector of all allocated PPGs.
   absl::flat_hash_map<int, std::vector<bf_tm_ppg_hdl>> device_to_ppg_handles_
-      GUARDED_BY(data_lock_);
+      ABSL_GUARDED_BY(data_lock_);
 
   // TODO(max): make the following maps to handle multiple devices.
   // Pointer to the ID mapper. Not owned by this class.
-  std::unique_ptr<BfrtIdMapper> bfrt_id_mapper_ GUARDED_BY(data_lock_);
+  std::unique_ptr<BfrtIdMapper> bfrt_id_mapper_ ABSL_GUARDED_BY(data_lock_);
 
   // Pointer to the current BfR info object. Not owned by this class.
-  const bfrt::BfRtInfo* bfrt_info_ GUARDED_BY(data_lock_);
+  const bfrt::BfRtInfo* bfrt_info_ ABSL_GUARDED_BY(data_lock_);
 
   // Pointer to the bfrt device manager. Not owned by this class.
-  bfrt::BfRtDevMgr* bfrt_device_manager_ GUARDED_BY(data_lock_);
+  bfrt::BfRtDevMgr* bfrt_device_manager_ ABSL_GUARDED_BY(data_lock_);
 };
 
 }  // namespace barefoot

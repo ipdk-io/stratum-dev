@@ -30,19 +30,19 @@ class TdiPreManager {
  public:
   // Pushes a ForwardingPipelineConfig.
   ::util::Status PushForwardingPipelineConfig(const TdiDeviceConfig& config)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes a PRE entry.
   ::util::Status WritePreEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type, const PreEntry& entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads a PRE entry.
   ::util::Status ReadPreEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const PreEntry& entry, WriterInterface<::p4::v1::ReadResponse>* writer)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   static std::unique_ptr<TdiPreManager> CreateInstance(
       TdiSdeInterface* tdi_sde_interface, int device);
@@ -59,33 +59,33 @@ class TdiPreManager {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type,
       const ::p4::v1::MulticastGroupEntry& entry)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Insert/Modify/Delete a clone session entry.
   ::util::Status WriteCloneSessionEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type& type,
-      const ::p4::v1::CloneSessionEntry& entry) EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      const ::p4::v1::CloneSessionEntry& entry) ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Reads a multicast group entry.
   ::util::Status ReadMulticastGroupEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MulticastGroupEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Reads a clone session entry.
   ::util::Status ReadCloneSessionEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::CloneSessionEntry& entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Insert new multicast nodes of a given multicast group.
   ::util::StatusOr<std::vector<uint32>> InsertMulticastNodes(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MulticastGroupEntry& entry)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Reader-writer lock used to protect access to pipeline state.
   mutable absl::Mutex lock_;

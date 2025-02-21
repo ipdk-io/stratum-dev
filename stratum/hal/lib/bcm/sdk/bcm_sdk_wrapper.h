@@ -126,12 +126,12 @@ class BcmSdkWrapper : public BcmSdkInterface {
       const BcmChassisMap& target_bcm_chassis_map, OperationMode mode) override;
   ::util::Status FindUnit(int unit, int pci_bus, int pci_slot,
                           BcmChip::BcmChipType chip_type) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InitializeUnit(int unit, bool warm_boot) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ShutdownUnit(int unit) override
-      EXCLUSIVE_LOCKS_REQUIRED(data_lock_);
-  ::util::Status ShutdownAllUnits() override LOCKS_EXCLUDED(data_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(data_lock_);
+  ::util::Status ShutdownAllUnits() override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status SetModuleId(int unit, int module) override;
   ::util::Status InitializePort(int unit, int port) override;
   ::util::Status SetPortOptions(int unit, int port,
@@ -144,12 +144,12 @@ class BcmSdkWrapper : public BcmSdkInterface {
   ::util::Status StopLinkscan(int unit) override;
   ::util::StatusOr<int> RegisterLinkscanEventWriter(
       std::unique_ptr<ChannelWriter<LinkscanEvent>> writer,
-      int priority) override LOCKS_EXCLUDED(linkscan_writers_lock_);
+      int priority) override ABSL_LOCKS_EXCLUDED(linkscan_writers_lock_);
   ::util::Status UnregisterLinkscanEventWriter(int id) override
-      LOCKS_EXCLUDED(linkscan_writers_lock_);
+      ABSL_LOCKS_EXCLUDED(linkscan_writers_lock_);
   ::util::StatusOr<BcmPortOptions::LinkscanMode> GetPortLinkscanMode(
       int unit, int port) override;
-  ::util::Status SetMtu(int unit, int mtu) override LOCKS_EXCLUDED(data_lock_);
+  ::util::Status SetMtu(int unit, int mtu) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<int> FindOrCreateL3RouterIntf(int unit, uint64 router_mac,
                                                  int vlan) override;
   ::util::Status DeleteL3RouterIntf(int unit, int router_intf_id) override;
@@ -241,7 +241,7 @@ class BcmSdkWrapper : public BcmSdkInterface {
       int serdes_num_lanes, const std::string& intf_type,
       const SerdesRegisterConfigs& serdes_register_configs,
       const SerdesAttrConfigs& serdes_attr_configs) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status CreateKnetIntf(int unit, int vlan, std::string* netif_name,
                                 int* netif_id) override;
   ::util::Status DestroyKnetIntf(int unit, int netif_id) override;
@@ -298,16 +298,16 @@ class BcmSdkWrapper : public BcmSdkInterface {
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
   static BcmSdkWrapper* CreateSingleton(BcmDiagShell* bcm_diag_shell)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // The following public functions are specific to this class. They are to be
   // called by SDK callbacks only.
 
   // Return the singleton instance to be used in the SDK callbacks.
-  static BcmSdkWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static BcmSdkWrapper* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the FD for the SDK checkpoint file.
-  ::util::StatusOr<int> GetSdkCheckpointFd(int unit) LOCKS_EXCLUDED(data_lock_);
+  ::util::StatusOr<int> GetSdkCheckpointFd(int unit) ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Pointer to the BDE. Error is returned if bde_ is not initialized yet.
   ::util::StatusOr<ibde_t*> GetBde() const;
@@ -319,7 +319,7 @@ class BcmSdkWrapper : public BcmSdkInterface {
   // linkscan event to the module who registered a callback by calling
   // RegisterLinkscanEventWriter().
   void OnLinkscanEvent(int unit, int port, bcm_port_info_t* info)
-      LOCKS_EXCLUDED(linkscan_writers_lock_);
+      ABSL_LOCKS_EXCLUDED(linkscan_writers_lock_);
 
   // BcmSdkWrapper is neither copyable nor movable.
   BcmSdkWrapper(const BcmSdkWrapper&) = delete;
@@ -345,20 +345,20 @@ class BcmSdkWrapper : public BcmSdkInterface {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static BcmSdkWrapper* singleton_ GUARDED_BY(init_lock_);
+  static BcmSdkWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Timeout for Write() operations on linkscan events.
   static constexpr absl::Duration kWriteTimeout = absl::InfiniteDuration();
 
   // Helpers to deal with SDK checkpoint file.
-  ::util::Status OpenSdkCheckpointFile(int unit) LOCKS_EXCLUDED(data_lock_);
-  ::util::Status CreateSdkCheckpointFile(int unit) LOCKS_EXCLUDED(data_lock_);
+  ::util::Status OpenSdkCheckpointFile(int unit) ABSL_LOCKS_EXCLUDED(data_lock_);
+  ::util::Status CreateSdkCheckpointFile(int unit) ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status RegisterSdkCheckpointFile(int unit);
   ::util::StatusOr<std::string> FindSdkCheckpointFilePath(int unit)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<int> FindSdkCheckpointFileSize(int unit)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   ::util::StatusOr<BcmChip::BcmChipType> GetChipType(int unit);
 
@@ -398,23 +398,23 @@ class BcmSdkWrapper : public BcmSdkInterface {
   int CheckIfUnitExists(int unit);
 
   // Helper to check if a port exists.
-  int CheckIfPortExists(int unit, int port) LOCKS_EXCLUDED(data_lock_);
+  int CheckIfPortExists(int unit, int port) ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // RW mutex lock for protecting the internal maps.
   mutable absl::Mutex data_lock_;
 
   // Map from unit number to the current MTU used for all the interfaces of
   // the unit.
-  absl::flat_hash_map<int, int> unit_to_mtu_ GUARDED_BY(data_lock_);
+  absl::flat_hash_map<int, int> unit_to_mtu_ ABSL_GUARDED_BY(data_lock_);
 
   // Map from unit to chip type specified.
   absl::flat_hash_map<int, BcmChip::BcmChipType> unit_to_chip_type_
-      GUARDED_BY(data_lock_);
+      ABSL_GUARDED_BY(data_lock_);
 
   // Map from each unit to the BcmSocDevice data struct associated with that
   // unit.
   absl::flat_hash_map<int, BcmSocDevice*> unit_to_soc_device_
-      GUARDED_BY(data_lock_);
+      ABSL_GUARDED_BY(data_lock_);
 
   // Pointer to BcmDiagShell singleton instance. Not owned by this class.
   BcmDiagShell* bcm_diag_shell_;
@@ -427,7 +427,7 @@ class BcmSdkWrapper : public BcmSdkInterface {
   // can be running in different threads. The is sorted based on the
   // the priority of the BcmLinkscanEventWriter instances.
   std::multiset<BcmLinkscanEventWriter, BcmLinkscanEventWriterComp>
-      linkscan_event_writers_ GUARDED_BY(linkscan_writers_lock_);
+      linkscan_event_writers_ ABSL_GUARDED_BY(linkscan_writers_lock_);
 };
 
 }  // namespace bcm

@@ -15,8 +15,8 @@
 #include "stratum/hal/lib/tdi/tdi_sde_interface.h"
 
 // Suppress clang errors
-#undef LOCKS_EXCLUDED
-#define LOCKS_EXCLUDED(...)
+#undef ABSL_LOCKS_EXCLUDED
+#define ABSL_LOCKS_EXCLUDED(...)
 
 namespace stratum {
 namespace hal {
@@ -37,13 +37,13 @@ class Es2kVirtualPortManager {
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static Es2kVirtualPortManager* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Es2kVirtualPortManager* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // The following public functions are specific to this class. They are to be
   // called by SDE callbacks only.
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static Es2kVirtualPortManager* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Es2kVirtualPortManager* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
  protected:
   // RW mutex lock for protecting the singleton instance initialization and
@@ -52,7 +52,7 @@ class Es2kVirtualPortManager {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static Es2kVirtualPortManager* singleton_ GUARDED_BY(init_lock_);
+  static Es2kVirtualPortManager* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Pointer to TdiSdeInterface implementation.

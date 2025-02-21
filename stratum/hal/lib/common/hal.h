@@ -84,10 +84,10 @@ class Hal final {
                               SwitchInterface* switch_interface,
                               AuthPolicyChecker* auth_policy_checker,
                               CredentialsManager* credentials_manager)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
-  static Hal* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Hal* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Hal is neither copyable nor movable.
   Hal(const Hal&) = delete;
@@ -164,7 +164,7 @@ class Hal final {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static Hal* singleton_ GUARDED_BY(init_lock_);
+  static Hal* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace hal

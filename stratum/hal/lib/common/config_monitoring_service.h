@@ -51,11 +51,11 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   // the function initializes the class and pushes the saved chassis config to
   // the switch. In the warmboot mode, it only restores the internal state of
   // the class.
-  ::util::Status Setup(bool warmboot) LOCKS_EXCLUDED(config_lock_);
+  ::util::Status Setup(bool warmboot) ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Tears down the class. Called in both warmboot or coldboot mode. It will
   // not alter any state on the hardware when called.
-  ::util::Status Teardown() LOCKS_EXCLUDED(config_lock_);
+  ::util::Status Teardown() ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Public helper function called in Setup(). It deserializes the contents
   // of the FLAGS_chassis_config_file file and calls PushChassisConfig().
@@ -66,7 +66,7 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   // pointer and passes it to 'running_chassis_config_'.
   ::util::Status PushChassisConfig(bool warmboot,
                                    std::unique_ptr<ChassisConfig> config)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Verifies platform independent properties of the given ChassisConfig proto.
   // It is called by PushChassisConfig at the beginning and by Set operations to
@@ -77,7 +77,7 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   ::grpc::Status Capabilities(::grpc::ServerContext* context,
                               const ::gnmi::CapabilityRequest* req,
                               ::gnmi::CapabilityResponse* resp) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Modify the state/config on the switch. The paths to modify along with the
   // new values that the client wishes to set the value to are given in the
@@ -85,14 +85,14 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   ::grpc::Status Set(::grpc::ServerContext* context,
                      const ::gnmi::SetRequest* req,
                      ::gnmi::SetResponse* resp) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Returns snapshots a subset of the config/state tree as specified by the
   // paths included in the request.
   ::grpc::Status Get(::grpc::ServerContext* context,
                      const ::gnmi::GetRequest* req,
                      ::gnmi::GetResponse* resp) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Subscribe allows a client to request the switch to send it values
   // of particular paths within the config/state tree. These values may be
@@ -100,7 +100,7 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   // channel (POLL), or sent as a one-off retrieval (ONCE).
   ::grpc::Status Subscribe(::grpc::ServerContext* context,
                            ServerSubscribeReaderWriter* stream) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // ConfigMonitoringService is neither copyable nor movable.
   ConfigMonitoringService(const ConfigMonitoringService&) = delete;
@@ -124,7 +124,7 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   ::grpc::Status DoSubscribe(GnmiPublisher* publisher,
                              ::grpc::ServerContext* context,
                              ServerSubscribeReaderWriterInterface* stream)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // The actual method that implements 'Get' that allows a client to
   // request the switch to send it values of particular paths within the
@@ -133,7 +133,7 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   // Get method.
   ::grpc::Status DoGet(::grpc::ServerContext* context,
                        const ::gnmi::GetRequest* req, ::gnmi::GetResponse* resp)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // The actual method that implements 'Set' that allows a client to
   // request the switch to change values of particular paths within the
@@ -141,14 +141,14 @@ class ConfigMonitoringService final : public ::gnmi::gNMI::Service {
   // Set method.
   ::grpc::Status DoSet(::grpc::ServerContext* context,
                        const ::gnmi::SetRequest* req, ::gnmi::SetResponse* resp)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Mutex lock for protecting the internal chassis config pushed to the switch.
   mutable absl::Mutex config_lock_;
 
   // Hold the ChassisConfig which is currently running on the switch.
   std::unique_ptr<ChassisConfig> running_chassis_config_
-      GUARDED_BY(config_lock_);
+      ABSL_GUARDED_BY(config_lock_);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and

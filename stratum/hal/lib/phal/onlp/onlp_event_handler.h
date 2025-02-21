@@ -91,15 +91,15 @@ class OnlpEventHandler {
   absl::Mutex monitor_lock_;
   absl::CondVar monitor_cond_var_;
   absl::flat_hash_map<OnlpOid, OidStatusMonitor> status_monitors_
-      GUARDED_BY(monitor_lock_);
+      ABSL_GUARDED_BY(monitor_lock_);
   std::function<void(::util::Status)> update_callback_
-      GUARDED_BY(monitor_lock_);
-  OnlpPortNumber max_front_port_num_ GUARDED_BY(monitor_lock_);
+      ABSL_GUARDED_BY(monitor_lock_);
+  OnlpPortNumber max_front_port_num_ ABSL_GUARDED_BY(monitor_lock_);
   // This pointer is set whenever we are currently executing a callback. This
   // lets us freely call UnregisterEventCallback for any callback except the one
   // that is currently executing.
   OnlpEventCallback* executing_callback_ = nullptr;
-  bool monitor_loop_running_ GUARDED_BY(monitor_lock_) = false;
+  bool monitor_loop_running_ ABSL_GUARDED_BY(monitor_lock_) = false;
   pthread_t monitor_loop_thread_id_;
 };
 

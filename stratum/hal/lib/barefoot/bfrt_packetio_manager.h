@@ -36,7 +36,7 @@ class BfrtPacketioManager {
   // first time), this function also initializes class.
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
                                            uint64 node_id)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Verifies the parts of ChassisConfig proto that this class cares about.
   // The given node_id is used to understand which part of the ChassisConfig is
@@ -47,25 +47,25 @@ class BfrtPacketioManager {
   // Pushes the forwarding pipeline to this class. If this is the first time, it
   // will also set up the necessary callbacks for packet IO.
   virtual ::util::Status PushForwardingPipelineConfig(
-      const BfrtDeviceConfig& config) LOCKS_EXCLUDED(data_lock_);
+      const BfrtDeviceConfig& config) ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Performs coldboot shutdown. Note that there is no public Initialize().
   // Initialization is done as part of PushChassisConfig() if the class is not
   // initialized by the time we push config.
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(data_lock_);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Registers a writer to be invoked when we capture a packet on a PCIe
   // interface.
   virtual ::util::Status RegisterPacketReceiveWriter(
       const std::shared_ptr<WriterInterface<::p4::v1::PacketIn>>& writer)
-      LOCKS_EXCLUDED(rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_writer_lock_);
 
   virtual ::util::Status UnregisterPacketReceiveWriter()
-      LOCKS_EXCLUDED(rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_writer_lock_);
 
   // Transmits a packet to the PCIe interface.
   virtual ::util::Status TransmitPacket(const ::p4::v1::PacketOut& packet)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<BfrtPacketioManager> CreateInstance(
@@ -89,25 +89,25 @@ class BfrtPacketioManager {
 
   // Builds the packet header structure for controller packets.
   ::util::Status BuildMetadataMapping(const p4::config::v1::P4Info& p4_info)
-      EXCLUSIVE_LOCKS_REQUIRED(data_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(data_lock_);
 
   // Deparses a PacketOut into the buffer by serializing the metadata fields in
   // front of the payload.
   ::util::Status DeparsePacketOut(const ::p4::v1::PacketOut& packet,
                                   std::string* buffer)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Parses a binary string into a PacketIn, filling the metadata fields.
   ::util::Status ParsePacketIn(const std::string& buffer,
                                ::p4::v1::PacketIn* packet)
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Handles a received packets and hands it over the registered receive writer.
   ::util::Status HandleSdePacketRx()
-      LOCKS_EXCLUDED(data_lock_, rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_, rx_writer_lock_);
 
   // Handles a received packets and hands it over the registered receive writer.
-  ::util::Status HandleVirtualCpuIntfPacketRx() LOCKS_EXCLUDED(data_lock_);
+  ::util::Status HandleVirtualCpuIntfPacketRx() ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // SDE CPU interface RX thread function.
   static void* SdeRxThreadFunc(void* arg);
@@ -122,32 +122,32 @@ class BfrtPacketioManager {
   mutable absl::Mutex data_lock_;
 
   // Initialized to false, set once only on first PushForwardingPipelineConfig.
-  bool initialized_ GUARDED_BY(data_lock_);
+  bool initialized_ ABSL_GUARDED_BY(data_lock_);
 
   // Stores the registered writer for PacketIns.
   std::shared_ptr<WriterInterface<::p4::v1::PacketIn>> rx_writer_
-      GUARDED_BY(rx_writer_lock_);
+      ABSL_GUARDED_BY(rx_writer_lock_);
 
   // List of metadata id and bitwidth pairs. Stores the size and structure of
   // the CPU packet headers.
-  std::vector<std::pair<uint32, int>> packetin_header_ GUARDED_BY(data_lock_);
-  std::vector<std::pair<uint32, int>> packetout_header_ GUARDED_BY(data_lock_);
-  size_t packetin_header_size_ GUARDED_BY(data_lock_);
-  size_t packetout_header_size_ GUARDED_BY(data_lock_);
+  std::vector<std::pair<uint32, int>> packetin_header_ ABSL_GUARDED_BY(data_lock_);
+  std::vector<std::pair<uint32, int>> packetout_header_ ABSL_GUARDED_BY(data_lock_);
+  size_t packetin_header_size_ ABSL_GUARDED_BY(data_lock_);
+  size_t packetout_header_size_ ABSL_GUARDED_BY(data_lock_);
 
   // Buffer channel for packets coming from the SDE to this manager.
   std::shared_ptr<Channel<std::string>> packet_receive_channel_
-      GUARDED_BY(data_lock_);
+      ABSL_GUARDED_BY(data_lock_);
 
   // File descriptor of the virtual TAP port used to simulate a CPU port.
-  int tap_intf_fd_ GUARDED_BY(data_lock_);
+  int tap_intf_fd_ ABSL_GUARDED_BY(data_lock_);
 
   // The ID of the RX thread which handles receiving packets from the SDE.
-  pthread_t sde_rx_thread_id_ GUARDED_BY(data_lock_);
+  pthread_t sde_rx_thread_id_ ABSL_GUARDED_BY(data_lock_);
 
   // The ID of the RX thread which handles receiving packets from the virtual
   // CPU interface.
-  pthread_t virtual_cpu_intf_rx_thread_id_ GUARDED_BY(data_lock_);
+  pthread_t virtual_cpu_intf_rx_thread_id_ ABSL_GUARDED_BY(data_lock_);
 
   // Pointer to a BfSdeInterface implementation that wraps all the SDE calls.
   BfSdeInterface* bf_sde_interface_ = nullptr;  // not owned by this class.

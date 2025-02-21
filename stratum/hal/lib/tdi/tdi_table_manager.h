@@ -29,75 +29,75 @@ class TdiTableManager {
  public:
   // Pushes the pipline info.
   ::util::Status PushForwardingPipelineConfig(const TdiDeviceConfig& config)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Verifies a P4-based forwarding pipeline configuration intended for this
   // manager.
   ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config) const
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes a table entry.
   ::util::Status WriteTableEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::TableEntry& table_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::TableEntry& table_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 TableEntry(s) matched by the given table entry.
   ::util::Status ReadTableEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the counter data of a table entry.
   ::util::Status WriteDirectCounterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the meter config of a table entry.
   ::util::Status WriteDirectMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::DirectMeterEntry& direct_meter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the data of a register entry.
   ::util::Status WriteRegisterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::RegisterEntry& register_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::RegisterEntry& register_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Modify the data of a meter entry.
   ::util::Status WriteMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::MeterEntry& meter_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::MeterEntry& meter_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the counter data of a table entry.
   ::util::StatusOr<::p4::v1::DirectCounterEntry> ReadDirectCounterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::DirectCounterEntry& direct_counter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the meter config of a table entry.
   ::util::StatusOr<::p4::v1::DirectMeterEntry> ReadDirectMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::DirectMeterEntry& direct_meter_entry)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the data of a register entry.
   ::util::Status ReadRegisterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::RegisterEntry& register_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Read the data of a meter entry.
   ::util::Status ReadMeterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::MeterEntry& meter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Creates a table manager instance.
   static std::unique_ptr<TdiTableManager> CreateInstance(
@@ -111,7 +111,7 @@ class TdiTableManager {
 
   ::util::Status BuildTableKey(const ::p4::v1::TableEntry& table_entry,
                                TdiSdeInterface::TableKeyInterface* table_key)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status BuildTableActionData(
       const ::p4::v1::Action& action,
@@ -127,19 +127,19 @@ class TdiTableManager {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status ReadDefaultTableEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   ::util::Status ReadAllTableEntries(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::TableEntry& table_entry,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Construct a P4RT table entry from a table entry request, table key and
   // table data.
@@ -147,7 +147,7 @@ class TdiTableManager {
       const ::p4::v1::TableEntry& request,
       const TdiSdeInterface::TableKeyInterface* table_key,
       const TdiSdeInterface::TableDataInterface* table_data)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and
@@ -168,7 +168,7 @@ class TdiTableManager {
   // Helper class to validate the P4Info and requests against it.
   // TODO(max): Maybe this manager should be created in the node and passed down
   // to all feature managers.
-  std::unique_ptr<P4InfoManager> p4_info_manager_ GUARDED_BY(lock_);
+  std::unique_ptr<P4InfoManager> p4_info_manager_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

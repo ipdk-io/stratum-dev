@@ -431,7 +431,7 @@ class TreeNode {
 class YangParseTree {
  public:
   explicit YangParseTree(SwitchInterface* switch_interface)
-      LOCKS_EXCLUDED(root_access_lock_);
+      ABSL_LOCKS_EXCLUDED(root_access_lock_);
   virtual ~YangParseTree() {}
 
   // Registers a writer for sending gNMI events.
@@ -455,57 +455,57 @@ class YangParseTree {
   // Add supported leaf handles for one particular interface like xe-1/1/1.
   void AddSubtreeInterfaceFromSingleton(const SingletonPort& singleton,
                                         const NodeConfigParams& node_config)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for one particular interface like xe-1/1/1.
   void AddSubtreeInterfaceFromOptical(const OpticalNetworkInterface& optical)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for one particular interface like xe-1/1/1.
   void AddSubtreeInterfaceFromTrunk(const std::string& name, uint64 node_id,
                                     uint32 port_id,
                                     const NodeConfigParams& node_config)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for the case of interfaces[name=*] (all known
   // interfaces).
-  void AddSubtreeAllInterfaces() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddSubtreeAllInterfaces() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Enable
   // * /components/component[name=*]/name
   // * /components/component/*
   // paths discovering.
-  void AddSubtreeAllComponents() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddSubtreeAllComponents() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for a node.
   void AddSubtreeNode(const Node& node)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for the chassis.
   void AddSubtreeChassis(const Chassis& chassis)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for the system.
-  void AddSubtreeSystem() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddSubtreeSystem() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for IPsec.
-  void AddSubtreeIPsec() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddSubtreeIPsec() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Add supported leaf handles for VirtualPort.
-  void AddSubtreeVirtualPort() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddSubtreeVirtualPort() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Configure the root element.
-  void AddRoot() EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+  void AddRoot() ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Returns a node that handles the YANG path.
   const TreeNode* FindNodeOrNull(const ::gnmi::Path& path) const
-      LOCKS_EXCLUDED(root_access_lock_);
+      ABSL_LOCKS_EXCLUDED(root_access_lock_);
 
   // Returns the root node of the parse tree. Access to this node is useful when
   // an action on all nodes is needed.
-  const TreeNode* GetRoot() const LOCKS_EXCLUDED(root_access_lock_);
+  const TreeNode* GetRoot() const ABSL_LOCKS_EXCLUDED(root_access_lock_);
 
-  SwitchInterface* GetSwitchInterface() LOCKS_EXCLUDED(root_access_lock_) {
+  SwitchInterface* GetSwitchInterface() ABSL_LOCKS_EXCLUDED(root_access_lock_) {
     absl::WriterMutexLock r(&root_access_lock_);
 
     return switch_interface_;
@@ -520,22 +520,22 @@ class YangParseTree {
   // A help method that is used to send notifications that a leaf has changed
   // using a channel between YangParseTree object and GnmiPublisher objest.
   virtual void SendNotification(const GnmiEventPtr& event)
-      LOCKS_EXCLUDED(root_access_lock_);
+      ABSL_LOCKS_EXCLUDED(root_access_lock_);
 
   // An action that modifies the tree to reflect new configuration.
   void ProcessPushedConfig(const ConfigHasBeenPushedEvent& change)
-      LOCKS_EXCLUDED(root_access_lock_);
+      ABSL_LOCKS_EXCLUDED(root_access_lock_);
 
  protected:
   using Action = std::function<void()>;
 
   // Adds node to a tree at specified path.
   TreeNode* AddNode(const ::gnmi::Path& path)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // Copies a subtree.
   ::util::Status CopySubtree(const ::gnmi::Path& from, const ::gnmi::Path& to)
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
   // A helper method for checking if the name of a TreeNode is a wildcard.
   // It is used while processing requests for multiple children to skip nodes
@@ -549,16 +549,16 @@ class YangParseTree {
   ::util::Status PerformActionForAllNonWildcardNodes(
       const gnmi::Path& path, const gnmi::Path& subpath,
       const std::function<::util::Status(const TreeNode& leaf)>& action) const
-      EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(root_access_lock_);
 
-  SwitchInterface* switch_interface_ GUARDED_BY(root_access_lock_);
+  SwitchInterface* switch_interface_ ABSL_GUARDED_BY(root_access_lock_);
 
   // A channel between YangParseTree object and GnmiPublisher objest.
   // It is used to send notifications that a leaf has changed.
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
-      GUARDED_BY(root_access_lock_);
+      ABSL_GUARDED_BY(root_access_lock_);
 
-  TreeNode root_ GUARDED_BY(root_access_lock_);
+  TreeNode root_ ABSL_GUARDED_BY(root_access_lock_);
   // A Mutex used to guard access to the root.
   mutable absl::Mutex root_access_lock_;
 

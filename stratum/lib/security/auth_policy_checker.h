@@ -34,12 +34,12 @@ class AuthPolicyChecker {
   // Refreshes the internal policy map(s). Used for forcing an update of the
   // internal policy map(s). Note that the map(s) will also be updated via the
   // watcher thread, which also calls this method.
-  virtual ::util::Status RefreshPolicies() LOCKS_EXCLUDED(auth_lock_);
+  virtual ::util::Status RefreshPolicies() ABSL_LOCKS_EXCLUDED(auth_lock_);
 
   // Performs shutdown of the class. Note that there is no public Initialize().
   // Initialize() is a private method which is called once when creating an
   // instance of the class.
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(shutdown_lock_);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(shutdown_lock_);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<AuthPolicyChecker> CreateInstance();
@@ -67,18 +67,18 @@ class AuthPolicyChecker {
   // Initializes the class. This includes spawning a thread which will watch
   // for changes in the files that include the membership info and auth
   // policies.
-  ::util::Status Initialize() LOCKS_EXCLUDED(shutdown_lock_);
+  ::util::Status Initialize() ABSL_LOCKS_EXCLUDED(shutdown_lock_);
 
   // Called by Authorize() method to check for authorization of a specific
   // username.
   ::util::Status AuthorizeUser(const std::string& service_name,
                                const std::string& rpc_name,
                                const std::string& username) const
-      LOCKS_EXCLUDED(auth_lock_);
+      ABSL_LOCKS_EXCLUDED(auth_lock_);
 
   // Helper to continuously watch for a change in the files that include the
   // membership info and auth policies. Called in WatcherThreadFunc().
-  ::util::Status WatchForFileChange() LOCKS_EXCLUDED(shutdown_lock_);
+  ::util::Status WatchForFileChange() ABSL_LOCKS_EXCLUDED(shutdown_lock_);
 
   // File watcher thread function. Upon being spawned, calls helper method
   // WatchForFileChange() and waits for its completion.
@@ -89,11 +89,11 @@ class AuthPolicyChecker {
   pthread_t watcher_thread_id_;
 
   // Set to true to inform the threads to exit.
-  bool shutdown_ GUARDED_BY(shutdown_lock_);
+  bool shutdown_ ABSL_GUARDED_BY(shutdown_lock_);
 
   // Per-service per-rpc authorized user map. Updated in RefreshPolicies().
   PerServicePerRpcAuthorizedUsers per_service_per_rpc_authorized_users_
-      GUARDED_BY(auth_lock_);
+      ABSL_GUARDED_BY(auth_lock_);
 
   // Mutex lock for protecting the internal authorized users map.
   mutable absl::Mutex auth_lock_;

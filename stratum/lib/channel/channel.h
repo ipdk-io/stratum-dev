@@ -220,10 +220,10 @@ class Channel : public channel_internal::ChannelBase {
 
   // Closes the Channel. Any blocked Read() or Write() operations immediately
   // return ERR_CANCELLED. Returns false if the Channel is already closed.
-  virtual bool Close() LOCKS_EXCLUDED(queue_lock_);
+  virtual bool Close() ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Returns true if the Channel has been closed.
-  virtual bool IsClosed() LOCKS_EXCLUDED(queue_lock_);
+  virtual bool IsClosed() ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Disallow copy and assign.
   Channel(const Channel&) = delete;
@@ -240,13 +240,13 @@ class Channel : public channel_internal::ChannelBase {
   //
   // Note: If timeout = absl::InfiniteDuration(), Write() blocks indefinitely.
   virtual ::util::Status Write(const T& t, absl::Duration timeout)
-      LOCKS_EXCLUDED(queue_lock_);
+      ABSL_LOCKS_EXCLUDED(queue_lock_);
   virtual ::util::Status Write(T&& t, absl::Duration timeout)
-      LOCKS_EXCLUDED(queue_lock_);
+      ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Returns ERR_NO_RESOURCE immediately if the queue is full.
-  virtual ::util::Status TryWrite(const T& t) LOCKS_EXCLUDED(queue_lock_);
-  virtual ::util::Status TryWrite(T&& t) LOCKS_EXCLUDED(queue_lock_);
+  virtual ::util::Status TryWrite(const T& t) ABSL_LOCKS_EXCLUDED(queue_lock_);
+  virtual ::util::Status TryWrite(T&& t) ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Reads and pops the first element of the queue into t. Returns ERR_SUCCESS
   // on successful dequeue. Blocks if the queue is empty until the timeout, then
@@ -255,15 +255,15 @@ class Channel : public channel_internal::ChannelBase {
   //
   // Note: If timeout = absl::InfiniteDuration(), Read() blocks indefinitely.
   virtual ::util::Status Read(T* t, absl::Duration timeout)
-      LOCKS_EXCLUDED(queue_lock_);
+      ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Returns ERR_ENTRY_NOT_FOUND immediately if the queue is empty.
-  virtual ::util::Status TryRead(T* t) LOCKS_EXCLUDED(queue_lock_);
+  virtual ::util::Status TryRead(T* t) ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Reads all of the elements of the queue into ts. Returns ERR_CANCELED if the
   // Channel is closed, otherwise ERR_SUCCESS.
   virtual ::util::Status ReadAll(std::vector<T>* t_s)
-      LOCKS_EXCLUDED(queue_lock_);
+      ABSL_LOCKS_EXCLUDED(queue_lock_);
 
   // Checks whether there are any elements enqueued in the Channel. If true,
   // sets both done and ready to true and returns ERR_SUCCESS. If the Channel
@@ -274,31 +274,31 @@ class Channel : public channel_internal::ChannelBase {
   // items are notified and removed from the list.
   void SelectRegister(
       const std::shared_ptr<channel_internal::SelectData>& select_data,
-      bool* ready) LOCKS_EXCLUDED(queue_lock_) override;
+      bool* ready) ABSL_LOCKS_EXCLUDED(queue_lock_) override;
 
  private:
   // Helper function used by both variants of Write(). Checks if Channel state
   // is closed and blocks if the internal queue is full. Returns OK or the error
   // statuses described above.
   ::util::Status CheckWriteStateAndBlock(absl::Duration timeout)
-      EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
 
   // Helper function used by both variants of TryWrite(). Checks Channel state
   // for closure and queue occupancy. Returns OK or the error statuses described
   // above.
-  ::util::Status CheckWriteState() EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
+  ::util::Status CheckWriteState() ABSL_EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
 
   // Helper function used by the Write()s and Close() on successful operation.
   // Pops each element on the select list, setting the corresponding done and
   // ready flags to the given value and signaling their condition variables.
-  void ClearSelectList(bool ready) EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
+  void ClearSelectList(bool ready) ABSL_EXCLUSIVE_LOCKS_REQUIRED(queue_lock_);
 
   // Mutex to protect internal queue of the Channel and state.
   mutable absl::Mutex queue_lock_;
-  std::deque<T> queue_ GUARDED_BY(queue_lock_);
-  bool closed_ GUARDED_BY(queue_lock_);
+  std::deque<T> queue_ ABSL_GUARDED_BY(queue_lock_);
+  bool closed_ ABSL_GUARDED_BY(queue_lock_);
   std::list<std::pair<std::shared_ptr<channel_internal::SelectData>, bool>>
-      select_list_ GUARDED_BY(queue_lock_);
+      select_list_ ABSL_GUARDED_BY(queue_lock_);
 
   // Maximum queue depth.
   const size_t max_depth_;

@@ -39,17 +39,17 @@ class ClientSyncReaderWriter {
   // Returns a reference to the stream reader-writer object.
   ::grpc::ClientReaderWriter<W, R>* get() const { return stream_.get(); }
 
-  bool Read(R* msg) LOCKS_EXCLUDED(read_lock_) {
+  bool Read(R* msg) ABSL_LOCKS_EXCLUDED(read_lock_) {
     absl::MutexLock l(&read_lock_);
     return stream_->Read(msg);
   }
 
-  bool Write(const W& msg) LOCKS_EXCLUDED(write_lock_) {
+  bool Write(const W& msg) ABSL_LOCKS_EXCLUDED(write_lock_) {
     absl::MutexLock l(&write_lock_);
     return stream_->Write(msg);
   }
 
-  bool WritesDone() LOCKS_EXCLUDED(write_lock_) {
+  bool WritesDone() ABSL_LOCKS_EXCLUDED(write_lock_) {
     absl::MutexLock l(&write_lock_);
     return stream_->WritesDone();
   }

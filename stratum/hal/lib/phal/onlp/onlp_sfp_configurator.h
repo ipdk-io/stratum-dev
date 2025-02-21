@@ -43,10 +43,10 @@ class OnlpSfpConfigurator : public OnlpEventCallback, public SfpConfigurator {
   ::util::Status AddSfp();
   ::util::Status RemoveSfp();
 
-  std::shared_ptr<OnlpSfpDataSource> datasource_ GUARDED_BY(config_lock_);
+  std::shared_ptr<OnlpSfpDataSource> datasource_ ABSL_GUARDED_BY(config_lock_);
 
   // Pointer to our attribute group
-  AttributeGroup* sfp_group_ GUARDED_BY(config_lock_);
+  AttributeGroup* sfp_group_ ABSL_GUARDED_BY(config_lock_);
 
   // Mutex lock for protecting the internal state when config is pushed or the
   // class is initialized so that other threads do not access the state while
@@ -54,7 +54,7 @@ class OnlpSfpConfigurator : public OnlpEventCallback, public SfpConfigurator {
   mutable absl::Mutex config_lock_;
 
   // Determine if Sfp has been added (i.e. initialized).
-  bool initialized_ GUARDED_BY(config_lock_) = false;
+  bool initialized_ ABSL_GUARDED_BY(config_lock_) = false;
 };
 
 }  // namespace onlp

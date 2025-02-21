@@ -219,14 +219,14 @@ class AttributeGroupQuery {
   // database into the given output protobuf. The passed protobuf must be of the
   // same type used for the descriptor of root_group.
   ::util::Status Get(google::protobuf::Message* out)
-      LOCKS_EXCLUDED(query_lock_);
+      ABSL_LOCKS_EXCLUDED(query_lock_);
   ::util::Status Subscribe(std::unique_ptr<ChannelWriter<PhalDB>> subscriber,
                            absl::Duration polling_interval)
-      LOCKS_EXCLUDED(query_lock_);
+      ABSL_LOCKS_EXCLUDED(query_lock_);
 
-  bool IsUpdated() LOCKS_EXCLUDED(query_lock_);
-  void MarkUpdated() LOCKS_EXCLUDED(query_lock_);
-  void ClearUpdated() LOCKS_EXCLUDED(query_lock_);
+  bool IsUpdated() ABSL_LOCKS_EXCLUDED(query_lock_);
+  void MarkUpdated() ABSL_LOCKS_EXCLUDED(query_lock_);
+  void ClearUpdated() ABSL_LOCKS_EXCLUDED(query_lock_);
 
  private:
   friend class AttributeGroupQueryNode;
@@ -237,7 +237,7 @@ class AttributeGroupQuery {
   absl::Mutex query_lock_;
   // If true, the result of this query has changed and a streaming message
   // should shortly be sent to all subscribers.
-  bool query_updated_ GUARDED_BY(query_lock_) = false;
+  bool query_updated_ ABSL_GUARDED_BY(query_lock_) = false;
 };
 
 }  // namespace phal

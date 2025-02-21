@@ -665,12 +665,12 @@ class EventHandlerListBase {
   // A method passing 'event' to all handlers that are registered in the handler
   // list.
   virtual ::util::Status Process(const GnmiEvent& event)
-      LOCKS_EXCLUDED(access_lock_) = 0;
+      ABSL_LOCKS_EXCLUDED(access_lock_) = 0;
 
   // Adds a event handler to a list of handlers interested in this ('E') type of
   // events.
   ::util::Status Register(const EventHandlerRecordPtr& record)
-      LOCKS_EXCLUDED(access_lock_) {
+      ABSL_LOCKS_EXCLUDED(access_lock_) {
     absl::WriterMutexLock l(&access_lock_);
     handlers_.insert(record);
     return ::util::OkStatus();
@@ -679,14 +679,14 @@ class EventHandlerListBase {
   // Removes a event handler from a list of handlers interested in this  ('E')
   // type of events.
   ::util::Status UnRegister(const EventHandlerRecordPtr& record)
-      LOCKS_EXCLUDED(access_lock_) {
+      ABSL_LOCKS_EXCLUDED(access_lock_) {
     absl::WriterMutexLock l(&access_lock_);
     handlers_.erase(record);
     return ::util::OkStatus();
   }
 
   // Returns the number of handlers that are registered for events of type E.
-  size_t GetNumberOfRegisteredHandlers() LOCKS_EXCLUDED(access_lock_) {
+  size_t GetNumberOfRegisteredHandlers() ABSL_LOCKS_EXCLUDED(access_lock_) {
     absl::WriterMutexLock l(&access_lock_);
     // To return acurate information remove all expired subscriptions.
     CleanUpInactiveRegistrations();
@@ -696,7 +696,7 @@ class EventHandlerListBase {
 
  protected:
   // Removes pointers that are expired.
-  void CleanUpInactiveRegistrations() EXCLUSIVE_LOCKS_REQUIRED(access_lock_) {
+  void CleanUpInactiveRegistrations() ABSL_EXCLUSIVE_LOCKS_REQUIRED(access_lock_) {
     std::list<EventHandlerRecordPtr> entries_to_be_removed;
     for (const auto& entry : handlers_) {
       if (entry.expired()) {
@@ -717,7 +717,7 @@ class EventHandlerListBase {
 
   // A set of event handlers that are interested in this ('E') type of events.
   std::set<EventHandlerRecordPtr, std::owner_less<EventHandlerRecordPtr>>
-      handlers_ GUARDED_BY(access_lock_);
+      handlers_ ABSL_GUARDED_BY(access_lock_);
 };
 
 // A class that keeps track of all event handlers that are interested in

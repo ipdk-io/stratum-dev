@@ -27,14 +27,14 @@ class BcmDiagShell {
   // telnet connection. There is no StopServer() method. We assume that when
   // the server starts, it will listen for connection for ever, until HAL
   // exits.
-  ::util::Status StartServer() LOCKS_EXCLUDED(server_lock_);
+  ::util::Status StartServer() ABSL_LOCKS_EXCLUDED(server_lock_);
 
   // Thread id for the currently running diag shell thread.
-  pthread_t GetDiagShellThreadId() const LOCKS_EXCLUDED(shell_lock_);
+  pthread_t GetDiagShellThreadId() const ABSL_LOCKS_EXCLUDED(shell_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static BcmDiagShell* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static BcmDiagShell* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // BcmDiagShell is neither copyable nor movable.
   BcmDiagShell(const BcmDiagShell&) = delete;
@@ -100,16 +100,16 @@ class BcmDiagShell {
   mutable absl::Mutex shell_lock_;
 
   // The singleton instance.
-  static BcmDiagShell* singleton_ GUARDED_BY(init_lock_);
+  static BcmDiagShell* singleton_ ABSL_GUARDED_BY(init_lock_);
 
   // Shows whether the server thread has been started.
-  bool server_started_ GUARDED_BY(server_lock_);
+  bool server_started_ ABSL_GUARDED_BY(server_lock_);
 
   // Server thread id.
-  pthread_t server_thread_id_ GUARDED_BY(server_lock_);
+  pthread_t server_thread_id_ ABSL_GUARDED_BY(server_lock_);
 
   // Diag shell thread id (for the currently running shell).
-  pthread_t shell_thread_id_ GUARDED_BY(shell_lock_);
+  pthread_t shell_thread_id_ ABSL_GUARDED_BY(shell_lock_);
 
   // Server socket used for listening to telnet clients.
   int server_socket_;

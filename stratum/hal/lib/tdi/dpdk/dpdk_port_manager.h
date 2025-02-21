@@ -21,8 +21,8 @@
 #include "stratum/lib/channel/channel.h"
 
 // Suppress clang errors
-#undef LOCKS_EXCLUDED
-#define LOCKS_EXCLUDED(...)
+#undef ABSL_LOCKS_EXCLUDED
+#define ABSL_LOCKS_EXCLUDED(...)
 
 namespace stratum {
 namespace hal {
@@ -98,7 +98,7 @@ class DpdkPortManager : public TdiPortManager {
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static DpdkPortManager* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static DpdkPortManager* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // ---------- Callback methods ---------
 
@@ -106,18 +106,18 @@ class DpdkPortManager : public TdiPortManager {
   // called by SDE callbacks only.
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static DpdkPortManager* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static DpdkPortManager* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Called whenever a port status event is received from SDK. It forwards the
   // port status event to the module who registered a callback by calling
   // RegisterPortStatusEventWriter().
   ::util::Status OnPortStatusEvent(int device, int dev_port, bool up,
                                    absl::Time timestamp)
-      LOCKS_EXCLUDED(port_status_event_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(port_status_event_writer_lock_);
 
  protected:
   // The singleton instance.
-  static DpdkPortManager* singleton_ GUARDED_BY(init_lock_);
+  static DpdkPortManager* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace tdi

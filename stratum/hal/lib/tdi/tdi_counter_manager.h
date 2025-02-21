@@ -26,19 +26,19 @@ class TdiCounterManager {
  public:
   // Pushes the forwarding pipeline config
   ::util::Status PushForwardingPipelineConfig(const TdiDeviceConfig& config)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an indrect counter entry.
   ::util::Status WriteIndirectCounterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::CounterEntry& counter_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::CounterEntry& counter_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads an indirect counter entry.
   ::util::Status ReadIndirectCounterEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::CounterEntry& counter_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Creates a table manager instance.
   static std::unique_ptr<TdiCounterManager> CreateInstance(

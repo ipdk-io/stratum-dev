@@ -26,18 +26,18 @@ class DummyChassisManager {
   ~DummyChassisManager();
   // Update chassis configuration.
   ::util::Status PushChassisConfig(const ChassisConfig& config)
-      EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Verify chassis configuration.
   ::util::Status VerifyChassisConfig(const ChassisConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Shutdown the chassis.
-  ::util::Status Shutdown() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+  ::util::Status Shutdown() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // Freeze and Unfreeze the chassis.
-  ::util::Status Freeze() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
-  ::util::Status Unfreeze() EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+  ::util::Status Freeze() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
+  ::util::Status Unfreeze() ABSL_EXCLUSIVE_LOCKS_REQUIRED(chassis_lock);
 
   // There should be only one chassis manager in a physical device.
   static DummyChassisManager* GetSingleton();
@@ -45,9 +45,9 @@ class DummyChassisManager {
   // Register/Unregister event notifier
   ::util::Status RegisterEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer)
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
   ::util::Status UnregisterEventNotifyWriter()
-      SHARED_LOCKS_REQUIRED(chassis_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock);
 
   // Retrieves chassis data
   ::util::StatusOr<DataResponse> RetrieveChassisData(const Request request);

@@ -29,10 +29,10 @@ class Udev : public UdevInterface {
   ~Udev() override;
 
   ::util::Status Initialize(const std::string& filter) override
-      LOCKS_EXCLUDED(data_lock_);
-  ::util::Status Shutdown() override LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
+  ::util::Status Shutdown() override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<std::pair<std::string, std::string>> Check() override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Creates the instance. Returns nullptr if there is any issue.
   static std::unique_ptr<Udev> CreateInstance();
@@ -48,9 +48,9 @@ class Udev : public UdevInterface {
   // Mutex lock for protecting the internal state.
   mutable absl::Mutex data_lock_;
 
-  struct udev* udev_ GUARDED_BY(data_lock_);
-  struct udev_monitor* udev_monitor_ GUARDED_BY(data_lock_);
-  int fd_ GUARDED_BY(data_lock_);  // FD for the monitor.
+  struct udev* udev_ ABSL_GUARDED_BY(data_lock_);
+  struct udev_monitor* udev_monitor_ ABSL_GUARDED_BY(data_lock_);
+  int fd_ ABSL_GUARDED_BY(data_lock_);  // FD for the monitor.
 };
 
 }  // namespace hal

@@ -156,8 +156,8 @@ class FakeProcessHandler : public ProcessHandler {
 
  private:
   absl::Mutex proc_lock_;
-  std::queue<pid_t> to_fork_ GUARDED_BY(proc_lock_);
-  std::map<pid_t, bool> procs_running_ GUARDED_BY(proc_lock_);
+  std::queue<pid_t> to_fork_ ABSL_GUARDED_BY(proc_lock_);
+  std::map<pid_t, bool> procs_running_ ABSL_GUARDED_BY(proc_lock_);
 };
 
 // We use ProcmonTest to manually check Procmon state and trigger

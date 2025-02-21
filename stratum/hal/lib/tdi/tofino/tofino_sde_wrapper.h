@@ -42,14 +42,14 @@ class TofinoSdeWrapper : public TdiSdeWrapper {
   // callback function.
   ::util::Status HandlePacketRx(bf_dev_id_t device, bf_pkt* pkt,
                                 bf_pkt_rx_ring_t rx_ring)
-      LOCKS_EXCLUDED(packet_rx_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static TofinoSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static TofinoSdeWrapper* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static TofinoSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static TofinoSdeWrapper* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // TofinoSdeWrapper is neither copyable nor movable.
   TofinoSdeWrapper(const TofinoSdeWrapper&) = delete;
@@ -64,7 +64,7 @@ class TofinoSdeWrapper : public TdiSdeWrapper {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static TofinoSdeWrapper* singleton_ GUARDED_BY(init_lock_);
+  static TofinoSdeWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Private constructor. Use CreateSingleton and GetSingleton().
@@ -85,7 +85,7 @@ class TofinoSdeWrapper : public TdiSdeWrapper {
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
-      device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
+      device_to_packet_rx_writer_ ABSL_GUARDED_BY(packet_rx_callback_lock_);
 };
 
 }  // namespace tdi

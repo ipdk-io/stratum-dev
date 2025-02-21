@@ -28,45 +28,45 @@ class TdiActionProfileManager {
  public:
   // Pushes the pipline info.
   ::util::Status PushForwardingPipelineConfig(const TdiDeviceConfig& config)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile member.
   ::util::Status WriteActionProfileEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
-      const ::p4::v1::ExternEntry& action_profile_entry) LOCKS_EXCLUDED(lock_);
+      const ::p4::v1::ExternEntry& action_profile_entry) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile member.
   ::util::Status WriteActionProfileMember(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileMember& action_profile_member)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes an action profile group.
   ::util::Status WriteActionProfileGroup(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileGroup& action_profile_group)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 ActionProfileEntry(s) matched by the given extern entry.
   ::util::Status ReadActionProfileEntry(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::ExternEntry& action_profile_entry,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 ActionProfileMember(s) matched by the given entry.
   ::util::Status ReadActionProfileMember(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::ActionProfileMember& action_profile_member,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads the P4 ActionProfileGroup(s) matched by the given entry.
   ::util::Status ReadActionProfileGroup(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const ::p4::v1::ActionProfileGroup& action_profile_group,
-      WriterInterface<::p4::v1::ReadResponse>* writer) LOCKS_EXCLUDED(lock_);
+      WriterInterface<::p4::v1::ReadResponse>* writer) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Creates an action profile manager instance.
   static std::unique_ptr<TdiActionProfileManager> CreateInstance(
@@ -83,14 +83,14 @@ class TdiActionProfileManager {
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 bfrt_table_id, const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileMember& action_profile_member)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Internal version of WriteActionProfileGroup which takes no locks.
   ::util::Status DoWriteActionProfileGroup(
       std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 bfrt_table_id, const ::p4::v1::Update::Type type,
       const ::p4::v1::ActionProfileGroup& action_profile_group)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Internal version of ReadActionProfileMember which takes no locks.
   ::util::Status DoReadActionProfileMember(
@@ -98,7 +98,7 @@ class TdiActionProfileManager {
       uint32 bfrt_table_id,
       const ::p4::v1::ActionProfileMember& action_profile_member,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Internal version of ReadActionProfileGroup which takes no locks.
   ::util::Status DoReadActionProfileGroup(
@@ -106,7 +106,7 @@ class TdiActionProfileManager {
       uint32 bfrt_table_id,
       const ::p4::v1::ActionProfileGroup& action_profile_group,
       WriterInterface<::p4::v1::ReadResponse>* writer)
-      SHARED_LOCKS_REQUIRED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(lock_);
 
   // Reader-writer lock used to protect access to pipeline state.
   // TODO(max): Check if removeable
@@ -118,7 +118,7 @@ class TdiActionProfileManager {
   // Helper class to validate the P4Info and requests against it.
   // TODO(max): Maybe this manager should be created in the node and passed down
   // to all feature managers.
-  std::unique_ptr<P4InfoManager> p4_info_manager_ GUARDED_BY(lock_);
+  std::unique_ptr<P4InfoManager> p4_info_manager_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based Tofino device number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

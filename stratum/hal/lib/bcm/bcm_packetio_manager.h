@@ -293,10 +293,10 @@ class BcmPacketioManager {
   // KNET intf).
   virtual ::util::StatusOr<BcmKnetTxStats> GetTxStats(
       GoogleConfig::BcmKnetIntfPurpose purpose) const
-      LOCKS_EXCLUDED(tx_stats_lock_);
+      ABSL_LOCKS_EXCLUDED(tx_stats_lock_);
   virtual ::util::StatusOr<BcmKnetRxStats> GetRxStats(
       GoogleConfig::BcmKnetIntfPurpose purpose) const
-      LOCKS_EXCLUDED(rx_stats_lock_);
+      ABSL_LOCKS_EXCLUDED(rx_stats_lock_);
 
   // Creates a packet replication group.
   virtual ::util::Status InsertPacketReplicationEntry(
@@ -309,7 +309,7 @@ class BcmPacketioManager {
   // Returns the RX/TX stats for all KNET intfs as string. It also dumps the
   // string to stdout.
   virtual std::string DumpStats() const
-      LOCKS_EXCLUDED(tx_stats_lock_, rx_stats_lock_);
+      ABSL_LOCKS_EXCLUDED(tx_stats_lock_, rx_stats_lock_);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<BcmPacketioManager> CreateInstance(
@@ -391,7 +391,7 @@ class BcmPacketioManager {
   // registered callback (if any).
   ::util::Status HandleKnetIntfPacketRx(
       GoogleConfig::BcmKnetIntfPurpose purpose)
-      LOCKS_EXCLUDED(chassis_lock, rx_writer_lock_);
+      ABSL_LOCKS_EXCLUDED(chassis_lock, rx_writer_lock_);
 
   // Helper called by HandleKnetIntfPacketRx() to read one single full message
   // from a socket. Returns true if we need to retry the receive and false if
@@ -485,7 +485,7 @@ class BcmPacketioManager {
   // is updated every time a controller is connected.
   std::map<GoogleConfig::BcmKnetIntfPurpose,
            std::shared_ptr<WriterInterface<::p4::v1::PacketIn>>>
-      purpose_to_rx_writer_ GUARDED_BY(rx_writer_lock_);
+      purpose_to_rx_writer_ ABSL_GUARDED_BY(rx_writer_lock_);
 
   // A vector of KnetIntfRxThreadData pointers.
   std::vector<KnetIntfRxThreadData*> knet_intf_rx_thread_data_;
@@ -494,13 +494,13 @@ class BcmPacketioManager {
   // created when there is a packet transmitted for the first time from a KNET
   // intf mapped and are updated continuously till class is shutdown.
   std::map<GoogleConfig::BcmKnetIntfPurpose, BcmKnetTxStats>
-      purpose_to_tx_stats_ GUARDED_BY(tx_stats_lock_);
+      purpose_to_tx_stats_ ABSL_GUARDED_BY(tx_stats_lock_);
 
   // Map from purpose of a KNET intf to its RX stats. The map entries are
   // created when there is a packet received for the first time from a KNET
   // intf mapped and are updated continuously till class is shutdown.
   std::map<GoogleConfig::BcmKnetIntfPurpose, BcmKnetRxStats>
-      purpose_to_rx_stats_ GUARDED_BY(rx_stats_lock_);
+      purpose_to_rx_stats_ ABSL_GUARDED_BY(rx_stats_lock_);
 
   // Pointer to BcmChassisRoInterface class to get the most updated node & port
   // maps after the config is pushed.

@@ -58,16 +58,16 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
   // the function initializes the class and pushes the saved forwarding pipeline
   // config to the switch. In the warmboot mode, it only restores the internal
   // state of the class.
-  ::util::Status Setup(bool warmboot) LOCKS_EXCLUDED(config_lock_);
+  ::util::Status Setup(bool warmboot) ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Tears down the class. Called in both warmboot or coldboot mode. It will
   // not alter any state on the hardware when called.
-  ::util::Status Teardown() LOCKS_EXCLUDED(config_lock_, controller_lock_,
+  ::util::Status Teardown() ABSL_LOCKS_EXCLUDED(config_lock_, controller_lock_,
                                            stream_response_thread_lock_);
 
   // Public helper function called in Setup().
   ::util::Status PushSavedForwardingPipelineConfigs(bool warmboot)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Writes one or more forwarding entries on the target as part of P4 Runtime
   // API. Entries include tables entries, action profile members/groups, meter
@@ -88,7 +88,7 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
       ::grpc::ServerContext* context,
       const ::p4::v1::SetForwardingPipelineConfigRequest* req,
       ::p4::v1::SetForwardingPipelineConfigResponse* resp) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Gets the P4-based forwarding pipeline configuration of one or more
   // switching nodes previously pushed to the switch.
@@ -96,7 +96,7 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
       ::grpc::ServerContext* context,
       const ::p4::v1::GetForwardingPipelineConfigRequest* req,
       ::p4::v1::GetForwardingPipelineConfigResponse* resp) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Bidirectional channel between controller and the switch for packet I/O,
   // master arbitration and stream errors.
@@ -131,7 +131,7 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
   // not end with so many dangling threads. Called for every newly connected
   // controller, and before `AddOrModifyController`.
   ::util::Status CheckAndIncrementConnectionCount()
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Adds a new controller to the controller manager. If the election_id in the
   // 'arbitration' token is highest among the existing controllers (or if this
@@ -144,64 +144,64 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
   // SdnControllerManager will have the master controller stream for packet I/O.
   ::util::Status AddOrModifyController(
       uint64 node_id, const ::p4::v1::MasterArbitrationUpdate& update,
-      p4runtime::SdnConnection* controller) LOCKS_EXCLUDED(controller_lock_);
+      p4runtime::SdnConnection* controller) ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Removes an existing controller from the controller manager given its
   // stream. To be called after stream from an existing controller is broken
   // (e.g. controller is disconnected).
   void RemoveController(uint64 node_id, p4runtime::SdnConnection* connection)
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Returns true if given (election_id, role) for a Write request belongs to
   // the master controller stream for a node given by its node ID.
   ::grpc::Status IsWritePermitted(uint64 node_id,
                                   const ::p4::v1::WriteRequest& req) const
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
   ::grpc::Status IsWritePermitted(
       uint64 node_id,
       const ::p4::v1::SetForwardingPipelineConfigRequest& req) const
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Returns true if given role for a Read request is allowed to read the
   // requested entities.
   ::grpc::Status IsReadPermitted(uint64 node_id,
                                  const ::p4::v1::ReadRequest& req) const
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Returns true if the given role and election_id belongs to the master
   // controller stream for a node given by its node ID.
   bool IsMasterController(
       uint64 node_id, const absl::optional<std::string>& role_name,
       const absl::optional<absl::uint128>& election_id) const
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Return the stored forwarding pipeline for the given node.
   ::util::StatusOr<::p4::v1::ForwardingPipelineConfig>
   DoGetForwardingPipelineConfig(uint64 node_id) const
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // Expands a generic wildcard request into individual entity wildcard reads.
   ::p4::v1::ReadRequest ExpandWildcardsInReadRequest(
       const ::p4::v1::ReadRequest& req,
       const ::p4::config::v1::P4Info& p4info) const
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Thread function for handling stream response RX.
   static void* StreamResponseReceiveThreadFunc(void* arg)
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Blocks on the Channel registered with SwitchInterface to read received
   // responses.
   void* ReceiveStreamRespones(
       uint64 node_id,
       std::unique_ptr<ChannelReader<::p4::v1::StreamMessageResponse>> reader)
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Callback to be called whenever we receive a stream response on the
   // specified node which is destined to controller.
   void StreamResponseReceiveHandler(uint64 node_id,
                                     const ::p4::v1::StreamMessageResponse& resp)
-      LOCKS_EXCLUDED(controller_lock_);
+      ABSL_LOCKS_EXCLUDED(controller_lock_);
 
   // Mutex lock used to protect node_id_to_controller_manager_ which is accessed
   // every time a controller connects, disconnects or wants to acquire
@@ -230,22 +230,22 @@ class P4Service final : public ::p4::v1::P4Runtime::Service {
   // tracked for resource limiting. Note that this count can be different from
   // the sum of connected controllers reported by all controller managers, as
   // a P4Runtime client can connect, but never send a arbitration message.
-  int num_controller_connections_ GUARDED_BY(controller_lock_);
+  int num_controller_connections_ ABSL_GUARDED_BY(controller_lock_);
 
   // List of threads which send received responses up to the controller.
   std::vector<pthread_t> stream_response_reader_tids_
-      GUARDED_BY(stream_response_thread_lock_);
+      ABSL_GUARDED_BY(stream_response_thread_lock_);
 
   // Map of per-node Channels which are used to forward received responses to
   // P4Service.
   absl::flat_hash_map<uint64,
                       std::shared_ptr<Channel<::p4::v1::StreamMessageResponse>>>
-      stream_response_channels_ GUARDED_BY(stream_response_thread_lock_);
+      stream_response_channels_ ABSL_GUARDED_BY(stream_response_thread_lock_);
 
   // Forwarding pipeline configs of all the switching nodes. Updated as we push
   // forwarding pipeline configs for new or existing nodes.
   std::unique_ptr<ForwardingPipelineConfigs> forwarding_pipeline_configs_
-      GUARDED_BY(config_lock_);
+      ABSL_GUARDED_BY(config_lock_);
 
   // Determines the mode of operation:
   // - OPERATION_MODE_STANDALONE: when Stratum stack runs independently and

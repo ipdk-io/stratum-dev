@@ -82,7 +82,7 @@ class PhalDbService final : public PhalDb::Service {
   // Map of subscriber channels (key is thread id, given that
   // each grpc request will have a different tid.
   std::map<pthread_t, std::shared_ptr<Channel<PhalDB>>> subscriber_channels_
-      GUARDED_BY(subscriber_thread_lock_);
+      ABSL_GUARDED_BY(subscriber_thread_lock_);
 
   friend class PhalDbServiceTest;
 };

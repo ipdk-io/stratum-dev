@@ -53,11 +53,11 @@ class TdiIpsecManager {
   virtual ::util::Status InitializeNotificationCallback();
 
   virtual ::util::Status GetSpiData(uint32& fetched_spi)
-      SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   virtual ::util::Status WriteConfigSADBEntry(const IPsecSadbConfigOp op_type,
                                               IPsecSADBConfig& msg)
-      SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
+      ABSL_SHARED_LOCKS_REQUIRED(_ipsec_mgr_lock);
 
   // TdiIpsecManager is neither copyable nor movable.
   TdiIpsecManager(const TdiIpsecManager&) = delete;
@@ -103,7 +103,7 @@ class TdiIpsecManager {
   // WriterInterface<GnmiEventPtr> object for sending event notifications.
   mutable absl::Mutex gnmi_event_lock_;
   std::shared_ptr<WriterInterface<GnmiEventPtr>> gnmi_event_writer_
-      GUARDED_BY(gnmi_event_lock_);
+      ABSL_GUARDED_BY(gnmi_event_lock_);
 
   // Pointer to TdiSdeInterface implementation.
   TdiSdeInterface* tdi_sde_interface_;  // not owned by this class.

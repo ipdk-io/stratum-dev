@@ -84,10 +84,10 @@ class DpdkHal final {
                                   absl::Notification* ready_sync = nullptr,
                                   absl::Notification* done_sync = nullptr,
                                   const TargetOptions* target_options = nullptr)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
-  static DpdkHal* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static DpdkHal* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // DpdkHal is neither copyable nor movable.
   DpdkHal(const DpdkHal&) = delete;
@@ -167,7 +167,7 @@ class DpdkHal final {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static DpdkHal* singleton_ GUARDED_BY(init_lock_);
+  static DpdkHal* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace hal

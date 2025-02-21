@@ -37,11 +37,11 @@ class Es2kNode : public TdiNode {
   // Forwarding entries
   virtual ::util::Status WriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      LOCKS_EXCLUDED(lock_);
+      ABSL_LOCKS_EXCLUDED(lock_);
   virtual ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) LOCKS_EXCLUDED(lock_);
+      std::vector<::util::Status>* details) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Factory function for creating the instance of the class.
   static std::unique_ptr<Es2kNode> CreateInstance(
@@ -91,13 +91,13 @@ class Es2kNode : public TdiNode {
   mutable absl::Mutex rx_writer_lock_;
 
   // Flag indicating whether the pipeline has been pushed.
-  bool pipeline_initialized_ GUARDED_BY(lock_);
+  bool pipeline_initialized_ ABSL_GUARDED_BY(lock_);
 
   // Flag indicating whether the chip is initialized.
-  bool initialized_ GUARDED_BY(lock_);
+  bool initialized_ ABSL_GUARDED_BY(lock_);
 
   // Stores pipeline information for this node.
-  TdiDeviceConfig tdi_config_ GUARDED_BY(lock_);
+  TdiDeviceConfig tdi_config_ ABSL_GUARDED_BY(lock_);
 
   // Pointer to a TdiSdeInterface implementation that wraps all the SDE calls.
   // Not owned by this class.
@@ -116,7 +116,7 @@ class Es2kNode : public TdiNode {
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
   // lifetime of the class.
-  uint64 node_id_ GUARDED_BY(lock_);
+  uint64 node_id_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based BFRT device_id number corresponding to the node/ASIC
   // managed by this class instance. Assigned in the class constructor.

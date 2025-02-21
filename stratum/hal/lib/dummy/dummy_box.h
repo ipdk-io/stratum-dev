@@ -68,34 +68,34 @@ class DummyBox : public Test::Service {
   ::grpc::Status TransceiverEventUpdate(::grpc::ServerContext* context,
                                         const TransceiverEventRequest* request,
                                         TransceiverEventResponse* response)
-      LOCKS_EXCLUDED(sdk_lock_) override;
+      ABSL_LOCKS_EXCLUDED(sdk_lock_) override;
 
   // Transceiver event writer.
   ::util::StatusOr<int> RegisterTransceiverEventWriter(
       std::unique_ptr<ChannelWriter<TransceiverEvent>> writer, int priority)
-      LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
   ::util::Status UnregisterTransceiverEventWriter(int id)
-      LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   // Event notify writer for a specific node.
   ::util::Status RegisterNodeEventNotifyWriter(
       uint64 node_id,
       std::shared_ptr<WriterInterface<DummyNodeEventPtr>> writer)
-      LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
   ::util::Status UnregisterNodeEventNotifyWriter(uint64 node_id)
-      LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   // Event notify writer for chassis
   ::util::Status RegisterChassisEventNotifyWriter(
       std::shared_ptr<WriterInterface<GnmiEventPtr>> writer)
-      LOCKS_EXCLUDED(sdk_lock_);
-  ::util::Status UnregisterChassisEventNotifyWriter() LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
+  ::util::Status UnregisterChassisEventNotifyWriter() ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   // Start SDK with test gRPC service
-  ::util::Status Start() LOCKS_EXCLUDED(sdk_lock_);
+  ::util::Status Start() ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   // Shuts down the SDK, including the gRPC server we use
-  ::util::Status Shutdown() LOCKS_EXCLUDED(sdk_lock_);
+  ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   static DummyBox* GetSingleton();
 
@@ -106,23 +106,23 @@ class DummyBox : public Test::Service {
   // Method to send port status update to switch interface.
   ::grpc::Status HandlePortStatusUpdate(
       uint64 node_id, uint64 port_id, ::stratum::hal::DataResponse state_update)
-      LOCKS_EXCLUDED(sdk_lock_);
+      ABSL_LOCKS_EXCLUDED(sdk_lock_);
 
   ::absl::Mutex sdk_lock_;  // protects initialized_ xcvr_writer_id_
                             // xcvr_event_writers_ node_event_notify_writers_
                             // chassis_event_notify_writer_
-  bool initialized_ GUARDED_BY(sdk_lock_);
-  int xcvr_writer_id_ GUARDED_BY(sdk_lock_);
+  bool initialized_ ABSL_GUARDED_BY(sdk_lock_);
+  int xcvr_writer_id_ ABSL_GUARDED_BY(sdk_lock_);
   std::vector<PhalInterface::TransceiverEventWriter> xcvr_event_writers_
-      GUARDED_BY(sdk_lock_);
+      ABSL_GUARDED_BY(sdk_lock_);
   ::absl::flat_hash_map<uint32,
                         std::shared_ptr<WriterInterface<DummyNodeEventPtr>>>
-      node_event_notify_writers_ GUARDED_BY(sdk_lock_);
+      node_event_notify_writers_ ABSL_GUARDED_BY(sdk_lock_);
   std::shared_ptr<WriterInterface<GnmiEventPtr>> chassis_event_notify_writer_
-      GUARDED_BY(sdk_lock_);
+      ABSL_GUARDED_BY(sdk_lock_);
 
   // Thread id of the gRPC server thread.
-  pthread_t external_server_tid_ GUARDED_BY(sdk_lock_);
+  pthread_t external_server_tid_ ABSL_GUARDED_BY(sdk_lock_);
 };
 
 }  // namespace dummy_switch

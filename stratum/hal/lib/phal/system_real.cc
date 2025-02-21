@@ -15,7 +15,7 @@ namespace hal {
 namespace phal {
 namespace {
 absl::Mutex singleton_lock_;
-const SystemReal* singleton_instance_ GUARDED_BY(singleton_lock_);
+const SystemReal* singleton_instance_ ABSL_GUARDED_BY(singleton_lock_);
 }  // namespace
 
 // TODO(unknown): Test this code. This needs to be tested on a device with
@@ -35,7 +35,7 @@ UdevMonitorReal::~UdevMonitorReal() {
 }
 
 const SystemInterface* SystemReal::GetSingleton()
-    LOCKS_EXCLUDED(singleton_lock_) {
+    ABSL_LOCKS_EXCLUDED(singleton_lock_) {
   absl::MutexLock lock(&singleton_lock_);
   if (singleton_instance_ == nullptr) singleton_instance_ = new SystemReal();
   return singleton_instance_;

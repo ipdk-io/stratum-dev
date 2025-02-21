@@ -41,7 +41,7 @@ const absl::flat_hash_map<std::string, uint64> kModulationFormatIds = {
 
 class TaishClient final : public TaiInterface {
  public:
-  util::Status Initialize() override EXCLUSIVE_LOCKS_REQUIRED(init_lock_);
+  util::Status Initialize() override ABSL_EXCLUSIVE_LOCKS_REQUIRED(init_lock_);
   util::StatusOr<std::vector<uint64>> GetModuleIds() override;
   util::StatusOr<std::vector<uint64>> GetNetworkInterfaceIds(
       const uint64 module_id) override;
@@ -53,39 +53,39 @@ class TaishClient final : public TaiInterface {
 
   // Functions for Network Interface.
   util::StatusOr<uint64> GetTxLaserFrequency(const uint64 netif_id) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::StatusOr<double> GetCurrentInputPower(const uint64 netif_id) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::StatusOr<double> GetCurrentOutputPower(const uint64 netif_id) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::StatusOr<double> GetTargetOutputPower(const uint64 netif_id) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::StatusOr<uint64> GetModulationFormat(const uint64 netif_id) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::Status SetTargetOutputPower(const uint64 netif_id,
                                     const double power) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::Status SetModulationFormat(const uint64 netif_id,
                                    const uint64 mod_format) override
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
   util::Status SetTxLaserFrequency(const uint64 netif_id,
                                    const uint64 frequency) override
-      LOCKS_EXCLUDED(init_lock_);
-  util::Status Shutdown() override LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
+  util::Status Shutdown() override ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Gets the singleton instance.
-  static TaishClient* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static TaishClient* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
  private:
   TaishClient();
 
   // Gets an attribute from a TAI object.
   util::StatusOr<std::string> GetAttribute(uint64 obj_id, uint64 attr_id)
-      SHARED_LOCKS_REQUIRED(init_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(init_lock_);
 
   // Sets an attribute to a TAI object.
   util::Status SetAttribute(uint64 obj_id, uint64 attr_id, std::string value)
-      SHARED_LOCKS_REQUIRED(init_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(init_lock_);
 
   util::StatusOr<uint64> GetModulationFormatIds(
       const std::string& modulation_format);
@@ -95,10 +95,10 @@ class TaishClient final : public TaiInterface {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static TaishClient* singleton_ GUARDED_BY(init_lock_);
+  static TaishClient* singleton_ ABSL_GUARDED_BY(init_lock_);
 
   // Determines if the taish client has been initialized.
-  bool initialized_ GUARDED_BY(init_lock_);
+  bool initialized_ ABSL_GUARDED_BY(init_lock_);
 
   // Pointer to the gRPC stub.
   std::unique_ptr<taish::TAI::Stub> taish_stub_;

@@ -79,10 +79,10 @@ class TofinoHal final {
   static TofinoHal* CreateSingleton(OperationMode mode,
                                     SwitchInterface* switch_interface,
                                     AuthPolicyChecker* auth_policy_checker)
-      LOCKS_EXCLUDED(init_lock_);
+      ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the signal handler..
-  static TofinoHal* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static TofinoHal* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // TofinoHal is neither copyable nor movable.
   TofinoHal(const TofinoHal&) = delete;
@@ -152,7 +152,7 @@ class TofinoHal final {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static TofinoHal* singleton_ GUARDED_BY(init_lock_);
+  static TofinoHal* singleton_ ABSL_GUARDED_BY(init_lock_);
 };
 
 }  // namespace hal

@@ -36,62 +36,62 @@ class BcmNode {
   // handle forwarding pipeline configuration.
   virtual ::util::Status PushChassisConfig(const ChassisConfig& config,
                                            uint64 node_id)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Verifies the given ChassisConfig proto for all node-specific managers.
   virtual ::util::Status VerifyChassisConfig(const ChassisConfig& config,
                                              uint64 node_id)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Configures the P4-based forwarding pipeline configuration for this node.
   virtual ::util::Status PushForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Verifies a P4-based forwarding pipeline configuration intended for this
   // node.
   virtual ::util::Status VerifyForwardingPipelineConfig(
       const ::p4::v1::ForwardingPipelineConfig& config)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Performs the shutdown sequence in coldboot mode for per-node managers
   // handled by this BcmNode instance.
-  virtual ::util::Status Shutdown() LOCKS_EXCLUDED(chassis_lock, lock_);
+  virtual ::util::Status Shutdown() ABSL_LOCKS_EXCLUDED(chassis_lock, lock_);
 
   // Performs NSF freeze. This includes the warmboot shutdown sequence and
   // saving of checkpoint data to local storage.
-  virtual ::util::Status Freeze() SHARED_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status Freeze() ABSL_SHARED_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Performs NSF unfreeze. This includes initialization of per-node managers
   // handled by this class and restoration of checkpointed data from Freeze().
-  virtual ::util::Status Unfreeze() SHARED_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(lock_);
+  virtual ::util::Status Unfreeze() ABSL_SHARED_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Writes P4-based forwarding entries (table entries, action profile members,
   // action profile groups, meters, counters) to this node.
   virtual ::util::Status WriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Reads P4-based forwarding entries (table entries, action profile members,
   // action profile groups, meters, counters) from this node.
   virtual ::util::Status ReadForwardingEntries(
       const ::p4::v1::ReadRequest& req,
       WriterInterface<::p4::v1::ReadResponse>* writer,
-      std::vector<::util::Status>* details) SHARED_LOCKS_REQUIRED(chassis_lock)
-      LOCKS_EXCLUDED(lock_);
+      std::vector<::util::Status>* details) ABSL_SHARED_LOCKS_REQUIRED(chassis_lock)
+      ABSL_LOCKS_EXCLUDED(lock_);
 
   // Registers a writer to be invoked on receipt of a packet on any port on this
   // node. The sent P4 PacketIn instance includes all the info on where
   // the packet was received on this node as well as its payload.
   virtual ::util::Status RegisterStreamMessageResponseWriter(
       const std::shared_ptr<WriterInterface<::p4::v1::StreamMessageResponse>>&
-          writer) SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+          writer) ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Unregisters writer registered in RegisterStreamMessageResponseWriter().
   virtual ::util::Status UnregisterStreamMessageResponseWriter()
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Transmits a packet received from controller directly to a port on this node
   // or to the ingress pipeline of the node to let the chip route the packet.
@@ -99,12 +99,12 @@ class BcmNode {
   // transmit the packet as well as its payload.
   virtual ::util::Status HandleStreamMessageRequest(
       const ::p4::v1::StreamMessageRequest& request)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Updates any managers which rely on current port state. This is generally
   // invoked by BcmChassisManager in the linkscan event handler.
   virtual ::util::Status UpdatePortState(uint32 port_id)
-      SHARED_LOCKS_REQUIRED(chassis_lock) LOCKS_EXCLUDED(lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(chassis_lock) ABSL_LOCKS_EXCLUDED(lock_);
 
   // Factory function for creating a BcmNode instance.
   static std::unique_ptr<BcmNode> CreateInstance(
@@ -137,12 +137,12 @@ class BcmNode {
   // pushing config.
   ::util::Status StaticEntryWrite(const P4PipelineConfig& config,
                                   bool post_push)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Non-locking internal version of WriteForwardingEntries().
   virtual ::util::Status DoWriteForwardingEntries(
       const ::p4::v1::WriteRequest& req, std::vector<::util::Status>* results)
-      EXCLUSIVE_LOCKS_REQUIRED(lock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock_);
 
   // Write a single P4 TableEntry.
   ::util::Status TableWrite(const ::p4::v1::TableEntry& entry,
@@ -165,7 +165,7 @@ class BcmNode {
   mutable absl::Mutex lock_;
 
   // Flag indicate whether chip is initialized.
-  bool initialized_ GUARDED_BY(lock_);
+  bool initialized_ ABSL_GUARDED_BY(lock_);
 
   // Managers. Not owned by the class.
   BcmAclManager* bcm_acl_manager_;
@@ -182,7 +182,7 @@ class BcmNode {
   // Logical node ID corresponding to the node/ASIC managed by this class
   // instance. Assigned on PushChassisConfig() and might change during the
   // lifetime of the class.
-  uint64 node_id_ GUARDED_BY(lock_);
+  uint64 node_id_ ABSL_GUARDED_BY(lock_);
 
   // Fixed zero-based BCM unit number corresponding to the node/ASIC managed by
   // this class instance. Assigned in the class constructor.

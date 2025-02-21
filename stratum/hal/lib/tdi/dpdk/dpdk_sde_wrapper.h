@@ -29,10 +29,10 @@ class DpdkSdeWrapper : public TdiSdeWrapper {
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static DpdkSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static DpdkSdeWrapper* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static DpdkSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static DpdkSdeWrapper* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // DpdkSdeWrapper is neither copyable nor movable.
   DpdkSdeWrapper(const DpdkSdeWrapper&) = delete;
@@ -47,7 +47,7 @@ class DpdkSdeWrapper : public TdiSdeWrapper {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static DpdkSdeWrapper* singleton_ GUARDED_BY(init_lock_);
+  static DpdkSdeWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Private constructor; use CreateSingleton and GetSingleton().

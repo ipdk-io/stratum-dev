@@ -170,87 +170,87 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::StatusOr<uint32> CreateMulticastNode(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       int mc_replication_id, const std::vector<uint32>& mc_lag_ids,
-      const std::vector<uint32>& ports) override LOCKS_EXCLUDED(data_lock_);
+      const std::vector<uint32>& ports) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<std::vector<uint32>> GetNodesInMulticastGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteMulticastNodes(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetMulticastNode(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 mc_node_id, int* replication_id, std::vector<uint32>* lag_ids,
-      std::vector<uint32>* ports) override LOCKS_EXCLUDED(data_lock_);
+      std::vector<uint32>* ports) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertMulticastGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyMulticastGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteMulticastGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetMulticastGroups(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 group_id, std::vector<uint32>* group_ids,
       std::vector<std::vector<uint32>>* mc_node_ids) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int cos, int max_pkt_len) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 session_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 session_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetCloneSessions(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, std::vector<uint32>* session_ids,
       std::vector<int>* egress_ports, std::vector<int>* coss,
-      std::vector<int>* max_pkt_lens) override LOCKS_EXCLUDED(data_lock_);
+      std::vector<int>* max_pkt_lens) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteIndirectCounter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 counter_id, int counter_index, absl::optional<uint64> byte_count,
-      absl::optional<uint64> packet_count) override LOCKS_EXCLUDED(data_lock_);
+      absl::optional<uint64> packet_count) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadIndirectCounter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 counter_id, absl::optional<uint32> counter_index,
       std::vector<uint32>* counter_indices,
       std::vector<absl::optional<uint64>>* byte_counts,
       std::vector<absl::optional<uint64>>* packet_counts,
-      absl::Duration timeout) override LOCKS_EXCLUDED(data_lock_);
+      absl::Duration timeout) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteRegister(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> register_index,
-      const std::string& register_data) override LOCKS_EXCLUDED(data_lock_);
+      const std::string& register_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadRegisters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> register_index,
       std::vector<uint32>* register_indices,
       std::vector<uint64>* register_values, absl::Duration timeout) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WriteIndirectMeter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index, bool in_pps,
       uint64 cir, uint64 cburst, uint64 pir, uint64 pburst) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadIndirectMeters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
       std::vector<uint32>* meter_indices, std::vector<uint64>* cirs,
       std::vector<uint64>* cbursts, std::vector<uint64>* pirs,
       std::vector<uint64>* pbursts, std::vector<bool>* in_pps) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status WritePktModMeter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
-      TdiPktModMeterConfig& cfg) override LOCKS_EXCLUDED(data_lock_) {
+      TdiPktModMeterConfig& cfg) override ABSL_LOCKS_EXCLUDED(data_lock_) {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
            << "WritePktModMeter not supported";
   }
@@ -259,110 +259,110 @@ class TdiSdeWrapper : public TdiSdeInterface {
       uint32 table_id, absl::optional<uint32> meter_index,
       std::vector<uint32>* meter_indices,
       std::vector<TdiPktModMeterConfig>& cfg) override
-      LOCKS_EXCLUDED(data_lock_) {
+      ABSL_LOCKS_EXCLUDED(data_lock_) {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
            << "ReadPktModMeters not supported";
   }
   ::util::Status DeletePktModMeterConfig(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index) override
-      LOCKS_EXCLUDED(data_lock_) {
+      ABSL_LOCKS_EXCLUDED(data_lock_) {
     return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
            << "DeletePktModMeters not supported";
   }
   ::util::Status InsertActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 table_id, int member_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id, int member_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetActionProfileMembers(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id, std::vector<int>* member_ids,
       std::vector<std::unique_ptr<TableDataInterface>>* table_values) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertActionProfileGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyActionProfileGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteActionProfileGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 table_id, int group_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id, int group_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetActionProfileGroups(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int group_id, std::vector<int>* group_ids,
       std::vector<int>* max_group_sizes,
       std::vector<std::vector<uint32>>* member_ids,
       std::vector<std::vector<bool>>* member_status) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status SynchronizeCounters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InsertTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ModifyTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      const TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      const TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeleteTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, const TableKeyInterface* table_key,
-      TableDataInterface* table_data) override LOCKS_EXCLUDED(data_lock_);
+      TableDataInterface* table_data) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetAllTableEntries(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id,
       std::vector<std::unique_ptr<TableKeyInterface>>* table_keys,
       std::vector<std::unique_ptr<TableDataInterface>>* table_values) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status SetDefaultTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, const TableDataInterface* table_data) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ResetDefaultTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-      uint32 table_id) override LOCKS_EXCLUDED(data_lock_);
+      uint32 table_id) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status GetDefaultTableEntry(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, TableDataInterface* table_data) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   ::util::StatusOr<uint32> GetTdiRtId(uint32 p4info_id) const override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetP4InfoId(uint32 tdi_id) const override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetActionSelectorTdiRtId(
-      uint32 action_profile_id) const override LOCKS_EXCLUDED(data_lock_);
+      uint32 action_profile_id) const override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::StatusOr<uint32> GetActionProfileTdiRtId(
-      uint32 action_selector_id) const override LOCKS_EXCLUDED(data_lock_);
+      uint32 action_selector_id) const override ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Gets the Tdi table id from the Table name.
   ::util::StatusOr<uint32> GetTableId(std::string& table_name) const override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
 
   ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
-      void* cookie) const override LOCKS_EXCLUDED(data_lock_);
+      void* cookie) const override ABSL_LOCKS_EXCLUDED(data_lock_);
 
   ::util::Status SetPacketIoConfig(const PacketIoConfig& pktio_config) override;
 
@@ -381,10 +381,10 @@ class TdiSdeWrapper : public TdiSdeInterface {
 
   // TODO(max): make the following maps to handle multiple devices.
   // Pointer to the ID mapper. Not owned by this class.
-  std::unique_ptr<TdiIdMapper> tdi_id_mapper_ GUARDED_BY(data_lock_);
+  std::unique_ptr<TdiIdMapper> tdi_id_mapper_ ABSL_GUARDED_BY(data_lock_);
 
   // Pointer to the current BfRt info object. Not owned by this class.
-  const ::tdi::TdiInfo* tdi_info_ GUARDED_BY(data_lock_);
+  const ::tdi::TdiInfo* tdi_info_ ABSL_GUARDED_BY(data_lock_);
 
  private:
   // RM Mutex to protect the port status writer.
@@ -394,19 +394,19 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status WriteMulticastGroup(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 group_id, const std::vector<uint32>& mc_node_ids, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for clone session handling.
   ::util::Status WriteCloneSession(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 session_id, int egress_port, int cos, int max_pkt_len, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for action profile member handling.
   ::util::Status WriteActionProfileMember(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, int member_id, const TableDataInterface* table_data,
-      bool insert) SHARED_LOCKS_REQUIRED(data_lock_);
+      bool insert) ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Common code for action profile group handling.
   ::util::Status WriteActionProfileGroup(
@@ -414,18 +414,18 @@ class TdiSdeWrapper : public TdiSdeInterface {
       uint32 table_id, int group_id, int max_group_size,
       const std::vector<uint32>& member_ids,
       const std::vector<bool>& member_status, bool insert)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Helper function to find, but not allocate, at free multicast node id.
   // This function is not optimized for speed yet.
   ::util::StatusOr<uint32> GetFreeMulticastNodeId(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Helper to dump the entire PRE table state for debugging. Only runs at v=2.
   ::util::Status DumpPreState(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Synchronizes the driver cached register values with the current hardware
   // state for a given TDI table.
@@ -433,19 +433,19 @@ class TdiSdeWrapper : public TdiSdeInterface {
   ::util::Status SynchronizeRegisters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Internal version SynchronizeCounters without locks.
   // TODO(max): consolidate with SynchronizeRegisters
   ::util::Status DoSynchronizeCounters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::Duration timeout)
-      SHARED_LOCKS_REQUIRED(data_lock_);
+      ABSL_SHARED_LOCKS_REQUIRED(data_lock_);
 
   // Writer to forward the port status change message to. It is registered
   // by chassis manager to receive SDE port status change events.
   std::unique_ptr<ChannelWriter<TdiPortManager::PortStatusEvent>>
-      port_status_event_writer_ GUARDED_BY(port_status_event_writer_lock_);
+      port_status_event_writer_ ABSL_GUARDED_BY(port_status_event_writer_lock_);
 };
 
 }  // namespace tdi

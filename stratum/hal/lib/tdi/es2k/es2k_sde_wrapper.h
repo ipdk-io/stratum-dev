@@ -31,28 +31,28 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   ::util::Status WritePktModMeter(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
-      TdiPktModMeterConfig& cfg) override LOCKS_EXCLUDED(data_lock_);
+      TdiPktModMeterConfig& cfg) override ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status ReadPktModMeters(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index,
       std::vector<uint32>* meter_indices,
       std::vector<TdiPktModMeterConfig>& cfg) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status DeletePktModMeterConfig(
       int device, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       uint32 table_id, absl::optional<uint32> meter_index) override
-      LOCKS_EXCLUDED(data_lock_);
+      ABSL_LOCKS_EXCLUDED(data_lock_);
   ::util::Status InitNotificationTableWithCallback(
       int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
       const std::string& table_name, notification_table_callback_t callback,
-      void* cookie) const override LOCKS_EXCLUDED(data_lock_);
+      void* cookie) const override ABSL_LOCKS_EXCLUDED(data_lock_);
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
-  static Es2kSdeWrapper* CreateSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Es2kSdeWrapper* CreateSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   // Return the singleton instance to be used in the SDE callbacks.
-  static Es2kSdeWrapper* GetSingleton() LOCKS_EXCLUDED(init_lock_);
+  static Es2kSdeWrapper* GetSingleton() ABSL_LOCKS_EXCLUDED(init_lock_);
 
   ::util::Status SetPacketIoConfig(const PacketIoConfig& pktio_config) override;
   ::util::Status TxPacket(int device, const std::string& packet) override;
@@ -66,7 +66,7 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   // callback function.
   ::util::Status HandlePacketRx(ipu_dev_id_t device, const char* pkt_data,
                                 const uint64_t pkt_len)
-      LOCKS_EXCLUDED(packet_rx_callback_lock_);
+      ABSL_LOCKS_EXCLUDED(packet_rx_callback_lock_);
 
   // Es2kSdeWrapper is neither copyable nor movable.
   Es2kSdeWrapper(const Es2kSdeWrapper&) = delete;
@@ -81,7 +81,7 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static Es2kSdeWrapper* singleton_ GUARDED_BY(init_lock_);
+  static Es2kSdeWrapper* singleton_ ABSL_GUARDED_BY(init_lock_);
 
  private:
   // Private constructor; use CreateSingleton and GetSingleton().
@@ -109,7 +109,7 @@ class Es2kSdeWrapper : public TdiSdeWrapper {
 
   // Map from device ID to packet receive writer.
   absl::flat_hash_map<int, std::unique_ptr<ChannelWriter<std::string>>>
-      device_to_packet_rx_writer_ GUARDED_BY(packet_rx_callback_lock_);
+      device_to_packet_rx_writer_ ABSL_GUARDED_BY(packet_rx_callback_lock_);
 };
 
 }  // namespace tdi

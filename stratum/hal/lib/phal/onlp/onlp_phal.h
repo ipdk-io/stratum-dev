@@ -32,17 +32,17 @@ class OnlpPhal final : public OnlpPhalInterface {
 
   // PhalInterface public methods.
   ::util::Status PushChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
   ::util::Status VerifyChassisConfig(const ChassisConfig& config) override
-      LOCKS_EXCLUDED(config_lock_);
-  ::util::Status Shutdown() override LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
+  ::util::Status Shutdown() override ABSL_LOCKS_EXCLUDED(config_lock_);
   ::util::Status RegisterOnlpEventCallback(OnlpEventCallback* callback)
-      EXCLUSIVE_LOCKS_REQUIRED(config_lock_) override;
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(config_lock_) override;
 
   // Creates the singleton instance. Expected to be called once to initialize
   // the instance.
   static OnlpPhal* CreateSingleton(OnlpInterface* onlp_interface)
-      LOCKS_EXCLUDED(config_lock_, init_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_, init_lock_);
 
   // OnlpPhal is neither copyable nor movable.
   OnlpPhal(const OnlpPhal&) = delete;
@@ -59,19 +59,19 @@ class OnlpPhal final : public OnlpPhalInterface {
 
   // Calls all the one time start initialisations
   ::util::Status Initialize(OnlpInterface* onlp_interface)
-      LOCKS_EXCLUDED(config_lock_);
+      ABSL_LOCKS_EXCLUDED(config_lock_);
 
   // One time initialization of the data sources. Need to be called after
   // InitializeOnlpWrapper() completes successfully.
   // TODO(unknown): move it to OnlpConfigurator
-  ::util::Status InitializeOnlpOids() EXCLUSIVE_LOCKS_REQUIRED(config_lock_);
+  ::util::Status InitializeOnlpOids() ABSL_EXCLUSIVE_LOCKS_REQUIRED(config_lock_);
 
   // Internal mutex lock for protecting the internal maps and initializing the
   // singleton instance.
   static absl::Mutex init_lock_;
 
   // The singleton instance.
-  static OnlpPhal* singleton_ GUARDED_BY(init_lock_);
+  static OnlpPhal* singleton_ ABSL_GUARDED_BY(init_lock_);
 
   // Mutex lock for protecting the internal state when config is pushed or the
   // class is initialized so that other threads do not access the state while
@@ -79,14 +79,14 @@ class OnlpPhal final : public OnlpPhalInterface {
   mutable absl::Mutex config_lock_;
 
   // Determines if PHAL is fully initialized.
-  bool initialized_ GUARDED_BY(config_lock_) = false;
+  bool initialized_ ABSL_GUARDED_BY(config_lock_) = false;
 
   // Not owned by this class.
-  OnlpInterface* onlp_interface_ GUARDED_BY(config_lock_);
+  OnlpInterface* onlp_interface_ ABSL_GUARDED_BY(config_lock_);
 
   // Owned by the class.
   std::unique_ptr<OnlpEventHandler> onlp_event_handler_
-      GUARDED_BY(config_lock_);
+      ABSL_GUARDED_BY(config_lock_);
 };
 
 }  // namespace onlp
