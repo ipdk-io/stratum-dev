@@ -66,8 +66,8 @@ std::unique_ptr<TdiIdMapper> TdiIdMapper::CreateInstance() {
         continue;
       }
       if (p4extern.extern_type_id() == kTnaExternActionSelectorId) {
-        // DirectTSMeter (extern id 132) externs must be skipped because they
-        // are not present in tdi.json
+        // DirectTSMeter (extern id 132) externs must be skipped as
+        // it will not present in tdi.json
         continue;
       }
       for (const auto& extern_instance : p4extern.instances()) {
