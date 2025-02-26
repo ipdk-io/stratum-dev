@@ -27,9 +27,11 @@ namespace tdi {
 
 Es2kSwitch::Es2kSwitch(Es2kChassisManager* chassis_manager,
                        TdiIpsecManager* ipsec_manager,
+                       Es2kVirtualPortManager* vport_manager,
                        const std::map<int, Es2kNode*>& device_id_to_es2k_node)
     : chassis_manager_(ABSL_DIE_IF_NULL(chassis_manager)),
       ipsec_manager_(ABSL_DIE_IF_NULL(ipsec_manager)),
+      vport_manager_(ABSL_DIE_IF_NULL(vport_manager)),
       device_id_to_es2k_node_(device_id_to_es2k_node),
       node_id_to_tdi_node_() {
   for (const auto& entry : device_id_to_es2k_node_) {
@@ -173,8 +175,10 @@ Es2kSwitch::~Es2kSwitch() {}
     std::shared_ptr<WriterInterface<GnmiEventPtr>> writer) {
   auto status = chassis_manager_->RegisterEventNotifyWriter(writer);
   if (!status.ok()) return status;
-  return ipsec_manager_->RegisterEventNotifyWriter(writer);
-  // TODO(dgf): Unregister chassis_manager event writer if ipsec_manager
+  status = ipsec_manager_->RegisterEventNotifyWriter(writer);
+  if (!status.ok()) return status;
+  return vport_manager_->RegisterEventNotifyWriter(writer);
+  // TODO(dgf): Unregister other managers event writer if one
   //            registration fails?
   //   auto rc2 = ipsec_manager_->RegisterEventNotifyWriter(writer);
   //   if (!rc2.ok()) chassis_manager_->UnregisterEventNotifyWriter();
@@ -286,6 +290,14 @@ Es2kSwitch::~Es2kSwitch() {}
         status.Update(ipsec_manager_->WriteConfigSADBEntry(op_type, payload));
         break;
       }
+      case SetRequest::Request::RequestCase::kNode: {
+        absl::WriterMutexLock l(&chassis_lock);
+        auto vport_notif_enable = req.node().enable_vport_status_notif();
+        if (vport_notif_enable) {
+          status.Update(vport_manager_->InitializeNotificationCallback());
+        }
+        break;
+      }
       default:
         status = MAKE_ERROR(ERR_INTERNAL)
                  << req.ShortDebugString() << " Not supported yet!";
@@ -302,9 +314,10 @@ Es2kSwitch::~Es2kSwitch() {}
 
 std::unique_ptr<Es2kSwitch> Es2kSwitch::CreateInstance(
     Es2kChassisManager* chassis_manager, TdiIpsecManager* ipsec_manager,
+    Es2kVirtualPortManager* vport_manager,
     const std::map<int, Es2kNode*>& device_id_to_es2k_node) {
-  return absl::WrapUnique(
-      new Es2kSwitch(chassis_manager, ipsec_manager, device_id_to_es2k_node));
+  return absl::WrapUnique(new Es2kSwitch(
+      chassis_manager, ipsec_manager, vport_manager, device_id_to_es2k_node));
 }
 
 ::util::StatusOr<Es2kNode*> Es2kSwitch::GetEs2kNodeFromDeviceId(

@@ -85,7 +85,6 @@ void SetUpVirtualPortFetchOperStatus(TreeNode* node, YangParseTree* tree) {
         .IgnoreError();
     return SendResponse(GetResponse(path, resp), stream);
   };
-
   auto unsupported_functor = UnsupportedFunc();
   node->SetOnPollHandler(unsupported_functor)
       ->SetOnTimerHandler(unsupported_functor)
@@ -127,6 +126,46 @@ void SetUpVirtualPortFetchMacAddress(TreeNode* node, YangParseTree* tree) {
       ->SetOnChangeHandler(unsupported_functor);
 }
 
+// Notification message that is sent to gnmi-client
+std::string ConvertVportStateToString(const VportStateNotification& notif) {
+  std::stringstream ss;
+  ss << "global-resource-id: " << notif.global_resource_id();
+  ss << ", oper-status: " << notif.state();
+  return ss.str();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// /virtual-ports/oper-status-change
+void SetUpVportNotification(TreeNode* node, YangParseTree* tree) {
+  auto unsupported_functor = UnsupportedFunc();
+  auto register_functor = [tree](const EventHandlerRecordPtr& record) {
+    // On register notification callback needs to be set in the underlying SDE.
+    // If it was already enabled it will be a no-op call.
+
+    // Create a set request.
+    SetRequest req;
+    auto* request = req.add_requests()->mutable_node();
+    request->set_enable_vport_status_notif(true);
+
+    std::vector<::util::Status> details;
+    tree->GetSwitchInterface()
+        ->SetValue(/*node_id*/ 0, req, &details)
+        .IgnoreError();
+    // Return status of the operation.
+    if (details.at(0) != ::util::OkStatus()) {
+      // Log error
+    }
+
+    return EventHandlerList<VportStateNotificationEvent>::GetInstance()
+        ->Register(record);
+  };
+  auto on_change_functor = GetOnChangeFunctor(
+      &VportStateNotificationEvent::GetNotification, ConvertVportStateToString);
+  node->SetOnTimerHandler(unsupported_functor)
+      ->SetOnPollHandler(unsupported_functor)
+      ->SetOnChangeRegistration(register_functor)
+      ->SetOnChangeHandler(on_change_functor);
+}
 }  // namespace
 
 //////////////////////////////
@@ -143,6 +182,9 @@ void YangParseTreePaths::AddSubtreeVirtualPort(YangParseTree* tree) {
   node = tree->AddNode(
       GetPath("virtual-ports")("virtual-port")("state")("mac-address")());
   SetUpVirtualPortFetchMacAddress(node, tree);
+  node = tree->AddNode(GetPath("virtual-ports")(
+      "oper-status-change")());  // Port state (Up/Down) change notification
+  SetUpVportNotification(node, tree);
 }
 
 }  // namespace hal

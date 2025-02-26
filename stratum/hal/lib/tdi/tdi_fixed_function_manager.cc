@@ -176,6 +176,18 @@ TdiFixedFunctionManager::CreateInstance(OperationMode mode,
 //////////////////////////////////////////
 // Virtual-ports fixed-function TDI calls
 //////////////////////////////////////////
+::util::Status TdiFixedFunctionManager::InitNotificationTableWithCallback(
+    std::string table_name,
+    void (*vport_state_notif_cb)(uint32_t, uint32_t, uint8_t, void*),
+    void* cookie) {
+  absl::ReaderMutexLock l(&lock_);
+
+  ASSIGN_OR_RETURN(auto session, tdi_sde_interface_->CreateSession());
+
+  return tdi_sde_interface_->InitNotificationTableWithCallback(
+      device_, session, table_name, vport_state_notif_cb, cookie);
+}
+
 ::util::Status TdiFixedFunctionManager::FetchVportTableData(
     std::shared_ptr<TdiSdeInterface::SessionInterface> session,
     std::string table_name, uint32 global_resource_id, const char* param_name,

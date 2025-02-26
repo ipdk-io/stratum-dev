@@ -120,7 +120,7 @@ TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
 //------------------------------------------------------------------------------
 ::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
     int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
-    const std::string& table_name, notification_table_callback_t callback,
+    const std::string& table_name, ipsec_notification_table_callback_t callback,
     void* cookie) const LOCKS_EXCLUDED(data_lock_) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
          << "Notification Table not supported";
@@ -129,6 +129,14 @@ TdiSdeWrapper::CreateTableData(uint32 table_id, uint32 action_id) {
 ::util::Status TdiSdeWrapper::SetPacketIoConfig(
     const PacketIoConfig& pktio_config) {
   return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED) << "PacketIO not supported";
+}
+
+::util::Status TdiSdeWrapper::InitNotificationTableWithCallback(
+    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const std::string& table_name, vport_notification_table_callback_t callback,
+    void* cookie) const LOCKS_EXCLUDED(data_lock_) {
+  return MAKE_ERROR(ERR_OPER_NOT_SUPPORTED)
+         << "Notification Table not supported";
 }
 
 }  // namespace tdi

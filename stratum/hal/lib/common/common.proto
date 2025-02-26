@@ -1564,6 +1564,14 @@ message IPsecOffloadInfo {
   int32 spi = 1;
 }
 
+// VportStateNotification message is sent from Stratum to gNMI-client based on a
+// target-originated event.
+message VportStateNotification {
+  uint32 device_id = 1;
+  uint32 global_resource_id = 2;
+  uint32 state = 3;
+}
+
 message VirtualPortInfo {
   oneof value { 
     uint32 vsi = 1;
@@ -1736,7 +1744,8 @@ message SetRequest {
     }
     // Data required to set info for a specific node.
     message Node {
-      // TODO(unknown): Add this.
+      // Used to enable status change notifications in the Switch.
+      bool enable_vport_status_notif = 1;
     }
     // Data required to set info for a specific chassis.
     message Chassis {

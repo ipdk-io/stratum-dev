@@ -157,8 +157,9 @@ void ParseCommandLine(int argc, char* argv[], bool remove_flags) {
   auto ipsec_manager = TdiIpsecManager::CreateInstance(
       sde_wrapper, fixed_function_manager.get());
 
-  auto es2k_switch = Es2kSwitch::CreateInstance(
-      chassis_manager.get(), ipsec_manager.get(), device_id_to_es2k_node);
+  auto es2k_switch =
+      Es2kSwitch::CreateInstance(chassis_manager.get(), ipsec_manager.get(),
+                                 virtual_port_manager, device_id_to_es2k_node);
 
   auto auth_policy_checker = AuthPolicyChecker::CreateInstance();
 

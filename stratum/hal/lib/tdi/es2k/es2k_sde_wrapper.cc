@@ -279,6 +279,64 @@ std::string Es2kSdeWrapper::GetChipType(int device) const {
   return ::util::OkStatus();
 }
 
+//------------------------------------------------------------------------------
+// Virtual Port State change notification
+//------------------------------------------------------------------------------
+::util::Status Es2kSdeWrapper::InitNotificationTableWithCallback(
+    int dev_id, std::shared_ptr<TdiSdeInterface::SessionInterface> session,
+    const std::string& table_name,
+    void (*vport_state_notif_cb)(uint32_t dev_id, uint32_t glort_id,
+                                 uint8_t state, void* cke),
+    void* cookie) const {
+  if (!tdi_info_) {
+    return MAKE_ERROR(ERR_INTERNAL) << "Unable to initialize notification "
+                                       "table due to TDI internal error";
+  }
+
+  auto real_session = std::dynamic_pointer_cast<Session>(session);
+  RET_CHECK(real_session);
+
+  const ::tdi::Table* notifTable;
+  RETURN_IF_TDI_ERROR(tdi_info_->tableFromNameGet(table_name, &notifTable));
+
+  // tdi_attributes_allocate
+  std::unique_ptr<::tdi::TableAttributes> attributes_field;
+  ::tdi::TableAttributes* attributes_object;
+  RETURN_IF_TDI_ERROR(notifTable->attributeAllocate(
+      (tdi_attributes_type_e)TDI_RT_ATTRIBUTES_TYPE_VPORT_STATUS_NOTIF,
+      &attributes_field));
+  attributes_object = attributes_field.get();
+
+  // tdi_attributes_set_values
+  const uint64_t enable = 1;
+  RETURN_IF_TDI_ERROR(attributes_object->setValue(
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_VPORT_STATUS_TABLE_FIELD_TYPE_ENABLE,
+      enable));
+
+  RETURN_IF_TDI_ERROR(attributes_object->setValue(
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_VPORT_STATUS_TABLE_FIELD_TYPE_CALLBACK_C,
+      (uint64_t)vport_state_notif_cb));
+
+  RETURN_IF_TDI_ERROR(attributes_object->setValue(
+      (tdi_attributes_field_type_e)
+          TDI_RT_ATTRIBUTES_VPORT_STATUS_TABLE_FIELD_TYPE_COOKIE,
+      (uint64_t)cookie));
+
+  // target & flag create
+  const ::tdi::Device* device = nullptr;
+  ::tdi::DevMgr::getInstance().deviceGet(dev_id, &device);
+  std::unique_ptr<::tdi::Target> target;
+  device->createTarget(&target);
+
+  const auto flags = ::tdi::Flags(0);
+  RETURN_IF_TDI_ERROR(notifTable->tableAttributesSet(
+      *real_session->tdi_session_, *target, flags, *attributes_object));
+
+  return ::util::OkStatus();
+}
+
 }  // namespace tdi
 }  // namespace hal
 }  // namespace stratum

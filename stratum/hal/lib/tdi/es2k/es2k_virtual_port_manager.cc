@@ -32,6 +32,9 @@
 
 #define VPORT_STATE_TABLE_NAME \
   "openconfig-virtual-ports.virtual-ports.virtual-port.state"
+#define VPORT_CONFIG_TABLE_NAME \
+  "openconfig-virtual-ports.virtual-ports.virtual-port.config"
+//  "openconfig-virtual-ports"
 
 namespace stratum {
 namespace hal {
@@ -109,6 +112,48 @@ void Es2kVirtualPortManager::SetTdiFixedFunctionManager(
                        ((data & 0xFF00000000) >> 24) |
                        ((data & 0xFF0000000000) >> 40);
   return swapped_mac;
+}
+
+/* #### C function callback #### */
+static void vport_state_notification_callback(uint32_t dev_id,
+                                              uint32_t glort_id, uint8_t state,
+                                              void* cookie) {
+  auto vport_mgr = reinterpret_cast<Es2kVirtualPortManager*>(cookie);
+  vport_mgr->SendVportStateNotificationEvent(dev_id, glort_id, state);
+}
+
+void Es2kVirtualPortManager::SendVportStateNotificationEvent(uint32_t dev_id,
+                                                             uint32_t glort_id,
+                                                             uint32_t state) {
+  absl::ReaderMutexLock l(&gnmi_event_lock_);
+  if (!gnmi_event_writer_) return;
+  // Allocate and initialize an VportStateNotificationEvent event and pass it to
+  // the gNMI publisher using the gNMI event notification channel.
+  // The GnmiEventPtr is a smart pointer (shared_ptr<>) and it takes care of
+  // the memory allocated to this event object once the event is handled by
+  // the GnmiPublisher.
+  if (!gnmi_event_writer_->Write(GnmiEventPtr(
+          new VportStateNotificationEvent(dev_id, glort_id, state)))) {
+    // Remove WriterInterface if it is no longer operational.
+    gnmi_event_writer_.reset();
+  }
+}
+
+::util::Status Es2kVirtualPortManager::InitializeNotificationCallback() {
+  if (notif_initialized_) {
+    return ::util::OkStatus();
+  }
+
+  auto status = tdi_fixed_function_manager_->InitNotificationTableWithCallback(
+      VPORT_CONFIG_TABLE_NAME, &vport_state_notification_callback, this);
+
+  if (!status.ok()) {
+    LOG(ERROR)
+        << "Failed to register virtual port state change notification callback";
+  } else {
+    notif_initialized_ = true;
+  }
+  return status;
 }
 
 }  // namespace tdi
