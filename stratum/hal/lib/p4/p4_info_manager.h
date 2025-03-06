@@ -287,6 +287,7 @@ class P4InfoManager {
   ::util::Status VerifyTableXrefs();
 
   void InitDirectPacketModMeters(const p4::config::v1::Extern& p4extern);
+  void InitDirectTSMeters(const p4::config::v1::Extern& p4extern);
   void InitPacketModMeters(const p4::config::v1::Extern& p4extern);
 
   // Functions to validate name and ID presence in message preamble.
@@ -309,6 +310,7 @@ class P4InfoManager {
   P4ResourceMap<::p4::config::v1::DirectMeter> direct_meter_map_;
   P4ResourceMap<::idpf::PacketModMeter> pkt_mod_meter_map_;
   P4ResourceMap<::idpf::DirectPacketModMeter> direct_pkt_mod_meter_map_;
+  P4ResourceMap<::idpf::DirectTSMeter> direct_ts_meter_map_;
   P4ResourceMap<::p4::config::v1::ValueSet> value_set_map_;
   P4ResourceMap<::p4::config::v1::Register> register_map_;
   P4ResourceMap<::p4::config::v1::Digest> digest_map_;
@@ -323,6 +325,8 @@ class P4InfoManager {
   google::protobuf::RepeatedPtrField<::idpf::PacketModMeter> all_meter_objects_;
   google::protobuf::RepeatedPtrField<::idpf::DirectPacketModMeter>
       direct_meter_objects_;
+  google::protobuf::RepeatedPtrField<::idpf::DirectTSMeter>
+      direct_ts_meter_objects_;
 };
 
 }  // namespace hal
