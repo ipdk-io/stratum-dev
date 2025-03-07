@@ -222,7 +222,6 @@ std::unique_ptr<TdiTableManager> TdiTableManager::CreateInstance(
       return MAKE_ERROR(ERR_UNIMPLEMENTED)
              << "Unsupported action type: " << table_entry.action().type_case();
   }
-
   ASSIGN_OR_RETURN(auto table,
                    p4_info_manager_->FindTableByID(table_entry.table_id()));
 

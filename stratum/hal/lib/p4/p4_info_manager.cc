@@ -40,6 +40,7 @@ P4InfoManager::P4InfoManager(const ::p4::config::v1::P4Info& p4_info)
       direct_meter_map_("Direct-Meter"),
       pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      direct_ts_meter_map_("DirectTSMeter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
       digest_map_("Digest"),
@@ -55,6 +56,7 @@ P4InfoManager::P4InfoManager()
       direct_meter_map_("Direct-Meter"),
       pkt_mod_meter_map_("PacketModMeter"),
       direct_pkt_mod_meter_map_("DirectPacketModMeter"),
+      direct_ts_meter_map_("DirectTSMeter"),
       value_set_map_("ValueSet"),
       register_map_("Register"),
       digest_map_("Digest"),
@@ -107,6 +109,9 @@ P4InfoManager::~P4InfoManager() {}
         case ::p4::config::v1::P4Ids_Prefix_DIRECT_PACKET_MOD_METER:
           InitDirectPacketModMeters(p4extern);
           break;
+        case ::idpf::P4Ids_Prefix_DIRECT_TSMETER:
+          InitDirectTSMeters(p4extern);
+          break;
         default:
           LOG(INFO) << "Unrecognized p4_info extern type: "
                     << p4extern.extern_type_id() << " (ignored)";
@@ -135,6 +140,22 @@ void P4InfoManager::InitDirectPacketModMeters(
     direct_meter_objects_.Add(std::move(direct_pkt_mod_meter));
   }
   direct_pkt_mod_meter_map_.BuildMaps(direct_meter_objects_, preamble_cb);
+}
+
+void P4InfoManager::InitDirectTSMeters(const p4::config::v1::Extern& p4extern) {
+  const auto& extern_instances = p4extern.instances();
+  PreambleCallback preamble_cb =
+      std::bind(&P4InfoManager::ProcessPreamble, this, std::placeholders::_1,
+                std::placeholders::_2);
+  for (const auto& extern_instance : extern_instances) {
+    ::idpf::DirectTSMeter direct_ts_meter;
+    *direct_ts_meter.mutable_preamble() = extern_instance.preamble();
+    p4::config::v1::MeterSpec meter_spec;
+    meter_spec.set_unit(p4::config::v1::MeterSpec::PACKETS);
+    *direct_ts_meter.mutable_spec() = meter_spec;
+    direct_ts_meter_objects_.Add(std::move(direct_ts_meter));
+  }
+  direct_ts_meter_map_.BuildMaps(direct_ts_meter_objects_, preamble_cb);
 }
 
 void P4InfoManager::InitPacketModMeters(
