@@ -14,6 +14,7 @@ install(
         es2k_skip_p4.conf
         ${STRATUM_SOURCE_DIR}/tools/tls/ca.conf
         ${STRATUM_SOURCE_DIR}/tools/tls/grpc-client.conf
+        ${STRATUM_SOURCE_DIR}/tools/tls/grpc-server.conf
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/stratum/es2k
 )
