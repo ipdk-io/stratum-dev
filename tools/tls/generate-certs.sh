@@ -2,20 +2,84 @@
 # Copyright 2020-present Open Networking Foundation
 # Copyright 2023,2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+
+show_help() {
+    cat << EOF
+Usage: $(basename $0) [options]
+
+This script accepts configuration through environment variables:
+
+Environment Variables:
+  SAN_DNS        DNS names to include in the certificate (comma or space separated)
+  SAN_IP         IP addresses to include in the certificate (comma or space separated)
+  COMMON_NAME    Common Name for the certificate
+
+Examples:
+  # Generate certificate with default settings (default CN=localhost)
+  ./$(basename $0)
+
+  # Generate certificate with a single DNS name
+  COMMON_NAME="example.com" ./$(basename $0)
+  
+  # Generate certificate with multiple DNS names
+  SAN_DNS="example.com test.org another.domain" COMMON_NAME="ipdk.io" ./$(basename $0)
+  
+  # Generate certificate with IP addresses
+  COMMON_NAME=10.10.0.2 ./$(basename $0)
+  SAN_IP="192.168.1.1 10.0.0.2" COMMON_NAME=1.2.3.4 ./$(basename $0)
+  
+  # Combine DNS names and IP addresses
+  SAN_DNS="example.com" SAN_IP="192.168.1.1" COMMON_NAME="ipdk.io" ./$(basename $0)
+
+Options:
+  -h, --help     Display this help message and exit
+EOF
+    exit 0
+}
+
+# Check for help flag
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    show_help
+fi
+
 set -e
 
 THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
-COMMON_NAME=${COMMON_NAME:-"127.0.0.1"}
+COMMON_NAME=${COMMON_NAME:-"localhost"}
+
+# Additional SANs can be passed as environment variables
+SAN_DNS=${SAN_DNS:-""}
+SAN_IP=${SAN_IP:-""}
 
 echo "Creating certificates for CN=$COMMON_NAME"
 
-# Create directory for certificates
 mkdir -p "$THIS_DIR/certs"
 rm -rf "$THIS_DIR/certs/"*
 
 # Create temporary server config with environment variables replaced
 SERVER_CONF_FILE="$(mktemp)"
-cat "$THIS_DIR/grpc-server.conf" | sed "s/\${COMMON_NAME}/$COMMON_NAME/g" > "$SERVER_CONF_FILE"
+sed "s/\${COMMON_NAME}/$COMMON_NAME/g" "$THIS_DIR/grpc-server.conf" > "$SERVER_CONF_FILE"
+
+# Populate SANs
+if [[ -n "$SAN_DNS" ]]; then
+    # Split the SAN_DNS string by commas or spaces
+    IFS=', ' read -r -a dns_array <<< "$SAN_DNS"
+    dns_index=2  # Start from 2 since DNS.1 is already set to COMMON_NAME
+    for dns in "${dns_array[@]}"; do
+        echo "DNS.$dns_index = $dns" >> "$SERVER_CONF_FILE"
+        ((dns_index++))
+    done
+fi
+
+if [[ -n "$SAN_IP" ]]; then
+    # Split the SAN_IP string by commas or spaces
+    IFS=', ' read -r -a ip_array <<< "$SAN_IP"
+    ip_index=1
+    for ip in "${ip_array[@]}"; do
+        echo "IP.$ip_index = $ip" >> "$SERVER_CONF_FILE"
+        ((ip_index++))
+    done
+fi
 
 echo "=== Generating CA certificate ==="
 # Generate CA private key and certificate
