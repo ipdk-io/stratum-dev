@@ -18,16 +18,14 @@ Examples:
   # Generate certificate with default settings (default CN=localhost)
   ./$(basename $0)
 
-  # Generate certificate with a single DNS name
-  COMMON_NAME="example.com" ./$(basename $0)
-  
-  # Generate certificate with multiple DNS names
-  SAN_DNS="example.com test.org another.domain" COMMON_NAME="ipdk.io" ./$(basename $0)
-  
   # Generate certificate with IP addresses
   COMMON_NAME=10.10.0.2 ./$(basename $0)
-  SAN_IP="192.168.1.1 10.0.0.2" COMMON_NAME=1.2.3.4 ./$(basename $0)
-  
+  SAN_IP="192.168.1.1,1.2.3.4" COMMON_NAME=10.10.0.2 ./$(basename $0)
+
+  # Generate certificate with a DNS names
+  COMMON_NAME="example.com" ./$(basename $0)
+  SAN_DNS="example.com,test.org,another.domain" COMMON_NAME="ipdk.io" ./$(basename $0)
+    
   # Combine DNS names and IP addresses
   SAN_DNS="example.com" SAN_IP="192.168.1.1" COMMON_NAME="ipdk.io" ./$(basename $0)
 
