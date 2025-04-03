@@ -31,6 +31,9 @@ endif()
 # Suppress "warning: attribute ignored" on ABSL_MUST_USE_RESULT [[nodiscard]]
 add_compile_options(-Wno-attributes)
 
+# Suppress "warning: 'deprecated' attribute ignored" on gnmi::Error
+add_compile_options(-Wno-deprecated-declarations)
+
 add_subdirectory(stratum)
 
 ###########################
