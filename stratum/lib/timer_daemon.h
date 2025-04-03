@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_LIB_TIMER_DAEMON_H_
@@ -19,6 +20,7 @@
 #include "stratum/glue/status/status.h"
 #include "stratum/glue/status/status_macros.h"
 #include "stratum/lib/macros.h"
+#include "stratum/lib/thread_annotations_compat.h"
 #include "stratum/public/lib/error.h"
 
 namespace stratum {

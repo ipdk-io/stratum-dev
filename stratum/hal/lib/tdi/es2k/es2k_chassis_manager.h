@@ -20,6 +20,7 @@
 #include "stratum/hal/lib/tdi/tdi_global_vars.h"
 #include "stratum/hal/lib/tdi/tdi_port_manager.h"
 #include "stratum/lib/channel/channel.h"
+#include "stratum/lib/thread_annotations_compat.h"
 
 namespace stratum {
 namespace hal {

@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_HAL_LIB_COMMON_ERROR_BUFFER_H_
@@ -12,6 +13,7 @@
 #include "absl/synchronization/mutex.h"
 #include "stratum/glue/gtl/source_location.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/lib/thread_annotations_compat.h"
 
 namespace stratum {
 namespace hal {

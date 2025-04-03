@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_LIB_SECURITY_AUTH_POLICY_CHECKER_H_
@@ -16,6 +17,7 @@
 #include "absl/synchronization/mutex.h"
 #include "grpcpp/grpcpp.h"
 #include "stratum/glue/status/status.h"
+#include "stratum/lib/thread_annotations_compat.h"
 
 namespace stratum {
 

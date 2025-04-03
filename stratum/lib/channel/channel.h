@@ -1,5 +1,6 @@
 // Copyright 2018 Google LLC
 // Copyright 2018-present Open Networking Foundation
+// Copyright 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #ifndef STRATUM_LIB_CHANNEL_CHANNEL_H_
@@ -18,6 +19,7 @@
 #include "absl/time/time.h"
 #include "stratum/lib/channel/channel_internal.h"
 #include "stratum/lib/macros.h"
+#include "stratum/lib/thread_annotations_compat.h"
 
 namespace stratum {
 
