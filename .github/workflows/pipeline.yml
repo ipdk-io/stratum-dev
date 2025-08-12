@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Clone stratum repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Mount bazel cache
         uses: actions/cache@v4
@@ -77,7 +77,7 @@ jobs:
 
     steps:
       - name: Clone stratum repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Mount bazel cache
         uses: actions/cache@v4
@@ -103,7 +103,7 @@ jobs:
 
     steps:
       - name: Clone stratum repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: stratum
 
